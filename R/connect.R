@@ -1,17 +1,20 @@
 #' Connec to Run ID Database
+library(DBI)
 
-connect <- function() {
+cfg <- config::get()
 
 con <- dbConnect(RPostgres::Postgres(),
-                 dbname = 'run_id_db',
-                 host = 'localhost', # i.e. 'ec2-54-83-201-96.compute-1.amazonaws.com'
-                 port = 5432, # or any other port specified by your DBA
-                 user = 'postgres',
-                 password = 'postgres')
-}
+                 dbname = cfg$dbname,
+                 host = cfg$host, # i.e. 'ec2-54-83-201-96.compute-1.amazonaws.com'
+                 port = cfg$port, # or any other port specified by your DBA
+                 user = cfg$username,
+                 password = cfg$password)
 
 
-#' User Login
-user_login <- function(username, password) {
+# process protocol file
+protocol_settings <- process_protocol_file(protocol_file = "")
 
-}
+#
+plate_run_uid <- create_plate_run(con, protocol_settings)
+
+DBI::dbDisconnect(con)

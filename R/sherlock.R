@@ -1,3 +1,33 @@
+process_protocol_file <- function(protocol_file) {
+  metadata <- process_sherlock_metadata("data-raw/exampleoutput_synergyH1trial_data_092021.xlsx")
+  metadata$genetic_method_id <- 1
+  metadata$laboratory_id <- 1
+  metadata$lab_work_preformed_by <- "dog"
+
+  return(metadata)
+}
+
+#' @title Create Plate Run
+#' @description blah
+create_plate_run <- function(con, plate_run_settings) {
+  # write to table using the con object
+  list2env(plate_run_settings, env = environment())
+
+  query <- glue::glue_sql("
+  INSERT INTO plate_run (software_version, date, reader_type, reader_serial_number, plate_type, set_point, preheat_before_moving, runtime, interval, read_count, run_mode, excitation, emissions, optics, gain, light_source, lamp_energy, read_height, genetic_method_id, laboratory_id, lab_work_preformed_by)
+  VALUES ({software_version}, {date}, {reader_type}, {reader_serial_number}, {plate_type}, {set_point}, {preheat_before_moving}, {runtime}, {interval}, {read_count}, {run_mode}, {excitation}, {emissions}, {optics}, {gain}, {light_source}, {lamp_energy}, {read_height}, {genetic_method_id}, {laboratory_id}, {lab_work_preformed_by});",
+                 .con = con)
+
+  DBI::dbExecute(con, query)
+
+  plate_run_id <- DBI::dbGetQuery(con, "select currval(pg_get_serial_sequence('plate_run', 'id'));")
+  return(plate_run_id$currval)
+}
+
+
+
+
+
 #' Process Sherlock Output
 #' @param filepath path to excel file with Sherlock output
 process_sherlock <- function(sherlock_results_filepath, layout_mapping_filepath,
@@ -42,8 +72,8 @@ process_sherlock <- function(sherlock_results_filepath, layout_mapping_filepath,
 
   # raw results encoded as strings because of OVERFLOW and ????? values
   raw_assay_results <- raw_fluorescence %>%
-    left_join(background_fluorescence) %>%
-    select(sample_id, raw_fluorescence = fluorescence, background_value = background_fluorescence,
+    dplyr::left_join(background_fluorescence) %>%
+    dplyr::select(sample_id, raw_fluorescence = fluorescence, background_value = background_fluorescence,
            time = Time, plate_run_id, well_location = location)
 
   # results ---
@@ -53,7 +83,7 @@ process_sherlock <- function(sherlock_results_filepath, layout_mapping_filepath,
   results <- readxl::read_excel(sherlock_results_filepath,
                         range = paste0("B", start_results,":", end_results),
                         col_types = "text") %>%
-    fill(...1) %>%
+    tidyr::fill(...1) %>%
     tidyr::pivot_longer(names_to = "number_location", values_to = "RFU", !c(...1, ...14)) %>%
     dplyr::transmute(location = paste0(...1, number_location), metric = ...14, RFU = as.numeric(RFU)) %>%
     dplyr::left_join(layout) %>%
