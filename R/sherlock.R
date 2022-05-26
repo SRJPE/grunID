@@ -1,26 +1,18 @@
-#' Create plate layout
-#' before running plate, recording mapping of samples to wells
-#' \example
-#' plate_run_id, sample_id, well_id
-#' 1, dofji, A3
-#' 1, dkfoi, A4
-duh <- function(con, filepath) {
-  layout_mapping <- read_csv(filepath)
-  res <- write_table(con, layout_mapping)
-  return(res)
-}
-
 #' Process Sherlock Output
 #' @param filepath path to excel file with Sherlock output
-process_sherlock <- function(filepath, layout_mapping, plate_size = c(96)) {
+process_sherlock <- function(sherlock_results_filepath, layout_mapping_filepath,
+                             plate_size = c(96)) {
 
-  metadata <- process_sherlock_metadata(filepath)
-  plate_layout <- process_plate_layout(filepath)
+  metadata <- process_sherlock_metadata(sherlock_results_filepath)
+  plate_layout <- process_plate_layout(sherlock_results_filepath)
+  sample_layout_mapping <- read_csv(layout_mapping_filepath)
+
+  layout <- left_join(sample_layout_mapping, plate_layout)
 
   number_of_rows <- metadata$read_count
 
   # raw fluorescence ----
-  column_index <- sum(!is.na(plate_layout$sample_id)) + 3 # offset 3 columns
+  column_index <- nrow(layout) + 3 # offset 3 columns
   if (plate_size == 96) {
     start_raw_fluorescence <- 43 # TODO (HARDCODE VALUE)
   } else {
@@ -29,47 +21,51 @@ process_sherlock <- function(filepath, layout_mapping, plate_size = c(96)) {
   end_row_raw_fluorescence <- start_raw_fluorescence + number_of_rows
   end_raw_fluorescence <- paste0(excel_column_index[column_index], end_row_raw_fluorescence)
 
-  raw_fluorescence <- readxl::read_excel(filepath,
+  raw_fluorescence <- readxl::read_excel(sherlock_results_filepath,
                                  range = paste0("B", start_raw_fluorescence,":", end_raw_fluorescence)) %>%
     dplyr::mutate(Time = hms::as_hms(Time)) %>%
     dplyr::mutate_all(as.character) %>%
     dplyr::select(-dplyr::starts_with("T°")) %>%
     tidyr::pivot_longer(names_to = "location", values_to = "fluorescence", !Time) %>%
-    dplyr::left_join(plate_layout)
+    dplyr::left_join(layout)
 
   # background values ---
   start_background_fluorescence <- end_row_raw_fluorescence + 4
   end_row_background_fluorescence <- start_background_fluorescence + number_of_rows
   end_background_fluorescence <- paste0(excel_column_index[column_index - 1], end_row_background_fluorescence)
-  background_fluorescence <- readxl::read_excel(filepath,
+  background_fluorescence <- readxl::read_excel(sherlock_results_filepath,
                                         range = paste0("B", start_background_fluorescence,":",
                                                        end_background_fluorescence)) %>%
     dplyr::mutate(Time = hms::as_hms(Time)) %>%
     dplyr::mutate_all(as.character) %>%
     tidyr::pivot_longer(names_to = "location", values_to = "background_fluorescence", !Time)
 
-  raw_fluorescence %>%
-    left_join(background_fluorescence)
-    select(raw_fluorescence, background_value, time, location)
+  # raw results encoded as strings because of OVERFLOW and ????? values
+  raw_assay_results <- raw_fluorescence %>%
+    left_join(background_fluorescence) %>%
+    select(sample_id, raw_fluorescence = fluorescence, background_value = background_fluorescence,
+           time = Time, plate_run_id, well_location = location)
+
   # results ---
   start_results <- end_row_background_fluorescence + 4
   end_row_results <- start_results + 4*8
   end_results <- paste0(excel_column_index[15], end_row_results)
-  results <- readxl::read_excel(filepath,
+  results <- readxl::read_excel(sherlock_results_filepath,
                         range = paste0("B", start_results,":", end_results),
                         col_types = "text") %>%
     fill(...1) %>%
     tidyr::pivot_longer(names_to = "number_location", values_to = "RFU", !c(...1, ...14)) %>%
-    dplyr::transmute(location = paste0(...1, number_location), metric = ...14, RFU) %>%
-    dplyr::left_join(plate_layout) %>%
+    dplyr::transmute(location = paste0(...1, number_location), metric = ...14, RFU = as.numeric(RFU)) %>%
+    dplyr::left_join(layout) %>%
     dplyr::filter(!is.na(sample_id)) %>%
     dplyr::mutate(metric = stringr::str_remove(metric, "\\[.+\\]")) %>%
-    dplyr::arrange(location)
-
+    dplyr::arrange(location) %>%
+    dplyr::select(sample_id, sample_type_id, assay_id, rfu_back_subtracted = RFU,
+                  plate_run_id, well_location = location)
 
   list(
     metadata = metadata,
-    raw_results = NA,
+    raw_assay_results = raw_assay_results,
     assay_result = results
   )
 
@@ -134,34 +130,8 @@ process_plate_layout <- function(filepath) {
   plate_layout <- readxl::read_excel(filepath, range = "C32:N39",
                                      col_names = as.character(1:12)) %>%
     dplyr::mutate(letter = letters[1:8]) %>%
-    tidyr::pivot_longer(names_to = "number", values_to = "sample_id", !letter) %>%
-    dplyr::transmute(location = toupper(paste0(letter, number)), sample_id)
+    tidyr::pivot_longer(names_to = "number", values_to = "psuedo_sample_id", !letter) %>%
+    dplyr::transmute(location = toupper(paste0(letter, number)), psuedo_sample_id)
   return(plate_layout)
 }
 
-
-
-# id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-# software_version VARCHAR(50) NOT NULL,
-# plate_num INTEGER NOT NULL,
-# date TIME NOT NULL,
-# reader_type VARCHAR(50) NOT NULL,
-# reader_serial_number VARCHAR(50) NOT NULL,
-# plate_type plate_type_enum NOT NULL,
-# set_point VARCHAR(50) NOT NULL,
-# preheat_before_moving BOOLEAN NOT NULL,
-# runtime VARCHAR(10) NOT NULL,
-# interval VARCHAR(10) NOT NULL,
-# read_count INTEGER NOT NULL,
-# run_mode run_mode_enum NOT NULL,
-# excitation INTEGER NOT NULL,
-# emissions INTEGER NOT NULL,
-# optics optics_enum NOT NULL,
-# gain INTEGER NOT NULL,
-# light_source light_source_enum NOT NULL,
-# lamp_energy lamp_energy_enum NOT NULL,
-# read_height INTEGER NOT NULL, --in mm
-# created_at TIMESTAMP DEFAULT NOW(),
-# created_by VARCHAR(30) DEFAULT CURRENT_USER,
-# updated_at TIMESTAMP DEFAULT NOW(),
-# updated_by VARCHAR(30) DEFAULT CURRENT_USER
