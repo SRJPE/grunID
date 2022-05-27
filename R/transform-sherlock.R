@@ -1,3 +1,5 @@
+#' Process Protocol File
+#' @export
 process_protocol_file <- function(protocol_file) {
   metadata <- process_sherlock_metadata("data-raw/exampleoutput_synergyH1trial_data_092021.xlsx")
   metadata$genetic_method_id <- 1
@@ -7,35 +9,15 @@ process_protocol_file <- function(protocol_file) {
   return(metadata)
 }
 
-#' @title Create Plate Run
-#' @description blah
-create_plate_run <- function(con, plate_run_settings) {
-  # write to table using the con object
-  list2env(plate_run_settings, env = environment())
-
-  query <- glue::glue_sql("
-  INSERT INTO plate_run (software_version, date, reader_type, reader_serial_number, plate_type, set_point, preheat_before_moving, runtime, interval, read_count, run_mode, excitation, emissions, optics, gain, light_source, lamp_energy, read_height, genetic_method_id, laboratory_id, lab_work_preformed_by)
-  VALUES ({software_version}, {date}, {reader_type}, {reader_serial_number}, {plate_type}, {set_point}, {preheat_before_moving}, {runtime}, {interval}, {read_count}, {run_mode}, {excitation}, {emissions}, {optics}, {gain}, {light_source}, {lamp_energy}, {read_height}, {genetic_method_id}, {laboratory_id}, {lab_work_preformed_by});",
-                 .con = con)
-
-  DBI::dbExecute(con, query)
-
-  plate_run_id <- DBI::dbGetQuery(con, "select currval(pg_get_serial_sequence('plate_run', 'id'));")
-  return(plate_run_id$currval)
-}
-
-
-
-
 
 #' Process Sherlock Output
 #' @param filepath path to excel file with Sherlock output
-process_sherlock <- function(sherlock_results_filepath, layout_mapping_filepath,
+#' @export
+process_sherlock <- function(sherlock_results_filepath, sample_layout_mapping,
                              plate_size = c(96)) {
 
   metadata <- process_sherlock_metadata(sherlock_results_filepath)
   plate_layout <- process_plate_layout(sherlock_results_filepath)
-  sample_layout_mapping <- read_csv(layout_mapping_filepath)
 
   layout <- left_join(sample_layout_mapping, plate_layout)
 
@@ -52,7 +34,7 @@ process_sherlock <- function(sherlock_results_filepath, layout_mapping_filepath,
   end_raw_fluorescence <- paste0(excel_column_index[column_index], end_row_raw_fluorescence)
 
   raw_fluorescence <- readxl::read_excel(sherlock_results_filepath,
-                                 range = paste0("B", start_raw_fluorescence,":", end_raw_fluorescence)) %>%
+                                         range = paste0("B", start_raw_fluorescence,":", end_raw_fluorescence)) %>%
     dplyr::mutate(Time = hms::as_hms(Time)) %>%
     dplyr::mutate_all(as.character) %>%
     dplyr::select(-dplyr::starts_with("T°")) %>%
@@ -64,8 +46,8 @@ process_sherlock <- function(sherlock_results_filepath, layout_mapping_filepath,
   end_row_background_fluorescence <- start_background_fluorescence + number_of_rows
   end_background_fluorescence <- paste0(excel_column_index[column_index - 1], end_row_background_fluorescence)
   background_fluorescence <- readxl::read_excel(sherlock_results_filepath,
-                                        range = paste0("B", start_background_fluorescence,":",
-                                                       end_background_fluorescence)) %>%
+                                                range = paste0("B", start_background_fluorescence,":",
+                                                               end_background_fluorescence)) %>%
     dplyr::mutate(Time = hms::as_hms(Time)) %>%
     dplyr::mutate_all(as.character) %>%
     tidyr::pivot_longer(names_to = "location", values_to = "background_fluorescence", !Time)
@@ -74,15 +56,15 @@ process_sherlock <- function(sherlock_results_filepath, layout_mapping_filepath,
   raw_assay_results <- raw_fluorescence %>%
     dplyr::left_join(background_fluorescence) %>%
     dplyr::select(sample_id, raw_fluorescence = fluorescence, background_value = background_fluorescence,
-           time = Time, plate_run_id, well_location = location)
+                  time = Time, plate_run_id, well_location = location)
 
   # results ---
   start_results <- end_row_background_fluorescence + 4
   end_row_results <- start_results + 4*8
   end_results <- paste0(excel_column_index[15], end_row_results)
   results <- readxl::read_excel(sherlock_results_filepath,
-                        range = paste0("B", start_results,":", end_results),
-                        col_types = "text") %>%
+                                range = paste0("B", start_results,":", end_results),
+                                col_types = "text") %>%
     tidyr::fill(...1) %>%
     tidyr::pivot_longer(names_to = "number_location", values_to = "RFU", !c(...1, ...14)) %>%
     dplyr::transmute(location = paste0(...1, number_location), metric = ...14, RFU = as.numeric(RFU)) %>%
@@ -93,20 +75,20 @@ process_sherlock <- function(sherlock_results_filepath, layout_mapping_filepath,
     dplyr::select(sample_id, sample_type_id, assay_id, rfu_back_subtracted = RFU,
                   plate_run_id, well_location = location)
 
-  list(
+  return(list(
     metadata = metadata,
     raw_assay_results = raw_assay_results,
-    assay_result = results
-  )
+    assay_results = results
+  ))
 
 }
 
 #' Process Sherlock Metadata
 process_sherlock_metadata <- function(filepath) {
   raw_metadata <- readxl::read_excel(filepath,
-                                 range = "A2:B27",
-                                 col_names = c("key", "value")) %>%
-    fill(key)
+                                     range = "A2:B27",
+                                     col_names = c("key", "value")) %>%
+    tidyr::fill(key)
 
   # parse metadata elements
   plate_num <- raw_metadata[5, 2, drop = TRUE]
@@ -125,11 +107,11 @@ process_sherlock_metadata <- function(filepath) {
   emissions <- as.integer(stringr::str_extract(raw_metadata[21, 2, drop = TRUE], "(?<=Emission:\\s)\\d+"))
   optics <- stringr::str_extract(raw_metadata[22, 2, drop = TRUE], "(?<=Optics:\\s)\\w+")
   gain <- as.integer(stringr::str_extract(raw_metadata[22, 2, drop = TRUE], "(?<=Gain:\\s)\\d+"))
-  light_source <- str_extract(raw_metadata[23, 2, drop = TRUE], "(?<=Light Source:\\s)\\w+ \\w+")
-  lamp_energy <- str_extract(raw_metadata[23, 2, drop = TRUE], "(?<=Lamp Energy:\\s)\\w+")
-  read_height <- as.integer(str_extract(raw_metadata[25, 2, drop = TRUE], "(?<=Read Height:\\s)\\d+"))
+  light_source <- stringr::str_extract(raw_metadata[23, 2, drop = TRUE], "(?<=Light Source:\\s)\\w+ \\w+")
+  lamp_energy <- stringr::str_extract(raw_metadata[23, 2, drop = TRUE], "(?<=Lamp Energy:\\s)\\w+")
+  read_height <- as.integer(stringr::str_extract(raw_metadata[25, 2, drop = TRUE], "(?<=Read Height:\\s)\\d+"))
 
-  metadata <- tibble(
+  metadata <- tibble::tibble(
     plate_num,
     software_version,
     date,
@@ -164,4 +146,3 @@ process_plate_layout <- function(filepath) {
     dplyr::transmute(location = toupper(paste0(letter, number)), psuedo_sample_id)
   return(plate_layout)
 }
-
