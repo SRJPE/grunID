@@ -7,13 +7,14 @@ add_plate_run <- function(con, plate_run_settings) {
 
   query <- glue::glue_sql("
   INSERT INTO plate_run (software_version, date, reader_type, reader_serial_number, plate_type, set_point, preheat_before_moving, runtime, interval, read_count, run_mode, excitation, emissions, optics, gain, light_source, lamp_energy, read_height, genetic_method_id, laboratory_id, lab_work_preformed_by)
-  VALUES ({software_version}, {date}, {reader_type}, {reader_serial_number}, {plate_type}, {set_point}, {preheat_before_moving}, {runtime}, {interval}, {read_count}, {run_mode}, {excitation}, {emissions}, {optics}, {gain}, {light_source}, {lamp_energy}, {read_height}, {genetic_method_id}, {laboratory_id}, {lab_work_preformed_by});",
+  VALUES ({software_version}, {date}, {reader_type}, {reader_serial_number}, {plate_type}, {set_point}, {preheat_before_moving}, {runtime}, {interval}, {read_count}, {run_mode}, {excitation}, {emissions}, {optics}, {gain}, {light_source}, {lamp_energy}, {read_height}, {genetic_method_id}, {laboratory_id}, {lab_work_preformed_by}) RETURNING id;",
                  .con = con)
 
-  DBI::dbExecute(con, query)
+  res <- DBI::dbSendQuery(con, query)
+  plate_run_id <- DBI::dbFetch(res)
+  DBI::dbClearResult(res)
 
-  plate_run_id <- DBI::dbGetQuery(con, "select currval(pg_get_serial_sequence('plate_run', 'id'));")
-  return(plate_run_id$currval)
+  return(plate_run_id)
 }
 
 #' @export
@@ -28,8 +29,8 @@ add_assay_results <- function(con, transformed_assay_results) {
     UNNEST(ARRAY[{assay_results$sample_type_id*}]),
     UNNEST(ARRAY[{assay_results$assay_id*}]),
     UNNEST(ARRAY[{assay_results$rfu_back_subtracted*}]),
-    UNNEST(ARRAY[{assay_results$plate_run_id*}]),
-    UNNEST(ARRAY[{assay_results$well_location*}])
+    UNNEST(ARRAY[{assay_results$plate_run_id*}]::int[]),
+    UNNEST(ARRAY[{assay_results$well_location*}]::well_location_enum[])
   );", .con = con)
 
 
