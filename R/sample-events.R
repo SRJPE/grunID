@@ -1,4 +1,3 @@
-
 #' Create sample_events
 #' @examples
 #' con <- DBI::dbConnect(
@@ -62,10 +61,11 @@ sample_events <- function(con, sample_bins) {
 
   sample_id_insert <- dplyr::left_join(sample_bin_insert,sample_bin_id)
 
-  # issue with generating duplicate sample_ids TODO
   sample_id <- sample_id_insert %>%
-    tidyr::expand(location_code, first_sample_date, sample_event_number,
-                  sample_bin_code, sample_bin_id, sample_number = 1:expected_number_of_samples) %>%
+    tidyr::uncount(expected_number_of_samples, .remove = FALSE) %>%
+    dplyr::group_by(sample_event_id) %>%
+    dplyr::mutate(sample_number = dplyr::row_number()) %>%
+    dplyr::ungroup() %>%
     dplyr::mutate(id = paste0(location_code, format(as.Date(first_sample_date), "%y"),
                               "_", sample_event_number, "_", sample_bin_code, "_", sample_number)) %>%
     dplyr::select(id, sample_bin_id)
