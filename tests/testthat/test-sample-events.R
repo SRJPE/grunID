@@ -26,12 +26,12 @@ test_that('create sample events works', {
 
   # mock functions
   mockery::stub(sample_events, 'dplyr::tbl', sample_locations)
-  # mockery::stub(sample_events, 'dplyr::collect', T)
   mockery::stub(sample_events, 'DBI::dbSendQuery', T)
-  mockery::stub(sample_events, 'DBI::dbFetch', 1)
+  mockery::stub(sample_events, 'DBI::dbFetch',
+                tibble::tibble(id = 1, sample_event_id = 2, sample_bin_code = "A",
+                               sample_event_number = 1))
   mockery::stub(sample_events, 'DBI::dbClearResult', T)
-  # mockery::stub(sample_events, 'glue::glue_sql', T)
-  mockery::stub(sample_events, 'DBI::dbExecute', T)
+  mockery::stub(sample_events, 'DBI::dbExecute', 5)
 
   expect_equal(sample_events(con, sample_bins), 5)
 
