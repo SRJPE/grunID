@@ -2,6 +2,12 @@
 #' @description blah
 #' @export
 add_plate_run <- function(con, plate_run_settings) {
+
+  if (!DBI::dbIsValid(con)) {
+    stop("Connection argument does not have a valid connection the run-id database",
+         call. = FALSE)
+  }
+
   # write to table using the con object
   list2env(plate_run_settings, env = environment())
 
