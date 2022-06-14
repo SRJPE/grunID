@@ -59,28 +59,6 @@ add_assay_results <- function(con, transformed_assay_results) {
 }
 
 
-
-validate_plate_run_settings <- function(plate_run_settings) {
-  # check names of colnames are correct
-  expected_names <- c("plate_num", "software_version", "date", "reader_type", "reader_serial_number",
-                      "plate_type", "set_point", "preheat_before_moving", "runtime",
-                      "interval", "read_count", "run_mode", "excitation", "emissions",
-                      "optics", "gain", "light_source", "lamp_energy", "read_height",
-                      "genetic_method_", "laboratory_id", "lab_work_preformed_by"
-  )
-
-  if ((error_loc <- which(!(names(plate_run_settings) %in% expected_names)))) {
-    return(FALSE)
-  }
-
-
-  return(TRUE)
-
-
-}
-
-
-
 expected_protocol_colnames <- function() {
   c("plate_num", "software_version", "date", "reader_type", "reader_serial_number",
     "plate_type", "set_point", "preheat_before_moving", "runtime",
