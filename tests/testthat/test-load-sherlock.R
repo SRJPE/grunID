@@ -7,6 +7,11 @@ test_that("non-valid connection errors correctly", {
     "Connection argument does not have a valid connection the run-id database"
   )
 
+  expect_error(
+    add_assay_results(con, "A"),
+    "Connection argument does not have a valid connection the run-id database"
+  )
+
   closeAllConnections()
 })
 

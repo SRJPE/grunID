@@ -22,6 +22,11 @@
 #' @export
 sample_events <- function(con, sample_bins) {
 
+  if (!DBI::dbIsValid(con)) {
+    stop("Connection argument does not have a valid connection the run-id database",
+         call. = FALSE)
+  }
+
   sample_locations <- dplyr::collect(dplyr::tbl(con, "sample_location"))
 
   sample_event_insert <- dplyr::left_join(sample_bins, sample_locations,

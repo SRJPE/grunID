@@ -34,6 +34,11 @@ add_plate_run <- function(con, plate_run_settings) {
 #' @export
 add_assay_results <- function(con, transformed_assay_results) {
 
+  if (!DBI::dbIsValid(con)) {
+    stop("Connection argument does not have a valid connection the run-id database",
+         call. = FALSE)
+  }
+
   list2env(transformed_assay_results, env = environment())
 
   query <- glue::glue_sql("
