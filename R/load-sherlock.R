@@ -8,9 +8,11 @@ add_plate_run <- function(con, plate_run_settings) {
          call. = FALSE)
   }
 
-  if (!validate_plate_run_settings(plate_run_settings)) {
-    stop("'plate_run_settings' file is not formatted correctly",
-         call. = FALSE)
+  # validate incoming data
+  if (length(missing_names <- expected_protocol_colnames()[!tibble::has_name(plate_run_settings, expected_protocol_colnames())])) {
+    stop(sprintf("the following columns are missing: %s",
+                 paste0(missing_names, collapse = ", ")
+                 ), call. = FALSE)
   }
 
 
@@ -72,3 +74,13 @@ validate_plate_run_settings <- function(plate_run_settings) {
 
 }
 
+
+
+expected_protocol_colnames <- function() {
+  c("plate_num", "software_version", "date", "reader_type", "reader_serial_number",
+    "plate_type", "set_point", "preheat_before_moving", "runtime",
+    "interval", "read_count", "run_mode", "excitation", "emissions",
+    "optics", "gain", "light_source", "lamp_energy", "read_height",
+    "genetic_method_id", "laboratory_id", "lab_work_preformed_by"
+  )
+}
