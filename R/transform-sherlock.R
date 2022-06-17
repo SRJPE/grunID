@@ -16,6 +16,15 @@ process_protocol_file <- function(protocol_file) {
 process_sherlock <- function(sherlock_results_filepath, sample_layout_mapping,
                              plate_size = c(96)) {
 
+
+  # validate incoming data
+  if (length(missing_names <- !tibble::has_name(plate_run_settings, expected_layout_colnames()))) {
+    stop(sprintf("the following columns are missing: %s",
+                 paste0(expected_layout_colnames()[missing_names], collapse = ", ")
+    ), call. = FALSE)
+  }
+
+
   metadata <- process_sherlock_metadata(sherlock_results_filepath)
   plate_layout <- process_plate_layout(sherlock_results_filepath)
 
@@ -145,4 +154,9 @@ process_plate_layout <- function(filepath) {
     tidyr::pivot_longer(names_to = "number", values_to = "psuedo_sample_id", !letter) %>%
     dplyr::transmute(location = toupper(paste0(letter, number)), psuedo_sample_id)
   return(plate_layout)
+}
+
+
+expected_layout_colnames <- function() {
+  c("location", "sample_id", "sample_type_id", "assay_id", "plate_run_id")
 }
