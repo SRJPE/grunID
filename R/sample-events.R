@@ -63,6 +63,7 @@ sample_events <- function(con, sample_bins) {
   res <- DBI::dbSendQuery(con, sample_bin_query)
   sample_bin_id <- DBI::dbFetch(res) %>%
     dplyr::transmute(sample_bin_id = as.numeric(id), sample_event_id, sample_bin_code = as.character(sample_bin_code))
+
   DBI::dbClearResult(res)
 
 
@@ -87,8 +88,17 @@ sample_events <- function(con, sample_bins) {
 
   number_of_samples_added <- DBI::dbExecute(con, sample_id_query)
 
+  status_code <- rep(1, length(sample_id$id))
+  sample_status_query <- glue::glue_sql("INSERT INTO sample_status (sample_id, status_code_id)
+                                        VALUES (
+                                          UNNEST(ARRAY[{sample_id$id*}]),
+                                          UNNEST(ARRAY[{status_code*}])
+                                        );",
+                                        .con = con)
+
+  DBI::dbExecute(con, sample_status_query)
+
   return(number_of_samples_added)
 }
-
 
 
