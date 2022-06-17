@@ -9,9 +9,9 @@ add_plate_run <- function(con, plate_run_settings) {
   }
 
   # validate incoming data
-  if (length(missing_names <- expected_protocol_colnames()[!tibble::has_name(plate_run_settings, expected_protocol_colnames())])) {
+  if (length(missing_names <- !tibble::has_name(plate_run_settings, expected_protocol_colnames()))) {
     stop(sprintf("the following columns are missing: %s",
-                 paste0(missing_names, collapse = ", ")
+                 paste0(expected_protocol_colnames()[missing_names], collapse = ", ")
                  ), call. = FALSE)
   }
 
