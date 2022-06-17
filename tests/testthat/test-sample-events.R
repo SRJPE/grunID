@@ -1,5 +1,16 @@
 skip_if_not_installed("RSQLite")
 
+test_that("non-valid connection errors correctly", {
+  con <- DBI::dbConnect(RSQLite::SQLite(), ":memory:")
+  DBI::dbDisconnect(con)
+
+  expect_error(
+    sample_events(con, "A"),
+    "Connection argument does not have a valid connection the run-id database"
+  )
+
+})
+
 test_that('create sample events works', {
   con <- DBI::dbConnect(RSQLite::SQLite(), ":memory:")
   on.exit(DBI::dbDisconnect(con))

@@ -2,6 +2,21 @@
 #' @description blah
 #' @export
 add_plate_run <- function(con, plate_run_settings) {
+
+  if (!DBI::dbIsValid(con)) {
+    stop("Connection argument does not have a valid connection the run-id database.
+         Please try reconnecting to the database using 'DBI::dbConnect'",
+         call. = FALSE)
+  }
+
+  # validate incoming data
+  if (length(missing_names <- !tibble::has_name(plate_run_settings, expected_protocol_colnames()))) {
+    stop(sprintf("the following protocol elements are missing: %s",
+                 paste0(expected_protocol_colnames()[missing_names], collapse = ", ")
+                 ), call. = FALSE)
+  }
+
+
   # write to table using the con object
   list2env(plate_run_settings, env = environment())
 
@@ -19,6 +34,12 @@ add_plate_run <- function(con, plate_run_settings) {
 
 #' @export
 add_assay_results <- function(con, transformed_assay_results) {
+
+  if (!DBI::dbIsValid(con)) {
+    stop("Connection argument does not have a valid connection the run-id database.
+         Please try reconnecting to the database using 'DBI::dbConnect'",
+         call. = FALSE)
+  }
 
   list2env(transformed_assay_results, env = environment())
 
@@ -40,5 +61,11 @@ add_assay_results <- function(con, transformed_assay_results) {
 }
 
 
-
-
+expected_protocol_colnames <- function() {
+  c("plate_num", "software_version", "date", "reader_type", "reader_serial_number",
+    "plate_type", "set_point", "preheat_before_moving", "runtime",
+    "interval", "read_count", "run_mode", "excitation", "emissions",
+    "optics", "gain", "light_source", "lamp_energy", "read_height",
+    "genetic_method_id", "laboratory_id", "lab_work_preformed_by"
+  )
+}
