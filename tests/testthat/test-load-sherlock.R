@@ -1,23 +1,27 @@
+skip_if_not_installed("RSQLite")
+
 test_that("non-valid connection errors correctly", {
-  con <- DBI::dbConnect(RSQLite::SQLite())
+  con <- DBI::dbConnect(RSQLite::SQLite(), ":memory:")
   DBI::dbDisconnect(con)
 
   expect_error(
     add_plate_run(con, "A"),
-    "Connection argument does not have a valid connection the run-id database"
+    "Connection argument does not have a valid connection the run-id database.
+         Please try reconnecting to the database using 'DBI::dbConnect'"
   )
 
   expect_error(
     add_assay_results(con, "A"),
-    "Connection argument does not have a valid connection the run-id database"
+    "Connection argument does not have a valid connection the run-id database.
+         Please try reconnecting to the database using 'DBI::dbConnect'"
   )
 
-  closeAllConnections()
 })
 
 
 test_that("non-valid plate_run_settings errors correctly for wrong or missing names", {
   con <- DBI::dbConnect(RSQLite::SQLite())
+  on.exit(DBI::dbDisconnect(con))
 
   # missing genetic method
   pr_settings_missing_name <- structure(list(plate_num = "Plate 1", software_version = "3.11.19",
@@ -32,6 +36,5 @@ test_that("non-valid plate_run_settings errors correctly for wrong or missing na
 
   expect_error(
     add_plate_run(con, pr_settings_missing_name),
-    "the following columns are missing: genetic_method_id, laboratory_id")
-  DBI::dbDisconnect(con)
+    "the following protocol elements are missing: genetic_method_id, laboratory_id")
 })

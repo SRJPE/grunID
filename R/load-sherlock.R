@@ -4,13 +4,14 @@
 add_plate_run <- function(con, plate_run_settings) {
 
   if (!DBI::dbIsValid(con)) {
-    stop("Connection argument does not have a valid connection the run-id database",
+    stop("Connection argument does not have a valid connection the run-id database.
+         Please try reconnecting to the database using 'DBI::dbConnect'",
          call. = FALSE)
   }
 
   # validate incoming data
   if (length(missing_names <- !tibble::has_name(plate_run_settings, expected_protocol_colnames()))) {
-    stop(sprintf("the following columns are missing: %s",
+    stop(sprintf("the following protocol elements are missing: %s",
                  paste0(expected_protocol_colnames()[missing_names], collapse = ", ")
                  ), call. = FALSE)
   }
@@ -35,7 +36,8 @@ add_plate_run <- function(con, plate_run_settings) {
 add_assay_results <- function(con, transformed_assay_results) {
 
   if (!DBI::dbIsValid(con)) {
-    stop("Connection argument does not have a valid connection the run-id database",
+    stop("Connection argument does not have a valid connection the run-id database.
+         Please try reconnecting to the database using 'DBI::dbConnect'",
          call. = FALSE)
   }
 

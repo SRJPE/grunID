@@ -23,7 +23,8 @@
 sample_events <- function(con, sample_bins) {
 
   if (!DBI::dbIsValid(con)) {
-    stop("Connection argument does not have a valid connection the run-id database",
+    stop("Connection argument does not have a valid connection the run-id database.
+         Please try reconnecting to the database using 'DBI::dbConnect'",
          call. = FALSE)
   }
 
