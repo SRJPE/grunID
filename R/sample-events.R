@@ -1,3 +1,41 @@
+#' Get locations
+#' @export
+get_sample_location <- function(con) {
+  return(dplyr::collect(dplyr::tbl(con, "sample_location")))
+}
+
+#' sample_bins <- tibble(
+#'                      location_code = c("BTC", "BUT"),
+#'                      sample_event_number = 1:2,
+#'                      first_sample_date = "2020-01-01",
+#'                      sample_bin_code = "A",
+#'                      min_fork_length = 10,
+#'                      max_fork_length = 95,
+#'                      expected_number_of_samples = 10
+#'                      )
+#' @export
+validate_sample_bins <- function(con, sample_bins) {
+  valid_colnames <- c("location_code", "sample_event_number", "first_sample_date",
+                      "sample_bin_code", "min_fork_length", "max_fork_length", "expected_number_of_samples"
+  )
+
+
+  # validate incoming data
+  if (any(missing_names <- !tibble::has_name(sample_bins, valid_colnames))) {
+    stop(sprintf("the following column(s) are missing: %s",
+                 paste0(valid_colnames[missing_names], collapse = ", ")
+    ), call. = FALSE)
+  }
+
+
+  valid_locations <- get_sample_location(con)
+  if (!all(sample_bins$location_code %in% valid_locations$code)) {
+    stop(sprintf("location_code provided not one of valid codes %s",
+                 paste0(valid_locations$code, collapse = ", ")), call. = FALSE)
+  }
+
+}
+
 #' Create sample_events
 #' @examples
 #' con <- DBI::dbConnect(
@@ -20,41 +58,42 @@
 #'                      )
 #' sample_events(con, sample_bins)
 #' @export
-  add_sample_events <- function(con, sample_bins) {
+add_sample_events <- function(con, sample_bins) {
 
-    if (!DBI::dbIsValid(con)) {
-      stop("Connection argument does not have a valid connection the run-id database.
+  if (!DBI::dbIsValid(con)) {
+    stop("Connection argument does not have a valid connection the run-id database.
          Please try reconnecting to the database using 'DBI::dbConnect'",
          call. = FALSE)
-    }
+  }
 
-    sample_locations <- dplyr::collect(dplyr::tbl(con, "sample_location"))
+  sample_locations <- dplyr::collect(dplyr::tbl(con, "sample_location"))
 
-    sample_event_insert <- dplyr::left_join(sample_bins, sample_locations,
-                                            by = c("location_code" = "code")) %>%
-      dplyr::distinct(sample_bins, sample_event_number, first_sample_date, sample_location_id = id)
+  sample_event_insert <- dplyr::left_join(sample_bins, sample_locations,
+                                          by = c("location_code" = "code")) %>%
+    dplyr::distinct(sample_bins, sample_event_number, first_sample_date, sample_location_id = id)
 
-    sample_event_query <- glue::glue_sql("INSERT INTO sample_event (sample_event_number, sample_location_id, first_sample_date)
+  sample_event_query <- glue::glue_sql("INSERT INTO sample_event (sample_event_number, sample_location_id, first_sample_date)
                  VALUES (
                   UNNEST(ARRAY[{sample_event_insert$sample_event_number*}]),
                   UNNEST(ARRAY[{sample_event_insert$sample_location_id*}]),
                   UNNEST(ARRAY[{sample_event_insert$first_sample_date*}]::DATE[])
                  ) RETURNING id, sample_event_number;",
-                 .con = con)
+                                       .con = con)
 
-    res <- DBI::dbSendQuery(con, sample_event_query)
-    sample_event_ids <- DBI::dbFetch(res) %>%
-      dplyr::transmute(sample_event_id = as.numeric(id), sample_event_number)
-    DBI::dbClearResult(res)
-  }
+  res <- DBI::dbSendQuery(con, sample_event_query)
+  sample_event_ids <- DBI::dbFetch(res) |>
+    dplyr::transmute(sample_event_id = as.numeric(id), sample_event_number)
+  DBI::dbClearResult(res)
+  return(sample_event_ids)
+}
 
-  add_sample_bin <- function(con, sample_bins) {
+fix_me <- function(con, sample_bins) {
 
-    if (!DBI::dbIsValid(con)) {
-      stop("Connection argument does not have a valid connection the run-id database.
+  if (!DBI::dbIsValid(con)) {
+    stop("Connection argument does not have a valid connection the run-id database.
          Please try reconnecting to the database using 'DBI::dbConnect'",
          call. = FALSE)
-    }
+  }
 
   sample_bin_insert <- dplyr::left_join(sample_bins, sample_event_ids,
                                         by = c("sample_event_number"))
@@ -74,11 +113,14 @@
     dplyr::transmute(sample_bin_id = as.numeric(id), sample_event_id, sample_bin_code = as.character(sample_bin_code))
 
   DBI::dbClearResult(res)
-  }
+}
 
+fix_me_too <- function() {
 
   sample_id_insert <- dplyr::left_join(sample_bin_insert, sample_bin_id,
                                        by = c("sample_bin_code", "sample_event_id"))
+
+
 
   sample_id <- sample_id_insert %>%
     tidyr::uncount(expected_number_of_samples, .remove = FALSE) %>%
@@ -109,6 +151,7 @@
   DBI::dbExecute(con, sample_status_query)
 
   return(number_of_samples_added)
+
 }
 
 
