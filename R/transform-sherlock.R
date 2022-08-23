@@ -18,7 +18,7 @@ process_sherlock <- function(sherlock_results_filepath, sample_layout_mapping,
 
 
   # validate incoming data
-  if (length(missing_names <- !tibble::has_name(plate_run_settings, expected_layout_colnames()))) {
+  if (any(missing_names <- !tibble::has_name(plate_run_settings, expected_layout_colnames()))) {
     stop(sprintf("the following plate setting elements are missing: %s",
                  paste0(expected_layout_colnames()[missing_names], collapse = ", ")
     ), call. = FALSE)
