@@ -20,7 +20,7 @@
 #'                      )
 #' sample_events(con, sample_bins)
 #' @export
-sample_events <- function(con, sample_bins) {
+add_sample_events <- function(con, sample_bins) {
 
   if (!DBI::dbIsValid(con)) {
     stop("Connection argument does not have a valid connection the run-id database.
@@ -100,5 +100,6 @@ sample_events <- function(con, sample_bins) {
 
   return(number_of_samples_added)
 }
+
 
 

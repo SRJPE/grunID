@@ -5,7 +5,7 @@ test_that("non-valid connection errors correctly", {
   DBI::dbDisconnect(con)
 
   expect_error(
-    sample_events(con, "A"),
+    add_sample_events(con, "A"),
     "Connection argument does not have a valid connection the run-id database"
   )
 
@@ -36,14 +36,14 @@ test_that('create sample events works', {
                                      updated_by = "postgres"), row.names = c(NA, -1L), class = "data.frame")
 
   # mock functions
-  mockery::stub(sample_events, 'dplyr::tbl', sample_locations)
-  mockery::stub(sample_events, 'DBI::dbSendQuery', T)
-  mockery::stub(sample_events, 'DBI::dbFetch',
+  mockery::stub(add_sample_events, 'dplyr::tbl', sample_locations)
+  mockery::stub(add_sample_events, 'DBI::dbSendQuery', T)
+  mockery::stub(add_sample_events, 'DBI::dbFetch',
                 tibble::tibble(id = 1, sample_event_id = 2, sample_bin_code = "A",
                                sample_event_number = 1))
-  mockery::stub(sample_events, 'DBI::dbClearResult', T)
-  mockery::stub(sample_events, 'DBI::dbExecute', 5)
+  mockery::stub(add_sample_events, 'DBI::dbClearResult', T)
+  mockery::stub(add_sample_events, 'DBI::dbExecute', 5)
 
-  expect_equal(sample_events(con, sample_bins), 5)
+  expect_equal(add_sample_events(con, sample_bins), 5)
 
 })
