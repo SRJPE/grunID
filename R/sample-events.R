@@ -36,7 +36,12 @@ validate_sample_bins <- function(con, sample_bins) {
 
 }
 
-#' Create sample_events
+#' Create sample events
+#'
+#'
+#' @param con
+#' @param sample_bins
+#'
 #' @examples
 #' con <- DBI::dbConnect(
 #'                       RPostgres::Postgres(),
@@ -87,13 +92,43 @@ add_sample_events <- function(con, sample_bins) {
   return(sample_event_ids)
 }
 
-fix_me <- function(con, sample_bins) {
+#' Create sample bins
+#'
+#' @param con
+#' @param sample_bins
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' con <- DBI::dbConnect(
+#'                       RPostgres::Postgres(),
+#'                       dbname = cfg$dbname,
+#'                       host = cfg$host, # i.e. 'ec2-54-83-201-96.compute-1.amazonaws.com'
+#'                       port = cfg$port, # or any other port specified by your DBA
+#'                       user = cfg$username,
+#'                       password = cfg$password
+#'                       )
+#'
+#' sample_bins <- tibble(
+#'                      location_code = c("BTC", "BUT"),
+#'                      sample_event_number = 1:2,
+#'                      first_sample_date = "2020-01-01",
+#'                      sample_bin_code = "A",
+#'                      min_fork_length = 10,
+#'                      max_fork_length = 95,
+#'                      expected_number_of_samples = 10
+#'                      )
+#' add_sample_bin_id(con, sample_bins)
+add_sample_bins <- function(con, sample_bins) {
 
   if (!DBI::dbIsValid(con)) {
     stop("Connection argument does not have a valid connection the run-id database.
          Please try reconnecting to the database using 'DBI::dbConnect'",
          call. = FALSE)
   }
+
+  sample_event_ids <- add_sample_events(con, sample_bins)
 
   sample_bin_insert <- dplyr::left_join(sample_bins, sample_event_ids,
                                         by = c("sample_event_number"))
@@ -111,16 +146,43 @@ fix_me <- function(con, sample_bins) {
   res <- DBI::dbSendQuery(con, sample_bin_query)
   sample_bin_id <- DBI::dbFetch(res) %>%
     dplyr::transmute(sample_bin_id = as.numeric(id), sample_event_id, sample_bin_code = as.character(sample_bin_code))
-
   DBI::dbClearResult(res)
-}
-
-fix_me_too <- function() {
-
   sample_id_insert <- dplyr::left_join(sample_bin_insert, sample_bin_id,
                                        by = c("sample_bin_code", "sample_event_id"))
+  return(sample_id_insert)
+}
 
+#' Add samples
+#'
+#' @param con
+#' @param sample_bins
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' con <- DBI::dbConnect(
+#'                       RPostgres::Postgres(),
+#'                       dbname = cfg$dbname,
+#'                       host = cfg$host, # i.e. 'ec2-54-83-201-96.compute-1.amazonaws.com'
+#'                       port = cfg$port, # or any other port specified by your DBA
+#'                       user = cfg$username,
+#'                       password = cfg$password
+#'                       )
+#'
+#' sample_bins <- tibble(
+#'                      location_code = c("BTC", "BUT"),
+#'                      sample_event_number = 1:2,
+#'                      first_sample_date = "2020-01-01",
+#'                      sample_bin_code = "A",
+#'                      min_fork_length = 10,
+#'                      max_fork_length = 95,
+#'                      expected_number_of_samples = 10
+#'                      )
+#' add_sample_bin_id(con, sample_bins)
+add_samples <- function(con, sample_bins) {
 
+  sample_id_insert <- add_sample_bin_id(con, sample_bins)
 
   sample_id <- sample_id_insert %>%
     tidyr::uncount(expected_number_of_samples, .remove = FALSE) %>%
