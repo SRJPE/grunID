@@ -31,7 +31,7 @@ add_sample_events <- function(con, sample_bins) {
   sample_locations <- dplyr::collect(dplyr::tbl(con, "sample_location"))
 
   sample_event_insert <- dplyr::left_join(sample_bins, sample_locations,
-                                           by = c("location_code" = "code")) %>%
+                                           by = c("location_code" = "code")) |>
     dplyr::distinct(sample_bins, sample_event_number, first_sample_date, sample_location_id = id)
 
   sample_event_query <- glue::glue_sql("INSERT INTO sample_event (sample_event_number, sample_location_id, first_sample_date)
@@ -43,7 +43,7 @@ add_sample_events <- function(con, sample_bins) {
                  .con = con)
 
   res <- DBI::dbSendQuery(con, sample_event_query)
-  sample_event_ids <- DBI::dbFetch(res) %>%
+  sample_event_ids <- DBI::dbFetch(res) |>
     dplyr::transmute(sample_event_id = as.numeric(id), sample_event_number)
   DBI::dbClearResult(res)
 
@@ -61,7 +61,7 @@ add_sample_events <- function(con, sample_bins) {
                                      .con = con)
 
   res <- DBI::dbSendQuery(con, sample_bin_query)
-  sample_bin_id <- DBI::dbFetch(res) %>%
+  sample_bin_id <- DBI::dbFetch(res) |>
     dplyr::transmute(sample_bin_id = as.numeric(id), sample_event_id, sample_bin_code = as.character(sample_bin_code))
 
   DBI::dbClearResult(res)
@@ -70,13 +70,13 @@ add_sample_events <- function(con, sample_bins) {
   sample_id_insert <- dplyr::left_join(sample_bin_insert, sample_bin_id,
                                        by = c("sample_bin_code", "sample_event_id"))
 
-  sample_id <- sample_id_insert %>%
-    tidyr::uncount(expected_number_of_samples, .remove = FALSE) %>%
-    dplyr::group_by(sample_event_id) %>%
-    dplyr::mutate(sample_number = dplyr::row_number()) %>%
-    dplyr::ungroup() %>%
+  sample_id <- sample_id_insert |>
+    tidyr::uncount(expected_number_of_samples, .remove = FALSE) |>
+    dplyr::group_by(sample_event_id) |>
+    dplyr::mutate(sample_number = dplyr::row_number()) |>
+    dplyr::ungroup() |>
     dplyr::mutate(id = paste0(location_code, format(as.Date(first_sample_date), "%y"),
-                              "_", sample_event_number, "_", sample_bin_code, "_", sample_number)) %>%
+                              "_", sample_event_number, "_", sample_bin_code, "_", sample_number)) |>
     dplyr::select(id, sample_bin_id)
 
   sample_id_query <- glue::glue_sql("INSERT INTO sample (id, sample_bin_id)

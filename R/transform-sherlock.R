@@ -43,11 +43,11 @@ process_sherlock <- function(sherlock_results_filepath, sample_layout_mapping,
   end_raw_fluorescence <- paste0(excel_column_index[column_index], end_row_raw_fluorescence)
 
   raw_fluorescence <- readxl::read_excel(sherlock_results_filepath,
-                                         range = paste0("B", start_raw_fluorescence,":", end_raw_fluorescence)) %>%
-    dplyr::mutate(Time = hms::as_hms(Time)) %>%
-    dplyr::mutate_all(as.character) %>%
-    dplyr::select(-dplyr::starts_with("T°")) %>%
-    tidyr::pivot_longer(names_to = "location", values_to = "fluorescence", !Time) %>%
+                                         range = paste0("B", start_raw_fluorescence,":", end_raw_fluorescence)) |>
+    dplyr::mutate(Time = hms::as_hms(Time)) |>
+    dplyr::mutate_all(as.character) |>
+    dplyr::select(-dplyr::starts_with("T°")) |>
+    tidyr::pivot_longer(names_to = "location", values_to = "fluorescence", !Time) |>
     dplyr::left_join(layout)
 
   # background values ---
@@ -56,14 +56,14 @@ process_sherlock <- function(sherlock_results_filepath, sample_layout_mapping,
   end_background_fluorescence <- paste0(excel_column_index[column_index - 1], end_row_background_fluorescence)
   background_fluorescence <- readxl::read_excel(sherlock_results_filepath,
                                                 range = paste0("B", start_background_fluorescence,":",
-                                                               end_background_fluorescence)) %>%
-    dplyr::mutate(Time = hms::as_hms(Time)) %>%
-    dplyr::mutate_all(as.character) %>%
+                                                               end_background_fluorescence)) |>
+    dplyr::mutate(Time = hms::as_hms(Time)) |>
+    dplyr::mutate_all(as.character) |>
     tidyr::pivot_longer(names_to = "location", values_to = "background_fluorescence", !Time)
 
   # raw results encoded as strings because of OVERFLOW and ????? values
-  raw_assay_results <- raw_fluorescence %>%
-    dplyr::left_join(background_fluorescence) %>%
+  raw_assay_results <- raw_fluorescence |>
+    dplyr::left_join(background_fluorescence) |>
     dplyr::select(sample_id, raw_fluorescence = fluorescence, background_value = background_fluorescence,
                   time = Time, plate_run_id, well_location = location)
 
@@ -73,14 +73,14 @@ process_sherlock <- function(sherlock_results_filepath, sample_layout_mapping,
   end_results <- paste0(excel_column_index[15], end_row_results)
   results <- readxl::read_excel(sherlock_results_filepath,
                                 range = paste0("B", start_results,":", end_results),
-                                col_types = "text") %>%
-    tidyr::fill(...1) %>%
-    tidyr::pivot_longer(names_to = "number_location", values_to = "RFU", !c(...1, ...14)) %>%
-    dplyr::transmute(location = paste0(...1, number_location), metric = ...14, RFU = as.numeric(RFU)) %>%
-    dplyr::left_join(layout) %>%
-    dplyr::filter(!is.na(sample_id)) %>%
-    dplyr::mutate(metric = stringr::str_remove(metric, "\\[.+\\]")) %>%
-    dplyr::arrange(location) %>%
+                                col_types = "text") |>
+    tidyr::fill(...1) |>
+    tidyr::pivot_longer(names_to = "number_location", values_to = "RFU", !c(...1, ...14)) |>
+    dplyr::transmute(location = paste0(...1, number_location), metric = ...14, RFU = as.numeric(RFU)) |>
+    dplyr::left_join(layout) |>
+    dplyr::filter(!is.na(sample_id)) |>
+    dplyr::mutate(metric = stringr::str_remove(metric, "\\[.+\\]")) |>
+    dplyr::arrange(location) |>
     dplyr::select(sample_id, sample_type_id, assay_id, rfu_back_subtracted = RFU,
                   plate_run_id, well_location = location)
 
@@ -96,7 +96,7 @@ process_sherlock <- function(sherlock_results_filepath, sample_layout_mapping,
 process_sherlock_metadata <- function(filepath) {
   raw_metadata <- readxl::read_excel(filepath,
                                      range = "A2:B27",
-                                     col_names = c("key", "value")) %>%
+                                     col_names = c("key", "value")) |>
     tidyr::fill(key)
 
   # parse metadata elements
@@ -149,9 +149,9 @@ process_sherlock_metadata <- function(filepath) {
 #' mapping of plate layout location to sample identifier
 process_plate_layout <- function(filepath) {
   plate_layout <- readxl::read_excel(filepath, range = "C32:N39",
-                                     col_names = as.character(1:12)) %>%
-    dplyr::mutate(letter = letters[1:8]) %>%
-    tidyr::pivot_longer(names_to = "number", values_to = "psuedo_sample_id", !letter) %>%
+                                     col_names = as.character(1:12)) |>
+    dplyr::mutate(letter = letters[1:8]) |>
+    tidyr::pivot_longer(names_to = "number", values_to = "psuedo_sample_id", !letter) |>
     dplyr::transmute(location = toupper(paste0(letter, number)), psuedo_sample_id)
   return(plate_layout)
 }
