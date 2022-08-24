@@ -46,7 +46,7 @@ process_sherlock <- function(sherlock_results_filepath, sample_layout_mapping,
                                          range = paste0("B", start_raw_fluorescence,":", end_raw_fluorescence)) |>
     dplyr::mutate(Time = hms::as_hms(Time)) |>
     dplyr::mutate_all(as.character) |>
-    dplyr::select(-dplyr::starts_with("T°")) |>
+    dplyr::select(-dplyr::starts_with("T")) |>
     tidyr::pivot_longer(names_to = "location", values_to = "fluorescence", !Time) |>
     dplyr::left_join(layout)
 
