@@ -1,3 +1,5 @@
+library(dplyr)
+
 skip_if_not_installed("RSQLite")
 
 test_that("non-valid connection errors correctly", {
