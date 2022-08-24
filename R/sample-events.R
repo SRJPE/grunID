@@ -1,5 +1,6 @@
 #' Create sample_events
 #' @examples
+#' \dontrun{
 #' con <- DBI::dbConnect(
 #'                       RPostgres::Postgres(),
 #'                       dbname = cfg$dbname,
@@ -19,6 +20,7 @@
 #'                      expected_number_of_samples = 10
 #'                      )
 #' sample_events(con, sample_bins)
+#' }
 #' @export
 add_sample_events <- function(con, sample_bins) {
 
