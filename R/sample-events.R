@@ -20,19 +20,53 @@ validate_sample_bins <- function(con, sample_bins) {
   )
 
 
-  # validate incoming data
+  # check that the data has the correct columns
   if (any(missing_names <- !tibble::has_name(sample_bins, valid_colnames))) {
     stop(sprintf("the following column(s) are missing: %s",
                  paste0(valid_colnames[missing_names], collapse = ", ")
     ), call. = FALSE)
   }
 
+  # check that the are no missing locations in the data input
+  if (any(is.na(sample_bins$location_code))) {
+    stop("location code missing in at least one record", call. = FALSE)
+  }
 
+
+  # check that the locations in the data match those that exist in the database
   valid_locations <- get_sample_location(con)
   if (!all(sample_bins$location_code %in% valid_locations$code)) {
     stop(sprintf("location_code provided not one of valid codes %s",
                  paste0(valid_locations$code, collapse = ", ")), call. = FALSE)
   }
+
+  if (!all(is.numeric(sample_bins$sample_event_number))) {
+    stop("sample_event_number must be numeric", call. = FALSE)
+  }
+
+  # validate first_sample_date
+  if (any(is.na(as.Date(sample_bins$first_sample_date)))) {
+    stop("one or more values in first_sample_date could not be parsed", call. = FALSE)
+  }
+
+  # validate sample_bin_code
+  if (any(is.na(sample_bins$sample_bin_code))) {
+    stop("sample_bin_code missing in at least one record", call. = FALSE)
+  }
+
+  # validate min_fork_length
+  if (any(is.na(sample_bins$min_fork_length))) {
+    stop("min_fork_length missing in at least one record", call. = FALSE)
+  }
+
+  fl_min <- 0
+  fl_max <- 2000
+
+  min_fl_range <- range(sample_bins$min_fork_length, na.rm = TRUE)
+  if (min_fl_range[1] < fl_min | min_fl_range[2] > fl_max) {
+    stop("value in min_fork_length is out of valid ranges (0 - 2000)", call. = TRUE)
+  }
+
 
 }
 
@@ -43,6 +77,7 @@ validate_sample_bins <- function(con, sample_bins) {
 #' @param sample_bins
 #'
 #' @examples
+#' \dontrun{
 #' con <- DBI::dbConnect(
 #'                       RPostgres::Postgres(),
 #'                       dbname = cfg$dbname,
@@ -62,6 +97,7 @@ validate_sample_bins <- function(con, sample_bins) {
 #'                      expected_number_of_samples = 10
 #'                      )
 #' sample_events(con, sample_bins)
+#' }
 #' @export
 add_sample_events <- function(con, sample_bins) {
 

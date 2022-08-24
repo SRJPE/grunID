@@ -1,4 +1,5 @@
-source("R/helper-sample-events.R")
+source("helper-sample-events.R")
+
 # skip_if_not_installed("RSQLite")
 #
 # test_that("non-valid connection errors correctly", {
@@ -90,18 +91,133 @@ test_that("sample bins data is valid", {
     expected_number_of_samples = 10
   )
 
+  bad_sample_bin_event_number <- tibble::tibble(
+    location_code = c("BTC", "BUT"),
+    sample_event_number = "1",
+    first_sample_date = "2020-01-01",
+    sample_bin_code = "A",
+    min_fork_length = 10,
+    max_fork_length = 95,
+    expected_number_of_samples = 10
+  )
+
+
   mockery::stub(validate_sample_bins, 'get_sample_location', sample_locations)
   con <- TRUE
 
 
   expect_error(validate_sample_bins(con, bad_sample_bin_location),
-               "location_code provided not one of valid codes BTC, BUT, CLR, DER, FTH_RM17, MIL, DEL, KNL, TIS, FTH_RM61")
+               "location_code provided not one of valid codes BTC, BUT, CLR, DER, FTH_RM17, MIL, DEL, KNL, TIS, FTH_RM61$")
+
   expect_error(validate_sample_bins(con, bad_sample_bin_location_NA),
-               "one of the records is missing a location code")
+               "location code missing in at least one record$")
+
   expect_error(
     validate_sample_bins(con, bad_sample_bin_location_missing),
     "the following column\\(s\\) are missing\\: location_code$"
     )
+
+  expect_error(
+    validate_sample_bins(con, bad_sample_bin_event_number),
+    "sample_event_number must be numeric"
+  )
+
+  #'                      location_code = c("BTC", "BUT"),
+  #'                      sample_event_number = 1:2,
+  #'                      first_sample_date = "2020-01-01",
+  #'                      sample_bin_code = "A",
+  #'                      min_fork_length = 10,
+  #'                      max_fork_length = 95,
+  #'                      expected_number_of_samples = 10
+
+  # sample date
+  bad_sample_bins_date <- tibble::tibble(
+    location_code = c("BTC"),
+    sample_event_number = 1,
+    first_sample_date = c("2020-01-01", "2020-01-01 12:00:00", "fdsafdsa", "03/14/1990"),
+    sample_bin_code = "A",
+    min_fork_length = 10,
+    max_fork_length = 95,
+    expected_number_of_samples = 10
+  )
+
+  expect_error(
+    validate_sample_bins(con, bad_sample_bins_date),
+    "one or more values in first_sample_date could not be parsed$"
+  )
+
+  # sample bin code
+  bad_sample_bins_code <- tibble::tibble(
+    location_code = c("BTC", "BUT"),
+    sample_event_number = 1:2,
+    first_sample_date = "2020-01-01",
+    sample_bin_code = NA,
+    min_fork_length = 10,
+    max_fork_length = 95,
+    expected_number_of_samples = 10
+  )
+
+  expect_error(
+    validate_sample_bins(con, bad_sample_bins_code),
+    "sample_bin_code missing in at least one record$"
+  )
+
+
+  # min fork length
+  bad_sample_bins_min_fl <- tibble::tibble(
+    location_code = c("BTC"),
+    sample_event_number = 1,
+    first_sample_date = "2020-01-01",
+    sample_bin_code = "A",
+    min_fork_length = c(0, -1, NA, 2000),
+    max_fork_length = 95,
+    expected_number_of_samples = 10
+  )
+
+  # check for missing
+  expect_error(
+    validate_sample_bins(con, bad_sample_bins_min_fl),
+    "min_fork_length missing in at least one record$"
+  )
+
+  # check out of range
+  expect_error(
+    validate_sample_bins(con, subset(bad_sample_bins_min_fl,
+                                     !is.na(min_fork_length))),
+    "value in min_fork_length is out of valid ranges \\(0 - 2000\\)$"
+  )
+
+
+  #
+  # # max fork length
+  # good_sample_bin_location <- tibble::tibble(
+  #   location_code = c("BTC", "BUT"),
+  #   sample_event_number = 1:2,
+  #   first_sample_date = "2020-01-01",
+  #   sample_bin_code = "A",
+  #   min_fork_length = 10,
+  #   max_fork_length = 95,
+  #   expected_number_of_samples = 10
+  # )
+  #
+  # expect_error(
+  #   validate_sample_bins(con, bad_sample_bins_max_fl)
+  # )
+  #
+  # # expected number of samples
+  # good_sample_bin_location <- tibble::tibble(
+  #   location_code = c("BTC", "BUT"),
+  #   sample_event_number = 1:2,
+  #   first_sample_date = "2020-01-01",
+  #   sample_bin_code = "A",
+  #   min_fork_length = 10,
+  #   max_fork_length = 95,
+  #   expected_number_of_samples = 10
+  # )
+  #
+  # expect_error(
+  #   validate_sample_bins(con, bad_sample_bins_num_of_samples)
+  # )
 
 
 })
