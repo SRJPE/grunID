@@ -18,7 +18,7 @@ add_plate_run <- function(con, plate_run_settings) {
 
 
   # write to table using the con object
-  list2env(plate_run_settings, env = environment())
+  list2env(plate_run_settings, envir = environment())
 
   query <- glue::glue_sql("
   INSERT INTO plate_run (software_version, date, reader_type, reader_serial_number, plate_type, set_point, preheat_before_moving, runtime, interval, read_count, run_mode, excitation, emissions, optics, gain, light_source, lamp_energy, read_height, genetic_method_id, laboratory_id, lab_work_preformed_by)
@@ -42,7 +42,7 @@ add_assay_results <- function(con, transformed_assay_results) {
          call. = FALSE)
   }
 
-  list2env(transformed_assay_results, env = environment())
+  list2env(transformed_assay_results, envir = environment())
 
   query <- glue::glue_sql("
   INSERT INTO assay_results (sample_id, sample_type_id, assay_id, rfu_back_subtracted, plate_run_id, well_location)
