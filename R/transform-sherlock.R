@@ -14,19 +14,14 @@ process_protocol_file <- function(protocol_file) {
 #' @param filepath path to excel file with Sherlock output
 #' @export
 process_sherlock <- function(sherlock_results_filepath, sample_layout_mapping,
-                             plate_size = c(96)) {
+                             plate_size = c(96, 384)) {
 
-
-  # validate incoming data
-  if (any(missing_names <- !tibble::has_name(plate_run_settings, expected_layout_colnames()))) {
-    stop(sprintf("the following plate setting elements are missing: %s",
-                 paste0(expected_layout_colnames()[missing_names], collapse = ", ")
-    ), call. = FALSE)
-  }
 
 
   metadata <- process_sherlock_metadata(sherlock_results_filepath)
-  plate_layout <- process_plate_layout(sherlock_results_filepath)
+  result_ranges <- get_result_ranges(plate_size)
+  plate_layout <- process_plate_layout(sherlock_results_filepath,
+                                       well_layout_range = result_ranges$layout)
 
   layout <- left_join(sample_layout_mapping, plate_layout)
 
@@ -160,3 +155,46 @@ process_plate_layout <- function(filepath) {
 expected_layout_colnames <- function() {
   c("location", "sample_id", "sample_type_id", "assay_id", "plate_run_id")
 }
+
+
+#' @title Generate call ranges
+#' @param wells_used the number of wells used in the well layout table
+#' @export
+generate_raw_fl_ranges <- function(plate_size, wells_used, time_intervals) {
+
+  if (plate_size == 96) {
+    start_index <- 43
+  } else {
+    start_index <- 51
+  }
+
+  max_cells <- 96
+
+  if (wells_used <= max_cells) {
+    return(sprintf("D%d:%s%d", start_index,
+                   excel_column_index[wells_used + 3],
+                   start_index + time_intervals))
+  }
+
+  last_table_cols <- wells_used %% max_cells
+  full_tables_count <- floor(wells_used/max_cells)
+
+  excel_col_index <- c(rep("CU", full_tables_count),
+                       excel_column_index[3+last_table_cols])
+  cell_ranges <- character(full_tables_count + 1)
+
+  for (i in seq_along(excel_col_index)) {
+    end_index <- start_index + time_intervals
+    cell_ranges[i] <- sprintf("D%d:%s%d", start_index, excel_col_index[i], end_index)
+    start_index <- end_index + 4
+  }
+
+  return(cell_ranges)
+}
+
+
+
+
+
+
+

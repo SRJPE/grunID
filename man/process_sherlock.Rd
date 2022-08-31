@@ -7,7 +7,7 @@
 process_sherlock(
   sherlock_results_filepath,
   sample_layout_mapping,
-  plate_size = c(96)
+  plate_size = c(96, 384)
 )
 }
 \arguments{
