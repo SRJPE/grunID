@@ -157,36 +157,58 @@ expected_layout_colnames <- function() {
 }
 
 
-#' @title Generate call ranges
-#' @param wells_used the number of wells used in the well layout table
+#' Generate all cell ranges
 #' @export
-generate_raw_fl_ranges <- function(plate_size, wells_used, time_intervals) {
+generate_ranges <- function(plate_size, wells_used, time_intervals) {
 
   if (plate_size == 96) {
-    start_index <- 43
+    column_header_row <- 43
   } else {
-    start_index <- 51
+    column_header_row <- 51
+  }
+
+
+  # TOOD swtich on table we want to get ranges for
+  if (table_type == "") {
+    start_col_index <- "D"
+  } else if (table_type == "") {
+    start_col_index <- ""
   }
 
   max_cells <- 96
 
+  raw_fl_ranges <- generate_range(column_header_row,
+                                  start_col_index, start_row_index,
+                                  end_col_index)
+}
+
+#' @title Generate a cell range
+#' @param wells_used the number of wells used in the well layout table
+#' @export
+generate_range <- function(column_header_row, start_col_index,
+                           start_row_index, end_col_index) {
+
   if (wells_used <= max_cells) {
-    return(sprintf("D%d:%s%d", start_index,
+    return(sprintf("%s%d:%s%d", start_col_index, column_header_row,
                    excel_column_index[wells_used + 3],
-                   start_index + time_intervals))
+                   column_header_row + time_intervals))
   }
 
   last_table_cols <- wells_used %% max_cells
   full_tables_count <- floor(wells_used/max_cells)
 
-  excel_col_index <- c(rep("CU", full_tables_count),
+  excel_col_index <- c(rep(end_col_index, full_tables_count),
                        excel_column_index[3+last_table_cols])
   cell_ranges <- character(full_tables_count + 1)
 
   for (i in seq_along(excel_col_index)) {
-    end_index <- start_index + time_intervals
-    cell_ranges[i] <- sprintf("D%d:%s%d", start_index, excel_col_index[i], end_index)
-    start_index <- end_index + 4
+    end_index <- column_header_row + time_intervals
+    cell_ranges[i] <- sprintf("%s%d:%s%d",
+                              start_col_index,
+                              column_header_row,
+                              excel_column_index[i],
+                              end_index)
+    column_header_row <- end_index + 4
   }
 
   return(cell_ranges)
