@@ -16,3 +16,9 @@ process_sherlock(
 \description{
 Process Sherlock Output
 }
+\examples{
+sherlock_results_filepath = "data-raw/081022_Chnk_JPE_Early_Plates7-10_results.xlsx"
+sample_layout_mapping = readr::read_csv("data-raw/sample_layout_template_384.csv")
+plate_size = 384
+process_sherlock(sherlock_results_filepath, sample_layout_mapping, plate_size)
+}

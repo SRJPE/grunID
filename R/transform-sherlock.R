@@ -8,11 +8,14 @@ process_protocol_file <- function(protocol_file) {
 
   return(metadata)
 }
-sherlock_results_filepath <- "data-raw/081022_Chnk_JPE_Early_Plates7-10_results.xlsx"
-sample_layout_mapping <- read_csv("data-raw/sample_layout_template_384.csv")
-plate_size <- 384
+
 #' Process Sherlock Output
 #' @param filepath path to excel file with Sherlock output
+#' @examples
+#' sherlock_results_filepath = "data-raw/081022_Chnk_JPE_Early_Plates7-10_results.xlsx"
+#' sample_layout_mapping = readr::read_csv("data-raw/sample_layout_template_384.csv")
+#' plate_size = 384
+#' process_sherlock(sherlock_results_filepath, sample_layout_mapping, plate_size)
 #' @export
 process_sherlock <- function(sherlock_results_filepath, sample_layout_mapping,
                              plate_size = c(96, 384)) {
@@ -46,35 +49,39 @@ process_sherlock <- function(sherlock_results_filepath, sample_layout_mapping,
                   dplyr::across(dplyr::everything(), as.character)) %>%
     dplyr::select(-tidyselect::contains("...")) %>%
     tidyr::pivot_longer(names_to = "location", values_to = "background_fluorescence", !Time)
-  #
-  # # raw results encoded as strings because of OVERFLOW and ????? values
-  # raw_assay_results <- raw_fluorescence %>%
-  #   dplyr::left_join(background_fluorescence) %>%
-  #   dplyr::select(sample_id, raw_fluorescence = fluorescence, background_value = background_fluorescence,
-  #                 time = Time, plate_run_id, well_location = location)
 
-  # # results ---
-  # start_results <- end_row_background_fluorescence + 4
-  # end_row_results <- start_results + 4*8
-  # end_results <- paste0(excel_column_index[15], end_row_results)
-  # results <- readxl::read_excel(sherlock_results_filepath,
-  #                               range = paste0("B", start_results,":", end_results),
-  #                               col_types = "text") %>%
-  #   tidyr::fill(...1) %>%
-  #   tidyr::pivot_longer(names_to = "number_location", values_to = "RFU", !c(...1, ...14)) %>%
-  #   dplyr::transmute(location = paste0(...1, number_location), metric = ...14, RFU = as.numeric(RFU)) %>%
-  #   dplyr::left_join(layout) %>%
-  #   dplyr::filter(!is.na(sample_id)) %>%
-  #   dplyr::mutate(metric = stringr::str_remove(metric, "\\[.+\\]")) %>%
-  #   dplyr::arrange(location) %>%
-  #   dplyr::select(sample_id, sample_type_id, assay_id, rfu_back_subtracted = RFU,
-  #                 plate_run_id, well_location = location)
-  #
-  # return(list(
-  #   metadata = metadata,
-  #   raw_assay_results = raw_assay_results,
-  #   assay_results = results
-  # ))
+  # raw results encoded as strings because of OVERFLOW and ????? values
+  raw_assay_results <- raw_fluorescence %>%
+    dplyr::left_join(background_fluorescence) %>%
+    dplyr::select(sample_id, raw_fluorescence = fluorescence, background_value = background_fluorescence,
+                  time = Time, plate_run_id, well_location = location)
+
+  # results ---
+  if (plate_size == 96) {
+    stat_id_column <- "...14"
+  } else if (plate_size == 384) {
+    stat_id_column <- "...26"
+  }
+
+  results <- readxl::read_excel(sherlock_results_filepath,
+                                range = cell_ranges$results, col_types = "text") %>%
+    tidyr::fill(...1) %>%
+    dplyr::rename(stat_id_column = stat_id_column) %>%
+    tidyr::pivot_longer(names_to = "number_location", values_to = "RFU", !c(...1, stat_id_column)) %>%
+    dplyr::arrange(...1, as.numeric(number_location)) %>%
+    dplyr::transmute(location = paste0(...1, number_location),
+                     metric = stat_id_column, RFU = as.numeric(RFU)) %>%
+    dplyr::filter(!is.na(RFU)) %>%
+    dplyr::left_join(layout) %>%
+    dplyr::mutate(metric = stringr::str_remove(metric, "\\s\\[.+\\]")) %>%
+    dplyr::select(sample_id, sample_type_id, assay_id, rfu_back_subtracted = RFU,
+                  plate_run_id, well_location = location)
+
+  return(list(
+    metadata = metadata,
+    raw_assay_results = raw_assay_results,
+    assay_results = results
+  ))
 
 }
 

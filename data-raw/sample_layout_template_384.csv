@@ -1,4 +1,4 @@
-location,sample_id,sample_type,assay_id,plate_run_id
+location,sample_id,sample_type_id,assay_id,plate_run_id
 A1,SPL4602kdfio,1,1,
 A2,SPL7658kdfio,1,1,
 A3,SPL7120kdfio,1,1,
