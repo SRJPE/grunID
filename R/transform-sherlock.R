@@ -156,6 +156,9 @@ expected_layout_colnames <- function() {
   c("location", "sample_id", "sample_type_id", "assay_id", "plate_run_id")
 }
 
+plate_size = 384
+wells_used = 331
+time_intervals = 41
 
 #' Generate all cell ranges
 #' @export
@@ -167,46 +170,60 @@ generate_ranges <- function(plate_size, wells_used, time_intervals) {
     column_header_row <- 51
   }
 
-
-  # TOOD swtich on table we want to get ranges for
-  if (table_type == "") {
-    start_col_index <- "D"
-  } else if (table_type == "") {
-    start_col_index <- ""
-  }
-
   max_cells <- 96
 
-  raw_fl_ranges <- generate_range(column_header_row,
-                                  start_col_index, start_row_index,
-                                  end_col_index)
+  raw_fl_ranges <- generate_range("raw fluorescence", column_header_row)
+
+  bk_fl_header_row <-
+    as.numeric(
+      stringr::str_extract(
+        stringr::str_split(raw_fl_ranges[length(raw_fl_ranges)],
+                           ":", simplify = TRUE)[2],
+        "[0-9]+")
+      ) + 4
+
+  background_fl_ranges <- generate_range("background fluorescence", bk_fl_header_row)
 }
 
 #' @title Generate a cell range
 #' @param wells_used the number of wells used in the well layout table
 #' @export
-generate_range <- function(column_header_row, start_col_index,
-                           start_row_index, end_col_index) {
+generate_range <- function(table_type = c("raw fluorescence", "background fluorescence", "results"),
+                           column_header_row) {
+
+  # TODO swtich on table we want to get ranges for
+  if (table_type == "raw fluorescence") {
+    start_col_index <- "D"
+    end_col_index <- "CU"
+    left_offset <- 3
+  } else if (table_type == "background value") {
+    start_col_index <- "C"
+    end_col_index <- "CT"
+    left_offset <- 2
+  } else {
+    start_col_index <- "C"
+    end_col_index <- "CT"
+  }
 
   if (wells_used <= max_cells) {
     return(sprintf("%s%d:%s%d", start_col_index, column_header_row,
-                   excel_column_index[wells_used + 3],
+                   grunID::excel_column_index[left_offset + wells_used],
                    column_header_row + time_intervals))
   }
 
   last_table_cols <- wells_used %% max_cells
   full_tables_count <- floor(wells_used/max_cells)
 
-  excel_col_index <- c(rep(end_col_index, full_tables_count),
-                       excel_column_index[3+last_table_cols])
+  letter_col_index <- c(rep(end_col_index, full_tables_count),
+                       grunID::excel_column_index[left_offset + last_table_cols])
   cell_ranges <- character(full_tables_count + 1)
 
-  for (i in seq_along(excel_col_index)) {
+  for (i in seq_along(letter_col_index)) {
     end_index <- column_header_row + time_intervals
     cell_ranges[i] <- sprintf("%s%d:%s%d",
                               start_col_index,
                               column_header_row,
-                              excel_column_index[i],
+                              letter_col_index[i],
                               end_index)
     column_header_row <- end_index + 4
   }
