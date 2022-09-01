@@ -38,16 +38,14 @@ process_sherlock <- function(sherlock_results_filepath, sample_layout_mapping,
     tidyr::pivot_longer(names_to = "location", values_to = "fluorescence", !Time) %>%
     dplyr::left_join(layout)
 
-  # # background values ---
-  # start_background_fluorescence <- end_row_raw_fluorescence + 4
-  # end_row_background_fluorescence <- start_background_fluorescence + number_of_rows
-  # end_background_fluorescence <- paste0(excel_column_index[column_index - 1], end_row_background_fluorescence)
-  # background_fluorescence <- readxl::read_excel(sherlock_results_filepath,
-  #                                               range = paste0("B", start_background_fluorescence,":",
-  #                                                              end_background_fluorescence)) %>%
-  #   dplyr::mutate(Time = hms::as_hms(Time)) %>%
-  #   dplyr::mutate_all(as.character) %>%
-  #   tidyr::pivot_longer(names_to = "location", values_to = "background_fluorescence", !Time)
+  # background values ---
+  background_fluorescence <- purrr::map_dfc(cell_ranges$background_fluorescence,
+                 ~readxl::read_excel(sherlock_results_filepath,
+                                     range = .)) %>%
+    dplyr::mutate(Time = hms::as_hms(Time...1),
+                  dplyr::across(dplyr::everything(), as.character)) %>%
+    dplyr::select(-tidyselect::contains("...")) %>%
+    tidyr::pivot_longer(names_to = "location", values_to = "background_fluorescence", !Time)
   #
   # # raw results encoded as strings because of OVERFLOW and ????? values
   # raw_assay_results <- raw_fluorescence %>%
@@ -234,7 +232,7 @@ generate_range <- function(table_type = c("raw fluorescence", "background fluore
     end_col_index <- "CU"
     left_offset <- 3
   } else if (table_type == "background fluorescence") {
-    start_col_index <- "C"
+    start_col_index <- "B"
     end_col_index <- "CT"
     left_offset <- 2
   } else if (table_type == "results") {
