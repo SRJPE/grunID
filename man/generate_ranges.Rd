@@ -2,10 +2,18 @@
 % Please edit documentation in R/transform-sherlock.R
 \name{generate_ranges}
 \alias{generate_ranges}
-\title{Generate all cell ranges}
+\title{Generate all cell ranges for tables containing assay results}
 \usage{
 generate_ranges(plate_size, wells_used, time_intervals)
 }
+\arguments{
+\item{plate_size}{The number of wells within the plate, either 96 or 384}
+
+\item{wells_used}{The number of wells containing samples or controls}
+
+\item{time_intervals}{The number of reads when the samples are being processed}
+}
 \description{
-Generate all cell ranges
+helper function used to generate all cell ranges for each type of table
+within the Synergy H1 excel workbook output
 }

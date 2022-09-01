@@ -5,15 +5,16 @@
 \title{Generate a cell range}
 \usage{
 generate_range(
-  column_header_row,
-  start_col_index,
-  start_row_index,
-  end_col_index
+  table_type = c("raw fluorescence", "background fluorescence", "results"),
+  column_header_row
 )
 }
 \arguments{
-\item{wells_used}{the number of wells used in the well layout table}
+\item{table_type}{the type of results table, either "raw fluorescence", "background fluorescence", or "results"}
+
+\item{column_header_row}{the row number containing the column headers for the first table of interest}
 }
 \description{
-Generate a cell range
+helper function used to identify a group of cell ranges that encompass
+tables containing a type of result from within the Synergy H1 excel workbook output
 }

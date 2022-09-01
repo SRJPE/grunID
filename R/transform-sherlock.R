@@ -156,12 +156,13 @@ expected_layout_colnames <- function() {
   c("location", "sample_id", "sample_type_id", "assay_id", "plate_run_id")
 }
 
-plate_size = 384
-wells_used = 331
-time_intervals = 41
 
-#' helper extract
-#' @export
+# -----
+#' Extract Previous End Row
+#' @description helper function used to identify the previous ending range of cells
+#' within the Synergy H1 excel workbook output
+#' @param cell_ranges a vector of strings representing the cell ranges of the tables e.g. c("A1:B10", "A11:B21")
+#' @example extract_previous_end_row(c("A1:B10", "A11:B21")) #21
 extract_previous_end_row <- function(cell_ranges) {
   as.numeric(
     stringr::str_extract(
@@ -171,8 +172,12 @@ extract_previous_end_row <- function(cell_ranges) {
   )
 }
 
-#' Generate all cell ranges
-#' @export
+#' Generate all cell ranges for tables containing assay results
+#' @description helper function used to generate all cell ranges for each type of table
+#' within the Synergy H1 excel workbook output
+#' @param plate_size The number of wells within the plate, either 96 or 384
+#' @param wells_used The number of wells containing samples or controls
+#' @param time_intervals The number of reads when the samples are being processed
 generate_ranges <- function(plate_size, wells_used, time_intervals) {
 
   if (plate_size == 96) {
@@ -195,11 +200,21 @@ generate_ranges <- function(plate_size, wells_used, time_intervals) {
 
   result_ranges <- generate_range("results", results_header_row)
 
+  return(
+    list(
+      raw_fluorescence = raw_fl_ranges,
+      background_fluorescence = background_fl_ranges,
+      results = result_ranges
+    )
+  )
+
 }
 
 #' @title Generate a cell range
-#' @param wells_used the number of wells used in the well layout table
-#' @export
+#' @description helper function used to identify a group of cell ranges that encompass
+#' tables containing a type of result from within the Synergy H1 excel workbook output
+#' @param table_type the type of results table, either "raw fluorescence", "background fluorescence", or "results"
+#' @param column_header_row the row number containing the column headers for the first table of interest
 generate_range <- function(table_type = c("raw fluorescence", "background fluorescence", "results"),
                            column_header_row) {
 
@@ -233,7 +248,7 @@ generate_range <- function(table_type = c("raw fluorescence", "background fluore
   full_tables_count <- floor(wells_used/max_cells)
 
   letter_col_index <- c(rep(end_col_index, full_tables_count),
-                       grunID::excel_column_index[left_offset + last_table_cols])
+                        grunID::excel_column_index[left_offset + last_table_cols])
   cell_ranges <- character(full_tables_count + 1)
 
   for (i in seq_along(letter_col_index)) {

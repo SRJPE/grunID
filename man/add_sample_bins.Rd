@@ -9,6 +9,9 @@ add_sample_bins(con, sample_bins)
 \arguments{
 \item{sample_bins}{}
 }
+\value{
+
+}
 \description{
 Create sample bins
 }
