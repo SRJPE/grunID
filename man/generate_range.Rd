@@ -6,13 +6,22 @@
 \usage{
 generate_range(
   table_type = c("raw fluorescence", "background fluorescence", "results"),
-  column_header_row
+  column_header_row,
+  result_row_count,
+  wells_used,
+  time_intervals
 )
 }
 \arguments{
 \item{table_type}{the type of results table, either "raw fluorescence", "background fluorescence", or "results"}
 
 \item{column_header_row}{the row number containing the column headers for the first table of interest}
+
+\item{result_row_count}{Based on the plate size e.g., 96 well plate has 32 rows or results}
+
+\item{wells_used}{The number of wells containing samples or controls}
+
+\item{time_intervals}{The number of reads when the samples are being processed}
 }
 \description{
 helper function used to identify a group of cell ranges that encompass

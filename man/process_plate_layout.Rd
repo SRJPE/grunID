@@ -4,7 +4,7 @@
 \alias{process_plate_layout}
 \title{mapping of plate layout location to sample identifier}
 \usage{
-process_plate_layout(filepath)
+process_plate_layout(filepath, plate_size)
 }
 \description{
 mapping of plate layout location to sample identifier
