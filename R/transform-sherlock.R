@@ -160,29 +160,41 @@ plate_size = 384
 wells_used = 331
 time_intervals = 41
 
+#' helper extract
+#' @export
+extract_previous_end_row <- function(cell_ranges) {
+  as.numeric(
+    stringr::str_extract(
+      stringr::str_split(cell_ranges[length(cell_ranges)],
+                         ":", simplify = TRUE)[2],
+      "[0-9]+")
+  )
+}
+
 #' Generate all cell ranges
 #' @export
 generate_ranges <- function(plate_size, wells_used, time_intervals) {
 
   if (plate_size == 96) {
     column_header_row <- 43
+    result_row_count <- 8 * 4
   } else {
     column_header_row <- 51
+    result_row_count <- 16 * 4
   }
 
   max_cells <- 96
 
   raw_fl_ranges <- generate_range("raw fluorescence", column_header_row)
 
-  bk_fl_header_row <-
-    as.numeric(
-      stringr::str_extract(
-        stringr::str_split(raw_fl_ranges[length(raw_fl_ranges)],
-                           ":", simplify = TRUE)[2],
-        "[0-9]+")
-      ) + 4
+  bk_fl_header_row <- extract_previous_end_row(raw_fl_ranges) + 4
 
   background_fl_ranges <- generate_range("background fluorescence", bk_fl_header_row)
+
+  results_header_row  <- extract_previous_end_row(background_fl_ranges) + 4
+
+  result_ranges <- generate_range("results", results_header_row)
+
 }
 
 #' @title Generate a cell range
@@ -191,7 +203,6 @@ generate_ranges <- function(plate_size, wells_used, time_intervals) {
 generate_range <- function(table_type = c("raw fluorescence", "background fluorescence", "results"),
                            column_header_row) {
 
-  # TODO swtich on table we want to get ranges for
   if (table_type == "raw fluorescence") {
     start_col_index <- "D"
     end_col_index <- "CU"
@@ -201,8 +212,15 @@ generate_range <- function(table_type = c("raw fluorescence", "background fluore
     end_col_index <- "CT"
     left_offset <- 2
   } else {
-    start_col_index <- "C"
-    end_col_index <- "CT"
+    start_col_index <- "B"
+    end_col_index <- "AA"
+    left_offset <- 1
+  }
+
+  if (table_type == "results") {
+    return(sprintf("%s%d:%s%d", start_col_index, column_header_row,
+                   end_col_index,
+                   column_header_row + result_row_count))
   }
 
   if (wells_used <= max_cells) {
