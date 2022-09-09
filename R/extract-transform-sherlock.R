@@ -1,6 +1,13 @@
 #' Process Protocol File
+#' @export
 process_protocol_file <- function(protocol_file) {
+  # cheat for now
+  metadata <- process_sherlock_metadata(protocol_file)
+  metadata$genetic_method_id <- 1
+  metadata$laboratory_id <- 1
+  metadata$lab_work_preformed_by <- "dog"
 
+  return(metadata)
 }
 
 #' Process Sherlock Results
@@ -50,8 +57,6 @@ process_protocol_file <- function(protocol_file) {
 process_sherlock <- function(filepath, sample_layout_mapping,
                              plate_size = c(96, 384)) {
 
-  metadata <- process_sherlock_metadata(filepath)
-
   plate_layout <- process_plate_layout(filepath, plate_size = plate_size)
   wells_used <- sum(!is.na(plate_layout$psuedo_sample_id))
   number_of_rows <- metadata$read_count
@@ -61,8 +66,22 @@ process_sherlock <- function(filepath, sample_layout_mapping,
 
   layout <- dplyr::left_join(sample_layout_mapping, plate_layout)
 
+  raw_assay_results <- process_raw_assay_results(filepath, ranges = cell_ranges, plate_size, layout)
+
+  results <- process_assay_results(filepath, range = cell_ranges$results, plate_size, layout)
+
+  return(list(
+    raw_assay_results = raw_assay_results,
+    assay_results = results
+  ))
+
+}
+
+#' Process Raw Assay Results
+#' @description
+process_raw_assay_results <- function(filepath, ranges, plate_size, layout) {
   # raw fluorescence ----
-  raw_fluorescence <- purrr::map_dfc(cell_ranges$raw_fluorescence,
+  raw_fluorescence <- purrr::map_dfc(ranges$raw_fluorescence,
                                      ~readxl::read_excel(filepath,
                                                          range = .)) %>%
     dplyr::mutate(Time = hms::as_hms(Time...1),
@@ -72,9 +91,9 @@ process_sherlock <- function(filepath, sample_layout_mapping,
     dplyr::left_join(layout)
 
   # background values ---
-  background_fluorescence <- purrr::map_dfc(cell_ranges$background_fluorescence,
-                 ~readxl::read_excel(filepath,
-                                     range = .)) %>%
+  background_fluorescence <- purrr::map_dfc(ranges$background_fluorescence,
+                                            ~readxl::read_excel(filepath,
+                                                                range = .)) %>%
     dplyr::mutate(Time = hms::as_hms(Time...1),
                   dplyr::across(dplyr::everything(), as.character)) %>%
     dplyr::select(-tidyselect::contains("...")) %>%
@@ -87,7 +106,13 @@ process_sherlock <- function(filepath, sample_layout_mapping,
                   background_value = background_fluorescence,
                   time = Time, plate_run_id, well_location = location)
 
-  # results ---
+  return(raw_assay_results)
+}
+
+#' Process Assay Results
+#' @description
+process_assay_results <- function(filepath, range, plate_size, layout) {
+
   if (plate_size == 96) {
     stat_id_column <- "...14"
   } else if (plate_size == 384) {
@@ -95,7 +120,7 @@ process_sherlock <- function(filepath, sample_layout_mapping,
   }
 
   results <- readxl::read_excel(filepath,
-                                range = cell_ranges$results, col_types = "text") %>%
+                                range = range, col_types = "text") %>%
     tidyr::fill(...1) %>%
     dplyr::rename(stat_id_column = stat_id_column) %>%
     tidyr::pivot_longer(names_to = "number_location", values_to = "RFU", !c(...1, stat_id_column)) %>%
@@ -108,12 +133,7 @@ process_sherlock <- function(filepath, sample_layout_mapping,
     dplyr::select(sample_id, sample_type_id, assay_id, rfu_back_subtracted = RFU,
                   plate_run_id, well_location = location)
 
-  return(list(
-    metadata = metadata,
-    raw_assay_results = raw_assay_results,
-    assay_results = results
-  ))
-
+  return(results)
 }
 
 #' Process Sherlock Metadata
@@ -172,6 +192,16 @@ process_sherlock_metadata <- function(filepath) {
 
   return(metadata)
 
+}
+
+# TODO fix name
+#' Prepare layout
+#' @description add plate id
+#' @export
+prepare_layout <- function(filepath, plate_run_id) {
+  layout <- read_csv(filepath)
+  layout$plate_run_id <- plate_run_uid
+  return(layout)
 }
 
 #' Process Plate Layout
@@ -317,7 +347,6 @@ generate_range <- function(table_type = c("raw fluorescence", "background fluore
 
   return(cell_ranges)
 }
-
 
 
 

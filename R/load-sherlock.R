@@ -29,7 +29,7 @@ add_plate_run <- function(con, plate_run_settings) {
   plate_run_id <- DBI::dbFetch(res)
   DBI::dbClearResult(res)
 
-  return(plate_run_id)
+  return(plate_run_id$id)
 }
 
 #' @title Add assay results to run-id-database

@@ -13,13 +13,12 @@ con <- dbConnect(RPostgres::Postgres(),
                  password = cfg$password)
 
 # process protocol file
-protocol_settings <- process_protocol_file(protocol_file = "")
+protocol_settings <- process_protocol_file(protocol_file = "data-raw/exampleoutput_synergyH1trial_data_092021.xlsx")
 
 plate_run_uid <- add_plate_run(con, protocol_settings)
 
 # sample layout
-layout <- read_csv("data-raw/sample_layout_template.csv")
-layout$plate_run_id <- plate_run_uid
+layout <- prepare_layout("data-raw/sample_layout_template.csv", plate_run_uid)
 
 # run sherlock
 
