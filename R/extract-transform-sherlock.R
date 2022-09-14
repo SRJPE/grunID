@@ -125,10 +125,10 @@ process_assay_results <- function(filepath, range, plate_size, layout) {
 }
 
 # TODO fix name
-#' Prepare layout
+#' Process layout
 #' @description add plate id
 #' @export
-prepare_layout <- function(filepath, plate_run_id) {
+process_layout <- function(filepath, plate_run_id) {
   layout <- read_csv(filepath)
   layout$plate_run_id <- plate_run_uid
   return(layout)
