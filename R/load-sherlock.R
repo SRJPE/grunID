@@ -55,12 +55,3 @@ add_assay_results <- function(con, transformed_assay_results) {
 
 }
 
-
-expected_protocol_colnames <- function() {
-  c("plate_num", "software_version", "date", "reader_type", "reader_serial_number",
-    "plate_type", "set_point", "preheat_before_moving", "runtime",
-    "interval", "read_count", "run_mode", "excitation", "emissions",
-    "optics", "gain", "light_source", "lamp_energy", "read_height",
-    "genetic_method_id", "laboratory_id", "lab_work_preformed_by"
-  )
-}
