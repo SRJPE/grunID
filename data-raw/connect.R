@@ -18,7 +18,7 @@ tbl(con, "agency")
 plate_run_uid <- add_plate_run(con, protocol, genetic_method, laboratory, lab_work_preformed_by)
 
 # sample layout
-layout <- prepare_layout("data-raw/sample_layout_template.csv", plate_run_uid)
+layout <- process_layout("data-raw/sample_layout_template.csv", plate_run_uid)
 
 # run sherlock
 
@@ -26,7 +26,6 @@ layout <- prepare_layout("data-raw/sample_layout_template.csv", plate_run_uid)
 results <- process_sherlock(sherlock_results_filepath = "data-raw/exampleoutput_synergyH1trial_data_092021.xlsx",
                             sample_layout_mapping = layout,
                             plate_size = 96)
-
 
 grunID::add_assay_results(con, results)
 
