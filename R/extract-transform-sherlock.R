@@ -7,21 +7,21 @@
 #' The Synergy H1 result output from plate runs is organized using generic identifiers
 #' that need to be mapped to the real sample identifiers in order to properly associate
 #'  the results with the correct sample id in the database.The output file’s
-#'  “Layout” section contains the well locations for samples encoded as generic
-#'  sample ids (e.g. SPL1, BLK). The number of rows and columns in the Layout vary
+#'  “Layout” section contains the well locations for samples encoded as non-unique generic
+#'  sample ids (e.g., SPL1, BLK). The number of rows and columns in the Layout vary
 #'  based on the plate size. A plate size 96 has rows A:H and columns 1:12 and
 #'  a plate size 384 has rows A:P and columns 1:24. The results for each sample are
 #'  found within columns that are the letter-number combination of the well location
 #'  captured in the Layout section (e.g., if SPL1 is in row A and column 3,
-#'  then the measurements at each timestep are recorded in a column labeled A3).
+#'  then the measurements at each time step are recorded in a column labeled A3).
 #' To map the sample ids to the generic identifiers produced by the Synergy H1 software
 #' (e.g., SPL1 and A3), the user must provide the true sample ids at each well
 #' location in the following format:
-#' * location
-#' * sample_id
-#' * sample_type #TODO maybe move to plate_run if the same for entire plate
-#' * assay_id #TODO maybe move to plate_run if the same for entire plate
-#' * plate_run_id
+#' * location -
+#' * sample_id -
+#' * sample_type -
+#' * assay_id -
+#' * plate_run_id -
 #' @returns
 #' A list containing the following 3 tables:
 #' ## 1) metadata
