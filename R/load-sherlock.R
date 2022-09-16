@@ -1,18 +1,14 @@
 #' @title Create Plate Run
 #' @description blah
 #' @export
-add_plate_run <- function(con, protocol, genetic_method,
-                          laboratory, lab_work_preformed_by) {
+add_plate_run <- function(con, protocol_id, genetic_method_id,
+                          laboratory_id, lab_work_preformed_by) {
 
   if (!DBI::dbIsValid(con)) {
     stop("Connection argument does not have a valid connection the run-id database.
          Please try reconnecting to the database using 'DBI::dbConnect'",
          call. = FALSE)
   }
-
-  protocol_id <- protocol
-  genetic_method_id <- genetic_method
-  laboratory_id <- laboratory
 
   query <- glue::glue_sql("
   INSERT INTO plate_run (protocol, genetic_method_id,  laboratory_id, lab_work_preformed_by)
