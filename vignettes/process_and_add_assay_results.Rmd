@@ -1,0 +1,93 @@
+---
+title: "Process and Add Results to Database"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Process and Add Results to Database}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Objective
+
+This tutorial describes how to:
+
+1. securely manage database credentials
+2. connect to the genetics run identification database
+3. write plate run metadata to the database
+4. prepare Synergy H1 result data for upload to the database
+5. upload assay result data to the database
+
+## Dependencies
+
+The following packages are required:
+```{r setup, message=FALSE, warning=FALSE}
+library(grunID)
+library(config)
+library(DBI)
+library(RPostgres)
+```
+
+## Database Credentials
+
+For improved security, we recommend managing your database credential information 
+with environment variables. The `config` package makes it easy to manage environment 
+variables. The database administrator will provide you with the necessary credential 
+information to connect to the database.
+
+First, you will need to create a **config.yml** file with the following information:
+
+```{yaml}
+default:
+  dbname: {DATABASE_NAME}
+  host: {HOST_ADDRESS}
+  port: {PORT_NUMBER}
+  username: {YOUR_USERNAME}
+  password: {YOUR_PASSWORD}
+```
+Replace all `{*}` place holders with the credential information provided by the 
+database administrator.
+
+It is important to not accidentally share credentials online. If you are pushing 
+your analysis to Github make sure to add `config.yml` to your **.gitignore** file.
+
+By default, the configuration data is read from **config.yml** within the current
+working directory (or parent directories if no config file is found in the initially 
+specified directory). For more details see the [config docs](https://rstudio.github.io/config/).
+
+To load the credential information into memory call:
+```{r, eval=FALSE}
+cfg <- config::get()
+```
+
+## Database Connection
+
+The `DBI` package provides simple and consistent methods for connecting R to 
+database management systems (DBMS). For more details see the [DBI docs](https://dbi.r-dbi.org/). 
+The genetic run identification DBMS is implemented with PostgreSQL. We use the 
+`RPostgres` package to define the proper operations for creating connections and 
+defining data type mappings. For more details see the [RPostgres docs](https://rpostgres.r-dbi.org/).
+
+To create a connection object, we pass our credentials to `DBI::dbConnect()` and 
+specify a PostgreSQL driver.
+
+```{r, eval=FALSE}
+con <- DBI::dbConnect(RPostgres::Postgres(),
+                 dbname = cfg$dbname,
+                 host = cfg$host, 
+                 port = cfg$port,
+                 user = cfg$username,
+                 password = cfg$password)
+```
+Every time we use a function to read or write to the database, we will pass 
+this connection object to the function.
+
+## Add Plate Run Metadata
+
+
