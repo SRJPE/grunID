@@ -10,11 +10,18 @@ con <- DBI::dbConnect(RPostgres::Postgres(),
                  user = cfg$username,
                  password = cfg$password)
 
-# TODO helpers for protocol id, gen method id, lab id
-plate_run_uid <- grunID::add_plate_run(con, protocol, genetic_method, laboratory, lab_work_preformed_by)
+# select protocol
+all_protocols <- get_protocol(con)
+View(all_protocols) # review available protocols and select appropriate protocol
+protocol_id <- all_protocols[1, "id", drop = TRUE]
+
+#
+
+plate_run_uid <- grunID::add_plate_run(con, protocol_id, genetic_method_id,
+                                       laboratory_id, lab_work_preformed_by)
 
 # sample layout
-layout <- grunID::process_layout("data-raw/sample_layout_template.csv", plate_run_uid)
+layout <- grunID::process_layout("data-raw/sample_layout_template.csv")
 
 # run sherlock
 
@@ -26,3 +33,5 @@ results <- grunID::process_sherlock(sherlock_results_filepath = "data-raw/exampl
 grunID::add_assay_results(con, results)
 
 DBI::dbDisconnect(con)
+
+
