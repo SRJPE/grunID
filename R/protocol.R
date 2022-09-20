@@ -64,8 +64,17 @@ update_protocol <- function(con, protocol_id, protocol) {
   return(results)
 }
 
-delete_protocol <- function(con) {
+#' Delete Protocol
+#' @export
+delete_protocol <- function(con, protocol_id) {
+  is_valid_connection(con)
 
+  query <- glue::glue_sql("DELETE FROM protocol where id = {protocol_id};",
+                          .con = con)
+
+  result <- DBI::dbExecute(con, query)
+
+  return(result)
 }
 
 is_valid_protocol <- function(protocol) {
