@@ -62,7 +62,6 @@ update_protocol <- function(con, protocol_id, protocol) {
   DBI::dbClearResult(res)
 
   return(results)
-
 }
 
 delete_protocol <- function(con) {
