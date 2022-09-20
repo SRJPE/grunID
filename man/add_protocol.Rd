@@ -6,8 +6,27 @@
 \usage{
 add_protocol(con, protocol)
 }
+\arguments{
+\item{con}{A DBI connection object obtained from DBI::dbConnect()}
+
+\item{protocol}{A valid protocol dataframe, reference \code{\link{protocol_template}} as an example}
+}
 \description{
 Add Protocol
+}
+\examples{
+# example database connection
+cfg <- config::get()
+con <- DBI::dbConnect(RPostgres::Postgres(),
+                      dbname = cfg$dbname,
+                      host = cfg$host,
+                      port = cfg$port,
+                      user = cfg$username,
+                      password = cfg$password)
+
+new_protocol <- protocol_template
+new_protocol$software_version <- "3.11.20"
+add_protocol(con, new_protocol)
 }
 \seealso{
 Other protocol functions: 

@@ -14,7 +14,6 @@ get_protocols(con)
 }
 \examples{
 # example database connection
-\dontrun{
 cfg <- config::get()
 con <- DBI::dbConnect(RPostgres::Postgres(),
                       dbname = cfg$dbname,
@@ -22,7 +21,6 @@ con <- DBI::dbConnect(RPostgres::Postgres(),
                       port = cfg$port,
                       user = cfg$username,
                       password = cfg$password)
-}
 protocols <- get_protocols(con)
 }
 \seealso{

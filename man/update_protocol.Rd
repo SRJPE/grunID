@@ -6,8 +6,32 @@
 \usage{
 update_protocol(con, protocol_id, protocol)
 }
+\arguments{
+\item{con}{A DBI connection object obtained from DBI::dbConnect()}
+
+\item{protocol_id}{A numeric ID for the targeted protocol \code{\link{get_protocols}}}
+
+\item{protocol}{A valid protocol dataframe, reference \code{\link{protocol_template}} as an example}
+}
 \description{
 Update Protocol
+}
+\examples{
+# example database connection
+cfg <- config::get()
+con <- DBI::dbConnect(RPostgres::Postgres(),
+                      dbname = cfg$dbname,
+                      host = cfg$host,
+                      port = cfg$port,
+                      user = cfg$username,
+                      password = cfg$password)
+
+all_protocols <- get_protocols(con)
+View(all_protocols) # to view the ID of the protocol needing updates
+
+updated_protocol <- protocol_template
+updated_protocol$software_version <- "3.11.20"
+update_protocol(con, 1, updated_protocol)
 }
 \seealso{
 Other protocol functions: 

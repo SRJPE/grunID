@@ -3,7 +3,6 @@
 #' @param con A DBI connection object obtained from DBI::dbConnect()
 #' @examples
 #' # example database connection
-#' \dontrun{
 #' cfg <- config::get()
 #' con <- DBI::dbConnect(RPostgres::Postgres(),
 #'                       dbname = cfg$dbname,
@@ -11,7 +10,6 @@
 #'                       port = cfg$port,
 #'                       user = cfg$username,
 #'                       password = cfg$password)
-#' }
 #' protocols <- get_protocols(con)
 #' @family protocol functions
 #' @export
@@ -29,8 +27,24 @@ get_protocols <- function(con) {
 }
 
 #' Add Protocol
+#' @param con A DBI connection object obtained from DBI::dbConnect()
+#' @param protocol A valid protocol dataframe, reference \code{\link{protocol_template}} as an example
+#' @examples
+#' # example database connection
+#' cfg <- config::get()
+#' con <- DBI::dbConnect(RPostgres::Postgres(),
+#'                       dbname = cfg$dbname,
+#'                       host = cfg$host,
+#'                       port = cfg$port,
+#'                       user = cfg$username,
+#'                       password = cfg$password)
+#'
+#' new_protocol <- protocol_template
+#' new_protocol$software_version <- "3.11.20"
+#' add_protocol(con, new_protocol)
 #' @family protocol functions
 #' @export
+#' @md
 add_protocol <- function(con, protocol) {
   is_valid_connection(con)
   is_valid_protocol(protocol)
@@ -47,8 +61,28 @@ add_protocol <- function(con, protocol) {
 }
 
 #' Update Protocol
+#' @param con A DBI connection object obtained from DBI::dbConnect()
+#' @param protocol_id A numeric ID for the targeted protocol \code{\link{get_protocols}}
+#' @param protocol A valid protocol dataframe, reference \code{\link{protocol_template}} as an example
+#' @examples
+#' # example database connection
+#' cfg <- config::get()
+#' con <- DBI::dbConnect(RPostgres::Postgres(),
+#'                       dbname = cfg$dbname,
+#'                       host = cfg$host,
+#'                       port = cfg$port,
+#'                       user = cfg$username,
+#'                       password = cfg$password)
+#'
+#' all_protocols <- get_protocols(con)
+#' View(all_protocols) # to view the ID of the protocol needing updates
+#'
+#' updated_protocol <- protocol_template
+#' updated_protocol$software_version <- "3.11.20"
+#' update_protocol(con, 1, updated_protocol)
 #' @family protocol functions
 #' @export
+#' @md
 update_protocol <- function(con, protocol_id, protocol) {
   is_valid_connection(con)
   is_valid_protocol(protocol)
@@ -83,8 +117,25 @@ update_protocol <- function(con, protocol_id, protocol) {
 }
 
 #' Delete Protocol
+#' @param con A DBI connection object obtained from DBI::dbConnect()
+#' @param protocol_id A numeric ID for the targeted protocol \code{\link{get_protocols}}
+#' @examples
+#' # example database connection
+#' cfg <- config::get()
+#' con <- DBI::dbConnect(RPostgres::Postgres(),
+#'                       dbname = cfg$dbname,
+#'                       host = cfg$host,
+#'                       port = cfg$port,
+#'                       user = cfg$username,
+#'                       password = cfg$password)
+#'
+#' all_protocols <- get_protocols(con)
+#' View(all_protocols) # to view the ID of the protocol needing deletion
+#'
+#' delete_protocol(con, 1)
 #' @family protocol functions
 #' @export
+#' @md
 delete_protocol <- function(con, protocol_id) {
   is_valid_connection(con)
 

@@ -6,8 +6,28 @@
 \usage{
 delete_protocol(con, protocol_id)
 }
+\arguments{
+\item{con}{A DBI connection object obtained from DBI::dbConnect()}
+
+\item{protocol_id}{A numeric ID for the targeted protocol \code{\link{get_protocols}}}
+}
 \description{
 Delete Protocol
+}
+\examples{
+# example database connection
+cfg <- config::get()
+con <- DBI::dbConnect(RPostgres::Postgres(),
+                      dbname = cfg$dbname,
+                      host = cfg$host,
+                      port = cfg$port,
+                      user = cfg$username,
+                      password = cfg$password)
+
+all_protocols <- get_protocols(con)
+View(all_protocols) # to view the ID of the protocol needing deletion
+
+delete_protocol(con, 1)
 }
 \seealso{
 Other protocol functions: 
