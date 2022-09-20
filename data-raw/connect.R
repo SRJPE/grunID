@@ -21,7 +21,7 @@ plate_run_uid <- grunID::add_plate_run(con, protocol_id, genetic_method_id,
                                        laboratory_id, lab_work_preformed_by)
 
 # sample layout
-layout <- grunID::process_layout("data-raw/sample_layout_template.csv")
+layout <- grunID::process_well_sample_details("data-raw/well_sample_template.csv")
 
 # run sherlock
 

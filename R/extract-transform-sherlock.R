@@ -136,7 +136,7 @@ process_assay_results <- function(filepath, range, plate_size, layout) {
 #' Process layout
 #' @description add plate id
 #' @export
-process_layout <- function(filepath, plate_run_id) {
+process_well_sample_details <- function(filepath, plate_run_id) {
   layout <- read_csv(filepath)
   layout$plate_run_id <- plate_run_uid
   return(layout)
