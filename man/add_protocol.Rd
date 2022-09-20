@@ -9,3 +9,10 @@ add_protocol(con, protocol)
 \description{
 Add Protocol
 }
+\seealso{
+Other protocol functions: 
+\code{\link{delete_protocol}()},
+\code{\link{get_protocols}()},
+\code{\link{update_protocol}()}
+}
+\concept{protocol functions}

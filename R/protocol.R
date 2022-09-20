@@ -1,6 +1,22 @@
 #' Retrieve Protocols
+#' @description `get_protocols()` returns all protocols within the database
+#' @param con A DBI connection object obtained from DBI::dbConnect()
+#' @examples
+#' # example database connection
+#' \dontrun{
+#' cfg <- config::get()
+#' con <- DBI::dbConnect(RPostgres::Postgres(),
+#'                       dbname = cfg$dbname,
+#'                       host = cfg$host,
+#'                       port = cfg$port,
+#'                       user = cfg$username,
+#'                       password = cfg$password)
+#' }
+#' protocols <- get_protocols(con)
+#' @family protocol functions
 #' @export
-get_protocol <- function(con) {
+#' @md
+get_protocols <- function(con) {
   is_valid_connection(con)
 
   protocols <- dplyr::tbl(con, "protocol") |>
@@ -13,6 +29,7 @@ get_protocol <- function(con) {
 }
 
 #' Add Protocol
+#' @family protocol functions
 #' @export
 add_protocol <- function(con, protocol) {
   is_valid_connection(con)
@@ -30,6 +47,7 @@ add_protocol <- function(con, protocol) {
 }
 
 #' Update Protocol
+#' @family protocol functions
 #' @export
 update_protocol <- function(con, protocol_id, protocol) {
   is_valid_connection(con)
@@ -65,6 +83,7 @@ update_protocol <- function(con, protocol_id, protocol) {
 }
 
 #' Delete Protocol
+#' @family protocol functions
 #' @export
 delete_protocol <- function(con, protocol_id) {
   is_valid_connection(con)

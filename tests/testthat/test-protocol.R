@@ -42,6 +42,3 @@ test_that('add protocol works', {
 
 })
 
-# test_that('update protocol works', {
-#
-# })

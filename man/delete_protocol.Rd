@@ -9,3 +9,10 @@ delete_protocol(con, protocol_id)
 \description{
 Delete Protocol
 }
+\seealso{
+Other protocol functions: 
+\code{\link{add_protocol}()},
+\code{\link{get_protocols}()},
+\code{\link{update_protocol}()}
+}
+\concept{protocol functions}

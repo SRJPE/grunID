@@ -5,13 +5,13 @@ cfg <- config::get()
 
 con <- DBI::dbConnect(RPostgres::Postgres(),
                  dbname = cfg$dbname,
-                 host = cfg$host, # i.e. 'ec2-54-83-201-96.compute-1.amazonaws.com'
-                 port = cfg$port, # or any other port specified by your DBA
+                 host = cfg$host,
+                 port = cfg$port,
                  user = cfg$username,
                  password = cfg$password)
 
 # select protocol
-all_protocols <- get_protocol(con)
+all_protocols <- get_protocols(con)
 View(all_protocols) # review available protocols and select appropriate protocol
 protocol_id <- all_protocols[1, "id", drop = TRUE]
 
