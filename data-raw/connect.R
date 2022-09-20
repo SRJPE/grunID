@@ -15,8 +15,6 @@ all_protocols <- get_protocol(con)
 View(all_protocols) # review available protocols and select appropriate protocol
 protocol_id <- all_protocols[1, "id", drop = TRUE]
 
-#
-
 plate_run_uid <- grunID::add_plate_run(con, protocol_id, genetic_method_id,
                                        laboratory_id, lab_work_preformed_by)
 

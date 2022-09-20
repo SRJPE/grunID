@@ -2,7 +2,13 @@
 #' @export
 get_protocol <- function(con) {
   is_valid_connection(con)
-  protocols <- dplyr::tbl(con, "protocol") |> dplyr::collect()
+
+  protocols <- dplyr::tbl(con, "protocol") |>
+    dplyr::collect() |>
+    dplyr::mutate(dplyr::across(
+      c("run_mode", "optics", "light_source", "lamp_energy"),
+      as.character))
+
   return(protocols)
 }
 
@@ -23,7 +29,39 @@ add_protocol <- function(con, protocol) {
 
 }
 
-update_protocol <- function(con) {
+#' Update Protocol
+#' @export
+update_protocol <- function(con, protocol_id, protocol) {
+  is_valid_connection(con)
+  is_valid_protocol(protocol)
+
+  query <- glue::glue_sql("UPDATE protocol
+                           SET software_version = {protocol$software_version},
+                               reader_type = {protocol$reader_type},
+                               reader_serial_number = {protocol$reader_serial_number},
+                               plate_type = {protocol$plate_type},
+                               set_point = {protocol$set_point},
+                               preheat_before_moving = {protocol$preheat_before_moving},
+                               runtime = {protocol$runtime},
+                               interval = {protocol$interval},
+                               read_count = {protocol$read_count},
+                               run_mode = {protocol$run_mode},
+                               excitation = {protocol$excitation},
+                               emissions = {protocol$emissions},
+                               optics = {protocol$optics},
+                               gain = {protocol$gain},
+                               light_source = {protocol$light_source},
+                               lamp_energy = {protocol$lamp_energy},
+                               read_height = {protocol$read_height}
+                           WHERE id = {protocol_id}
+                           RETURNING id, updated_at;",
+                          .con = con)
+
+  res <- DBI::dbSendQuery(con, query)
+  results <- DBI::dbFetch(res)
+  DBI::dbClearResult(res)
+
+  return(results)
 
 }
 
