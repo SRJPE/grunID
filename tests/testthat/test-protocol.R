@@ -6,13 +6,25 @@ test_that("non-valid connection errors correctly", {
   DBI::dbDisconnect(con)
 
   expect_error(
-    get_protocol(con),
+    get_protocols(con),
     "Connection argument does not have a valid connection the run-id database.
          Please try reconnecting to the database using 'DBI::dbConnect'"
   )
 
   expect_error(
     add_protocol(con),
+    "Connection argument does not have a valid connection the run-id database.
+         Please try reconnecting to the database using 'DBI::dbConnect'"
+  )
+
+  expect_error(
+    update_protocol(con),
+    "Connection argument does not have a valid connection the run-id database.
+         Please try reconnecting to the database using 'DBI::dbConnect'"
+  )
+
+  expect_error(
+    delete_protocol(con),
     "Connection argument does not have a valid connection the run-id database.
          Please try reconnecting to the database using 'DBI::dbConnect'"
   )
@@ -42,3 +54,11 @@ test_that('add protocol works', {
 
 })
 
+test_that("update protocol works", {
+  con <- DBI::dbConnect(RSQLite::SQLite(), ":memory:")
+  protocol <- protocols
+  protocol$lamp_energy <- "Low"
+  expect_error(update_protocol(con, protocol_id = 1, protocol),
+               "The `lamp_energy` supplied is not valid")
+  DBI::dbDisconnect(con)
+})
