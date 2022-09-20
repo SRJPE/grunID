@@ -4,7 +4,13 @@
 \alias{add_plate_run}
 \title{Create Plate Run}
 \usage{
-add_plate_run(con, protocol, genetic_method, laboratory, lab_work_preformed_by)
+add_plate_run(
+  con,
+  protocol_id,
+  genetic_method_id,
+  laboratory_id,
+  lab_work_preformed_by
+)
 }
 \description{
 blah
