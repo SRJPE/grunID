@@ -12,14 +12,11 @@ con <- DBI::dbConnect(RPostgres::Postgres(),
 
 # select protocol
 all_protocols <- get_protocols(con)
-all_protocols[1, "lamp_energy"] <- "Low"
-a <- all_protocols[, c(-1, -19:-22)]
-add_protocol(con, a)
 
 View(all_protocols) # review available protocols and select appropriate protocol
 protocol_id <- all_protocols[1, "id", drop = TRUE]
 
-plate_run_uid <- grunID::add_plate_run(con, protocol_id, genetic_method_id,
+plate_run_uid <- grunID::add_plate_run(con, protocol_id, genetic_method_id = 1,
                                        laboratory_id, lab_work_preformed_by)
 
 # sample layout
