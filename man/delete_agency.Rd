@@ -12,7 +12,14 @@ delete_agency(con, agency_id)
 \item{agency_id}{A numeric ID for the targeted agency \code{\link{get_agencies}}}
 }
 \description{
-Delete Agency
+\code{delete_agency()} deletes an existing agency in the agency lookup table
+}
+\details{
+\strong{Note:} If an assay type has been associated with an assay result record, then
+the database restricts deleting this assay type. You must first update those records
+with a new assay type before reattempting to delete the assay type. Consider
+using the \code{\link{update_assay_status}} function if you are wanting to
+retire an assay type while retaining its value for historic records.
 }
 \examples{
 # example database connection

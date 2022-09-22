@@ -18,7 +18,7 @@ update_agency(con, agency_id, agency)
 }}
 }
 \description{
-Update Agency
+\code{update_agency()} updates an existing agency in the agency lookup table
 }
 \examples{
 # example database connection

@@ -17,7 +17,7 @@ is called. This helps preserve look up values that are valid in historic
 contexts, but are no longer valid for current data records.}
 }
 \description{
-Change Agency Status
+\code{update_agency_status()} changes active flag on existing agency in the agency lookup table
 }
 \examples{
 # example database connection
