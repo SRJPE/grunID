@@ -32,5 +32,3 @@ results <- grunID::process_sherlock(sherlock_results_filepath = "data-raw/exampl
 grunID::add_assay_results(con, results)
 
 DBI::dbDisconnect(con)
-
-
