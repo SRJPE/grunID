@@ -24,6 +24,7 @@ get_genetic_methods <- function(con) {
 }
 
 #' Add Genetic Method
+#' @description `add_genetic_method()` adds a new genetic method type to the genetic method lookup table
 #' @param con A DBI connection object obtained from DBI::dbConnect()
 #' @param genetic_method A valid genetic method dataframe with the following:
 #'
@@ -64,6 +65,7 @@ add_genetic_method <- function(con, genetic_method) {
 }
 
 #' Update Genetic Method
+#' @description `update_genetic_method()` updates an existing genetic method in the genetic method lookup table
 #' @param con A DBI connection object obtained from DBI::dbConnect()
 #' @param genetic_method_id A numeric ID for the targeted genetic method \code{\link{get_genetic_methods}}
 #' @param genetic_method A valid genetic method dataframe with the following:
@@ -110,9 +112,61 @@ update_genetic_method <- function(con, genetic_method_id, genetic_method) {
   return(results)
 }
 
+#' Change Agency Status
+#' @description `update_genetic_method_status()` changes active flag on existing genetic method in the genetic method lookup table
+#' @param con A DBI connection object obtained from DBI::dbConnect()
+#' @param genetic_method_id A numeric ID for the targeted genetic method \code{\link{get_agencies}}
+#' @param set_active A boolean, TRUE for activating and FALSE for deactivating.
+#' When a record is active, it is returned by default when \code{\link{get_agencies}}
+#' is called. This helps preserve look up values that are valid in historic
+#' contexts, but are no longer valid for current data records.
+#' @export
+#' @examples
+#' # example database connection
+#' cfg <- config::get()
+#' con <- DBI::dbConnect(RPostgres::Postgres(),
+#'                       dbname = cfg$dbname,
+#'                       host = cfg$host,
+#'                       port = cfg$port,
+#'                       user = cfg$username,
+#'                       password = cfg$password)
+#'
+#' all_agencies <- get_agencies(con)
+#' View(all_agencies) # to view the ID of the genetic method needing status change
+#'
+#' #deactivate
+#' update_genetic_method_status(con, 4, set_active=FALSE)
+#' #reactivate
+#' update_genetic_method_status(con, 4)
+#' @family genetic method functions
+#' @export
+#' @md
+update_genetic_method_status <- function(con, genetic_method_id, set_active=TRUE) {
+  is_valid_connection(con)
+
+  query <- glue::glue_sql("UPDATE genetic_method
+                           SET active = {set_active}
+                           WHERE id = {genetic_method_id}
+                           RETURNING id, code, active, updated_at;",
+                          .con = con)
+
+  res <- DBI::dbSendQuery(con, query)
+  results <- DBI::dbFetch(res)
+  DBI::dbClearResult(res)
+
+  return(results)
+}
+
+
 #' Delete Genetic Method
+#' @description `delete_genetic_method()` deletes an existing genetic method in the genetic method lookup table
 #' @param con A DBI connection object obtained from DBI::dbConnect()
 #' @param genetic_method_id A numeric ID for the targeted genetic method \code{\link{get_genetic_methods}}
+#' **Note:** If an genetic method type has been associated with an genetic method result record, then
+#' the database restricts deleting this genetic method type. You must first update those records
+#' with a new genetic method type before reattempting to delete the genetic method type. Consider
+#' using the \code{\link{update_genetic_method_status}} function if you are wanting to
+#' retire an genetic method type while retaining its value for historic records.
 #' @examples
 #' # example database connection
 #' cfg <- config::get()

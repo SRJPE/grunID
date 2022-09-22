@@ -19,7 +19,7 @@ update_genetic_method(con, genetic_method_id, genetic_method)
 }}
 }
 \description{
-Update Genetic Method
+\code{update_genetic_method()} updates an existing genetic method in the genetic method lookup table
 }
 \examples{
 # example database connection
@@ -42,6 +42,7 @@ update_genetic_method(con, genetic_method_id = 1, updated_method)
 Other genetic method functions: 
 \code{\link{add_genetic_method}()},
 \code{\link{delete_genetic_method}()},
-\code{\link{get_genetic_methods}()}
+\code{\link{get_genetic_methods}()},
+\code{\link{update_genetic_method_status}()}
 }
 \concept{genetic method functions}

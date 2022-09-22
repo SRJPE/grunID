@@ -17,7 +17,7 @@ add_genetic_method(con, genetic_method)
 }}
 }
 \description{
-Add Genetic Method
+\code{add_genetic_method()} adds a new genetic method type to the genetic method lookup table
 }
 \examples{
 # example database connection
@@ -38,6 +38,7 @@ add_genetic_method(con, new_method)
 Other genetic method functions: 
 \code{\link{delete_genetic_method}()},
 \code{\link{get_genetic_methods}()},
+\code{\link{update_genetic_method_status}()},
 \code{\link{update_genetic_method}()}
 }
 \concept{genetic method functions}

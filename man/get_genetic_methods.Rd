@@ -27,6 +27,7 @@ protocols <- get_genetic_methods(con)
 Other genetic method functions: 
 \code{\link{add_genetic_method}()},
 \code{\link{delete_genetic_method}()},
+\code{\link{update_genetic_method_status}()},
 \code{\link{update_genetic_method}()}
 }
 \concept{genetic method functions}
