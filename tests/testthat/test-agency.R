@@ -35,7 +35,7 @@ test_that('duplicate agencies are not added', {
   error_message_from_db <- 'Error: COPY returned error: ERROR: duplicate key value violates unique constraint'
 
   mockery::stub(add_agency, 'DBI::dbExecute', function(con, query) {stop(error_message_from_db)})
-  expect_error(add_agency(con, "bin_code_enum", "A"))
+  expect_error(add_agency(con, data.frame(code="DWR", agency_name="Deparment of Water Resources")))
 
   DBI::dbDisconnect(con)
 })

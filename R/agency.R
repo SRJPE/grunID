@@ -14,11 +14,17 @@
 #' @family agency functions
 #' @export
 #' @md
-get_agencies <- function(con) {
+get_agencies <- function(con, is_active=TRUE, all_results=FALSE) {
   is_valid_connection(con)
 
+  if(all_results) {
+    agencies <- dplyr::tbl(con, "agency") |>
+      dplyr::collect()
+  } else {
   agencies <- dplyr::tbl(con, "agency") |>
+    dplyr::filter(active == is_active) |>
     dplyr::collect()
+  }
 
   return(agencies)
 }
@@ -95,6 +101,50 @@ update_agency <- function(con, agency_id, agency) {
                                agency_name = {agency$agency_name},
                            WHERE id = {agency_id}
                            RETURNING id, updated_at;",
+                          .con = con)
+
+  res <- DBI::dbSendQuery(con, query)
+  results <- DBI::dbFetch(res)
+  DBI::dbClearResult(res)
+
+  return(results)
+}
+
+#' Change Agency Status
+#' @param con A DBI connection object obtained from DBI::dbConnect()
+#' @param agency_id A numeric ID for the targeted agency \code{\link{get_agencies}}
+#' @param set_active A boolean, TRUE for activating and FALSE for deactivating.
+#' When a record is active, it is returned by default when \code{\link{get_agencies}}
+#' is called. This helps preserve look up values that are valid in historic
+#' contexts, but are no longer valid for current data records.
+#' @export
+#' @examples
+#' # example database connection
+#' cfg <- config::get()
+#' con <- DBI::dbConnect(RPostgres::Postgres(),
+#'                       dbname = cfg$dbname,
+#'                       host = cfg$host,
+#'                       port = cfg$port,
+#'                       user = cfg$username,
+#'                       password = cfg$password)
+#'
+#' all_agencies <- get_agencies(con)
+#' View(all_agencies) # to view the ID of the agency needing status change
+#'
+#' #deactivate
+#' update_agency_status(con, 4, set_active=FALSE)
+#' #reactivate
+#' update_agency_status(con, 4)
+#' @family agency functions
+#' @export
+#' @md
+update_agency_status <- function(con, agency_id, set_active=TRUE) {
+  is_valid_connection(con)
+
+  query <- glue::glue_sql("UPDATE agency
+                           SET active = {set_active}
+                           WHERE id = {agency_id}
+                           RETURNING id, code, active, updated_at;",
                           .con = con)
 
   res <- DBI::dbSendQuery(con, query)

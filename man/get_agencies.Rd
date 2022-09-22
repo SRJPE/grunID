@@ -4,7 +4,7 @@
 \alias{get_agencies}
 \title{Retrieve Agencies}
 \usage{
-get_agencies(con)
+get_agencies(con, is_active = TRUE, all_results = FALSE)
 }
 \arguments{
 \item{con}{A DBI connection object obtained from DBI::dbConnect()}
@@ -27,6 +27,7 @@ agencies <- get_agencies(con)
 Other agency functions: 
 \code{\link{add_agency}()},
 \code{\link{delete_agency}()},
+\code{\link{update_agency_status}()},
 \code{\link{update_agency}()}
 }
 \concept{agency functions}
