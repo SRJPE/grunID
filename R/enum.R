@@ -182,4 +182,3 @@ is_valid_enum <- function(enum, enum_value) {
 
 }
 
-

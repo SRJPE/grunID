@@ -10,6 +10,7 @@ con <- DBI::dbConnect(RPostgres::Postgres(),
                  user = cfg$username,
                  password = cfg$password)
 
+test <- add_sample_plan(con, grunID::sample_plan_template)
 # select protocol
 all_protocols <- get_protocols(con)
 
