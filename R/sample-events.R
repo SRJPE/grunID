@@ -60,7 +60,6 @@ add_sample_events <- function(con, sample_plan) {
 
   DBI::dbClearResult(res)
 
-  print(sample_event_ids)
   return(sample_event_ids)
 }
 
