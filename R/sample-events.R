@@ -140,7 +140,7 @@ add_sample_status <- function(con, sample_ids) {
 }
 
 
-is_valid_sample_plan <- function(con, sample_plan) {
+is_valid_sample_plan <- function(sample_plan) {
 
   if (!is.data.frame(sample_plan)) {
     stop("Please provide agency as a dataframe", call. = FALSE)
@@ -155,9 +155,9 @@ is_valid_sample_plan <- function(con, sample_plan) {
   valid_locations <- c("BTC", "BUT", "CLR", "DER", "FTH_RM17", "MIL", "DEL", "KNL",
                        "TIS", "FTH_RM61")
 
-  if (!all(sample_plan$location_code %in% valid_locations$code)) {
+  if (!all(sample_plan$location_code %in% valid_locations)) {
     stop(sprintf("location_code provided not one of valid codes %s",
-                 paste0(valid_locations$code, collapse = ", ")), call. = FALSE)
+                 paste0(valid_locations, collapse = ", ")), call. = FALSE)
   }
 
   if (!all(is.integer(sample_plan$sample_event_number))) {
