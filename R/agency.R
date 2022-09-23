@@ -30,7 +30,7 @@ get_agencies <- function(con, is_active=TRUE, all_results=FALSE) {
 }
 
 #' Add Agency
-#' @description `add_assay()` adds a new assay type to the assay lookup table
+#' @description `add_agency()` adds a new agency to the agency lookup table
 #' @param con A DBI connection object obtained from DBI::dbConnect()
 #' @param agency A valid agency dataframe with the following:
 #'
@@ -162,11 +162,11 @@ update_agency_status <- function(con, agency_id, set_active=TRUE) {
 #' @param con A DBI connection object obtained from DBI::dbConnect()
 #' @param agency_id A numeric ID for the targeted agency \code{\link{get_agencies}}
 #' @details
-#' **Note:** If an assay type has been associated with an assay result record, then
-#' the database restricts deleting this assay type. You must first update those records
-#' with a new assay type before reattempting to delete the assay type. Consider
-#' using the \code{\link{update_assay_status}} function if you are wanting to
-#' retire an assay type while retaining its value for historic records.
+#' **Note:** If an agency has been associated with a permit record, then
+#' the database restricts deleting this agency. You must first update those records
+#' with a new agency before reattempting to delete the agency. Consider
+#' using the \code{\link{update_agency_status}} function if you are wanting to
+#' retire an agency while retaining its value for historic records.
 #' @examples
 #' # example database connection
 #' cfg <- config::get()

@@ -16,7 +16,7 @@ add_agency(con, agency)
 }}
 }
 \description{
-\code{add_assay()} adds a new assay type to the assay lookup table
+\code{add_agency()} adds a new agency to the agency lookup table
 }
 \examples{
 # example database connection

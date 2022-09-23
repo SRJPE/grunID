@@ -15,11 +15,11 @@ delete_agency(con, agency_id)
 \code{delete_agency()} deletes an existing agency in the agency lookup table
 }
 \details{
-\strong{Note:} If an assay type has been associated with an assay result record, then
-the database restricts deleting this assay type. You must first update those records
-with a new assay type before reattempting to delete the assay type. Consider
-using the \code{\link{update_assay_status}} function if you are wanting to
-retire an assay type while retaining its value for historic records.
+\strong{Note:} If an agency has been associated with a permit record, then
+the database restricts deleting this agency. You must first update those records
+with a new agency before reattempting to delete the agency. Consider
+using the \code{\link{update_agency_status}} function if you are wanting to
+retire an agency while retaining its value for historic records.
 }
 \examples{
 # example database connection
