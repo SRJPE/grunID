@@ -4,3 +4,5 @@
 .Ruserdata
 .DS_Store
 config.yml
+data-raw/~$*
+inst/doc

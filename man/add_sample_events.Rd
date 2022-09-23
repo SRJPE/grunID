@@ -2,31 +2,10 @@
 % Please edit documentation in R/sample-events.R
 \name{add_sample_events}
 \alias{add_sample_events}
-\title{Create sample_events}
+\title{Create sample events}
 \usage{
-add_sample_events(con, sample_bins)
+add_sample_events(con, sample_plan)
 }
 \description{
-Create sample_events
-}
-\examples{
-con <- DBI::dbConnect(
-                      RPostgres::Postgres(),
-                      dbname = cfg$dbname,
-                      host = cfg$host, # i.e. 'ec2-54-83-201-96.compute-1.amazonaws.com'
-                      port = cfg$port, # or any other port specified by your DBA
-                      user = cfg$username,
-                      password = cfg$password
-                      )
-
-sample_bins <- tibble(
-                     location_code = c("BTC", "BUT"),
-                     sample_event_number = 1:2,
-                     first_sample_date = "2020-01-01",
-                     sample_bin_code = "A",
-                     min_fork_length = 10,
-                     max_fork_length = 95,
-                     expected_number_of_samples = 10
-                     )
-sample_events(con, sample_bins)
+Create sample events
 }

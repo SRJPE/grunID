@@ -1,33 +1,34 @@
-#' Connec to Run ID Database
+#' Connect to Run ID Database
 library(DBI)
 library(grunID)
-library(dplyr)
-library(readr)
 cfg <- config::get()
 
-con <- dbConnect(RPostgres::Postgres(),
+con <- DBI::dbConnect(RPostgres::Postgres(),
                  dbname = cfg$dbname,
-                 host = cfg$host, # i.e. 'ec2-54-83-201-96.compute-1.amazonaws.com'
-                 port = cfg$port, # or any other port specified by your DBA
+                 host = cfg$host,
+                 port = cfg$port,
                  user = cfg$username,
                  password = cfg$password)
 
-# process protocol file
-protocol_settings <- process_protocol_file(protocol_file = "")
+test <- add_sample_plan(con, grunID::sample_plan_template)
+# select protocol
+all_protocols <- get_protocols(con)
 
-plate_run_uid <- add_plate_run(con, protocol_settings)
+View(all_protocols) # review available protocols and select appropriate protocol
+protocol_id <- all_protocols[1, "id", drop = TRUE]
+
+plate_run_uid <- grunID::add_plate_run(con, protocol_id, genetic_method_id = 1,
+                                       laboratory_id, lab_work_preformed_by)
 
 # sample layout
-layout <- read_csv("data-raw/sample_layout_template.csv")
-layout$plate_run_id <- plate_run_uid
+layout <- grunID::process_well_sample_details("data-raw/well_sample_template.csv")
 
 # run sherlock
 
 # process
-results <- process_sherlock(sherlock_results_filepath = "data-raw/exampleoutput_synergyH1trial_data_092021.xlsx",
+results <- grunID::process_sherlock(sherlock_results_filepath = "data-raw/exampleoutput_synergyH1trial_data_092021.xlsx",
                             sample_layout_mapping = layout,
                             plate_size = 96)
-
 
 grunID::add_assay_results(con, results)
 

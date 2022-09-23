@@ -1,7 +1,8 @@
 #' @title Create Plate Run
 #' @description blah
 #' @export
-add_plate_run <- function(con, plate_run_settings) {
+add_plate_run <- function(con, protocol_id, genetic_method_id,
+                          laboratory_id, lab_work_preformed_by) {
 
   if (!DBI::dbIsValid(con)) {
     stop("Connection argument does not have a valid connection the run-id database.
@@ -9,27 +10,16 @@ add_plate_run <- function(con, plate_run_settings) {
          call. = FALSE)
   }
 
-  # validate incoming data
-  if (any(missing_names <- !tibble::has_name(plate_run_settings, expected_protocol_colnames()))) {
-    stop(sprintf("the following protocol elements are missing: %s",
-                 paste0(expected_protocol_colnames()[missing_names], collapse = ", ")
-                 ), call. = FALSE)
-  }
-
-
-  # write to table using the con object
-  list2env(plate_run_settings, env = environment())
-
   query <- glue::glue_sql("
-  INSERT INTO plate_run (software_version, date, reader_type, reader_serial_number, plate_type, set_point, preheat_before_moving, runtime, interval, read_count, run_mode, excitation, emissions, optics, gain, light_source, lamp_energy, read_height, genetic_method_id, laboratory_id, lab_work_preformed_by)
-  VALUES ({software_version}, {date}, {reader_type}, {reader_serial_number}, {plate_type}, {set_point}, {preheat_before_moving}, {runtime}, {interval}, {read_count}, {run_mode}, {excitation}, {emissions}, {optics}, {gain}, {light_source}, {lamp_energy}, {read_height}, {genetic_method_id}, {laboratory_id}, {lab_work_preformed_by}) RETURNING id;",
+  INSERT INTO plate_run (protocol, genetic_method_id,  laboratory_id, lab_work_preformed_by)
+  VALUES ({protocol_id}, {genetic_method_id}, {laboratory_id}, {lab_work_preformed_by}) RETURNING id;",
                  .con = con)
 
   res <- DBI::dbSendQuery(con, query)
   plate_run_id <- DBI::dbFetch(res)
   DBI::dbClearResult(res)
 
-  return(plate_run_id)
+  return(plate_run_id$id)
 }
 
 #' @title Add assay results to run-id-database
@@ -61,12 +51,3 @@ add_assay_results <- function(con, transformed_assay_results) {
 
 }
 
-
-expected_protocol_colnames <- function() {
-  c("plate_num", "software_version", "date", "reader_type", "reader_serial_number",
-    "plate_type", "set_point", "preheat_before_moving", "runtime",
-    "interval", "read_count", "run_mode", "excitation", "emissions",
-    "optics", "gain", "light_source", "lamp_energy", "read_height",
-    "genetic_method_id", "laboratory_id", "lab_work_preformed_by"
-  )
-}

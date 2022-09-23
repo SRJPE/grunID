@@ -25,3 +25,7 @@ update_sample_status <- function(con, sample_ids,
   DBI::dbExecute(con, sample_status_query)
 
 }
+
+get_sample_status <- function(con, sample_ids) {
+
+}
