@@ -10,7 +10,7 @@ delete_genetic_method(con, genetic_method_id)
 \item{con}{A DBI connection object obtained from DBI::dbConnect()}
 
 \item{genetic_method_id}{A numeric ID for the targeted genetic method \code{\link{get_genetic_methods}}
-\strong{Note:} If an genetic method type has been associated with an genetic method result record, then
+\strong{Note:} If an genetic method type has been associated with an assay result record, then
 the database restricts deleting this genetic method type. You must first update those records
 with a new genetic method type before reattempting to delete the genetic method type. Consider
 using the \code{\link{update_genetic_method_status}} function if you are wanting to

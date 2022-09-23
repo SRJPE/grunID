@@ -27,6 +27,7 @@ protocols <- get_protocols(con)
 Other protocol functions: 
 \code{\link{add_protocol}()},
 \code{\link{delete_protocol}()},
+\code{\link{update_protocol_status}()},
 \code{\link{update_protocol}()}
 }
 \concept{protocol functions}

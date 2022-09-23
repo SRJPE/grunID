@@ -27,6 +27,7 @@ get_protocols <- function(con) {
 }
 
 #' Add Protocol
+#' @description `add_protocol()` adds a new protocol to the protocol lookup table
 #' @param con A DBI connection object obtained from DBI::dbConnect()
 #' @param protocol A valid protocol dataframe, reference \code{\link{protocol_template}} as an example
 #' @examples
@@ -61,6 +62,7 @@ add_protocol <- function(con, protocol) {
 }
 
 #' Update Protocol
+#' @description `update_protocol()` updates an existing protocol in the protocol lookup table
 #' @param con A DBI connection object obtained from DBI::dbConnect()
 #' @param protocol_id A numeric ID for the targeted protocol \code{\link{get_protocols}}
 #' @param protocol A valid protocol dataframe, reference \code{\link{protocol_template}} as an example
@@ -116,9 +118,60 @@ update_protocol <- function(con, protocol_id, protocol) {
   return(results)
 }
 
+#' Update Protocol Status
+#' @description `update_protocol_status()` changes active flag on existing protocol in the protocol lookup table
+#' @param con A DBI connection object obtained from DBI::dbConnect()
+#' @param protocol_id A numeric ID for the targeted protocol \code{\link{get_agencies}}
+#' @param set_active A boolean, TRUE for activating and FALSE for deactivating.
+#' When a record is active, it is returned by default when \code{\link{get_agencies}}
+#' is called. This helps preserve look up values that are valid in historic
+#' contexts, but are no longer valid for current data records.
+#' @export
+#' @examples
+#' # example database connection
+#' cfg <- config::get()
+#' con <- DBI::dbConnect(RPostgres::Postgres(),
+#'                       dbname = cfg$dbname,
+#'                       host = cfg$host,
+#'                       port = cfg$port,
+#'                       user = cfg$username,
+#'                       password = cfg$password)
+#'
+#' all_agencies <- get_agencies(con)
+#' View(all_agencies) # to view the ID of the protocol needing status change
+#'
+#' #deactivate
+#' update_protocol_status(con, 4, set_active=FALSE)
+#' #reactivate
+#' update_protocol_status(con, 4)
+#' @family protocol functions
+#' @export
+#' @md
+update_protocol_status <- function(con, protocol_id, set_active=TRUE) {
+  is_valid_connection(con)
+
+  query <- glue::glue_sql("UPDATE protocol
+                           SET active = {set_active}
+                           WHERE id = {protocol_id}
+                           RETURNING id, code, active, updated_at;",
+                          .con = con)
+
+  res <- DBI::dbSendQuery(con, query)
+  results <- DBI::dbFetch(res)
+  DBI::dbClearResult(res)
+
+  return(results)
+}
+
 #' Delete Protocol
+#' @description `delete_protocol()` deletes an existing protocol in the protocol lookup table
 #' @param con A DBI connection object obtained from DBI::dbConnect()
 #' @param protocol_id A numeric ID for the targeted protocol \code{\link{get_protocols}}
+#' **Note:** If an protocol has been associated with a assay result record, then
+#' the database restricts deleting this protocol. You must first update those records
+#' with a new protocol before reattempting to delete the protocol. Consider
+#' using the \code{\link{update_protocol_status}} function if you are wanting to
+#' retire an protocol while retaining its value for historic records.
 #' @examples
 #' # example database connection
 #' cfg <- config::get()

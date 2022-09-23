@@ -14,7 +14,7 @@ update_protocol(con, protocol_id, protocol)
 \item{protocol}{A valid protocol dataframe, reference \code{\link{protocol_template}} as an example}
 }
 \description{
-Update Protocol
+\code{update_protocol()} updates an existing protocol in the protocol lookup table
 }
 \examples{
 # example database connection
@@ -37,6 +37,7 @@ update_protocol(con, 1, updated_protocol)
 Other protocol functions: 
 \code{\link{add_protocol}()},
 \code{\link{delete_protocol}()},
-\code{\link{get_protocols}()}
+\code{\link{get_protocols}()},
+\code{\link{update_protocol_status}()}
 }
 \concept{protocol functions}

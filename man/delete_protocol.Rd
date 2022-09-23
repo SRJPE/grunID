@@ -9,10 +9,15 @@ delete_protocol(con, protocol_id)
 \arguments{
 \item{con}{A DBI connection object obtained from DBI::dbConnect()}
 
-\item{protocol_id}{A numeric ID for the targeted protocol \code{\link{get_protocols}}}
+\item{protocol_id}{A numeric ID for the targeted protocol \code{\link{get_protocols}}
+\strong{Note:} If an protocol has been associated with a assay result record, then
+the database restricts deleting this protocol. You must first update those records
+with a new protocol before reattempting to delete the protocol. Consider
+using the \code{\link{update_protocol_status}} function if you are wanting to
+retire an protocol while retaining its value for historic records.}
 }
 \description{
-Delete Protocol
+\code{delete_protocol()} deletes an existing protocol in the protocol lookup table
 }
 \examples{
 # example database connection
@@ -33,6 +38,7 @@ delete_protocol(con, 1)
 Other protocol functions: 
 \code{\link{add_protocol}()},
 \code{\link{get_protocols}()},
+\code{\link{update_protocol_status}()},
 \code{\link{update_protocol}()}
 }
 \concept{protocol functions}

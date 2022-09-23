@@ -12,7 +12,7 @@ add_protocol(con, protocol)
 \item{protocol}{A valid protocol dataframe, reference \code{\link{protocol_template}} as an example}
 }
 \description{
-Add Protocol
+\code{add_protocol()} adds a new protocol to the protocol lookup table
 }
 \examples{
 # example database connection
@@ -32,6 +32,7 @@ add_protocol(con, new_protocol)
 Other protocol functions: 
 \code{\link{delete_protocol}()},
 \code{\link{get_protocols}()},
+\code{\link{update_protocol_status}()},
 \code{\link{update_protocol}()}
 }
 \concept{protocol functions}

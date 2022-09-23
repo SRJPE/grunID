@@ -112,7 +112,7 @@ update_agency <- function(con, agency_id, agency) {
   return(results)
 }
 
-#' Change Agency Status
+#' Update Agency Status
 #' @description `update_agency_status()` changes active flag on existing agency in the agency lookup table
 #' @param con A DBI connection object obtained from DBI::dbConnect()
 #' @param agency_id A numeric ID for the targeted agency \code{\link{get_agencies}}
