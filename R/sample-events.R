@@ -25,10 +25,10 @@
 #' @md
 add_sample_plan <- function(con, sample_plan) {
   is_valid_connection(con)
-  is_valid_sample_bin(sample_plan)
+  is_valid_sample_plan(sample_plan)
 
   sample_event_ids <- add_sample_events(con, sample_plan)
-  sample_id_insert <- add_sample_plan(con, sample_plan, sample_event_ids)
+  sample_id_insert <- add_sample_bins(con, sample_plan, sample_event_ids)
   sample_ids <- add_samples(con, sample_plan, sample_id_insert)
   number_of_samples_added <- add_sample_status(con, sample_ids)
 
@@ -65,7 +65,7 @@ add_sample_events <- function(con, sample_plan) {
 }
 
 #' Create sample bins
-add_sample_plan <- function(con, sample_plan, sample_event_ids) {
+add_sample_bins <- function(con, sample_plan, sample_event_ids) {
 
   sample_bin_insert <- dplyr::left_join(sample_plan, sample_event_ids,
                                         by = c("sample_event_number"))
@@ -140,7 +140,7 @@ add_sample_status <- function(con, sample_ids) {
 }
 
 
-is_valid_sample_bin <- function(con, sample_plan) {
+is_valid_sample_plan <- function(con, sample_plan) {
 
   if (!is.data.frame(sample_plan)) {
     stop("Please provide agency as a dataframe", call. = FALSE)
