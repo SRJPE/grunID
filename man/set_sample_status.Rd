@@ -2,7 +2,7 @@
 % Please edit documentation in R/sample-status.R
 \name{set_sample_status}
 \alias{set_sample_status}
-\title{Set the status code for a list of existing samples}
+\title{Set Status Code}
 \usage{
 set_sample_status(
   con,
@@ -17,8 +17,39 @@ set_sample_status(
 
 \item{sample_ids}{vector of sample ids to update}
 
-\item{status}{status to code to use for update}
+\item{status}{status code to use for the update
+\itemize{
+\item \strong{created} status assigned automatically when a new sample ID is generated
+\item \strong{prepped} sample tube has been created
+\item \strong{out to field} sample tube is out in the field to be collected
+\item \strong{return from field} sample tube has returned from the field
+\item \strong{in analysis} sample is being analyzed
+\item \strong{stored} sample is in storage
+\item \strong{archived} sample has been sent to a tissue archive
+\item \strong{other lab} sample is out at another lab
+}}
 }
 \description{
-Set the status code for a list of existing samples
+Set the status code for existing samples
 }
+\examples{
+# example database connection
+cfg <- config::get()
+con <- DBI::dbConnect(RPostgres::Postgres(),
+                      dbname = cfg$dbname,
+                      host = cfg$host,
+                      port = cfg$port,
+                      user = cfg$username,
+                      password = cfg$password)
+
+sample_locations <- set_sample_locations(con,
+                                         sample_ids = c("FTH_RM1722_3_A_1",
+                                                         "FTH_RM1722_3_A_2"),
+                                         status = "prepped",
+                                         comment = "ready for pickup")
+}
+\seealso{
+Other status code functions: 
+\code{\link{get_sample_status}()}
+}
+\concept{status code functions}

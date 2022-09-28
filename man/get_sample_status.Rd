@@ -11,8 +11,27 @@ get_sample_status(con, sample_ids, full_history = FALSE)
 
 \item{sample_ids}{vector of sample ids to update}
 
-\item{full_history}{dk}
+\item{full_history}{when set to TRUE, will return the current and each previously assigned status for a sample ID}
 }
 \description{
-Get Sample Status
+View the current or full sample status history
 }
+\examples{
+# example database connection
+cfg <- config::get()
+con <- DBI::dbConnect(RPostgres::Postgres(),
+                      dbname = cfg$dbname,
+                      host = cfg$host,
+                      port = cfg$port,
+                      user = cfg$username,
+                      password = cfg$password)
+
+sample_locations <- get_sample_locations(con,
+                                         sample_ids = c("FTH_RM1722_3_A_1",
+                                                         "FTH_RM1722_3_A_2"))
+}
+\seealso{
+Other status code functions: 
+\code{\link{set_sample_status}()}
+}
+\concept{status code functions}

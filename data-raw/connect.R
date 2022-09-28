@@ -20,7 +20,7 @@ set_sample_status(con, sample_ids = sample_ids_to_set, comment = "sent to feathe
                   status = "out to field")
 
 a <- get_sample_status(con, sample_ids_to_set)
-b <- get_sample_status(con, sample_ids_to_set, TRUE)
+get_sample_status(con, sample_ids_to_set, TRUE) |> View()
 View(b)
 
 # select protocol

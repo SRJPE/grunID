@@ -1,8 +1,34 @@
-#' Set the status code for a list of existing samples
+#' Set Status Code
+#' @description Set the status code for existing samples
 #' @param con connection to the database
 #' @param sample_ids vector of sample ids to update
-#' @param status status to code to use for update
+#' @param status status code to use for the update
+#' * **created** status assigned automatically when a new sample ID is generated
+#' * **prepped** sample tube has been created
+#' * **out to field** sample tube is out in the field to be collected
+#' * **return from field** sample tube has returned from the field
+#' * **in analysis** sample is being analyzed
+#' * **stored** sample is in storage
+#' * **archived** sample has been sent to a tissue archive
+#' * **other lab** sample is out at another lab
+#' @examples
+#' # example database connection
+#' cfg <- config::get()
+#' con <- DBI::dbConnect(RPostgres::Postgres(),
+#'                       dbname = cfg$dbname,
+#'                       host = cfg$host,
+#'                       port = cfg$port,
+#'                       user = cfg$username,
+#'                       password = cfg$password)
+#'
+#' sample_locations <- set_sample_locations(con,
+#'                                          sample_ids = c("FTH_RM1722_3_A_1",
+#'                                                          "FTH_RM1722_3_A_2"),
+#'                                          status = "prepped",
+#'                                          comment = "ready for pickup")
+#' @family status code functions
 #' @export
+#' @md
 set_sample_status <- function(con, sample_ids,
                               status = c("created", "prepped", "out to field",
                                          "return from field", "in analysis",
@@ -40,10 +66,26 @@ set_sample_status <- function(con, sample_ids,
 }
 
 #' Get Sample Status
+#' @description View the current or full sample status history
 #' @param con connection to the database
 #' @param sample_ids vector of sample ids to update
-#' @param full_history dk
+#' @param full_history when set to TRUE, will return the current and each previously assigned status for a sample ID
+#' @examples
+#' # example database connection
+#' cfg <- config::get()
+#' con <- DBI::dbConnect(RPostgres::Postgres(),
+#'                       dbname = cfg$dbname,
+#'                       host = cfg$host,
+#'                       port = cfg$port,
+#'                       user = cfg$username,
+#'                       password = cfg$password)
+#'
+#' sample_locations <- get_sample_locations(con,
+#'                                          sample_ids = c("FTH_RM1722_3_A_1",
+#'                                                          "FTH_RM1722_3_A_2"))
+#' @family status code functions
 #' @export
+#' @md
 get_sample_status <- function(con, sample_ids, full_history = FALSE) {
 
   is_valid_connection(con)
