@@ -11,6 +11,18 @@ con <- DBI::dbConnect(RPostgres::Postgres(),
                  password = cfg$password)
 
 test <- add_sample_plan(con, grunID::sample_plan_template)
+
+a <- get_sample_status(con, sample_ids)
+View(a)
+sample_ids_to_set <- sample_ids[1:8]
+
+set_sample_status(con, sample_ids = sample_ids_to_set, comment = "sent to feather river",
+                  status = "out to field")
+
+a <- get_sample_status(con, sample_ids_to_set)
+b <- get_sample_status(con, sample_ids_to_set, TRUE)
+View(b)
+
 # select protocol
 all_protocols <- get_protocols(con)
 
