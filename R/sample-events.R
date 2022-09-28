@@ -30,7 +30,7 @@ add_sample_plan <- function(con, sample_plan) {
   sample_event_ids <- add_sample_events(con, sample_plan)
   sample_id_insert <- add_sample_bins(con, sample_plan, sample_event_ids)
   sample_ids <- add_samples(con, sample_plan, sample_id_insert)
-  number_of_samples_added <- add_sample_status(con, sample_ids)
+  number_of_samples_added <- set_sample_status(con, sample_ids, "created")
 
   return(number_of_samples_added)
 }
@@ -124,19 +124,6 @@ add_samples <- function(con, sample_plan, sample_id_insert) {
   return(sample_ids)
 }
 
-add_sample_status <- function(con, sample_ids) {
-  status_code <- rep(1, length(sample_ids))
-
-  sample_status_query <- glue::glue_sql("INSERT INTO sample_status (sample_id, status_code_id)
-                                        VALUES (
-                                          UNNEST(ARRAY[{sample_ids*}]),
-                                          UNNEST(ARRAY[{status_code*}])
-                                        );",
-                                        .con = con)
-
-  DBI::dbExecute(con, sample_status_query)
-
-}
 
 
 is_valid_sample_plan <- function(sample_plan) {
