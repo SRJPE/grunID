@@ -195,26 +195,11 @@ is_valid_laboratory <- function(laboratory) {
     stop("Please provide laboratory as a dataframe", call. = FALSE)
   }
 
-  if (!identical(sapply(protocol_template, class), sapply(laboratory, class))) {
-    stop("The laboratory supplied is not valid, reference `grunID::protocol_template`", call. = FALSE)
+  column_reference <- c("code" = "character", "laboratory_name" = "character",
+                        "description" = "character")
+  if (!identical(sapply(laboratory, class), column_reference)) {
+    stop('The laboratory supplied is not valid, see `help("add_laboratory")` for correct format', call. = FALSE)
   }
-
-  if (!laboratory$run_mode %in% c("Kinetic")) {
-    stop("The `run_mode` supplied is not valid", call. = FALSE)
-  }
-
-  if (!laboratory$optics %in% c("Top")) {
-    stop("The `optics` supplied is not valid", call. = FALSE)
-  }
-
-  if (!laboratory$light_source %in% c("Xenon Flash")) {
-    stop("The `light_source` supplied is not valid", call. = FALSE)
-  }
-
-  if (!laboratory$lamp_energy %in% c("High")) {
-    stop("The `lamp_energy` supplied is not valid", call. = FALSE)
-  }
-
 
 }
 
