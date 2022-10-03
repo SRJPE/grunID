@@ -1,8 +1,6 @@
 # library(openxlsx)
 # library(tidyverse)
 
-
-
 create_field_sheet <- function(wb, field_sheet_sample_plan,
                                sample_event_number, first_sample_date,
                                sample_location, sample_location_code) {
