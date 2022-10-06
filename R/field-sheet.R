@@ -1,16 +1,18 @@
 #' Create Field Sheets
 #' @description `create_field_sheet` appends a worksheet to an existing excel workbook
 #' containing a formatted field sheet to be used by crew collecting genetic samples.
-#' @param wb A Workbook object from \link{\code[openxlsx]{createWorkbook}}
-#' @param field_sheet_sample_plan A dataframe containing the content of the field sheet.
-#' Use the \code{sample_plan} output from \link{\code{get_field_sheet_event_plan}},
-#' this function also returns the other arguments required by this function.
+#' @param wb A Workbook object from \code{\link[openxlsx]{createWorkbook}}
+#' @param field_sheet_sample_plan A dataframe containing the content of the field sheet,
+#' use the \code{sample_plan} output from \code{\link{get_field_sheet_event_plan}}.
+#' *Note \code{\link{get_field_sheet_event_plan}} also returns the other arguments required by this function.*
+#'
 #' The following columns must contain data:
 #' * **Bin** The sampling bin identifier A-E
 #' * **Bin FL Range (mm)** The min to max fork length range of the sampling bin
 #' * **Sample #** A number denoting the order the sample was taken, 1 to the total
 #' number of planned samples with in the sampling bin
 #' * **Sample ID** \code{{sample_location_code}{YY}_{sample_event_number}_{sample_bin}_{sample_number}} (e.g., "BTC22_3_A_1")
+#'
 #' The remaining columns ("Date", "Time", "FL (mm)", "Field Run ID", "Fin Clip (Y/N)", "Comments")
 #' will be left empty and filled out by hand in the field
 #' @param sample_event_number The sampling event number, enumerated from 1 at

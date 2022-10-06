@@ -14,11 +14,12 @@ create_field_sheet(
 )
 }
 \arguments{
-\item{wb}{A Workbook object from \link{\code[openxlsx]{createWorkbook}}}
+\item{wb}{A Workbook object from \code{\link[openxlsx]{createWorkbook}}}
 
-\item{field_sheet_sample_plan}{A dataframe containing the content of the field sheet.
-Use the \code{sample_plan} output from \link{\code{get_field_sheet_event_plan}},
-this function also returns the other arguments required by this function.
+\item{field_sheet_sample_plan}{A dataframe containing the content of the field sheet,
+use the \code{sample_plan} output from \code{\link{get_field_sheet_event_plan}}.
+\emph{Note \code{\link{get_field_sheet_event_plan}} also returns the other arguments required by this function.}
+
 The following columns must contain data:
 \itemize{
 \item \strong{Bin} The sampling bin identifier A-E
@@ -26,9 +27,10 @@ The following columns must contain data:
 \item \strong{Sample #} A number denoting the order the sample was taken, 1 to the total
 number of planned samples with in the sampling bin
 \item \strong{Sample ID} \code{{sample_location_code}{YY}_{sample_event_number}_{sample_bin}_{sample_number}} (e.g., "BTC22_3_A_1")
+}
+
 The remaining columns ("Date", "Time", "FL (mm)", "Field Run ID", "Fin Clip (Y/N)", "Comments")
-will be left empty and filled out by hand in the field
-}}
+will be left empty and filled out by hand in the field}
 
 \item{sample_event_number}{The sampling event number, enumerated from 1 at
 the start of each monitoring season for each sampling location}
