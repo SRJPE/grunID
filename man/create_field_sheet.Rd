@@ -17,7 +17,7 @@ create_field_sheet(
 \item{wb}{A Workbook object from \code{\link[openxlsx]{createWorkbook}}}
 
 \item{field_sheet_sample_plan}{A dataframe containing the content of the field sheet,
-use the \code{sample_plan} output from \code{\link{get_field_sheet_event_plan}}.
+use the \code{field_sheet_sample_plan} output from \code{\link{get_field_sheet_event_plan}}.
 \emph{Note \code{\link{get_field_sheet_event_plan}} also returns the other arguments required by this function.}
 
 The following columns must contain data:
@@ -32,17 +32,21 @@ number of planned samples with in the sampling bin
 The remaining columns ("Date", "Time", "FL (mm)", "Field Run ID", "Fin Clip (Y/N)", "Comments")
 will be left empty and filled out by hand in the field}
 
-\item{sample_event_number}{The sampling event number, enumerated from 1 at
+\item{sample_event_number}{The non-unique sampling event number, enumerated from 1 at
 the start of each monitoring season for each sampling location}
 
-\item{first_sample_date}{A date object YYYY-MM-DD}
+\item{first_sample_date}{A date object YYYY-MM-DD representing the first day of
+sampling of a 2 day sampling event}
 
 \item{sample_location}{The sampling location name (e.g., "Battle Creek")}
 
 \item{sample_location_code}{The sampling location short code (e.g., "BTC")}
 }
+\value{
+A Workbook object from \code{\link[openxlsx]{createWorkbook}} with the new worksheet
+}
 \description{
-\code{create_field_sheet} appends a worksheet to an existing excel workbook
+\code{create_field_sheet()} appends a worksheet to an existing excel workbook
 containing a formatted field sheet to be used by crew collecting genetic samples.
 }
 \examples{
@@ -58,7 +62,7 @@ wb <- create_field_sheet(wb = wb,
 
 plan <- get_field_sheet_event_plan(con, sample_event_id = 2)
 wb <- create_field_sheet(wb = wb,
-                         field_sheet_sample_plan = plan$sample_plan,
+                         field_sheet_sample_plan = plan$field_sheet_sample_plan,
                          sample_event_number = plan$sample_event_number,
                          first_sample_date = plan$first_sample_date,
                          sample_location = plan$location_name,
@@ -66,3 +70,8 @@ wb <- create_field_sheet(wb = wb,
 
 saveWorkbook(wb, "test.xlsx", overwrite = TRUE)
 }
+\seealso{
+Other field sheet helpers: 
+\code{\link{get_field_sheet_event_plan}()}
+}
+\concept{field sheet helpers}

@@ -1,9 +1,9 @@
 #' Create Field Sheets
-#' @description `create_field_sheet` appends a worksheet to an existing excel workbook
+#' @description `create_field_sheet()` appends a worksheet to an existing excel workbook
 #' containing a formatted field sheet to be used by crew collecting genetic samples.
 #' @param wb A Workbook object from \code{\link[openxlsx]{createWorkbook}}
 #' @param field_sheet_sample_plan A dataframe containing the content of the field sheet,
-#' use the \code{sample_plan} output from \code{\link{get_field_sheet_event_plan}}.
+#' use the \code{field_sheet_sample_plan} output from \code{\link{get_field_sheet_event_plan}}.
 #' *Note \code{\link{get_field_sheet_event_plan}} also returns the other arguments required by this function.*
 #'
 #' The following columns must contain data:
@@ -15,11 +15,13 @@
 #'
 #' The remaining columns ("Date", "Time", "FL (mm)", "Field Run ID", "Fin Clip (Y/N)", "Comments")
 #' will be left empty and filled out by hand in the field
-#' @param sample_event_number The sampling event number, enumerated from 1 at
+#' @param sample_event_number The non-unique sampling event number, enumerated from 1 at
 #' the start of each monitoring season for each sampling location
-#' @param first_sample_date A date object YYYY-MM-DD
+#' @param first_sample_date A date object YYYY-MM-DD representing the first day of
+#' sampling of a 2 day sampling event
 #' @param sample_location The sampling location name (e.g., "Battle Creek")
 #' @param sample_location_code The sampling location short code (e.g., "BTC")
+#' @returns A Workbook object from \code{\link[openxlsx]{createWorkbook}} with the new worksheet
 #' @examples
 #' wb <- openxlsx::createWorkbook()
 #' # Each sample_event will be a tab in a workbook
@@ -33,7 +35,7 @@
 #'
 #' plan <- get_field_sheet_event_plan(con, sample_event_id = 2)
 #' wb <- create_field_sheet(wb = wb,
-#'                          field_sheet_sample_plan = plan$sample_plan,
+#'                          field_sheet_sample_plan = plan$field_sheet_sample_plan,
 #'                          sample_event_number = plan$sample_event_number,
 #'                          first_sample_date = plan$first_sample_date,
 #'                          sample_location = plan$location_name,
@@ -41,6 +43,7 @@
 #'
 #' saveWorkbook(wb, "test.xlsx", overwrite = TRUE)
 #' @export
+#' @family field sheet helpers
 #' @md
 create_field_sheet <- function(wb, field_sheet_sample_plan, sample_event_number,
                                first_sample_date, sample_location,
@@ -72,7 +75,22 @@ create_field_sheet <- function(wb, field_sheet_sample_plan, sample_event_number,
 }
 
 #' Get Sample Event Information for Creating a Field Sheet
+#' @description `get_field_sheet_event_plan()` retrieves the sampling event information
+#' from the database that is needed to prepare field sheets.
+#' @param con A DBI connection object obtained from DBI::dbConnect()
+#' @param sample_event_id The numeric unique identifier of the targeted sampling event for a location
+#' Use \code{\link{get_sample_event}} to query and retrieve the IDs from the database.
+#' @returns
+#' A list object containing the required arguments for \code{\link{create_field_sheet}}
+#' * **field_sheet_sample_plan** A dataframe containing the content of the field sheet
+#' * **sample_event_number** The non-unique sample event ID
+#' * **first_sample_date** A date object YYYY-MM-DD representing the first day of
+#' sampling of a 2 day sampling event
+#' * **location_name** The sampling location name (e.g., "Battle Creek")
+#' * **location_code** The sampling location short code (e.g., "BTC")
 #' @export
+#' @family field sheet helpers
+#' @md
 get_field_sheet_event_plan <- function(con, sample_event_id) {
 
   sample_event <- tbl(con, "sample_event") |>
@@ -104,7 +122,7 @@ get_field_sheet_event_plan <- function(con, sample_event_id) {
   sample_event_details <- sample_event |>
     left_join(sample_locations, by = c("sample_location_id" = "sample_location_id"))
 
-  sample_plan <- sample_plan_raw |>
+  field_sheet_sample_plan <- sample_plan_raw |>
     transmute(
       Bin = sample_bin_code,
       `Bin FL Range (mm)` = glue::glue("{min_fork_length}-{max_fork_length}"),
@@ -118,31 +136,13 @@ get_field_sheet_event_plan <- function(con, sample_event_id) {
       Comments = "",
     )
 
-  return(list(sample_plan = sample_plan,
+  return(list(field_sheet_sample_plan = field_sheet_sample_plan,
               sample_event_number = sample_event_details$sample_event_number,
               first_sample_date = sample_event_details$first_sample_date,
               location_name = sample_event_details$location_name,
               location_code = sample_event_details$code))
 
 }
-
-# wb <- openxlsx::createWorkbook()
-# # Each sample_event will be a tab in a workbook
-# plan <- get_field_sheet_event_plan(con, sample_event_id = 1)
-# wb <- create_field_sheet(wb = wb,
-#                         field_sheet_sample_plan = plan$sample_plan,
-#                         sample_event_number = plan$sample_event_number,
-#                         first_sample_date = plan$first_sample_date,
-#                         sample_location = plan$location_name,
-#                         sample_location_code = plan$location_code)
-# plan <- get_field_sheet_event_plan(con, sample_event_id = 2)
-# wb <- create_field_sheet(wb = wb,
-#                         field_sheet_sample_plan = plan$sample_plan,
-#                         sample_event_number = plan$sample_event_number,
-#                         first_sample_date = plan$first_sample_date,
-#                         sample_location = plan$location_name,
-#                         sample_location_code = plan$location_code)
-# saveWorkbook(wb, "test.xlsx", overwrite = TRUE)
 
 
 

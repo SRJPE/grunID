@@ -6,6 +6,29 @@
 \usage{
 get_field_sheet_event_plan(con, sample_event_id)
 }
-\description{
-Get Sample Event Information for Creating a Field Sheet
+\arguments{
+\item{con}{A DBI connection object obtained from DBI::dbConnect()}
+
+\item{sample_event_id}{The numeric unique identifier of the targeted sampling event for a location
+Use \code{\link{get_sample_event}} to query and retrieve the IDs from the database.}
 }
+\value{
+A list object containing the required arguments for \code{\link{create_field_sheet}}
+\itemize{
+\item \strong{field_sheet_sample_plan} A dataframe containing the content of the field sheet
+\item \strong{sample_event_number} The non-unique sample event ID
+\item \strong{first_sample_date} A date object YYYY-MM-DD representing the first day of
+sampling of a 2 day sampling event
+\item \strong{location_name} The sampling location name (e.g., "Battle Creek")
+\item \strong{location_code} The sampling location short code (e.g., "BTC")
+}
+}
+\description{
+\code{get_field_sheet_event_plan()} retrieves the sampling event information
+from the database that is needed to prepare field sheets.
+}
+\seealso{
+Other field sheet helpers: 
+\code{\link{create_field_sheet}()}
+}
+\concept{field sheet helpers}
