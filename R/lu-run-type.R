@@ -21,12 +21,12 @@ get_run_types <- function(con, is_active=TRUE, all_results=FALSE) {
     run_types <- dplyr::tbl(con, "run_type") |>
       dplyr::collect()
   } else {
-    agencies <- dplyr::tbl(con, "run_type") |>
+    run_types <- dplyr::tbl(con, "run_type") |>
       dplyr::filter(active == is_active) |>
       dplyr::collect()
   }
 
-  return(laboratories)
+  return(run_types)
 }
 
 #' Add Run Type
