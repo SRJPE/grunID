@@ -21,7 +21,7 @@ get_laboratories <- function(con, is_active=TRUE, all_results=FALSE) {
     laboratories <- dplyr::tbl(con, "laboratory") |>
       dplyr::collect()
   } else {
-    agencies <- dplyr::tbl(con, "laboratory") |>
+    laboratories <- dplyr::tbl(con, "laboratory") |>
       dplyr::filter(active == is_active) |>
       dplyr::collect()
   }
@@ -110,9 +110,9 @@ update_laboratory <- function(con, laboratory_id, laboratory) {
 #' Update Laboratory Status
 #' @description `update_laboratory_status()` changes active flag on existing laboratory in the laboratory lookup table
 #' @param con A DBI connection object obtained from DBI::dbConnect()
-#' @param laboratory_id A numeric ID for the targeted laboratory \code{\link{get_agencies}}
+#' @param laboratory_id A numeric ID for the targeted laboratory \code{\link{get_laboratories}}
 #' @param set_active A boolean, TRUE for activating and FALSE for deactivating.
-#' When a record is active, it is returned by default when \code{\link{get_agencies}}
+#' When a record is active, it is returned by default when \code{\link{get_laboratories}}
 #' is called. This helps preserve look up values that are valid in historic
 #' contexts, but are no longer valid for current data records.
 #' @export
@@ -126,8 +126,8 @@ update_laboratory <- function(con, laboratory_id, laboratory) {
 #'                       user = cfg$username,
 #'                       password = cfg$password)
 #'
-#' all_agencies <- get_agencies(con)
-#' View(all_agencies) # to view the ID of the laboratory needing status change
+#' all_laboratories <- get_laboratories(con)
+#' View(all_laboratories) # to view the ID of the laboratory needing status change
 #'
 #' #deactivate
 #' update_laboratory_status(con, 4, set_active=FALSE)
