@@ -83,7 +83,7 @@ process_raw_assay_results <- function(filepath, ranges, plate_size, layout) {
     dplyr::mutate(Time = hms::as_hms(Time),
                   dplyr::across(dplyr::everything(), as.character)) |>
     dplyr::select(-tidyselect::contains("...")) |>
-    tidyr::pivot_longer(names_to = "location", values_to = "fluorescence", !Time) |>
+    tidyr::pivot_longer(names_to = "location", values_to = "fluorescence", !(tidyselect::starts_with("T"))) |>
     dplyr::left_join(layout)
 
   # background values ---
@@ -98,7 +98,7 @@ process_raw_assay_results <- function(filepath, ranges, plate_size, layout) {
   # raw results encoded as strings because of OVERFLOW and ????? values
   raw_assay_results <- raw_fluorescence |>
     dplyr::left_join(background_fluorescence) |>
-    dplyr::select(sample_id, raw_fluorescence = fluorescence,
+    dplyr::select(sample_id, sample_type_id, assay_id, plate_run_id, raw_fluorescence = fluorescence,
                   background_value = background_fluorescence,
                   time = Time, plate_run_id, well_location = location)
 
