@@ -60,7 +60,7 @@ process_sherlock <- function(filepath, sample_details,
   cell_ranges <- generate_ranges(plate_size = plate_size, wells_used = wells_used,
                                  time_intervals = read_count)
 
-  layout <- dplyr::left_join(sample_details, plate_layout)
+  layout <- dplyr::left_join(sample_details, plate_layout, by="location")
 
   raw_assay_results <- process_raw_assay_results(filepath, ranges = cell_ranges, plate_size, layout)
 
@@ -80,7 +80,7 @@ process_raw_assay_results <- function(filepath, ranges, plate_size, layout) {
   raw_fluorescence <- purrr::map_dfc(ranges$raw_fluorescence,
                                      ~readxl::read_excel(filepath,
                                                          range = .)) |>
-    dplyr::mutate(Time = hms::as_hms(Time...1),
+    dplyr::mutate(Time = hms::as_hms(Time),
                   dplyr::across(dplyr::everything(), as.character)) |>
     dplyr::select(-tidyselect::contains("...")) |>
     tidyr::pivot_longer(names_to = "location", values_to = "fluorescence", !Time) |>
@@ -90,7 +90,7 @@ process_raw_assay_results <- function(filepath, ranges, plate_size, layout) {
   background_fluorescence <- purrr::map_dfc(ranges$background_fluorescence,
                                             ~readxl::read_excel(filepath,
                                                                 range = .)) |>
-    dplyr::mutate(Time = hms::as_hms(Time...1),
+    dplyr::mutate(Time = hms::as_hms(Time),
                   dplyr::across(dplyr::everything(), as.character)) |>
     dplyr::select(-tidyselect::contains("...")) |>
     tidyr::pivot_longer(names_to = "location", values_to = "background_fluorescence", !Time)
@@ -137,8 +137,8 @@ process_assay_results <- function(filepath, range, plate_size, layout) {
 #' @description add plate id
 #' @export
 process_well_sample_details <- function(filepath, plate_run_id) {
-  layout <- read_csv(filepath)
-  layout$plate_run_id <- plate_run_uid
+  layout <- readr::read_csv(filepath)
+  layout$plate_run_id <- plate_run_id
   return(layout)
 }
 
