@@ -9,7 +9,8 @@ add_plate_run(
   protocol_id,
   genetic_method_id,
   laboratory_id,
-  lab_work_preformed_by
+  lab_work_preformed_by,
+  date_run
 )
 }
 \description{
