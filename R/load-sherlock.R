@@ -46,8 +46,27 @@ add_assay_results <- function(con, transformed_assay_results) {
   );", .con = con)
 
 
+  assay_results_rows <- DBI::dbExecute(con, query)
 
-  return(DBI::dbExecute(con, query))
 
+  query <- glue::glue_sql("
+  INSERT INTO raw_assay_results (sample_id, sample_type_id, assay_id, raw_fluorescence,
+                                background_value, time, plate_run_id, well_location)
+  VALUES (
+    UNNEST(ARRAY[{raw_assay_results$sample_id*}]),
+    UNNEST(ARRAY[{raw_assay_results$sample_type_id*}]),
+    UNNEST(ARRAY[{raw_assay_results$assay_id*}]),
+    UNNEST(ARRAY[{raw_assay_results$raw_fluorescence*}]),
+    UNNEST(ARRAY[{raw_assay_results$background_value*}]),
+    UNNEST(ARRAY[{raw_assay_results$time*}]),
+    UNNEST(ARRAY[{raw_assay_results$plate_run_id*}]::int[]),
+    UNNEST(ARRAY[{raw_assay_results$well_location*}]::well_location_enum[])
+  );", .con = con)
+
+  raw_assay_results_rows <- DBI::dbExecute(con, query)
+
+  return(c("raw_results" = raw_assay_results_rows, "results" = assay_results_rows))
 }
+
+
 
