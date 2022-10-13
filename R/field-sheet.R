@@ -111,23 +111,6 @@ get_field_sheet_event_plan <- function(con, sample_event_id) {
 
 }
 
-# wb <- openxlsx::createWorkbook()
-# # Each sample_event will be a tab in a workbook
-# plan <- get_field_sheet_event_plan(con, sample_event_id = 1)
-# wb <- create_field_sheet(wb = wb,
-#                         field_sheet_sample_plan = plan$sample_plan,
-#                         sample_event_number = plan$sample_event_number,
-#                         first_sample_date = plan$first_sample_date,
-#                         sample_location = plan$location_name,
-#                         sample_location_code = plan$location_code)
-# plan <- get_field_sheet_event_plan(con, sample_event_id = 2)
-# wb <- create_field_sheet(wb = wb,
-#                         field_sheet_sample_plan = plan$sample_plan,
-#                         sample_event_number = plan$sample_event_number,
-#                         first_sample_date = plan$first_sample_date,
-#                         sample_location = plan$location_name,
-#                         sample_location_code = plan$location_code)
-# saveWorkbook(wb, "test.xlsx", overwrite = TRUE)
 
 
 
