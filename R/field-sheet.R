@@ -93,37 +93,37 @@ create_field_sheet <- function(wb, field_sheet_sample_plan, sample_event_number,
 #' @md
 get_field_sheet_event_plan <- function(con, sample_event_id) {
 
-  sample_event <- tbl(con, "sample_event") |>
-    filter(id == sample_event_id) |>
-    select(sample_event_id = id, sample_event_number, sample_location_id, first_sample_date) |>
-    collect()
+  sample_event <- dplyr::tbl(con, "sample_event") |>
+    dplyr::filter(id == sample_event_id) |>
+    dplyr::select(sample_event_id = id, sample_event_number, sample_location_id, first_sample_date) |>
+    dplyr::collect()
 
-  sample_bins <- tbl(con, "sample_bin") |>
-    select(sample_bin_id = id, sample_event_id, sample_bin_code, min_fork_length,
+  sample_bins <- dplyr::tbl(con, "sample_bin") |>
+    dplyr::select(sample_bin_id = id, sample_event_id, sample_bin_code, min_fork_length,
            max_fork_length) |>
-    filter(sample_event_id == sample_event_id) |>
-    collect()
+    dplyr::filter(sample_event_id == sample_event_id) |>
+    dplyr::collect()
 
-  sample_bin_ids <- sample_bins |> pull(sample_bin_id)
+  sample_bin_ids <- sample_bins |> dplyr::pull(sample_bin_id)
 
-  samples <- tbl(con, "sample") |>
-    select(sample_id = id, sample_bin_id) |>
-    filter(sample_bin_id %in% sample_bin_ids) |>
-    collect()
+  samples <- dplyr::tbl(con, "sample") |>
+    dplyr::select(sample_id = id, sample_bin_id) |>
+    dplyr::filter(sample_bin_id %in% sample_bin_ids) |>
+    dplyr::collect()
 
-  sample_locations <- tbl(con, "sample_location") |>
-    select(sample_location_id = id, code, location_name) |>
-    collect()
+  sample_locations <- dplyr::tbl(con, "sample_location") |>
+    dplyr::select(sample_location_id = id, code, location_name) |>
+    dplyr::collect()
 
-  sample_plan_raw <- samples |>
-    left_join(sample_bins, by = c("sample_bin_id" = "sample_bin_id")) |>
-    left_join(sample_event, by = c("sample_event_id" = "sample_event_id"))
+  sample_plan_raw <- dplyr::samples |>
+    dplyr::left_join(sample_bins, by = c("sample_bin_id" = "sample_bin_id")) |>
+    dplyr::left_join(sample_event, by = c("sample_event_id" = "sample_event_id"))
 
   sample_event_details <- sample_event |>
-    left_join(sample_locations, by = c("sample_location_id" = "sample_location_id"))
+    dplyr::left_join(sample_locations, by = c("sample_location_id" = "sample_location_id"))
 
   field_sheet_sample_plan <- sample_plan_raw |>
-    transmute(
+    dplyr::transmute(
       Bin = sample_bin_code,
       `Bin FL Range (mm)` = glue::glue("{min_fork_length}-{max_fork_length}"),
       `Sample #` = as.numeric(stringr::str_extract(sample_id, "([0-9]+)$")),
