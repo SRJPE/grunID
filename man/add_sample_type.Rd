@@ -9,7 +9,7 @@ add_sample_type(con, sample_type)
 \arguments{
 \item{con}{A DBI connection object obtained from DBI::dbConnect()}
 
-\item{run_type}{A valid sample type dataframe containing the following:
+\item{sample_type}{A valid sample type dataframe containing the following:
 \itemize{
 \item \strong{code} Short code representing sample type name
 \item \strong{sample_type_name} Sample type full name
