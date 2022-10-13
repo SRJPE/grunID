@@ -11,6 +11,7 @@
 #' * **stored** sample is in storage
 #' * **archived** sample has been sent to a tissue archive
 #' * **other lab** sample is out at another lab
+#' @param comment *optional* character string to provide additional context for the status change
 #' @examples
 #' # example database connection
 #' cfg <- config::get()
@@ -80,9 +81,9 @@ set_sample_status <- function(con, sample_ids,
 #'                       user = cfg$username,
 #'                       password = cfg$password)
 #'
-#' sample_locations <- get_sample_locations(con,
-#'                                          sample_ids = c("FTH_RM1722_3_A_1",
-#'                                                          "FTH_RM1722_3_A_2"))
+#' sample_status <- get_sample_status(con,
+#'                                    sample_ids = c("FTH_RM1722_3_A_1",
+#'                                                    "FTH_RM1722_3_A_2"))
 #' @family status code functions
 #' @export
 #' @md
@@ -90,7 +91,7 @@ get_sample_status <- function(con, sample_ids, full_history = FALSE) {
 
   is_valid_connection(con)
 
-  sample_names <- dplyr::tbl(con, "status_code") |>
+  sample_status <- dplyr::tbl(con, "sample_status") |>
     dplyr::collect() |>
     dplyr::select(status_code_id = id, status_code_name)
 

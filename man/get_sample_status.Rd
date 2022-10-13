@@ -26,9 +26,9 @@ con <- DBI::dbConnect(RPostgres::Postgres(),
                       user = cfg$username,
                       password = cfg$password)
 
-sample_locations <- get_sample_locations(con,
-                                         sample_ids = c("FTH_RM1722_3_A_1",
-                                                         "FTH_RM1722_3_A_2"))
+sample_status <- get_sample_status(con,
+                                   sample_ids = c("FTH_RM1722_3_A_1",
+                                                   "FTH_RM1722_3_A_2"))
 }
 \seealso{
 Other status code functions: 

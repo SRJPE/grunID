@@ -28,6 +28,8 @@ set_sample_status(
 \item \strong{archived} sample has been sent to a tissue archive
 \item \strong{other lab} sample is out at another lab
 }}
+
+\item{comment}{\emph{optional} character string to provide additional context for the status change}
 }
 \description{
 Set the status code for existing samples
