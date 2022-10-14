@@ -4,28 +4,20 @@ results$raw_assay_results
 # get the last time step for blank values
 plate_run_uid
 
-# get the last two values for the blank
-get_protocols(con) |>
-  filter(id == protocol_id) |> glimpse()
+# to get the last time stamp just get the value of run time
+# you can filter the results to this time value
+final_time_step <- get_protocols(con) |>
+  filter(id == protocol_id) |>
+  select(runtime) |>
+  pull()
 
-library(hms)
+blank_values <- results$raw_assay_results |>
+  filter(time == final_time_step,
+         sample_id == "BLK") |>
+  pull(raw_fluorescence) |>
+  as.numeric()
 
-as_hms("00:00:00") + (("00:03:00") * 31)
-
-a <- as_hms("00:00:00")
-
-for (i in 1:31) {
-  a <- a + as_hms("00:01:00")
-  print(as_hms(a))
-}
-
-clock::as_
-
-clock::add_minutes("00:00:00", 1)
+mean(blank_values) * 2
 
 results$raw_assay_results |>
-  glimpse()
-
-
-a <- hms::as_hms("00:00:00")
-b <- hms::as_hms
+  distinct(time)
