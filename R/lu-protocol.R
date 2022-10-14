@@ -14,10 +14,11 @@
 #' @family protocol functions
 #' @export
 #' @md
-get_protocols <- function(con) {
+get_protocols <- function(con, ...) {
   is_valid_connection(con)
 
   protocols <- dplyr::tbl(con, "protocol") |>
+    dplyr::filter(...) |>
     dplyr::collect() |>
     dplyr::mutate(dplyr::across(
       c("run_mode", "optics", "light_source", "lamp_energy"),

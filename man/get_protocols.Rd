@@ -4,7 +4,7 @@
 \alias{get_protocols}
 \title{Retrieve Protocols}
 \usage{
-get_protocols(con)
+get_protocols(con, ...)
 }
 \arguments{
 \item{con}{A DBI connection object obtained from DBI::dbConnect()}

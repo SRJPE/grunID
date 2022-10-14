@@ -100,7 +100,7 @@ process_raw_assay_results <- function(filepath, ranges, plate_size, layout) {
     dplyr::left_join(background_fluorescence) |>
     dplyr::select(sample_id, sample_type_id, assay_id, plate_run_id, raw_fluorescence = fluorescence,
                   background_value = background_fluorescence,
-                  time = Time, plate_run_id, well_location = location)
+                  time = Time, plate_run_id, well_location = location, layout_sample_number = psuedo_sample_id)
 
   return(raw_assay_results)
 }
