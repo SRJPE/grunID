@@ -84,7 +84,8 @@ process_raw_assay_results <- function(filepath, ranges, plate_size, layout) {
                   dplyr::across(dplyr::everything(), as.character)) |>
     dplyr::select(-tidyselect::contains("...")) |>
     tidyr::pivot_longer(names_to = "location", values_to = "fluorescence", !(tidyselect::starts_with("T"))) |>
-    dplyr::left_join(layout)
+    dplyr::left_join(layout) |>
+    dplyr::mutate(fluorescence = as.numeric(fluorescence))
 
   # background values ---
   background_fluorescence <- purrr::map_dfc(ranges$background_fluorescence,
