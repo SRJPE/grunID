@@ -37,12 +37,13 @@ plate_run_uid <- add_plate_run(con,
                                protocol_id = protocol_id,
                                genetic_method_id = 1,
                                laboratory_id = laboratory_id,
-                               lab_work_preformed_by = "user")
+                               lab_work_preformed_by = "user") # TODO determine the user
 
 # sample layout, is then created by the user and read in here
 # the plate run must be identified to correspond to
 layout <- process_well_sample_details("data-raw/well_sample_template.csv",
-                                      plate_run_id = plate_run_uid)
+                                      plate_run_id = plate_run_uid) |>
+  mutate(control_flag = ifelse(is.na(control_flag), F, T))
 
 # process
 results <- process_sherlock(
@@ -50,10 +51,7 @@ results <- process_sherlock(
   sample_details = layout,
   plate_size = 96)
 
-# this adds both the raw and final results
-add_sherlock_results(con, results, layout)
-# once results are added we can go in and get the blk values
-
+res <- add_sherlock_results(con, results, layout)
 
 
 
