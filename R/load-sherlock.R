@@ -16,13 +16,13 @@
 add_sherlock_results <- function(con, transformed_assay_results, sample_details) {
 
   # the final results
-  add_assay_results(con = con,
+  results_added <- add_assay_results(con = con,
                     transformed_assay_results = transformed_assay_results)
   # add the raw results
-  add_raw_assay_results(con = con,
+  raw_results_added <- add_raw_assay_results(con = con,
                         transformed_assay_results = transformed_assay_results)
 
-  # get variables needed for trhresholds
+  # get variables needed for thresholds
   ids_from_layout <- layout$sample_id
   plate_run_id <- layout$plate_run_id[1]
   assay_type_id <- unique(layout$assay_id)
@@ -35,34 +35,21 @@ add_sherlock_results <- function(con, transformed_assay_results, sample_details)
   protocol_from_db <- get_protocols(con, id == protocol_id)
   last_time_val <- protocol_from_db$runtime
 
-  blanks_for_threshold <- get_raw_results(con, sample_id %in% ids_from_layout,
-                  time == last_time_val, layout_sample_number == "BLK")
-
+  blanks_for_threshold <- tbl(con, "raw_assay_results") |>
+    filter(sample_id %in% ids_from_layout,
+           time == last_time_val,
+           layout_sample_number == "BLK") |>
+    collect()
 
   threshold <- mean(as.numeric(blanks_for_threshold$raw_fluorescence)) * 2
 
   # add value to join table that includes plate_run_id, assay_type_id, threshold
-  add_run_type_threshold(con, plate_run_id, assay_type_id, threshold)
+  thresholds_added <- add_run_type_threshold(con, plate_run_id, assay_type_id, threshold)
+
+  return(c("results" = results_added, "raw_results" = raw_results_added,
+           "thresholds" = thresholds_added))
 
 
-}
-
-# get_assignment_threshold <- function(con, sample_ids, )
-
-
-#' @export
-get_raw_results <- function(con, ...) {
-  dplyr::tbl(con, "raw_assay_results") |>
-    dplyr::filter(...) |>
-    dplyr::collect()
-
-}
-
-#' @export
-get_plate_run <- function(con, ...) {
-  dplyr::tbl(con, "plate_run") |>
-    dplyr::filter(...) |>
-    dplyr::collect()
 }
 
 #' @title Insert new Threshold
@@ -128,9 +115,9 @@ add_assay_results <- function(con, transformed_assay_results) {
   );", .con = con)
 
 
-  rows_created <- DBI::dbExecute(con, query)
+  res <- DBI::dbExecute(con, query)
 
-  return(rows_created)
+  return(res)
 
 }
 
@@ -154,7 +141,7 @@ add_raw_assay_results <- function(con, transformed_assay_results) {
     UNNEST(ARRAY[{transformed_assay_results$raw_assay_results$layout_sample_number*}])
   );", .con = con)
 
-  res <- DBI::dbSendQuery(con, query)
+  res <- DBI::dbExecute(con, query)
 
   return(res)
 }
