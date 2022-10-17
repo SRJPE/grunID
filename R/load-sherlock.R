@@ -32,7 +32,10 @@ add_sherlock_results <- function(con, transformed_assay_results, sample_details)
     dplyr::select(protocol_id) |>
     pull()
 
-  protocol_from_db <- get_protocols(con, id == protocol_id)
+  protocol_from_db <- tbl(con, "protocol") |>
+    filter(id == protocol_id) |>
+    collect()
+
   last_time_val <- protocol_from_db$runtime
 
   blanks_for_threshold <- tbl(con, "raw_assay_results") |>
