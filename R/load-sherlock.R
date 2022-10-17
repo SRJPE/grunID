@@ -41,10 +41,35 @@ add_sherlock_results <- function(con, transformed_assay_results, sample_details)
            layout_sample_number == "BLK") |>
     collect()
 
-  threshold <- mean(as.numeric(blanks_for_threshold$raw_fluorescence)) * 2
+  thresholds <- blanks_for_threshold |>
+    group_by(assay_id) |>
+    summarise(
+      threshold = mean(as.numeric(raw_fluorescence)) * 2
+    ) |>
+    mutate(plate_run_id = plate_run_id)
 
   # add value to join table that includes plate_run_id, assay_type_id, threshold
-  thresholds_added <- add_run_type_threshold(con, plate_run_id, assay_type_id, threshold)
+  thresholds_added <- add_run_type_threshold(con,
+                                             thresholds$plate_run_id,
+                                             thresholds$assay_id,
+                                             thresholds$threshold)
+
+
+  # update genetic run id based on the thresholds
+  threshold_tbl <- tbl(con, "plate_run_thresholds") |>
+    select(plate_run_id, assay_id, threshold)
+
+  sample_id_with_genetic_types <- tbl(con, "raw_assay_results") |>
+    filter(sample_id %in% ids_from_layout) |>
+    select(sample_id, raw_fluorescence, assay_id, plate_run_id) |>
+    left_join(threshold_tbl) |>
+    mutate(run_type_id = ifelse(raw_fluorescence > threshold, 2, NA)) |> # TODO this part is WRONG!!
+    select(sample_id, assay_id, run_type_id) |>
+    collect()
+
+
+  add_genetic_run_type(con, sample_id_with_genetic_types$sample_id,
+                       sample_id_with_genetic_types$run_type_id)
 
   return(c("results" = results_added, "raw_results" = raw_results_added,
            "thresholds" = thresholds_added))
@@ -62,7 +87,30 @@ add_run_type_threshold <- function(con, plate_run_id, assay_type_id, threshold) 
 
   query <- glue::glue_sql("
   INSERT INTO plate_run_thresholds (plate_run_id, assay_id, threshold)
-  VALUES ({plate_run_id}, {assay_type_id}, {threshold});",
+  VALUES (
+          UNNEST(ARRAY[{plate_run_id*}]),
+          UNNEST(ARRAY[{assay_type_id*}]),
+          UNNEST(ARRAY[{threshold*}])
+  );",
+                          .con = con)
+
+  return(DBI::dbExecute(con, query))
+}
+
+#' @title Add run type to genetic table
+add_genetic_run_type <- function(con, sample_id, run_type_id) {
+  if (!DBI::dbIsValid(con)) {
+    stop("Connection argument does not have a valid connection the run-id database.
+         Please try reconnecting to the database using 'DBI::dbConnect'",
+         call. = FALSE)
+  }
+
+  query <- glue::glue_sql("
+  INSERT INTO genetic_run_identification (sample_id, run_type_id)
+  VALUES (
+          UNNEST(ARRAY[{sample_id*}]),
+          UNNEST(ARRAY[{run_type_id*}]::int[])
+  );",
                           .con = con)
 
   return(DBI::dbExecute(con, query))
