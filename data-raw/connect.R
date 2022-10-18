@@ -30,7 +30,7 @@ View(all_protocols) # review available protocols and select appropriate protocol
 protocol_id <- all_protocols[1, "id", drop = TRUE]
 
 plate_run_uid <- grunID::add_plate_run(con, protocol_id, genetic_method_id = 1,
-                                       laboratory_id, lab_work_preformed_by)
+                                       laboratory_id, lab_work_preformed_by = "scooby")
 
 # sample layout
 layout <- grunID::process_well_sample_details("data-raw/well_sample_template.csv")

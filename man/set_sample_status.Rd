@@ -50,6 +50,11 @@ sample_locations <- set_sample_locations(con,
 }
 \seealso{
 Other status code functions: 
-\code{\link{get_sample_status}()}
+\code{\link{add_status_code}()},
+\code{\link{delete_status_code}()},
+\code{\link{get_sample_status}()},
+\code{\link{get_status_codes}()},
+\code{\link{update_status_code_status}()},
+\code{\link{update_status_code}()}
 }
 \concept{status code functions}
