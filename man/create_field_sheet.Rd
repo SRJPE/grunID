@@ -50,11 +50,19 @@ A Workbook object from \code{\link[openxlsx]{createWorkbook}} with the new works
 containing a formatted field sheet to be used by crew collecting genetic samples.
 }
 \examples{
+cfg <- config::get()
+
+con <- DBI::dbConnect(RPostgres::Postgres(),
+                      dbname = cfg$dbname,
+                      host = cfg$host,
+                      port = cfg$port,
+                      user = cfg$username,
+                      password = cfg$password)
 wb <- openxlsx::createWorkbook()
 # Each sample_event will be a tab in a workbook
 plan <- get_field_sheet_event_plan(con, sample_event_id = 1)
 wb <- create_field_sheet(wb = wb,
-                         field_sheet_sample_plan = plan$sample_plan,
+                         field_sheet_sample_plan = plan$field_sheet_sample_plan,
                          sample_event_number = plan$sample_event_number,
                          first_sample_date = plan$first_sample_date,
                          sample_location = plan$location_name,
@@ -68,7 +76,7 @@ wb <- create_field_sheet(wb = wb,
                          sample_location = plan$location_name,
                          sample_location_code = plan$location_code)
 
-saveWorkbook(wb, "test.xlsx", overwrite = TRUE)
+openxlsx::saveWorkbook(wb, "test.xlsx", overwrite = TRUE)
 }
 \seealso{
 Other field sheet helpers: 

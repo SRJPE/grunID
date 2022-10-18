@@ -27,6 +27,17 @@ sampling of a 2 day sampling event
 \code{get_field_sheet_event_plan()} retrieves the sampling event information
 from the database that is needed to prepare field sheets.
 }
+\examples{
+cfg <- config::get()
+
+con <- DBI::dbConnect(RPostgres::Postgres(),
+                      dbname = cfg$dbname,
+                      host = cfg$host,
+                      port = cfg$port,
+                      user = cfg$username,
+                      password = cfg$password)
+plan <- get_field_sheet_event_plan(con, sample_event_id = 1)
+}
 \seealso{
 Other field sheet helpers: 
 \code{\link{create_field_sheet}()}

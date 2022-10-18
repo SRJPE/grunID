@@ -23,11 +23,19 @@
 #' @param sample_location_code The sampling location short code (e.g., "BTC")
 #' @returns A Workbook object from \code{\link[openxlsx]{createWorkbook}} with the new worksheet
 #' @examples
+#' cfg <- config::get()
+#'
+#' con <- DBI::dbConnect(RPostgres::Postgres(),
+#'                       dbname = cfg$dbname,
+#'                       host = cfg$host,
+#'                       port = cfg$port,
+#'                       user = cfg$username,
+#'                       password = cfg$password)
 #' wb <- openxlsx::createWorkbook()
 #' # Each sample_event will be a tab in a workbook
 #' plan <- get_field_sheet_event_plan(con, sample_event_id = 1)
 #' wb <- create_field_sheet(wb = wb,
-#'                          field_sheet_sample_plan = plan$sample_plan,
+#'                          field_sheet_sample_plan = plan$field_sheet_sample_plan,
 #'                          sample_event_number = plan$sample_event_number,
 #'                          first_sample_date = plan$first_sample_date,
 #'                          sample_location = plan$location_name,
@@ -41,7 +49,7 @@
 #'                          sample_location = plan$location_name,
 #'                          sample_location_code = plan$location_code)
 #'
-#' saveWorkbook(wb, "test.xlsx", overwrite = TRUE)
+#' openxlsx::saveWorkbook(wb, "test.xlsx", overwrite = TRUE)
 #' @export
 #' @family field sheet helpers
 #' @md
@@ -88,6 +96,16 @@ create_field_sheet <- function(wb, field_sheet_sample_plan, sample_event_number,
 #' sampling of a 2 day sampling event
 #' * **location_name** The sampling location name (e.g., "Battle Creek")
 #' * **location_code** The sampling location short code (e.g., "BTC")
+#' @examples
+#' cfg <- config::get()
+#'
+#' con <- DBI::dbConnect(RPostgres::Postgres(),
+#'                       dbname = cfg$dbname,
+#'                       host = cfg$host,
+#'                       port = cfg$port,
+#'                       user = cfg$username,
+#'                       password = cfg$password)
+#' plan <- get_field_sheet_event_plan(con, sample_event_id = 1)
 #' @export
 #' @family field sheet helpers
 #' @md
@@ -111,11 +129,10 @@ get_field_sheet_event_plan <- function(con, sample_event_id) {
     dplyr::filter(sample_bin_id %in% sample_bin_ids) |>
     dplyr::collect()
 
-  sample_locations <- dplyr::tbl(con, "sample_location") |>
-    dplyr::select(sample_location_id = id, code, location_name) |>
-    dplyr::collect()
+  sample_locations <- get_sample_locations(con) |>
+    dplyr::select(sample_location_id = id, code, location_name)
 
-  sample_plan_raw <- dplyr::samples |>
+  sample_plan_raw <- samples |>
     dplyr::left_join(sample_bins, by = c("sample_bin_id" = "sample_bin_id")) |>
     dplyr::left_join(sample_event, by = c("sample_event_id" = "sample_event_id"))
 
