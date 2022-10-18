@@ -13,7 +13,7 @@ update_status_code(con, status_code_id, status_code)
 
 \item{status_code}{A valid status code dataframe containing the following:
 \itemize{
-\item \strong{status_code_name} Status code full name
+\item \strong{status_code} Status code full name
 \item \strong{description} Brief description of the status code
 }}
 }
@@ -34,7 +34,7 @@ all_status_codes <- get_status_codes(con)
 View(all_status_codes) # to view the ID of the status code needing updates
 
 updated_status_code <- all_status_codes[1, 2:3]
-updated_status_code$status_code_name <- "New all done"
+updated_status_code$status_code <- "New all done"
 update_status_code(con, 1, updated_status_code)
 }
 \seealso{

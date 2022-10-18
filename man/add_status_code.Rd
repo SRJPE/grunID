@@ -11,7 +11,7 @@ add_status_code(con, status_code)
 
 \item{status_code}{A valid status code dataframe containing the following:
 \itemize{
-\item \strong{status_code_name} Status code full name
+\item \strong{status_code} Status code full name
 \item \strong{description} Brief description of the status code
 }}
 }
@@ -28,7 +28,7 @@ con <- DBI::dbConnect(RPostgres::Postgres(),
                       user = cfg$username,
                       password = cfg$password)
 
-new_status_code <- data.frame(status_code_name = "All done",
+new_status_code <- data.frame(status_code = "All done",
                               description = "Everything is all done")
 add_status_code(con, new_status_code)
 }

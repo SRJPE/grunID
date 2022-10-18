@@ -33,7 +33,7 @@ get_status_codes <- function(con, is_active=TRUE, all_results=FALSE) {
 #' @description `add_status_code()` adds a new status code to the status code lookup table
 #' @param con A DBI connection object obtained from DBI::dbConnect()
 #' @param status_code A valid status code dataframe containing the following:
-#' * **status_code_name** Status code full name
+#' * **status_code** Status code full name
 #' * **description** Brief description of the status code
 #' @examples
 #' # example database connection
@@ -45,7 +45,7 @@ get_status_codes <- function(con, is_active=TRUE, all_results=FALSE) {
 #'                       user = cfg$username,
 #'                       password = cfg$password)
 #'
-#' new_status_code <- data.frame(status_code_name = "All done",
+#' new_status_code <- data.frame(status_code = "All done",
 #'                               description = "Everything is all done")
 #' add_status_code(con, new_status_code)
 #' @family status code functions
@@ -64,7 +64,7 @@ add_status_code <- function(con, status_code) {
 #' @param con A DBI connection object obtained from DBI::dbConnect()
 #' @param status_code_id A numeric ID for the targeted status code \code{\link{get_status_codes}}
 #' @param status_code A valid status code dataframe containing the following:
-#' * **status_code_name** Status code full name
+#' * **status_code** Status code full name
 #' * **description** Brief description of the status code
 #' @examples
 #' # example database connection
@@ -80,7 +80,7 @@ add_status_code <- function(con, status_code) {
 #' View(all_status_codes) # to view the ID of the status code needing updates
 #'
 #' updated_status_code <- all_status_codes[1, 2:3]
-#' updated_status_code$status_code_name <- "New all done"
+#' updated_status_code$status_code <- "New all done"
 #' update_status_code(con, 1, updated_status_code)
 #' @family status code functions
 #' @export
@@ -90,7 +90,7 @@ update_status_code <- function(con, status_code_id, status_code) {
   is_valid_status_code(status_code)
 
   query <- glue::glue_sql("UPDATE status_code
-                           SET status_code_name = {status_code$status_code_name},
+                           SET status_code = {status_code$status_code},
                                description = {status_code$description}
                            WHERE id = {status_code_id}
                            RETURNING id, updated_at;",
@@ -138,7 +138,7 @@ update_status_code_status <- function(con, status_code_id, set_active=TRUE) {
   query <- glue::glue_sql("UPDATE status_code
                            SET active = {set_active}
                            WHERE id = {status_code_id}
-                           RETURNING id, code, active, updated_at;",
+                           RETURNING id, status_code, active, updated_at;",
                           .con = con)
 
   res <- DBI::dbSendQuery(con, query)
@@ -180,9 +180,17 @@ delete_status_code <- function(con, status_code_id) {
   query <- glue::glue_sql("DELETE FROM status_code where id = {status_code_id};",
                           .con = con)
 
-  result <- DBI::dbExecute(con, query)
+  tryCatch(DBI::dbExecute(con, query),
+           error = function(e) {
+             if (grepl("violates foreign key constraint", e)) {
+               stop("This status name is in use. Before deleting this status name,
+                    please update existing samples to a new status name. Also consider
+                    deactivating this status name instead with update_status_name_status().", call. = FALSE)
+             } else {
+               stop(e)
+             }
+           })
 
-  return(result)
 }
 
 is_valid_status_code <- function(status_code) {
@@ -191,7 +199,7 @@ is_valid_status_code <- function(status_code) {
     stop("Please provide status code as a dataframe", call. = FALSE)
   }
 
-  column_reference <- c("status_code_name" = "character","description" = "character")
+  column_reference <- c("status_code" = "character","description" = "character")
   if (!identical(sapply(status_code, class), column_reference)) {
     stop('The status code supplied is not valid, see `help("add_sample_type")` for correct format', call. = FALSE)
   }
