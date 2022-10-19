@@ -4,12 +4,12 @@
 \alias{add_sherlock_results}
 \title{Insert all results from Sherlock Output}
 \usage{
-add_sherlock_results(con, transformed_assay_results, sample_details)
+add_sherlock_results(con, assay_results, sample_details)
 }
 \arguments{
 \item{con}{a connection to the database}
 
-\item{transformed_assay_results}{a list of containing two tables, \code{raw_assay_results} and \code{assay_results} result from \code{process_sherlock}}
+\item{assay_results}{a list of containing two tables, \code{raw_assay_results} and \code{assay_results} result from \code{process_sherlock}}
 
 \item{sample_details}{dataframe containing sample information at each well}
 }

@@ -64,12 +64,7 @@ process_sherlock <- function(filepath, sample_details,
 
   raw_assay_results <- process_raw_assay_results(filepath, ranges = cell_ranges, plate_size, layout)
 
-  results <- process_assay_results(filepath, range = cell_ranges$results, plate_size, layout)
-
-  return(list(
-    raw_assay_results = raw_assay_results,
-    assay_results = results
-  ))
+  return(raw_assay_results)
 
 }
 
@@ -111,23 +106,22 @@ process_raw_assay_results <- function(filepath, ranges, plate_size, layout) {
 process_assay_results <- function(filepath, range, plate_size, layout) {
 
   if (plate_size == 96) {
-    stat_id_column <- "...14"
+    stat_col_id <- "...14"
   } else if (plate_size == 384) {
-    stat_id_column <- "...26"
+    stat_col_id <- "...26"
   }
 
   results <- readxl::read_excel(filepath,
                                 range = range, col_types = "text") |>
     tidyr::fill(...1) |>
-    dplyr::rename(stat_id_column = stat_id_column) |>
-    tidyr::pivot_longer(names_to = "number_location", values_to = "RFU", !c(...1, stat_id_column)) |>
+    tidyr::pivot_longer(names_to = "number_location", values_to = "result", !c(...1, stat_col_id)) |>
+    dplyr::rename(metric = stat_col_id) |>
     dplyr::arrange(...1, as.numeric(number_location)) |>
-    dplyr::transmute(location = paste0(...1, number_location),
-                     metric = stat_id_column, RFU = as.numeric(RFU)) |>
-    dplyr::filter(!is.na(RFU)) |>
+    dplyr::transmute(location = paste0(...1, number_location), result, metric) |>
+    dplyr::filter(!is.na(result)) |>
     dplyr::left_join(layout) |>
     dplyr::mutate(metric = stringr::str_remove(metric, "\\s\\[.+\\]")) |>
-    dplyr::select(sample_id, sample_type_id, assay_id, rfu_back_subtracted = RFU,
+    dplyr::select(sample_id, sample_type_id, assay_id, result, metric,
                   plate_run_id, well_location = location)
 
   return(results)

@@ -12,7 +12,6 @@ con <- DBI::dbConnect(RPostgres::Postgres(),
                user = cfg$username,
                password = cfg$password)
 
-
 # running this does the following:
 # adds sample events to table SAMPLE_EVENT
 # adds sample bins for each event SAMPLE_BIN
@@ -42,8 +41,7 @@ plate_run_uid <- add_plate_run(con,
 # sample layout, is then created by the user and read in here
 # the plate run must be identified to correspond to
 layout <- process_well_sample_details("data-raw/well_sample_template.csv",
-                                      plate_run_id = plate_run_uid) |>
-  mutate(control_flag = ifelse(is.na(control_flag), F, T))
+                                      plate_run_id = plate_run_uid)
 
 # process
 results <- process_sherlock(

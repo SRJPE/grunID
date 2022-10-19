@@ -2,7 +2,7 @@
 #' @description  Adds results from Sherlock output after being processed via `process_sherlock()`
 #' to the run-id database, as well as computed thresholds for run assignment.
 #' @param con a connection to the database
-#' @param transformed_assay_results a list of containing two tables, `raw_assay_results` and `assay_results` result from `process_sherlock`
+#' @param assay_results a list of containing two tables, `raw_assay_results` and `assay_results` result from `process_sherlock`
 #' @param sample_details dataframe containing sample information at each well
 #' @examples
 #' sample_details = readr::read_csv("data-raw/sample_layout_template.csv")
@@ -13,14 +13,11 @@
 #' add_sherlock_results(con, processed_results, sample_details)
 #' @md
 #' @export
-add_sherlock_results <- function(con, transformed_assay_results, sample_details) {
+add_sherlock_results <- function(con, assay_results, sample_details) {
 
-  # the final results
-  results_added <- add_assay_results(con = con,
-                    transformed_assay_results = transformed_assay_results)
   # add the raw results
   raw_results_added <- add_raw_assay_results(con = con,
-                        transformed_assay_results = transformed_assay_results)
+                                             assay_results = assay_results)
 
   # get variables needed for thresholds
   ids_from_layout <- layout$sample_id
@@ -174,22 +171,22 @@ add_assay_results <- function(con, transformed_assay_results) {
 
 #' @title Add Raw Results
 #' @export
-add_raw_assay_results <- function(con, transformed_assay_results) {
+add_raw_assay_results <- function(con, assay_results) {
 
   query <- glue::glue_sql("
   INSERT INTO raw_assay_results (sample_id, sample_type_id, assay_id, raw_fluorescence,
                                 background_value, time, plate_run_id, well_location,
                                 layout_sample_number)
   VALUES (
-    UNNEST(ARRAY[{transformed_assay_results$raw_assay_results$sample_id*}]),
-    UNNEST(ARRAY[{transformed_assay_results$raw_assay_results$sample_type_id*}]),
-    UNNEST(ARRAY[{transformed_assay_results$raw_assay_results$assay_id*}]),
-    UNNEST(ARRAY[{transformed_assay_results$raw_assay_results$raw_fluorescence*}]),
-    UNNEST(ARRAY[{transformed_assay_results$raw_assay_results$background_value*}]),
-    UNNEST(ARRAY[{transformed_assay_results$raw_assay_results$time*}]),
-    UNNEST(ARRAY[{transformed_assay_results$raw_assay_results$plate_run_id*}]::int[]),
-    UNNEST(ARRAY[{transformed_assay_results$raw_assay_results$well_location*}]::well_location_enum[]),
-    UNNEST(ARRAY[{transformed_assay_results$raw_assay_results$layout_sample_number*}])
+    UNNEST(ARRAY[{assay_results$sample_id*}]),
+    UNNEST(ARRAY[{assay_results$sample_type_id*}]),
+    UNNEST(ARRAY[{assay_results$assay_id*}]),
+    UNNEST(ARRAY[{assay_results$raw_fluorescence*}]),
+    UNNEST(ARRAY[{assay_results$background_value*}]),
+    UNNEST(ARRAY[{assay_results$time*}]),
+    UNNEST(ARRAY[{assay_results$plate_run_id*}]::int[]),
+    UNNEST(ARRAY[{assay_results$well_location*}]::well_location_enum[]),
+    UNNEST(ARRAY[{assay_results$layout_sample_number*}])
   );", .con = con)
 
   res <- DBI::dbExecute(con, query)
