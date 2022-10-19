@@ -4,8 +4,12 @@
 \alias{add_assay_results}
 \title{Add assay results to run-id-database}
 \usage{
-add_assay_results(con, transformed_assay_results)
+add_assay_results(con, assay_results)
+
+add_assay_results(con, assay_results)
 }
 \description{
 Add assay results to run-id-database
+
+Add Raw Results
 }

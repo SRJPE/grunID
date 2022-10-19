@@ -15,24 +15,13 @@ see the \strong{Sample Details} section for more information}
 \item{plate_size}{either 96 or 384}
 }
 \value{
-A list containing the following 2 tables:
+A table:
 \subsection{1) raw_assay_results}{
 \itemize{
 \item sample_id
 \item raw_fluorescence
 \item background_value
 \item time
-\item plate_run_id
-\item well_location
-}
-}
-
-\subsection{2) assay_results}{
-\itemize{
-\item sample_id
-\item sample_type_id
-\item assay_id
-\item rfu_back_subtracted
 \item plate_run_id
 \item well_location
 }

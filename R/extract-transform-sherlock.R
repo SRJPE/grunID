@@ -28,19 +28,12 @@
 #' the function that creates a new plate run record in the database to associate
 #' important metadata with the assay results
 #' @returns
-#' A list containing the following 2 tables:
+#' A table:
 #' ## 1) raw_assay_results
 #' * sample_id
 #' * raw_fluorescence
 #' * background_value
 #' * time
-#' * plate_run_id
-#' * well_location
-#' ## 2) assay_results
-#' * sample_id
-#' * sample_type_id
-#' * assay_id
-#' * rfu_back_subtracted
 #' * plate_run_id
 #' * well_location
 #' @examples
@@ -101,31 +94,6 @@ process_raw_assay_results <- function(filepath, ranges, plate_size, layout) {
   return(raw_assay_results)
 }
 
-#' Process Assay Results
-#' @description
-process_assay_results <- function(filepath, range, plate_size, layout) {
-
-  if (plate_size == 96) {
-    stat_col_id <- "...14"
-  } else if (plate_size == 384) {
-    stat_col_id <- "...26"
-  }
-
-  results <- readxl::read_excel(filepath,
-                                range = range, col_types = "text") |>
-    tidyr::fill(...1) |>
-    tidyr::pivot_longer(names_to = "number_location", values_to = "result", !c(...1, stat_col_id)) |>
-    dplyr::rename(metric = stat_col_id) |>
-    dplyr::arrange(...1, as.numeric(number_location)) |>
-    dplyr::transmute(location = paste0(...1, number_location), result, metric) |>
-    dplyr::filter(!is.na(result)) |>
-    dplyr::left_join(layout) |>
-    dplyr::mutate(metric = stringr::str_remove(metric, "\\s\\[.+\\]")) |>
-    dplyr::select(sample_id, sample_type_id, assay_id, result, metric,
-                  plate_run_id, well_location = location)
-
-  return(results)
-}
 
 # TODO fix name
 #' Process layout
@@ -207,14 +175,11 @@ generate_ranges <- function(plate_size, wells_used, time_intervals) {
 
   results_header_row  <- extract_previous_end_row(background_fl_ranges) + 4
 
-  result_ranges <- generate_range("results", results_header_row, result_row_count,
-                                  wells_used, time_intervals)
 
   return(
     list(
       raw_fluorescence = raw_fl_ranges,
-      background_fluorescence = background_fl_ranges,
-      results = result_ranges
+      background_fluorescence = background_fl_ranges
     )
   )
 
@@ -241,18 +206,8 @@ generate_range <- function(table_type = c("raw fluorescence", "background fluore
     start_col_index <- "B"
     end_col_index <- "CT"
     left_offset <- 2
-  } else if (table_type == "results") {
-    start_col_index <- "B"
-    end_col_index <- "AA"
-    left_offset <- 1
   } else {
     stop(paste("Unknown table type -", table_type))
-  }
-
-  if (table_type == "results") {
-    return(sprintf("%s%d:%s%d", start_col_index, column_header_row,
-                   end_col_index,
-                   column_header_row + result_row_count))
   }
 
   if (wells_used <= max_cells) {

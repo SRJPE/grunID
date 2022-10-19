@@ -1,81 +1,81 @@
-#' @title Insert all results from Sherlock Output
-#' @description  Adds results from Sherlock output after being processed via `process_sherlock()`
-#' to the run-id database, as well as computed thresholds for run assignment.
-#' @param con a connection to the database
-#' @param assay_results a list of containing two tables, `raw_assay_results` and `assay_results` result from `process_sherlock`
-#' @param sample_details dataframe containing sample information at each well
-#' @examples
-#' sample_details = readr::read_csv("data-raw/sample_layout_template.csv")
-#' processed_results <- process_sherlock(filepath = "data-raw/exampleoutput_synergyH1trial_data_092021.xlsx",
-#'                  sample_details = sample_details,
-#'                  plate_size = 96)
-#'
-#' add_sherlock_results(con, processed_results, sample_details)
-#' @md
+#' Generate Thresholds
 #' @export
-add_sherlock_results <- function(con, assay_results, sample_details) {
-
-  # add the raw results
-  raw_results_added <- add_raw_assay_results(con = con,
-                                             assay_results = assay_results)
-
-  # get variables needed for thresholds
-  ids_from_layout <- layout$sample_id
-  plate_run_id <- layout$plate_run_id[1]
-  assay_type_id <- unique(layout$assay_id)
+generate_threshold <- function(con, plate_run_id) {
 
   protocol_id <- tbl(con, "plate_run") |>
-    dplyr::filter(id  == plate_run_id) |>
-    dplyr::select(protocol_id) |>
-    pull()
+    dplyr::filter(id == plate_run_id) |>
+    dplyr::pull(protocol_id)
 
-  protocol_from_db <- tbl(con, "protocol") |>
-    filter(id == protocol_id) |>
+  last_time_val <- tbl(con, "protocol") |>
+    dplyr::filter(id == protocol_id) |>
+    dplyr::pull(runtime)
+
+
+  control_blanks <- tbl(con, "assay_result") |>
+    filter(time == last_time_val,
+           sample_id == "CONTROL",
+           plate_run_id == plate_run_id) |>
     collect()
 
-  last_time_val <- protocol_from_db$runtime
-
-  blanks_for_threshold <- tbl(con, "raw_assay_results") |>
-    filter(sample_id %in% ids_from_layout,
-           time == last_time_val,
-           layout_sample_number == "BLK") |>
-    collect()
-
-  thresholds <- blanks_for_threshold |>
-    group_by(assay_id) |>
+  thresholds <- control_blanks |>
+    group_by(plate_run_id, assay_id) |>
     summarise(
       threshold = mean(as.numeric(raw_fluorescence)) * 2
-    ) |>
-    mutate(plate_run_id = plate_run_id)
+    ) |> ungroup()
 
-  # add value to join table that includes plate_run_id, assay_type_id, threshold
-  thresholds_added <- add_run_type_threshold(con,
-                                             thresholds$plate_run_id,
-                                             thresholds$assay_id,
-                                             thresholds$threshold)
+  return(thresholds)
+}
 
+#' @title Set detection on assay results
+#' @export
+update_assay_detection <- function(con, thresholds) {
 
-  # update genetic run id based on the thresholds
-  threshold_tbl <- tbl(con, "plate_run_thresholds") |>
-    select(plate_run_id, assay_id, threshold)
+  if (!DBI::dbIsValid(con)) {
+    stop("Connection argument does not have a valid connection the run-id database.
+         Please try reconnecting to the database using 'DBI::dbConnect'",
+         call. = FALSE)
+  }
 
-  sample_id_with_genetic_types <- tbl(con, "raw_assay_results") |>
-    filter(sample_id %in% ids_from_layout) |>
-    select(sample_id, raw_fluorescence, assay_id, plate_run_id) |>
-    left_join(threshold_tbl) |>
-    mutate(run_type_id = ifelse(raw_fluorescence > threshold, 2, NA)) |> # TODO this part is WRONG!!
-    select(sample_id, assay_id, run_type_id) |>
-    collect()
+  plate_run_id <- unique(thresholds$plate_run_id)
 
+  if (length(plate_run_id) > 1) {
+    stop("TODO")
+  }
 
-  add_genetic_run_type(con, sample_id_with_genetic_types$sample_id,
-                       sample_id_with_genetic_types$run_type_id)
+  detection_results <- dplyr::tbl(con, "assay_result") |>
+    dplyr::filter(plate_run_id == plate_run_id,
+           sample_id != "CONTROL") |>
+    dplyr::collect() |>
+    dplyr::left_join(thresholds, by = c("assay_id" = "assay_id")) |>
+    dplyr::mutate(positive_detection = raw_fluorescence > threshold) |>
+    dplyr::select(sample_id, positive_detection)
 
-  return(c("results" = results_added, "raw_results" = raw_results_added,
-           "thresholds" = thresholds_added))
+  positive_ids <- detection_results |>
+    dplyr::filter(positive_detection) |>
+    dplyr::pull(sample_id)
 
+  negative_ids <- detection_results |>
+    dplyr::filter(!positive_detection) |>
+    dplyr::pull(sample_id)
+
+  positive_query <- glue::glue_sql("
+  UPDATE assay_result SET positive_detection = true
+  WHERE sample_id IN ({positive_ids*});",
+                          .con = con)
+
+  negative_query <- glue::glue_sql("
+  UPDATE assay_result SET positive_detection = false
+  WHERE sample_id IN ({negative_ids*});",
+                          .con = con)
+
+  positive_results <- DBI::dbExecute(con, positive_query)
+  negative_results <- DBI::dbExecute(con, negative_query)
+
+  return(positive_results + negative_results)
 
 }
+
+
 
 #' @title Insert new Threshold
 add_run_type_threshold <- function(con, plate_run_id, assay_type_id, threshold) {
@@ -143,7 +143,7 @@ add_plate_run <- function(con, protocol_id, genetic_method_id,
 
 #' @title Add assay results to run-id-database
 #' @export
-add_assay_results <- function(con, transformed_assay_results) {
+add_assay_results <- function(con, assay_results) {
 
   if (!DBI::dbIsValid(con)) {
     stop("Connection argument does not have a valid connection the run-id database.
@@ -152,14 +152,14 @@ add_assay_results <- function(con, transformed_assay_results) {
   }
 
   query <- glue::glue_sql("
-  INSERT INTO assay_results (sample_id, sample_type_id, assay_id, rfu_back_subtracted, plate_run_id, well_location)
+  INSERT INTO assay_result (sample_id, sample_type_id, assay_id, rfu_back_subtracted, plate_run_id, well_location)
   VALUES (
-    UNNEST(ARRAY[{transformed_assay_results$assay_results$sample_id*}]),
-    UNNEST(ARRAY[{transformed_assay_results$assay_results$sample_type_id*}]),
-    UNNEST(ARRAY[{transformed_assay_results$assay_results$assay_id*}]),
-    UNNEST(ARRAY[{transformed_assay_results$assay_results$rfu_back_subtracted*}]),
-    UNNEST(ARRAY[{transformed_assay_results$assay_results$plate_run_id*}]::int[]),
-    UNNEST(ARRAY[{transformed_assay_results$assay_results$well_location*}]::well_location_enum[])
+    UNNEST(ARRAY[{assay_results$sample_id*}]),
+    UNNEST(ARRAY[{assay_results$sample_type_id*}]),
+    UNNEST(ARRAY[{assay_results$assay_id*}]),
+    UNNEST(ARRAY[{assay_results$rfu_back_subtracted*}]),
+    UNNEST(ARRAY[{assay_results$plate_run_id*}]::int[]),
+    UNNEST(ARRAY[{assay_results$well_location*}]::well_location_enum[])
   );", .con = con)
 
 
@@ -171,12 +171,11 @@ add_assay_results <- function(con, transformed_assay_results) {
 
 #' @title Add Raw Results
 #' @export
-add_raw_assay_results <- function(con, assay_results) {
+add_assay_results <- function(con, assay_results) {
 
   query <- glue::glue_sql("
-  INSERT INTO raw_assay_results (sample_id, sample_type_id, assay_id, raw_fluorescence,
-                                background_value, time, plate_run_id, well_location,
-                                layout_sample_number)
+  INSERT INTO assay_result (sample_id, sample_type_id, assay_id, raw_fluorescence,
+                                background_value, time, plate_run_id, well_location)
   VALUES (
     UNNEST(ARRAY[{assay_results$sample_id*}]),
     UNNEST(ARRAY[{assay_results$sample_type_id*}]),
@@ -185,8 +184,7 @@ add_raw_assay_results <- function(con, assay_results) {
     UNNEST(ARRAY[{assay_results$background_value*}]),
     UNNEST(ARRAY[{assay_results$time*}]),
     UNNEST(ARRAY[{assay_results$plate_run_id*}]::int[]),
-    UNNEST(ARRAY[{assay_results$well_location*}]::well_location_enum[]),
-    UNNEST(ARRAY[{assay_results$layout_sample_number*}])
+    UNNEST(ARRAY[{assay_results$well_location*}]::well_location_enum[])
   );", .con = con)
 
   res <- DBI::dbExecute(con, query)
