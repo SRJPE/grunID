@@ -32,7 +32,7 @@ get_sample_types <- function(con, is_active=TRUE, all_results=FALSE) {
 #' Add Sample Type
 #' @description `add_sample_type()` adds a new sample type to the sample type lookup table
 #' @param con A DBI connection object obtained from DBI::dbConnect()
-#' @param run_type A valid sample type dataframe containing the following:
+#' @param sample_type A valid sample type dataframe containing the following:
 #' * **code** Short code representing sample type name
 #' * **sample_type_name** Sample type full name
 #' * **description** Brief description of the sample type

@@ -29,6 +29,7 @@ protocol_id <- all_protocols[2, "id", drop = TRUE]
 laboratory_id <- get_laboratories(con) |>
   filter(stringr::str_detect(code, "DWR")) |> pull(id)
 
+
 # adding a plate run is someone choosing one of the protocols
 # and adding a few more parameters to create a "plate run"
 plate_run_uid <- add_plate_run(con,
