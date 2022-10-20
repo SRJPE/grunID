@@ -49,7 +49,7 @@ results <- process_sherlock(
   sample_details = layout,
   plate_size = 96)
 
-res <- add_assay_results(con, results)
+res <- add_raw_assay_results(con, results)
 
 thresholds <- generate_threshold(con, plate_run_id = 1)
 
