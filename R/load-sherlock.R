@@ -1,6 +1,6 @@
 #' Generate Thresholds
 #' @export
-generate_threshold <- function(con, plate_run_id) {
+generate_threshold <- function(con, plate_run) {
 
   if (!DBI::dbIsValid(con)) {
     stop("Connection argument does not have a valid connection the run-id database.
@@ -9,7 +9,7 @@ generate_threshold <- function(con, plate_run_id) {
   }
 
   protocol_id <- dplyr::tbl(con, "plate_run") |>
-    dplyr::filter(id == plate_run_id) |>
+    dplyr::filter(id == plate_run) |>
     dplyr::pull(protocol_id)
 
   runtime <- dplyr::tbl(con, "protocol") |>
@@ -19,7 +19,7 @@ generate_threshold <- function(con, plate_run_id) {
   control_blanks <- dplyr::tbl(con, "raw_assay_result") |>
     dplyr::filter(time == runtime,
            sample_id == "CONTROL",
-           plate_run_id == plate_run_id) |>
+           plate_run_id == plate_run) |>
     dplyr::collect()
 
   thresholds <- control_blanks |>
@@ -42,7 +42,7 @@ update_assay_detection <- function(con, thresholds) {
          call. = FALSE)
   }
 
-  plate_run_id <- unique(thresholds$plate_run_id)
+  plate_run <- unique(thresholds$plate_run_id)
   runtime <- unique(thresholds$runtime)
 
   if (length(plate_run_id) > 1) {
@@ -54,7 +54,7 @@ update_assay_detection <- function(con, thresholds) {
   }
 
   detection_results <- dplyr::tbl(con, "raw_assay_result") |>
-    dplyr::filter(plate_run_id == plate_run_id,
+    dplyr::filter(plate_run_id == plate_run,
            sample_id != "CONTROL",
            time == runtime) |>
     dplyr::collect() |>
@@ -130,23 +130,48 @@ add_plate_run <- function(con, protocol_id, genetic_method_id,
 #' @export
 add_raw_assay_results <- function(con, assay_results) {
 
-  query <- glue::glue_sql("
-  INSERT INTO raw_assay_result (sample_id, sample_type_id, assay_id, raw_fluorescence,
-                                background_value, time, plate_run_id, well_location)
-  VALUES (
-    UNNEST(ARRAY[{assay_results$sample_id*}]),
-    UNNEST(ARRAY[{assay_results$sample_type_id*}]),
-    UNNEST(ARRAY[{assay_results$assay_id*}]),
-    UNNEST(ARRAY[{assay_results$raw_fluorescence*}]),
-    UNNEST(ARRAY[{assay_results$background_value*}]),
-    UNNEST(ARRAY[{assay_results$time*}]),
-    UNNEST(ARRAY[{assay_results$plate_run_id*}]::int[]),
-    UNNEST(ARRAY[{assay_results$well_location*}]::well_location_enum[])
-  );", .con = con)
-
-  res <- DBI::dbExecute(con, query)
+  res <- DBI::dbAppendTable(con, "raw_assay_result", assay_results)
 
   return(res)
 }
+
+#' @export
+add_genetic_identification <- function(con, plate_run) {
+  assay_results <- dplyr::tbl(con, "assay_result") |>
+    dplyr::filter(plate_run_id == plate_run) |>
+    dplyr::collect()
+
+  run_types <- assay_results |>
+    dplyr::filter(positive_detection) |>
+    dplyr::mutate(
+      run_type_id = dplyr::case_when(
+        assay_id == 1 ~ 6,
+        assay_id == 2 ~ 5,
+        assay_id == 3 ~ 1,
+        assay_id == 4 ~ 4
+      )
+    ) |>
+    dplyr::select(sample_id, run_type_id)
+
+  query <- glue::glue_sql("
+  INSERT INTO genetic_run_identification (sample_id, run_type_id)
+  VALUES (
+    UNNEST(ARRAY[{run_types$sample_id*}]),
+    UNNEST(ARRAY[{run_types$run_type_id*}])
+  );
+  ", .con = con)
+
+  return(DBI::dbExecute(con, query))
+
+}
+
+
+
+
+
+
+
+
+
 
 

@@ -4,7 +4,7 @@
 \alias{generate_threshold}
 \title{Generate Thresholds}
 \usage{
-generate_threshold(con, plate_run_id)
+generate_threshold(con, plate_run)
 }
 \description{
 Generate Thresholds

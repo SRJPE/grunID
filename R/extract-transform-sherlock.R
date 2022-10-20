@@ -65,31 +65,53 @@ process_sherlock <- function(filepath, sample_details,
 #' @description
 process_raw_assay_results <- function(filepath, ranges, plate_size, layout) {
   # raw fluorescence ----
-  raw_fluorescence <- purrr::map_dfc(ranges$raw_fluorescence,
-                                     ~readxl::read_excel(filepath,
-                                                         range = .)) |>
-    dplyr::mutate(Time = hms::as_hms(Time),
-                  dplyr::across(dplyr::everything(), as.character)) |>
-    dplyr::select(-tidyselect::contains("...")) |>
-    tidyr::pivot_longer(names_to = "location", values_to = "fluorescence", !(tidyselect::starts_with("T"))) |>
-    dplyr::left_join(layout) |>
-    dplyr::mutate(fluorescence = as.numeric(fluorescence))
 
-  # background values ---
-  background_fluorescence <- purrr::map_dfc(ranges$background_fluorescence,
-                                            ~readxl::read_excel(filepath,
-                                                                range = .)) |>
-    dplyr::mutate(Time = hms::as_hms(Time),
-                  dplyr::across(dplyr::everything(), as.character)) |>
-    dplyr::select(-tidyselect::contains("...")) |>
-    tidyr::pivot_longer(names_to = "location", values_to = "background_fluorescence", !Time)
+  if (plate_size == 96) {
+    raw_fluorescence <- purrr::map_dfc(ranges$raw_fluorescence,
+                                       ~readxl::read_excel(filepath,
+                                                           range = .)) |>
+      dplyr::mutate(Time = hms::as_hms(Time),
+                    dplyr::across(dplyr::everything(), as.character)) |>
+      dplyr::select(-tidyselect::contains("...")) |>
+      tidyr::pivot_longer(names_to = "location", values_to = "fluorescence", !(tidyselect::starts_with("T"))) |>
+      dplyr::left_join(layout) |>
+      dplyr::mutate(fluorescence = as.numeric(fluorescence))
+
+    # background values ---
+    background_fluorescence <- purrr::map_dfc(ranges$background_fluorescence,
+                                              ~readxl::read_excel(filepath,
+                                                                  range = .)) |>
+      dplyr::mutate(Time = hms::as_hms(Time),
+                    dplyr::across(dplyr::everything(), as.character)) |>
+      dplyr::select(-tidyselect::contains("...")) |>
+      tidyr::pivot_longer(names_to = "location", values_to = "background_fluorescence", !Time)
+  } else {
+    raw_fluorescence <- purrr::map_dfc(ranges$raw_fluorescence,
+                                       ~readxl::read_excel(filepath,
+                                                           range = .)) |>
+      dplyr::mutate(Time = hms::as_hms(Time...1),
+                    dplyr::across(dplyr::everything(), as.character)) |>
+      dplyr::select(-tidyselect::contains("...")) |>
+      tidyr::pivot_longer(names_to = "location", values_to = "fluorescence", !(tidyselect::starts_with("T"))) |>
+      dplyr::left_join(layout) |>
+      dplyr::mutate(fluorescence = as.numeric(fluorescence))
+
+    # background values ---
+    background_fluorescence <- purrr::map_dfc(ranges$background_fluorescence,
+                                              ~readxl::read_excel(filepath,
+                                                                  range = .)) |>
+      dplyr::mutate(Time = hms::as_hms(Time...1),
+                    dplyr::across(dplyr::everything(), as.character)) |>
+      dplyr::select(-tidyselect::contains("...")) |>
+      tidyr::pivot_longer(names_to = "location", values_to = "background_fluorescence", !Time)
+  }
 
   # raw results encoded as strings because of OVERFLOW and ????? values
   raw_assay_results <- raw_fluorescence |>
     dplyr::left_join(background_fluorescence) |>
     dplyr::select(sample_id, sample_type_id, assay_id, plate_run_id, raw_fluorescence = fluorescence,
                   background_value = background_fluorescence,
-                  time = Time, plate_run_id, well_location = location, layout_sample_number = psuedo_sample_id)
+                  time = Time, plate_run_id, well_location = location)
 
   return(raw_assay_results)
 }
