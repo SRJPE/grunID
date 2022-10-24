@@ -1,4 +1,5 @@
 #' Generate Thresholds
+#' @description
 #' @export
 generate_threshold <- function(con, plate_run) {
 
@@ -185,10 +186,10 @@ add_genetic_identification <- function(con, sample_identifiers) {
     dplyr::left_join(results_complete) |>
     dplyr::mutate(
       run_type_id = dplyr::case_when(
-        ots_16 & `3` & `4` ~ 7,
+        ots_16 & `3` & `4` ~ 8,
         ots_16 & `3` ~ 1,
         ots_16 & `4` ~ 4,
-        ots_28 & `1` & `2` ~ 7,
+        ots_28 & `1` & `2` ~ 8,
         ots_28 & `1` ~ 6,
         ots_28 & `2` ~ 5,
         TRUE ~ 7
