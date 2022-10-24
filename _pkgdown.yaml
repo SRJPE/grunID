@@ -1,0 +1,70 @@
+title: grunID
+url: https://SRJPE.github.io/grunID/
+template:
+  params:
+    bootswatch: yeti
+home:
+  links:
+  - text: Department of Water Resources’ (DWR) Division of Environmental Services (DES)
+    href: https://water.ca.gov/Programs/Integrated-Science-and-Engineering/Applied-Research
+reference:
+- title: Retrieve Elements From Lookup Tables
+  desc: Functions to retrieve existing records from the database lookup tables
+  contents:
+  - get_agencies
+  - get_assays
+  - get_genetic_methods
+  - get_laboratories
+  - get_protocols
+  - get_run_types
+  - get_sample_locations
+  - get_sample_types
+  - get_status_codes
+- title: Add Element to Lookup Tables
+  desc: Functions to add a new element to the database lookup tables
+  contents:
+  - add_agency
+  - add_assay
+  - add_genetic_method
+  - add_laboratory
+  - add_protocol
+  - add_run_type
+  - add_sample_location
+  - add_sample_type
+  - add_status_code
+- title: Update Element From Lookup Tables
+  desc: Functions to update an existing record from the database lookup tables
+  contents:
+  - update_agency
+  - update_assay
+  - update_genetic_method
+  - update_laboratory
+  - update_protocol
+  - update_run_type
+  - update_sample_location
+  - update_sample_type
+  - update_status_code
+- title: Update Element's Status Lookup Tables
+  desc: Functions to delete an existing record from the database lookup tables
+  contents:
+  - update_agency_status
+  - update_assay_status
+  - update_genetic_method_status
+  - update_laboratory_status
+  - update_protocol_status
+  - update_run_type_status
+  - update_sample_location_status
+  - update_sample_type_status
+  - update_status_code_status
+- title: Delete Element From Lookup Tables
+  desc: Functions to delete an existing record from the database lookup tables
+  contents:
+  - delete_agency
+  - delete_assay
+  - delete_genetic_method
+  - delete_laboratory
+  - delete_protocol
+  - delete_run_type
+  - delete_sample_location
+  - delete_sample_type
+  - delete_status_code

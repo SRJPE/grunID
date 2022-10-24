@@ -1,0 +1,10 @@
+pandoc: 2.17.1.1
+pkgdown: 1.6.1
+pkgdown_sha: ~
+articles:
+  process_and_add_assay_results: process_and_add_assay_results.html
+last_built: 2022-10-24T20:09Z
+urls:
+  reference: https://SRJPE.github.io/grunID//reference
+  article: https://SRJPE.github.io/grunID//articles
+
