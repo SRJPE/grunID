@@ -80,10 +80,6 @@ update_assay_detection(con, thresholds_ots_28_e)
 update_assay_detection(con, thresholds_ots_28_l)
 
 
-add_genetic_identification(con, plate_run = plate_run_id_ots_28_e)
-add_genetic_identification(con, plate_run = plate_run_id_ots_28_l)
-
-
 DBI::dbDisconnect(con)
 
 

@@ -45,7 +45,7 @@ update_assay_detection <- function(con, thresholds) {
   plate_run <- unique(thresholds$plate_run_id)
   runtime <- unique(thresholds$runtime)
 
-  if (length(plate_run_id) > 1) {
+  if (length(plate_run) > 1) {
     stop("TODO")
   }
 
@@ -75,9 +75,35 @@ update_assay_detection <- function(con, thresholds) {
           UNNEST(ARRAY[{detection_results$plate_run_id*}]::int[])
   );", .con = con)
 
-  return(DBI::dbExecute(con, query))
+  assay_results_added <- DBI::dbExecute(con, query)
+
+  genetic_ids_added <- add_genetic_identification(con, unique(detection_results$sample_id))
+
+  return(c("Assay records added" = assay_results_added,
+           "Samples assigned run type" = genetic_ids_added))
 }
 
+
+check_results_complete <- function(con, sample_identifiers) {
+  results_complete <- dplyr::tbl(con, "assay_result") |>
+    dplyr::filter(sample_id %in% sample_identifiers) |>
+    dplyr::select(sample_id, assay_id, positive_detection) |>
+    dplyr::collect() |>
+    tidyr::pivot_wider(names_from = "assay_id", values_from = "positive_detection")
+
+  all_ots_results <- dplyr::bind_rows(
+    tibble::tibble(sample_id = "DELETE_ME", `1` = FALSE, `2` = FALSE, `3` = FALSE, `4` = FALSE),
+    results_complete
+  ) |>
+    dplyr::group_by(sample_id) |>
+    dplyr::transmute(sample_id,
+                     ots_28 = all(`1`, `2`),
+                     ots_16 = all(`3`, `4`)) |>
+    dplyr::filter(sample_id != "DELETE_ME", (ots_28 | ots_16)) |>
+    dplyr::ungroup()
+
+  return(all_ots_results)
+}
 
 
 #' @title Insert new Threshold
@@ -135,22 +161,40 @@ add_raw_assay_results <- function(con, assay_results) {
   return(res)
 }
 
-#' @export
-add_genetic_identification <- function(con, plate_run) {
-  assay_results <- dplyr::tbl(con, "assay_result") |>
-    dplyr::filter(plate_run_id == plate_run) |>
-    dplyr::collect()
 
-  run_types <- assay_results |>
-    dplyr::filter(positive_detection) |>
+
+#' @export
+add_genetic_identification <- function(con, sample_identifiers) {
+
+  results_complete <- check_results_complete(con, sample_identifiers)
+
+  if (nrow(results_complete) == 0) {
+    return(0)
+  }
+
+  assay_detections <- tbl(con, "assay_result") |>
+    dplyr::filter(positive_detection, sample_id %in% sample_identifiers) |>
+    dplyr::select(sample_id, assay_id, positive_detection) |>
+    dplyr::collect() |>
+    tidyr::pivot_wider(names_from = "assay_id", values_from = "positive_detection")
+
+  run_types <- dplyr::bind_rows(
+    tibble::tibble(sample_id = "DELETE_ME", `1` = FALSE, `2` = FALSE, `3` = FALSE, `4` = FALSE),
+    assay_detections
+  ) |>
+    dplyr::left_join(results_complete) |>
     dplyr::mutate(
       run_type_id = dplyr::case_when(
-        assay_id == 1 ~ 6,
-        assay_id == 2 ~ 5,
-        assay_id == 3 ~ 1,
-        assay_id == 4 ~ 4
+        ots_28 & `1` & `2` ~ 7,
+        ots_28 & `1` ~ 6,
+        ots_28 & `2` ~ 5,
+        ots_16 & `3` & `4` ~ 7,
+        ots_16 & `3` ~ 1,
+        ots_16 & `4` ~ 4,
+        TRUE ~ 7
       )
     ) |>
+    dplyr::filter(sample_id != "DELETE_ME") |>
     dplyr::select(sample_id, run_type_id)
 
   query <- glue::glue_sql("
