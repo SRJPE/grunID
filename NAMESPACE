@@ -3,7 +3,6 @@
 export(add_agency)
 export(add_assay)
 export(add_enum_value)
-export(add_genetic_identification)
 export(add_genetic_method)
 export(add_laboratory)
 export(add_plate_run)

@@ -97,8 +97,8 @@ check_results_complete <- function(con, sample_identifiers) {
   ) |>
     dplyr::group_by(sample_id) |>
     dplyr::transmute(sample_id,
-                     ots_28 = all(`1`, `2`),
-                     ots_16 = all(`3`, `4`)) |>
+                     ots_28 = all(!is.na(`1`), !is.na(`2`)),
+                     ots_16 = all(!is.na(`3`), !is.na(`4`))) |>
     dplyr::filter(sample_id != "DELETE_ME", (ots_28 | ots_16)) |>
     dplyr::ungroup()
 
@@ -163,7 +163,7 @@ add_raw_assay_results <- function(con, assay_results) {
 
 
 
-#' @export
+#' @title Genetic Identification
 add_genetic_identification <- function(con, sample_identifiers) {
 
   results_complete <- check_results_complete(con, sample_identifiers)
@@ -185,12 +185,12 @@ add_genetic_identification <- function(con, sample_identifiers) {
     dplyr::left_join(results_complete) |>
     dplyr::mutate(
       run_type_id = dplyr::case_when(
-        ots_28 & `1` & `2` ~ 7,
-        ots_28 & `1` ~ 6,
-        ots_28 & `2` ~ 5,
         ots_16 & `3` & `4` ~ 7,
         ots_16 & `3` ~ 1,
         ots_16 & `4` ~ 4,
+        ots_28 & `1` & `2` ~ 7,
+        ots_28 & `1` ~ 6,
+        ots_28 & `2` ~ 5,
         TRUE ~ 7
       )
     ) |>

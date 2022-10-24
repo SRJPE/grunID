@@ -80,6 +80,12 @@ update_assay_detection(con, thresholds_ots_28_e)
 update_assay_detection(con, thresholds_ots_28_l)
 
 
+tbl(con, "genetic_run_identification") |>
+  filter(run_type_id == 5)
+
+results_ots_28_l
+
+
 DBI::dbDisconnect(con)
 
 
