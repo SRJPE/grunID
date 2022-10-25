@@ -9,9 +9,24 @@ add_plate_run(
   protocol_id,
   genetic_method_id,
   laboratory_id,
-  lab_work_preformed_by
+  lab_work_performed_by,
+  date_run
 )
 }
+\arguments{
+\item{con}{valid connection to the database}
+
+\item{protocol_id}{protocol identifier}
+
+\item{genetic_method_id}{genetic method identifier}
+
+\item{laboratory_id}{laboratory identifier}
+
+\item{lab_work_performed_by}{name of staff who performed the plate run}
+
+\item{date_run}{date of plate run}
+}
 \description{
-blah
+`add_plate_run()` adds metadata about a plate run to
+the plate_run table in the database.
 }
