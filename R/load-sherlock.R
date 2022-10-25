@@ -193,6 +193,16 @@ add_raw_assay_results <- function(con, assay_results) {
 
 
 #' @title Genetic Identification
+#' @description `add_genetic_identification` assigns genetic identifier to a
+#' sample based on assay results.
+#' @param con valid connection to database
+#' @param sample_identifiers identifiers for samples to be added
+#' @details `add_genetic_identification` checks the database for all existing
+#' assay results for a sample identifier, then uses those to assign a
+#' genetic identification value. The genetic_run_identification table in the
+#' database is updated with the genetic identification value. The genetic
+#' identification values are dependent on the assay results:
+#' 1: high value for
 add_genetic_identification <- function(con, sample_identifiers) {
 
   results_complete <- check_results_complete(con, sample_identifiers)
