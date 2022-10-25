@@ -1,5 +1,12 @@
 #' Generate Thresholds
-#' @description
+#' @description `generate_threshold()` calculates the raw fluorescence threshold
+#' values for an assay.
+#' @param con valid connection to the database
+#' @param plate_run plate run identifier value
+#' @details For each assay on a plate run, the threshold value is calculated as two times
+#' the mean value of the last time step from the control blank wells. Each
+#' assay on a plate will have its own control blanks and threshold value.
+#' @returns
 #' @export
 generate_threshold <- function(con, plate_run) {
 
@@ -33,7 +40,22 @@ generate_threshold <- function(con, plate_run) {
   return(thresholds)
 }
 
-#' @title Set detection on assay results
+#' @title Set detection for assay results
+#' @description `update_assay_detection()` updates the assay result table with
+#' positive detections and, depending on the assay, the genetic run type
+#' identification.
+#' @param con valid connection to the database
+#' @param thresholds threshold values calculated in `generate_threshold`
+#' @details The assay result table is updated to reflect whether the assays
+#' in a plate run produced raw fluorescence values that exceed the threshold
+#' calculated by `generate_threshold()`, resulting in a positive or negative
+#' detection (TRUE or FALSE, where TRUE means the assay is a positive
+#' detection). The database is then checked for whether other ots_28 and
+#' ots_16 have been run on the samples. If so, samples are added to
+#' the genetic_run_identification table in the database with a genetic
+#' identification number (see `add_genetic_identification` for details).
+#' @returns The number of assay results added to the assay_result table
+#' and the number of samples updated in the genetic_run_identification table.
 #' @export
 update_assay_detection <- function(con, thresholds) {
 
@@ -107,7 +129,7 @@ check_results_complete <- function(con, sample_identifiers) {
 }
 
 
-#' @title Insert new Threshold
+#' @title Insert New Threshold
 add_run_type_threshold <- function(con, plate_run_id, assay_type_id, threshold) {
 
   if (!DBI::dbIsValid(con)) {
@@ -129,11 +151,17 @@ add_run_type_threshold <- function(con, plate_run_id, assay_type_id, threshold) 
 
 
 #' @title Create Plate Run
-#' @description blah
+#' @description `add_plate_run()` adds metadata about a plate run to
+#' the plate_run table in the database.
+#' @param con valid connection to the database
+#' @param protocol_id protocol identifier
+#' @param genetic_method_id genetic method identifier
+#' @param laboratory_id laboratory identifier
+#' @param lab_work_performed_by name of staff who performed the plate run
+#' @param date_run date of plate run
 #' @export
 add_plate_run <- function(con, protocol_id, genetic_method_id,
                           laboratory_id, lab_work_preformed_by, date_run) {
-
   if (!DBI::dbIsValid(con)) {
     stop("Connection argument does not have a valid connection the run-id database.
          Please try reconnecting to the database using 'DBI::dbConnect'",
