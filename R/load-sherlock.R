@@ -107,32 +107,11 @@ check_results_complete <- function(con, sample_identifiers) {
 }
 
 
-#' @title Insert new Threshold
-add_run_type_threshold <- function(con, plate_run_id, assay_type_id, threshold) {
-
-  if (!DBI::dbIsValid(con)) {
-    stop("Connection argument does not have a valid connection the run-id database.
-         Please try reconnecting to the database using 'DBI::dbConnect'",
-         call. = FALSE)
-  }
-
-  query <- glue::glue_sql("
-  INSERT INTO plate_run_thresholds (plate_run_id, assay_id, threshold)
-  VALUES (
-          UNNEST(ARRAY[{plate_run_id*}]),
-          UNNEST(ARRAY[{assay_type_id*}]),
-          UNNEST(ARRAY[{threshold*}])
-  );", .con = con)
-
-  return(DBI::dbExecute(con, query))
-}
-
-
 #' @title Create Plate Run
 #' @description blah
 #' @export
 add_plate_run <- function(con, protocol_id, genetic_method_id,
-                          laboratory_id, lab_work_preformed_by, date_run) {
+                          laboratory_id, lab_work_performed_by, date_run) {
 
   if (!DBI::dbIsValid(con)) {
     stop("Connection argument does not have a valid connection the run-id database.
@@ -141,8 +120,8 @@ add_plate_run <- function(con, protocol_id, genetic_method_id,
   }
 
   query <- glue::glue_sql("
-  INSERT INTO plate_run (protocol_id, genetic_method_id,  laboratory_id, lab_work_preformed_by, date_run)
-  VALUES ({protocol_id}, {genetic_method_id}, {laboratory_id}, {lab_work_preformed_by}, {date_run}) RETURNING id;",
+  INSERT INTO plate_run (protocol_id, genetic_method_id,  laboratory_id, lab_work_performed_by, date_run)
+  VALUES ({protocol_id}, {genetic_method_id}, {laboratory_id}, {lab_work_performed_by}, {date_run}) RETURNING id;",
                  .con = con)
 
   res <- DBI::dbSendQuery(con, query)
