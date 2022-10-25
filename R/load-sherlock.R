@@ -174,11 +174,12 @@ add_genetic_identification <- function(con, sample_identifiers) {
   }
 
   assay_detections <- tbl(con, "assay_result") |>
-    dplyr::filter(positive_detection, sample_id %in% sample_identifiers) |>
+    dplyr::filter(sample_id %in% sample_identifiers) |>
     dplyr::select(sample_id, assay_id, positive_detection) |>
     dplyr::collect() |>
     tidyr::pivot_wider(names_from = "assay_id", values_from = "positive_detection")
 
+  # TODO why are we assigning id 8 when id should be 7 for FALSE + FALSE
   run_types <- dplyr::bind_rows(
     tibble::tibble(sample_id = "DELETE_ME", `1` = FALSE, `2` = FALSE, `3` = FALSE, `4` = FALSE),
     assay_detections
