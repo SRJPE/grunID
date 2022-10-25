@@ -162,5 +162,77 @@ get_field_sheet_event_plan <- function(con, sample_event_id) {
 }
 
 
+#' Process Sample Field Sheet Data
+process_field_sheet_samples <- function(filepath){
+
+  field_data <- purrr::map_dfr(excel_sheets(filepath), function(sheet) {
+    readxl::read_excel(path = filepath, sheet = sheet)
+  })
+
+  formatted_data <- field_data |>
+    dplyr::mutate(datetime_collected = lubridate::as_datetime(
+      paste(lubridate::date(Date),
+            lubridate::hour(Time),
+            lubridate::minute(Time),
+            lubridate::second(Time)) # TODO: returns as POSIXct POSIXt, not Date
+    )) |>
+    dplyr::mutate(fork_length_mm = as.numeric(`FL (mm)`)) |>
+    dplyr::mutate(field_run_type_id = as.numeric(`Field Run ID`)) |>
+    dplyr::mutate(fin_clip = as.logical(`Fin Clip\r\n(Y/N)`)) |>
+    dplyr::mutate(field_comment = as.character(`Comments`)) |>
+    dplyr::mutate(sample_id = `Sample ID`) |>
+    dplyr::select(datetime_collected,
+                 fork_length_mm,
+                 field_run_type_id,
+                 fin_clip,
+                 field_comment,
+                 sample_id)
+
+  return(formatted_data)
+}
+
+
+#' Update Sample Field Sheet Data
+update_field_sheet_samples <- function(con, field_data) {
+
+  is_valid_connection(con)
+  is_valid_sample_field_data(field_data)
+
+  query <- glue::glue_sql("UPDATE sample
+                          SET datetime_collected = {field_data$datetime_collected},
+                            fork_length_mm = {field_data$fork_length_mm},
+                            field_run_type_id = {field_data$field_run_type_id},
+                            fin_clip = {field_data$fin_clip},
+                            field_comment = {field_data$field_comment}
+                          WHERE id = {field_data$sample_id}
+                          RETURNING id, updated_at;",
+                          .con = con)
+
+  res <- DBI::dbSendQuery(con, query)
+  results <- DBI:dbFetch(res)
+  DBI::dbClearResult(res)
+
+  return(results)
+}
+
+
+#' Helper function - checks field sheet data format
+is_valid_sample_field_data <- function(data) {
+
+  if (!is.data.frame(data)) {
+    stop("Please provide sample field data as a dataframe", call. = FALSE)
+  }
+
+  column_reference <- c("datetime_collected" = "Date", # TODO: this will return false until process_field_sheet_samples returns class = Date
+                        "fork_length_mm" = "numeric",
+                        "field_run_type_id" = "numeric",
+                        "fin_clip" = "logical",
+                        "field_comment" = "character")
+
+  if (!identical(sapply(data, class), column_reference)) {
+    stop('The sample field data supplied is not valid, see `help("process_field_sheet_samples")` for correct format', call. = FALSE)
+  }
+
+}
 
 
