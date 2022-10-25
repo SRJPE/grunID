@@ -6,6 +6,20 @@
 \usage{
 add_genetic_identification(con, sample_identifiers)
 }
+\arguments{
+\item{con}{valid connection to database}
+
+\item{sample_identifiers}{identifiers for samples to be added}
+}
 \description{
-Genetic Identification
+`add_genetic_identification` assigns genetic identifier to a
+sample based on assay results.
+}
+\details{
+`add_genetic_identification` checks the database for all existing
+assay results for a sample identifier, then uses those to assign a
+genetic identification value. The genetic_run_identification table in the
+database is updated with the genetic identification value. The genetic
+identification values are dependent on the assay results:
+1: high value for
 }

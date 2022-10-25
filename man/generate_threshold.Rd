@@ -6,6 +6,20 @@
 \usage{
 generate_threshold(con, plate_run)
 }
+\arguments{
+\item{con}{valid connection to the database}
+
+\item{plate_run}{plate run identifier value}
+}
+\value{
+
+}
 \description{
-Generate Thresholds
+`generate_threshold()` calculates the raw fluorescence threshold
+values for an assay.
+}
+\details{
+For each assay on a plate run, the threshold value is calculated as two times
+the mean value of the last time step from the control blank wells. Each
+assay on a plate will have its own control blanks and threshold value.
 }
