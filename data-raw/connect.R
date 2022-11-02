@@ -3,7 +3,8 @@ library(DBI)
 library(grunID)
 library(dplyr)
 
-cfg <- config::get()
+
+cfg <- config::get(config = "azure-dev")
 
 con <- DBI::dbConnect(RPostgres::Postgres(),
                dbname = cfg$dbname,
@@ -12,7 +13,9 @@ con <- DBI::dbConnect(RPostgres::Postgres(),
                user = cfg$username,
                password = cfg$password)
 
-# running this does the following:
+tbl(con, "status_code")
+
+`# running this does the following:
 # adds sample events to table SAMPLE_EVENT
 # adds sample bins for each event SAMPLE_BIN
 # adds samples with ids
@@ -36,7 +39,7 @@ plate_run_id_ots_28_e <- add_plate_run(con,
                                protocol_id = protocol_id,
                                genetic_method_id = 1,
                                laboratory_id = laboratory_id,
-                               lab_work_preformed_by = "user") # TODO determine the user
+                               lab_work_performed_by = "user") # TODO determine the user
 
 # sample layout, is then created by the user and read in here
 # the plate run must be identified to correspond to
@@ -49,7 +52,7 @@ plate_run_id_ots_28_l <- add_plate_run(con,
                                protocol_id = protocol_id,
                                genetic_method_id = 1,
                                laboratory_id = laboratory_id,
-                               lab_work_preformed_by = "user") # TODO determine the user
+                               lab_work_performed_by = "user") # TODO determine the user
 
 # sample layout, is then created by the user and read in here
 # the plate run must be identified to correspond to
@@ -80,11 +83,37 @@ update_assay_detection(con, thresholds_ots_28_e)
 update_assay_detection(con, thresholds_ots_28_l)
 
 
-tbl(con, "genetic_run_identification") |>
-  filter(run_type_id == 5)
+# Do the OTS 16
 
-results_ots_28_l
+samples_require_analysis <- function(con, assay_name=c("ots28", "ots16")) {
 
+  samples_that_need_ots16 <- tbl(con, "genetic_run_identification") |>
+    filter(run_type_id == 6)
+
+
+  return(samples_that_need_ots16)
+
+}
+
+
+samples_require_ots16(con)
+
+readr::write_csv(samples_that_need_ots16, "data-raw/ots_16_s1_plate_details.csv")
+
+plate_run_id_ots_16_S <- add_plate_run(con,
+                                       date_run = "2022-10-27",
+                                       protocol_id = protocol_id,
+                                       genetic_method_id = 1,
+                                       laboratory_id = laboratory_id,
+                                       lab_work_performed_by = "user")
+
+layout_ots_16_S <- process_well_sample_details("data-raw/ots_16_s1_plate_details.csv",
+                                               plate_run_id = plate_run_id_ots_16_S)
+
+results_ots_16_S <- process_sherlock(
+  filepath = "data-raw/FAKE_OTS16_S1.xlsx",
+  sample_details = layout_ots_28_e,
+  plate_size = 384)
 
 DBI::dbDisconnect(con)
 

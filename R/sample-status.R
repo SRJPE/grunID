@@ -29,18 +29,11 @@
 #' @family status code functions
 #' @export
 #' @md
-set_sample_status <- function(con, sample_ids,
-                              status = c("created", "prepped", "out to field",
-                                         "return from field", "in analysis",
-                                         "stored", "archived", "other lab"),
-                              comment = NULL) {
+set_sample_status <- function(con, sample_ids, status_code_id, comment = NULL) {
   is_valid_connection(con)
 
-  status <- match.arg(status)
 
-  status_code <- rep(which(status == c("created", "prepped", "out to field",
-                                       "return from field", "in analysis", "stored",
-                                       "archived", "other lab")), length(sample_ids))
+  status_codes_to_insert <- rep(status_code_id, length(sample_ids))
 
   if (!is.null(comment)) {
     comments <- rep(comment, length(sample_ids))
@@ -48,7 +41,7 @@ set_sample_status <- function(con, sample_ids,
     sample_status_query <- glue::glue_sql("INSERT INTO sample_status (sample_id, status_code_id, comment)
                                         VALUES (
                                           UNNEST(ARRAY[{sample_ids*}]),
-                                          UNNEST(ARRAY[{status_code*}]),
+                                          UNNEST(ARRAY[{status_codes_to_insert*}]),
                                           UNNEST(ARRAY[{comments*}])
                                         );",
                                         .con = con)
@@ -56,7 +49,7 @@ set_sample_status <- function(con, sample_ids,
     sample_status_query <- glue::glue_sql("INSERT INTO sample_status (sample_id, status_code_id)
                                         VALUES (
                                           UNNEST(ARRAY[{sample_ids*}]),
-                                          UNNEST(ARRAY[{status_code*}])
+                                          UNNEST(ARRAY[{status_codes_to_insert*}])
                                         );",
                                         .con = con)
   }
