@@ -120,6 +120,16 @@ check_results_complete <- function(con, sample_identifiers) {
   ) |>
     dplyr::group_by(sample_id) |>
     dplyr::transmute(sample_id,
+                     status_code_id = dplyr::case_when(
+                       `1` & !`2` ,
+                       run_type_id == 5 ~ 11,
+                       run_type_id == 1 ~ 11,
+                       run_type_id == 4 ~ 11,
+                       ots16 & run_type_id == 8 ~ 10,
+                       ots28 & run_type_id == 8 ~ 7,
+                       ots16 & run_type_id == 7 ~ 9,
+                       ots28 & run_type_id == 7 ~ 6
+                     ),
                      ots_28 = all(!is.na(`1`), !is.na(`2`)),
                      ots_16 = all(!is.na(`3`), !is.na(`4`))) |>
     dplyr::filter(sample_id != "DELETE_ME", (ots_28 | ots_16)) |>
@@ -184,11 +194,7 @@ add_raw_assay_results <- function(con, assay_results) {
 #' 1: high value for
 add_genetic_identification <- function(con, sample_identifiers) {
 
-  results_complete <- check_results_complete(con, sample_identifiers)
-
-  if (nrow(results_complete) == 0) {
-    return(0)
-  }
+  is_valid_connection(con)
 
   assay_detections <- tbl(con, "assay_result") |>
     dplyr::filter(sample_id %in% sample_identifiers) |>
@@ -196,39 +202,62 @@ add_genetic_identification <- function(con, sample_identifiers) {
     dplyr::collect() |>
     tidyr::pivot_wider(names_from = "assay_id", values_from = "positive_detection")
 
-  # TODO why are we assigning id 8 when id should be 7 for FALSE + FALSE
+  if (nrow(assay_detections) == 0) {
+    return(0)
+  }
+
   run_types <- dplyr::bind_rows(
     tibble::tibble(sample_id = "DELETE_ME", `1` = FALSE, `2` = FALSE, `3` = FALSE, `4` = FALSE),
     assay_detections
   ) |>
-    dplyr::left_join(results_complete) |>
     dplyr::mutate(
+      status_code_id = dplyr::case_when(
+        `3` & `4` ~ 11,
+        !`3` & !`4` ~ 10,
+        `3` & is.na(`4`) ~ 9,
+        `4` & is.na(`3`) ~ 9,
+        `3` & !`4` ~ 11,
+        `4` & !`3` ~ 11,
+        `1` & `2` ~ 11,
+        !`1` & !`2` ~ 7,
+        `1` & is.na(`2`) ~ 6,
+        `2` & is.na(`1`) ~ 6,
+        `1` & !`2` ~ 8,
+        `2` & !`1` ~ 11
+      ),
       run_type_id = dplyr::case_when(
-        ots_16 & `3` & `4` ~ 8,
-        ots_16 & `3` ~ 1,
-        ots_16 & `4` ~ 4,
-        ots_28 & `1` & `2` ~ 8,
-        ots_28 & `1` ~ 6,
-        ots_28 & `2` ~ 5,
-        TRUE ~ 7
+        status_code_id == 11 & `3` & `4` ~ 8,
+        status_code_id == 11 & `3` ~ 1,
+        status_code_id == 11 & `4` ~ 4,
+        status_code_id == 11 & `1` & `2` ~ 8,
+        status_code_id == 11 & `1` ~ 6,
+        status_code_id == 11 & `2` ~ 5,
+        status_code_id == 7 ~ 7,
+        status_code_id == 10 ~ 7,
+        TRUE ~ 0
       )
     ) |>
     dplyr::filter(sample_id != "DELETE_ME") |>
-    dplyr::select(sample_id, run_type_id)
+    dplyr::select(sample_id, run_type_id, status_code_id)
+
+
+  run_type_id_data <- run_types |> dplyr::filter(run_type_id != 0)
 
   query <- glue::glue_sql("
   INSERT INTO genetic_run_identification (sample_id, run_type_id)
   VALUES (
-    UNNEST(ARRAY[{run_types$sample_id*}]),
-    UNNEST(ARRAY[{run_types$run_type_id*}])
+    UNNEST(ARRAY[{run_type_id_data$sample_id*}]),
+    UNNEST(ARRAY[{run_type_id_data$run_type_id*}])
   );
   ", .con = con)
 
-  return(DBI::dbExecute(con, query))
+  run_types_added <- DBI::dbExecute(con, query)
+
+  set_sample_status(con, run_types$sample_id, run_types$status_code_id)
+
+  return(run_types_added)
 
 }
-
-
 
 
 

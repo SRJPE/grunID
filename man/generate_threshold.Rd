@@ -11,9 +11,6 @@ generate_threshold(con, plate_run)
 
 \item{plate_run}{plate run identifier value}
 }
-\value{
-
-}
 \description{
 `generate_threshold()` calculates the raw fluorescence threshold
 values for an assay.
