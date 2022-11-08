@@ -201,24 +201,24 @@ update_field_sheet_samples <- function(con, field_data) {
   #is_valid_sample_field_data(field_data)
 
   query <- glue::glue_sql("UPDATE sample
-                           SET (datetime_collected, fork_length_mm, field_run_type_id,
-                                fin_clip, field_comment) =
-                              ( UNNEST(ARRAY[{field_data$datetime_collected*}]),
-                                UNNEST(ARRAY[{field_data$fork_length_mm*}]),
-                                UNNEST(ARRAY[{field_data$field_run_type_id*}]),
-                                UNNEST(ARRAY[{field_data$fin_clip_y_n*}]),
-                                UNNEST(ARRAY[{field_data$field_comment*}])
-                                )
-                           WHERE id IN (UNNEST(ARRAY[{field_data$sample_id*}]))
+                           SET datetime_collected = (SELECT(UNNEST(ARRAY[{field_data$datetime_collected*}]::timestamp[]))),
+                               fork_length_mm = (SELECT(UNNEST(ARRAY[{field_data$fork_length_mm*}]))),
+                               field_run_type_id = (SELECT(UNNEST(ARRAY[{field_data$field_run_type_id*}]))),
+                               fin_clip = (SELECT(UNNEST(ARRAY[{field_data$fin_clip*}]))),
+                               field_comment = (SELECT(UNNEST(ARRAY[{field_data$field_comment*}])))
+                           WHERE id IN (SELECT(UNNEST(ARRAY[{field_data$sample_id*}])))
                            RETURNING id, updated_at;",
                           .con = con)
 
   res <- DBI::dbSendQuery(con, query)
-  results <- DBI:dbFetch(res)
+  results <- DBI::dbFetch(res)
   DBI::dbClearResult(res)
 
   return(results)
 }
+
+# TODO: this isn't working if you have rows with samples that don't exist in the database
+# TODO: check if this still works if you have two rows with sample IDs that exist in the database
 
 
 #' Helper function - checks field sheet data format
