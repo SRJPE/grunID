@@ -4,7 +4,7 @@ library(grunID)
 library(dplyr)
 
 
-cfg <- config::get(config = "azure-dev")
+cfg <- config::get()
 
 con <- DBI::dbConnect(RPostgres::Postgres(),
                dbname = cfg$dbname,
@@ -13,7 +13,7 @@ con <- DBI::dbConnect(RPostgres::Postgres(),
                user = cfg$username,
                password = cfg$password)
 
-tbl(con, "status_code")
+tbl(con, "sample")
 
 `# running this does the following:
 # adds sample events to table SAMPLE_EVENT
