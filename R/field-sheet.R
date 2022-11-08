@@ -177,8 +177,8 @@ process_field_sheet_samples <- function(filepath){
     dplyr::filter(!is.na(`Field Run ID`)) |> # don't read in any empty rows
     dplyr::mutate(Time= hms::as_hms(Time),
                   datetime_collected = lubridate::ymd_hms(paste0(Date, Time)),
-                  fin_clip_y_n = tolower(`Fin Clip\r\n(Y/N)`),
-                  fin_clip_y_n = ifelse(fin_clip_y_n == "y", TRUE, FALSE)) |>
+                  fin_clip = tolower(`Fin Clip\r\n(Y/N)`),
+                  fin_clip = ifelse(fin_clip == "y", TRUE, FALSE)) |>
     dplyr::rename(fork_length_mm = `FL (mm)`,
                   field_run_type_id = `Field Run ID`,
                   field_comment = `Comments`,
@@ -186,7 +186,7 @@ process_field_sheet_samples <- function(filepath){
     dplyr::select(datetime_collected,
                   fork_length_mm,
                   field_run_type_id,
-                  fin_clip_y_n,
+                  fin_clip,
                   field_comment,
                   sample_id)
 
@@ -237,7 +237,7 @@ is_valid_sample_field_data <- function(data) {
     stop('The sample field data supplied is not valid, see `help("process_field_sheet_samples")` for correct format', call. = FALSE)
   }
 
-  if (sum(class(data$datetime_collected) != c("POSIXct", "POSIXt")) < 0){
+  if (sum(class(data$datetime_collected) != c("POSIXct", "POSIXt")) > 0){
     stop('The datetime field of sample field data is not valid, see `help("process_field_sheet_samples")` for correct format', call. = FALSE)
   }
 }
