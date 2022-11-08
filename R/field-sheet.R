@@ -197,8 +197,8 @@ process_field_sheet_samples <- function(filepath){
 #' Update Sample Field Sheet Data
 update_field_sheet_samples <- function(con, field_data) {
 
-  #is_valid_connection(con)
-  #is_valid_sample_field_data(field_data)
+  is_valid_connection(con)
+  is_valid_sample_field_data(field_data)
 
   query <- glue::glue_sql("UPDATE sample
                            SET datetime_collected = (SELECT(UNNEST(ARRAY[{field_data$datetime_collected*}]::timestamp[]))),
@@ -228,16 +228,18 @@ is_valid_sample_field_data <- function(data) {
     stop("Please provide sample field data as a dataframe", call. = FALSE)
   }
 
-  column_reference <- c("datetime_collected" = "Date", # TODO: this will return false until process_field_sheet_samples returns class = Date
-                        "fork_length_mm" = "numeric",
+  column_reference <- c("fork_length_mm" = "numeric",
                         "field_run_type_id" = "numeric",
                         "fin_clip" = "logical",
                         "field_comment" = "character")
 
-  if (!identical(sapply(data, class), column_reference)) {
+  if (!identical(sapply(data[2:5], class), column_reference)) {
     stop('The sample field data supplied is not valid, see `help("process_field_sheet_samples")` for correct format', call. = FALSE)
   }
 
+  if (sum(class(data$datetime_collected) != c("POSIXct", "POSIXt")) < 0){
+    stop('The datetime field of sample field data is not valid, see `help("process_field_sheet_samples")` for correct format', call. = FALSE)
+  }
 }
 
 
