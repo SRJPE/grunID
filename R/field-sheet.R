@@ -162,6 +162,27 @@ get_field_sheet_event_plan <- function(con, sample_event_id) {
 }
 
 #' Process Sample Field Sheet Data
+#' @description `process_field_sheet_examples()` takes sample field sheets and converts
+#' them to database-ready formatting.
+#' @param filepath the filepath of the field sheet you want to prepare for upload.
+#' See \code{\link{create_field_sheet} and \code{\link{get_field_sheet_event_plan}} for
+#' more information on creating field sheet workbooks.
+#' @returns
+#' A tibble object containing the data from all sheets in the @param filepath workbook
+#' in required format for \code{\link{update_field_sheet_samples}}. This contains
+#' the following variables:
+#' * **sample_id** The unique identifier for the sample recorded.
+#' * **datetime_collected** The date and time (YYYY-MM-DD H:M:S) the sample was processed.
+#' * **fork_length_mm** The recorded fork length corresponding to the sample.
+#' * **field_run_type_id** The unique identifier for the field run type.
+#' * **fin_clip** Logical variable indicating whether a fin clip sample was taken.
+#' * **field_comment** Any recorded comments from the field regarding the sample.
+#' @examples
+#' filepath <- "data-raw/test.xlsx"
+#' field_data_clean <- process_field_sheet_samples(filepath)
+#' @export
+#' @family field sheet helpers
+#' @md
 process_field_sheet_samples <- function(filepath){
 
   field_data <- purrr::map_dfr(readxl::excel_sheets(filepath), function(sheet) {
@@ -190,6 +211,40 @@ process_field_sheet_samples <- function(filepath){
 
 
 #' Update Sample Field Sheet Data
+#' #' @description `update_field_sheet_samples()` takes a formatted tibble of field sample
+#' data and updates those samples in the database.
+#' @param con A DBI connection object obtained from DBI::dbConnect()
+#' @param field_data the field data processed using \code{\link{process_field_sheet_samples}
+#' See \code{\link{create_field_sheet} and \code{\link{get_field_sheet_event_plan}} for
+#' more information on creating field sheet workbooks, and \code{\link{process_field_sheet_samples}
+#' for more information on processing raw data before updating in the database.
+#' @details This function requires a valid connection to the database and a processed dataset
+#' with all variables in the correct format. Errors may be due to invalid data structure or
+#' connection; \code{\link{is_valid_con}} and \code{\link{is_valid_sample_field_data}} for more
+#' information. Variables should be as follows:
+#' * **sample_id** The unique identifier for the sample recorded, of class "character".
+#' * **datetime_collected** The date and time (YYYY-MM-DD H:M:S) the sample was processed,
+#' of class "datetime" or ("POSIXct" "POSIXt")
+#' * **fork_length_mm** The recorded fork length corresponding to the sample, of class "numeric".
+#' * **field_run_type_id** The unique identifier for the field run type, of class "numeric".
+#' * **fin_clip** Logical variable indicating whether a fin clip sample was taken, of class "logical".
+#' * **field_comment** Any recorded comments from the field regarding the sample, of class "character".
+#' @returns Does not return any objects.
+#' @examples
+#' cfg <- config::get()
+#' con <- DBI::dbConnect(RPostgres::Postgres(),
+#'                       dbname = cfg$dbname,
+#'                       host = cfg$host,
+#'                       port = cfg$port,
+#'                       user = cfg$username,
+#'                       password = cfg$password)
+#'
+#' filepath <- "data-raw/test.xlsx"
+#' field_data_clean <- process_field_sheet_samples(filepath)
+#' update_field_sheet_samples(con, field_data_clean)
+#' @export
+#' @family field sheet helpers
+#' @md
 update_field_sheet_samples <- function(con, field_data) {
 
   is_valid_connection(con)
@@ -218,6 +273,12 @@ update_field_sheet_samples <- function(con, field_data) {
 
 
 #' Helper function - checks field sheet data format
+#' @description Helper function for parsing input before updating field sample data in
+#' database. Called in \code{\link{update_field_sheet_samples}.
+#' @details Checks whether the connection is valid using \code{\link{is_valid_con}} and
+#' checks class of input variables.
+#' @export
+#' @md
 is_valid_sample_field_data <- function(data) {
 
   if (!is.data.frame(data)) {
