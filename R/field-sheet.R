@@ -164,9 +164,9 @@ get_field_sheet_event_plan <- function(con, sample_event_id) {
 #' Process Sample Field Sheet Data
 #' @description `process_field_sheet_examples()` takes sample field sheets and converts
 #' them to database-ready formatting.
-#' @param filepath the filepath of the field sheet you want to prepare for upload.
-#' See \code{\link{create_field_sheet} and \code{\link{get_field_sheet_event_plan}} for
+#' @details See \code{\link{create_field_sheet} and \code{\link{get_field_sheet_event_plan}} for
 #' more information on creating field sheet workbooks.
+#' @param filepath the filepath of the field sheet you want to prepare for upload.
 #' @returns
 #' A tibble object containing the data from all sheets in the @param filepath workbook
 #' in required format for \code{\link{update_field_sheet_samples}}. This contains
@@ -211,7 +211,7 @@ process_field_sheet_samples <- function(filepath){
 
 
 #' Update Sample Field Sheet Data
-#' #' @description `update_field_sheet_samples()` takes a formatted tibble of field sample
+#' @description `update_field_sheet_samples()` takes a formatted tibble of field sample
 #' data and updates those samples in the database.
 #' @param con A DBI connection object obtained from DBI::dbConnect()
 #' @param field_data the field data processed using \code{\link{process_field_sheet_samples}
@@ -220,7 +220,7 @@ process_field_sheet_samples <- function(filepath){
 #' for more information on processing raw data before updating in the database.
 #' @details This function requires a valid connection to the database and a processed dataset
 #' with all variables in the correct format. Errors may be due to invalid data structure or
-#' connection; \code{\link{is_valid_con}} and \code{\link{is_valid_sample_field_data}} for more
+#' connection; see \code{\link{is_valid_con}} and \code{\link{is_valid_sample_field_data}} for more
 #' information. Variables should be as follows:
 #' * **sample_id** The unique identifier for the sample recorded, of class "character".
 #' * **datetime_collected** The date and time (YYYY-MM-DD H:M:S) the sample was processed,
