@@ -161,11 +161,10 @@ get_field_sheet_event_plan <- function(con, sample_event_id) {
 
 }
 
-
 #' Process Sample Field Sheet Data
 process_field_sheet_samples <- function(filepath){
 
-  field_data <- purrr::map_dfr(excel_sheets(filepath), function(sheet) {
+  field_data <- purrr::map_dfr(readxl::excel_sheets(filepath), function(sheet) {
     readxl::read_excel(path = filepath, sheet = sheet,
                        col_types = c("text", "text", "numeric",
                                      "text", "date", "date",
@@ -174,21 +173,17 @@ process_field_sheet_samples <- function(filepath){
   })
 
   formatted_data <- field_data |>
-    dplyr::filter(!is.na(`Field Run ID`)) |> # don't read in any empty rows
-    dplyr::mutate(Time= hms::as_hms(Time),
+    dplyr::filter(!is.na(Date)) |> # don't read in any empty rows
+    dplyr::mutate(Time = format(Time, "%H:%M:%S"),
                   datetime_collected = lubridate::ymd_hms(paste0(Date, Time)),
-                  fin_clip = tolower(`Fin Clip\r\n(Y/N)`),
-                  fin_clip = ifelse(fin_clip == "y", TRUE, FALSE)) |>
-    dplyr::rename(fork_length_mm = `FL (mm)`,
+                  fin_clip = tolower(`Fin Clip (Y/N)`),
+                  fin_clip = ifelse(fin_clip == "n" | is.na(fin_clip), FALSE, TRUE)) |>
+    dplyr::select(sample_id = `Sample ID`,
+                  datetime_collected,
+                  fork_length_mm = `FL (mm)`,
                   field_run_type_id = `Field Run ID`,
-                  field_comment = `Comments`,
-                  sample_id = `Sample ID`)  |>
-    dplyr::select(datetime_collected,
-                  fork_length_mm,
-                  field_run_type_id,
                   fin_clip,
-                  field_comment,
-                  sample_id)
+                  field_comment = `Comments`)
 
   return(formatted_data)
 }
@@ -201,24 +196,25 @@ update_field_sheet_samples <- function(con, field_data) {
   is_valid_sample_field_data(field_data)
 
   query <- glue::glue_sql("UPDATE sample
-                           SET datetime_collected = (SELECT(UNNEST(ARRAY[{field_data$datetime_collected*}]::timestamp[]))),
-                               fork_length_mm = (SELECT(UNNEST(ARRAY[{field_data$fork_length_mm*}]))),
-                               field_run_type_id = (SELECT(UNNEST(ARRAY[{field_data$field_run_type_id*}]))),
-                               fin_clip = (SELECT(UNNEST(ARRAY[{field_data$fin_clip*}]))),
-                               field_comment = (SELECT(UNNEST(ARRAY[{field_data$field_comment*}])))
-                           WHERE id IN (SELECT(UNNEST(ARRAY[{field_data$sample_id*}])))
-                           RETURNING id, updated_at;",
+                           SET datetime_collected = {field_data$datetime_collected},
+                               fork_length_mm = {field_data$fork_length_mm},
+                               field_run_type_id = {field_data$field_run_type_id},
+                               fin_clip = {field_data$fin_clip},
+                               field_comment = {field_data$field_comment}
+                           WHERE id = {field_data$sample_id};",
                           .con = con)
 
-  res <- DBI::dbSendQuery(con, query)
-  results <- DBI::dbFetch(res)
-  DBI::dbClearResult(res)
+  for(i in 1:length(query)) {
+    res <- DBI::dbSendQuery(con, query[i])
+    DBI::dbClearResult(res)
+  }
 
-  return(results)
+  # res <- DBI::dbSendQuery(con, query)
+  # results <- DBI::dbFetch(res)
+  # DBI::dbClearResult(res)
+
+  #return(results)
 }
-
-# TODO: this isn't working if you have rows with samples that don't exist in the database
-# TODO: check if this still works if you have two rows with sample IDs that exist in the database
 
 
 #' Helper function - checks field sheet data format
@@ -228,17 +224,15 @@ is_valid_sample_field_data <- function(data) {
     stop("Please provide sample field data as a dataframe", call. = FALSE)
   }
 
-  column_reference <- c("fork_length_mm" = "numeric",
-                        "field_run_type_id" = "numeric",
-                        "fin_clip" = "logical",
-                        "field_comment" = "character")
+  column_reference <- list("sample_id" = "character",
+                           "datetime_collected" = c("POSIXct", "POSIXt"),
+                           "fork_length_mm" = "numeric",
+                           "field_run_type_id" = "numeric",
+                           "fin_clip" = "logical",
+                           "field_comment" = "character")
 
-  if (!identical(sapply(data[2:5], class), column_reference)) {
+  if (!identical(lapply(data, class), column_reference)) {
     stop('The sample field data supplied is not valid, see `help("process_field_sheet_samples")` for correct format', call. = FALSE)
-  }
-
-  if (sum(class(data$datetime_collected) != c("POSIXct", "POSIXt")) > 0){
-    stop('The datetime field of sample field data is not valid, see `help("process_field_sheet_samples")` for correct format', call. = FALSE)
   }
 }
 
