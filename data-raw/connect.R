@@ -15,7 +15,7 @@ con <- DBI::dbConnect(RPostgres::Postgres(),
 
 tbl(con, "status_code")
 
-`# running this does the following:
+# running this does the following:
 # adds sample events to table SAMPLE_EVENT
 # adds sample bins for each event SAMPLE_BIN
 # adds samples with ids
