@@ -59,8 +59,7 @@ seed_components <- seed_components |>
   left_join(sample_bin_ids, by = "sample_bin_code") |>
   left_join(sample_event_ids, by = "sample_event_number") |>
   left_join(sample_location_ids, by = "location_code") |>
-  select(-first_sample_year, -sample_bin_code, -sample_event_number,
-         -location_code) |>
+  select(-first_sample_year) |>
   glimpse()
 
 write_csv(seed_components, here::here("data-raw", "2022-use-case", "2022_seed_components.csv"))
@@ -81,10 +80,5 @@ for(i in 1:length(query)) {
   DBI::dbClearResult(res)
 }
 
-
-# notes from pair w emanuel 1-4-2023
-# sample ids already contain information about bin, sample event id, year
-# decompose those into separate columns in the seed csv
-# and then update those the query
-# open pull request
+# TODO do we need to insert into the other tables?
 
