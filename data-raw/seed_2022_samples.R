@@ -15,39 +15,24 @@ con <- DBI::dbConnect(RPostgres::Postgres(),
 
 # read in 2022 Sample numbers to seed the "sample" table with
 sample_ids_2022 <- read_csv(here::here("data-raw", "2022-use-case", "JPE_2022_Sample_ID_List.txt"))$`Sample ID`
+sample_ids_2022 <- tibble(sample_ids = sample_ids_2022)
+seed_components <- sample_ids_2022 %>%
+  tidyr::separate(sample_ids, sep = "_",
+                  into = c("location_and_date", "sample_event_number",
+                           "sample_bin_code", "sample_number")) |>
+  mutate(location_code = substr(location_and_date, 1, 3),
+         first_sample_year = substr(location_and_date, 4, 5),
+         first_sample_year = ifelse(first_sample_year == "", NA_character_, paste0("20", first_sample_year))) |>
+        select(-location_and_date) |>
+  glimpse()
 
-# get associated location, sample_bin_code, year, and sample_number
-# load sample locations
-sample_locations <- dplyr::tbl(con, "sample_location") |>
-  collect()
-# load sample events
-sample_events <- dplyr::tbl(con, "sample_event") |>
-  collect()
-
-sample_information <- dplyr::tbl(con, "sample_bin") |>
-  collect() |>
-  rename(sample_bin_id = id) |>
-  left_join(sample_events |>
-              rename(sample_event_id = id),
-            by = "sample_event_id") |>
-  left_join(sample_locations |>
-              rename(sample_location_id = id,
-                     location_code = code),
-            by = "sample_location_id") |>
-  mutate(year = year(first_sample_date)) |>
-  select(sample_bin_code,
-         location_code, # missing sample number! need this to filter/join w/ 2022 samples
-         sample_event_number) |> glimpse()
-
-# join based on sample ids from 2022 seed data
-# TODO
-seed_samples <- sample_information |>
-  filter(sample_number %in% sample_ids_2022) |> glimpse()
+write_csv(seed_components, here::here("data-raw", "2022-use-case", "2022_seed_components.csv"))
 
 
-# check if samples in the table
-sample_table <- tbl(con, "sample") |> collect()
-sum(sample_ids_2022 %in% sample_table$id)/length(sample_ids_2022)
+
+# now insert into database ------------------------------------------------
+
+seed_components <- read_csv(here::here("data-raw", "2022-use-case", "2022_seed_components.csv"))
 
 # seed into Sample table on database
 # this inserts the samples without checking if they already exist in the database
@@ -59,4 +44,10 @@ for(i in 1:length(query)) {
   DBI::dbClearResult(res)
 }
 
+
+# notes from pair w emanuel 1-4-2023
+# sample ids already contain information about bin, sample event id, year
+# decompose those into separate columns in the seed csv
+# and then update those the query
+# open pull request
 
