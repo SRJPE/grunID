@@ -3,7 +3,7 @@ library(DBI)
 library(grunID)
 library(dplyr)
 
-cfg <- config::get()
+cfg <- config::get(config = "azure-prod")
 
 con <- DBI::dbConnect(RPostgres::Postgres(),
                dbname = cfg$dbname,
@@ -12,12 +12,21 @@ con <- DBI::dbConnect(RPostgres::Postgres(),
                user = cfg$username,
                password = cfg$password)
 
+
+tbl(con, "agency")
+
 # running this does the following:
 # adds sample events to table SAMPLE_EVENT
 # adds sample bins for each event SAMPLE_BIN
 # adds samples with ids
 # updates sample status for each to "created"
-plan_1 <- add_sample_plan(con, grunID::sample_plan_template)
+# plan_2022 <- add_sample_plan(con, sample_plan_2022_final)
+
+sample_event_ids <- add_sample_events(con, sample_plan_2022_final)
+sample_id_insert <- add_sample_bins(con, sample_plan_2022_final, sample_event_ids)
+sample_ids <- add_samples(con, sample_plan_2022_final, sample_id_insert, verbose = TRUE)
+number_of_samples_added <- set_sample_status(con, sample_ids, "created")
+
 
 # select protocol
 all_protocols <- get_protocols(con)
