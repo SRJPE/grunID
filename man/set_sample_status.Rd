@@ -4,13 +4,7 @@
 \alias{set_sample_status}
 \title{Set Status Code}
 \usage{
-set_sample_status(
-  con,
-  sample_ids,
-  status = c("created", "prepped", "out to field", "return from field", "in analysis",
-    "stored", "archived", "other lab"),
-  comment = NULL
-)
+set_sample_status(con, sample_ids, status_code_id, comment = NULL)
 }
 \arguments{
 \item{con}{connection to the database}
