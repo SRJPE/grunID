@@ -22,10 +22,17 @@ tbl(con, "agency")
 # updates sample status for each to "created"
 # plan_2022 <- add_sample_plan(con, sample_plan_2022_final)
 
-sample_event_ids <- add_sample_events(con, sample_plan_2022_final)
-sample_id_insert <- add_sample_bins(con, sample_plan_2022_final, sample_event_ids)
-sample_ids <- add_samples(con, sample_plan_2022_final, sample_id_insert, verbose = TRUE)
-number_of_samples_added <- set_sample_status(con, sample_ids, "created")
+btc_sample_plan <- sample_plan_2022_final |>
+  filter(location_code == "BTC")
+
+btc_plan_2022 <- add_sample_plan(con, btc_sample_plan, verbose = TRUE)
+
+
+# butte creek
+but_sample_plan <- sample_plan_2022_final |>
+  filter(location_code == "BUT")
+
+but_plan_2022 <- add_sample_plan(con, but_sample_plan, verbose = TRUE)
 
 
 # select protocol

@@ -80,6 +80,8 @@ openxlsx::saveWorkbook(wb, "test.xlsx", overwrite = TRUE)
 }
 \seealso{
 Other field sheet helpers: 
-\code{\link{get_field_sheet_event_plan}()}
+\code{\link{get_field_sheet_event_plan}()},
+\code{\link{process_field_sheet_samples}()},
+\code{\link{update_field_sheet_samples}()}
 }
 \concept{field sheet helpers}

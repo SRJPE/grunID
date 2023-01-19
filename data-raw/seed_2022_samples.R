@@ -3,7 +3,7 @@ library(DBI)
 library(dplyr)
 
 # set up connection
-cfg <- config::get()
+cfg <- config::get(config = "azure-prod")
 
 con <- DBI::dbConnect(RPostgres::Postgres(),
                       dbname = cfg$dbname,
@@ -28,19 +28,10 @@ seed_components_raw <- sample_ids_2022 |>
         select(-location_and_date) |>
   glimpse()
 
-# get sample bin ids
-sample_bin_ids <- dplyr::tbl(con, "sample_bin") |>
-  collect() |>
-  filter(sample_bin_code %in% seed_components_raw$sample_bin_code) |>
-  mutate(sample_bin_code = as.character(sample_bin_code)) |>
-  select(sample_bin_code, sample_bin_id = id) |>
-  glimpse()
-
 # get sample location ids
 sample_location_ids <- dplyr::tbl(con, "sample_location") |>
-  collect() |>
-  filter(code %in% seed_components_raw$location_code) |>
   select(location_code = code, location_id = id) |>
+  collect() |>
   glimpse()
 
 # combine
@@ -52,18 +43,20 @@ seed_components <- seed_components_raw |>
          max_fork_length = 200) |> # TODO placeholders
   glimpse()
 
+
 #write_csv(seed_components_raw, here::here("data-raw", "2022-use-case", "2022_seed_components_raw.csv"))
-
-
 
 # now insert into database ------------------------------------------------
 
 # seed into Sample table on database
 
 # sample event
-query <- glue::glue_sql("INSERT INTO sample_event(sample_event_number, sample_location_id, permit_id, first_sample_date)
-                          OVERRIDING SYSTEM VALUE VALUES ({seed_components$sample_event_number}, {seed_components$location_id}, {seed_components$permit_id}, {seed_components$first_sample_date});",
+query <- glue::glue_sql("INSERT INTO sample_event(sample_event_number, sample_location_id, first_sample_date)
+                          OVERRIDING SYSTEM VALUE VALUES ({seed_components$sample_event_number},
+                        {seed_components$location_id},
+                        {seed_components$first_sample_date});",
                         .con = con)
+
 for(i in 1:length(query)) {
   res <- DBI::dbSendQuery(con, query[i])
   DBI::dbClearResult(res)

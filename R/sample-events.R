@@ -23,13 +23,13 @@
 #' add_sample_plan(con, sample_plan)
 #' @export
 #' @md
-add_sample_plan <- function(con, sample_plan) {
+add_sample_plan <- function(con, sample_plan, verbose = FALSE) {
   is_valid_connection(con)
   is_valid_sample_plan(sample_plan)
 
   sample_event_ids <- add_sample_events(con, sample_plan)
   sample_id_insert <- add_sample_bins(con, sample_plan, sample_event_ids)
-  sample_ids <- add_samples(con, sample_plan, sample_id_insert)
+  sample_ids <- add_samples(con, sample_plan, sample_id_insert, verbose = verbose)
   number_of_samples_added <- set_sample_status(con, sample_ids, "created")
 
   return(number_of_samples_added)
@@ -125,10 +125,10 @@ add_samples <- function(con, sample_plan, sample_id_insert, verbose = FALSE) {
   partitioned_inserts <- partition_df_to_size(sample_id, 200)
 
   if (verbose) {
-    message(paste0("partitioned inserts into ", length(partitioned_inserts), " parts."))
+    message(paste0("partitioned ", nrow(sample_id), " inserts into ", length(partitioned_inserts), " parts."))
   }
 
-  sample_ids <- purrr::map_df(partitioned_inserts, function(d, idx) {
+  sample_ids <- purrr::imap(partitioned_inserts, function(d, idx) {
     query <- glue::glue_sql("INSERT INTO sample (id, sample_bin_id)
                                       VALUES (
                                         UNNEST(ARRAY[{d$id*}]),
@@ -152,7 +152,7 @@ add_samples <- function(con, sample_plan, sample_id_insert, verbose = FALSE) {
 
 
 
-  return(sample_ids)
+  return(purrr::flatten_chr(sample_ids))
 }
 
 
