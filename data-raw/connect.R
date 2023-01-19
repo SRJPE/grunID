@@ -3,9 +3,7 @@ library(DBI)
 library(grunID)
 library(dplyr)
 
-
-cfg <- config::get(config = "azure-dev")
-
+cfg <- config::get(config = "azure-prod")
 con <- DBI::dbConnect(RPostgres::Postgres(),
                dbname = cfg$dbname,
                host = cfg$host,
@@ -13,14 +11,29 @@ con <- DBI::dbConnect(RPostgres::Postgres(),
                user = cfg$username,
                password = cfg$password)
 
+tbl(con, "agency")
 tbl(con, "status_code")
+# running this does the following:
 
 `# running this does the following:
 # adds sample events to table SAMPLE_EVENT
 # adds sample bins for each event SAMPLE_BIN
 # adds samples with ids
 # updates sample status for each to "created"
-plan_1 <- add_sample_plan(con, grunID::sample_plan_template)
+# plan_2022 <- add_sample_plan(con, sample_plan_2022_final)
+
+btc_sample_plan <- sample_plan_2022_final |>
+  filter(location_code == "BTC")
+
+btc_plan_2022 <- add_sample_plan(con, btc_sample_plan, verbose = TRUE)
+
+
+# butte creek
+but_sample_plan <- sample_plan_2022_final |>
+  filter(location_code == "BUT")
+
+but_plan_2022 <- add_sample_plan(con, but_sample_plan, verbose = TRUE)
+
 
 # select protocol
 all_protocols <- get_protocols(con)

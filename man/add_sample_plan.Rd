@@ -4,7 +4,7 @@
 \alias{add_sample_plan}
 \title{Add Sample Plan}
 \usage{
-add_sample_plan(con, sample_plan)
+add_sample_plan(con, sample_plan, verbose = FALSE)
 }
 \description{
 \code{add_sample_plan} registers new sampling events and generates new sample ids

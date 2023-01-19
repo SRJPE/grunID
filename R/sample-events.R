@@ -23,19 +23,20 @@
 #' add_sample_plan(con, sample_plan)
 #' @export
 #' @md
-add_sample_plan <- function(con, sample_plan) {
+add_sample_plan <- function(con, sample_plan, verbose = FALSE) {
   is_valid_connection(con)
   is_valid_sample_plan(sample_plan)
 
   sample_event_ids <- add_sample_events(con, sample_plan)
   sample_id_insert <- add_sample_bins(con, sample_plan, sample_event_ids)
-  sample_ids <- add_samples(con, sample_plan, sample_id_insert)
+  sample_ids <- add_samples(con, sample_plan, sample_id_insert, verbose = verbose)
   number_of_samples_added <- set_sample_status(con, sample_ids, 1)
 
   return(number_of_samples_added)
 }
 
 #' Create sample events
+#' @export
 add_sample_events <- function(con, sample_plan) {
   sample_locations <- get_sample_locations(con)
 
@@ -44,59 +45,72 @@ add_sample_events <- function(con, sample_plan) {
     dplyr::distinct(sample_event_number, first_sample_date,
                     sample_location_id = id)
 
-  sample_event_query <- glue::glue_sql(
-    "INSERT INTO sample_event (sample_event_number, sample_location_id, first_sample_date)
+  partitioned_inserts <- partition_df_to_size(sample_event_insert, 50)
+
+  sample_event_ids <- purrr::map_df(partitioned_inserts, function(d) {
+    sample_event_query <- glue::glue_sql(
+      "INSERT INTO sample_event (sample_event_number, sample_location_id, first_sample_date)
         VALUES (
-         UNNEST(ARRAY[{sample_event_insert$sample_event_number*}]),
-         UNNEST(ARRAY[{sample_event_insert$sample_location_id*}]),
-         UNNEST(ARRAY[{sample_event_insert$first_sample_date*}]::DATE[])
+         UNNEST(ARRAY[{d$sample_event_number*}]),
+         UNNEST(ARRAY[{d$sample_location_id*}]),
+         UNNEST(ARRAY[{d$first_sample_date*}]::DATE[])
         ) RETURNING id, sample_event_number;",
-    .con = con)
+      .con = con)
 
-  res <- DBI::dbSendQuery(con, sample_event_query)
+    res <- DBI::dbSendQuery(con, sample_event_query)
+    on.exit(DBI::dbClearResult(res))
 
-  sample_event_ids <- DBI::dbFetch(res) |>
-    dplyr::transmute(sample_event_id = as.numeric(id), sample_event_number)
+    DBI::dbFetch(res) |>
+      dplyr::transmute(sample_event_id = as.numeric(id), sample_event_number)
 
-  DBI::dbClearResult(res)
+  })
+
+
 
   return(sample_event_ids)
 }
 
 #' Create sample bins
+#' @export
 add_sample_bins <- function(con, sample_plan, sample_event_ids) {
 
   sample_bin_insert <- dplyr::left_join(sample_plan, sample_event_ids,
                                         by = c("sample_event_number"))
 
-  query <- glue::glue_sql(
-    "INSERT INTO sample_bin (sample_event_id, sample_bin_code, min_fork_length,
-                             max_fork_length, expected_number_of_samples)
-        VALUES (
-         UNNEST(ARRAY[{sample_bin_insert$sample_event_id*}]),
-         UNNEST(ARRAY[{sample_bin_insert$sample_bin_code*}]::bin_code_enum[]),
-         UNNEST(ARRAY[{sample_bin_insert$min_fork_length*}]),
-         UNNEST(ARRAY[{sample_bin_insert$max_fork_length*}]),
-         UNNEST(ARRAY[{sample_bin_insert$expected_number_of_samples*}])
-        ) RETURNING id, sample_event_id, sample_bin_code;",
-    .con = con)
 
-  res <- DBI::dbSendQuery(con, query)
+  partitioned_inserts <- partition_df_to_size(sample_bin_insert, 100)
 
-  sample_bin_id <- DBI::dbFetch(res) |>
-    dplyr::transmute(sample_bin_id = as.numeric(id), sample_event_id,
-                     sample_bin_code = as.character(sample_bin_code))
+  sample_id_insert <- purrr::map_df(partitioned_inserts, function(d) {
+    query <- glue::glue_sql(
+      "INSERT INTO sample_bin (sample_event_id, sample_bin_code, min_fork_length,
+                               max_fork_length, expected_number_of_samples)
+          VALUES (
+           UNNEST(ARRAY[{d$sample_event_id*}]),
+           UNNEST(ARRAY[{d$sample_bin_code*}]::bin_code_enum[]),
+           UNNEST(ARRAY[{d$min_fork_length*}]),
+           UNNEST(ARRAY[{d$max_fork_length*}]),
+           UNNEST(ARRAY[{d$expected_number_of_samples*}])
+          ) RETURNING id, sample_event_id, sample_bin_code;",
+      .con = con)
 
-  DBI::dbClearResult(res)
+    res <- DBI::dbSendQuery(con, query)
 
-  sample_id_insert <- dplyr::left_join(sample_bin_insert, sample_bin_id,
-                                       by = c("sample_bin_code", "sample_event_id"))
+    sample_bin_id <- DBI::dbFetch(res) |>
+      dplyr::transmute(sample_bin_id = as.numeric(id), sample_event_id,
+                       sample_bin_code = as.character(sample_bin_code))
+
+    DBI::dbClearResult(res)
+
+    dplyr::left_join(d, sample_bin_id,
+                     by = c("sample_bin_code", "sample_event_id"))
+  })
 
   return(sample_id_insert)
 }
 
 #' Add samples
-add_samples <- function(con, sample_plan, sample_id_insert) {
+#' @export
+add_samples <- function(con, sample_plan, sample_id_insert, verbose = FALSE) {
 
   sample_id <- sample_id_insert |>
     tidyr::uncount(expected_number_of_samples, .remove = FALSE) |>
@@ -107,21 +121,38 @@ add_samples <- function(con, sample_plan, sample_id_insert) {
                               "_", sample_event_number, "_", sample_bin_code, "_", sample_number)) |>
     dplyr::select(id, sample_bin_id)
 
-  query <- glue::glue_sql("INSERT INTO sample (id, sample_bin_id)
-                                    VALUES (
-                                      UNNEST(ARRAY[{sample_id$id*}]),
-                                      UNNEST(ARRAY[{sample_id$sample_bin_id*}])
-                                    ) RETURNING id;",
-                                    .con = con)
 
-  res <- DBI::dbSendQuery(con, query)
+  partitioned_inserts <- partition_df_to_size(sample_id, 200)
 
-  sample_ids <- DBI::dbFetch(res) |>
-    dplyr::pull(id)
+  if (verbose) {
+    message(paste0("partitioned ", nrow(sample_id), " inserts into ", length(partitioned_inserts), " parts."))
+  }
 
-  DBI::dbClearResult(res)
+  sample_ids <- purrr::imap(partitioned_inserts, function(d, idx) {
+    query <- glue::glue_sql("INSERT INTO sample (id, sample_bin_id)
+                                      VALUES (
+                                        UNNEST(ARRAY[{d$id*}]),
+                                        UNNEST(ARRAY[{d$sample_bin_id*}])
+                                      ) RETURNING id;",
+                                      .con = con)
 
-  return(sample_ids)
+    res <- DBI::dbSendQuery(con, query)
+    on.exit(DBI::dbClearResult(res))
+    if (verbose) {
+      message("working on partition ", idx, "/", length(partitioned_inserts))
+    }
+
+    gc(full = TRUE)
+
+    DBI::dbFetch(res) |>
+      dplyr::pull(id)
+
+
+  })
+
+
+
+  return(purrr::flatten_chr(sample_ids))
 }
 
 
@@ -186,3 +217,10 @@ is_valid_sample_plan <- function(sample_plan) {
 
 
 }
+
+
+partition_df_to_size <- function(df, chunk_size) {
+  split(df, (seq(nrow(df))-1) %/% chunk_size)
+}
+
+

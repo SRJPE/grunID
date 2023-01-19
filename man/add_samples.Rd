@@ -4,7 +4,7 @@
 \alias{add_samples}
 \title{Add samples}
 \usage{
-add_samples(con, sample_plan, sample_id_insert)
+add_samples(con, sample_plan, sample_id_insert, verbose = FALSE)
 }
 \description{
 Add samples

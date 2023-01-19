@@ -40,6 +40,8 @@ plan <- get_field_sheet_event_plan(con, sample_event_id = 1)
 }
 \seealso{
 Other field sheet helpers: 
-\code{\link{create_field_sheet}()}
+\code{\link{create_field_sheet}()},
+\code{\link{process_field_sheet_samples}()},
+\code{\link{update_field_sheet_samples}()}
 }
 \concept{field sheet helpers}
