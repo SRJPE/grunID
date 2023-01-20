@@ -2,8 +2,9 @@ Package: grunID
 Type: Package
 Title: What the Package Does (Title Case)
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
+Authors@R: c(
+    person("Emanuel", "Rodriguez", email = "erodriguez@flowwest.com", role = c("aut", "cre")), 
+    person("Liz", "Stebbins", email = "lstebbins@flowwest.com", role = "aut"))
 Description: More about what it does (maybe more than one line)
     Use four spaces when indenting paragraphs within the Description.
 License: CC0
