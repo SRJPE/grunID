@@ -25,7 +25,7 @@ db_get_config <- function() {
 
 #' Connect to Run ID Database
 #' @export
-gr_db_connect <- function(config = db_get_config(), username = NULL, password = NULL,
+gr_db_connect <- function(config = db_get_config(), username = NULL,
                        host = NULL, port = NULL) {
 
   if (is.null(config)) {
@@ -47,7 +47,7 @@ gr_db_connect <- function(config = db_get_config(), username = NULL, password = 
                  host = config$host,
                  port = config$port,
                  user = config$username,
-                 password = config$password)
+                 password = az_refresh_token()$accessToken)
 
 
 }
