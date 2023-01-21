@@ -4,14 +4,26 @@
 \alias{gr_db_connect}
 \title{Connect to Run ID Database}
 \usage{
-gr_db_connect(
-  config = db_get_config(),
-  username = NULL,
-  password = NULL,
-  host = NULL,
-  port = NULL
-)
+gr_db_connect(username = NULL, host = NULL, port = NULL)
+}
+\arguments{
+\item{username}{(optional) username for login}
+
+\item{host}{(optional) host for login}
+
+\item{port}{(optional) port for login}
+}
+\value{
+a "PqConnection" object to be used in queries to database
 }
 \description{
-Connect to Run ID Database
+create a connection object to the Run ID Database. By default function will
+look for a config file using the \code{config::get()} function. If no file is found user provided
+username, host, and port will be used. In all cases the password will be obtained using an Azure
+token generated using the azure cli tool.
+}
+\details{
+Azure accesstoken will be used for password authentication, users must have the
+\href{https://learn.microsoft.com/en-us/cli/azure/}{Azure CLI} tool installed. To verify try running
+\code{az --version} and confirm a version number and additional information is printed to the screen.
 }
