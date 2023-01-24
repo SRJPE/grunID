@@ -27,30 +27,28 @@ db_get_config <- function() {
 #' token generated using the azure cli tool.
 #' @param username (optional) username for login
 #' @param host (optional) host for login
-#' @param port (optional) port for login
 #' @details Azure accesstoken will be used for password authentication, users must have the
 #' [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/) tool installed. To verify try running
 #' `az --version` and confirm a version number and additional information is printed to the screen.
 #' @return a "PqConnection" object to be used in queries to database
 #' @md
 #' @export
-gr_db_connect <- function(username = NULL, host = NULL, port = NULL) {
+gr_db_connect <- function(username = NULL, host = NULL) {
 
   config <- db_get_config()
 
   if (is.null(config)) {
-    if (any(is.null(username), is.null(password), is.null(host), is.null(port))) {
-      stop("could not find a config file, and one of username, password, host and port was left blank")
+    if (any(is.null(username), is.null(host))) {
+      stop("could not find a config file, and one of username or host was left blank", call. = FALSE)
     } else {
       config$username <- username
       config$host <- host
-      config$port <- port
+      config$port <- 5432
       config$dbname <- "runiddb-prod"
     }
   }
 
   # at this point config has the creds
-
   DBI::dbConnect(RPostgres::Postgres(),
                  dbname = config$dbname,
                  host = config$host,

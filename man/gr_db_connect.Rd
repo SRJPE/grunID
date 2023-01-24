@@ -4,14 +4,12 @@
 \alias{gr_db_connect}
 \title{Connect to Run ID Database}
 \usage{
-gr_db_connect(username = NULL, host = NULL, port = NULL)
+gr_db_connect(username = NULL, host = NULL)
 }
 \arguments{
 \item{username}{(optional) username for login}
 
 \item{host}{(optional) host for login}
-
-\item{port}{(optional) port for login}
 }
 \value{
 a "PqConnection" object to be used in queries to database
