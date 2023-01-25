@@ -167,6 +167,10 @@ database administrator.</p>
 <li>The password is left out of the file, as it is filled in by using
 the <code>az</code> tool installed in the previous step.</li>
 </ul>
+<p>With this file in place, we create a connection to the database with
+the following:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">con</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/gr_db_connect.html">gr_db_connect</a></span><span class="op">(</span><span class="op">)</span> <span class="co"># a config file will be searched for starting at the working directory.</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="authentication-with-username-dbname-and-host">Authentication with username, dbname and host<a class="anchor" aria-label="anchor" href="#authentication-with-username-dbname-and-host"></a>
@@ -178,7 +182,7 @@ connection to the database but if using source control its also an easy
 way to accidentally share your credentials. For this reason, we
 recommend setting up a config file and adding it to your ignores
 file.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">con</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/gr_db_connect.html">gr_db_connect</a></span><span class="op">(</span></span>
 <span>  username <span class="op">=</span> <span class="st">"myusername"</span>, </span>
 <span>  dbname <span class="op">=</span> <span class="st">"dbname"</span>, </span>
