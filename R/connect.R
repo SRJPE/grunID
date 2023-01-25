@@ -3,13 +3,16 @@
 #' Azure Token Refresh
 #' @description refresh auth token using az cli
 az_refresh_token <- function() {
-  res <- tryCatch(
+  res <- tryCatch({
+    cli::cli_process_start("refreshing Azure auth token")
     system2("az",
             args = c("account get-access-token --resource https://ossrdbms-aad.database.windows.net"),
-            stdout = TRUE),
-    error = function(e) {stop("could not find `az` please make sure you have Azure CLI installed", call. = FALSE)}
+            stdout = TRUE)
+  },
+  error = function(e) {stop("could not find `az` please make sure you have Azure CLI installed", call. = FALSE)}
   )
 
+  cli::cli_process_done("done")
   return(jsonlite::parse_json(res))
 }
 
@@ -33,28 +36,32 @@ db_get_config <- function() {
 #' @return a "PqConnection" object to be used in queries to database
 #' @md
 #' @export
-gr_db_connect <- function(username = NULL, host = NULL) {
+gr_db_connect <- function(username = NULL, host = NULL, dbname = NULL) {
 
-  config <- db_get_config()
+  # no username, host or dbname passed, try to read config file
+  if (all(is.null(username), is.null(host), is.null(dbname))) {
 
-  if (is.null(config)) {
-    if (any(is.null(username), is.null(host))) {
-      stop("could not find a config file, and one of username or host was left blank", call. = FALSE)
-    } else {
-      config$username <- username
-      config$host <- host
-      config$port <- 5432
-      config$dbname <- "runiddb-prod"
+    config <- db_get_config()
+
+    if (is.null(config)) {
+      stop("Could not find a config file within your working directory", call. = FALSE)
     }
+  } else {
+    config <- list()
+    config$username <- username
+    config$host <- host
+    config$dbname <- dbname
   }
+
+  auth_token <- az_refresh_token()
 
   # at this point config has the creds
   DBI::dbConnect(RPostgres::Postgres(),
                  dbname = config$dbname,
                  host = config$host,
-                 port = config$port,
+                 port = 5432,
                  user = config$username,
-                 password = az_refresh_token()$accessToken)
+                 password = auth_token$accessToken)
 
 
 }

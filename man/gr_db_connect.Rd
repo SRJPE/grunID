@@ -4,7 +4,7 @@
 \alias{gr_db_connect}
 \title{Connect to Run ID Database}
 \usage{
-gr_db_connect(username = NULL, host = NULL)
+gr_db_connect(username = NULL, host = NULL, dbname = NULL)
 }
 \arguments{
 \item{username}{(optional) username for login}

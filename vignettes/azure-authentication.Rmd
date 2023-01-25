@@ -21,7 +21,7 @@ library(grunID)
 
 ## Confirm Account on Azure
 
-The first step in the process is to confirm that your account has been successfully linked to Azure. To do this, navigate to the [Microsoft Azure Portal](https://portal.azure.com/) and log in with your existing credentials or create a new one. Once logged in, click on your account.
+The first step in the process is to confirm that your account has been successfully linked to Azure. To do this, navigate to the [Microsoft Azure Portal](https://portal.azure.com/) and log in with your existing credentials or create a new one. Once logged in, click on your account as shown below.
 
 ![](assets/arrow-to-account-button.png){width=75%}
 
@@ -40,12 +40,9 @@ In addition to installing the R package, we need to install the Azure Command Li
 
 ## Authentication with AZ tool
 
-The next set of steps require opening a command prompt. On Windows, this can be done by searching for "command prompt" in the start menu, or by right-clicking the Start button and selecting "Windows PowerShell" or "Windows Command prompt" from the pop-up menu. We should see a blank screen.
+The next step requires opening a command prompt. On Windows, this can be done by searching for "command prompt" in the Start menu, or by right-clicking the Start button and selecting "Windows PowerShell" or "Windows Command prompt" from the pop-up menu. On Mac, you should use the "Terminal" application. The Windows Command Prompt is shown below.
 
 ![](assets/windows-command-prmpt-new.png)
-
-
-### Log in with AZ
 
 Next, we'll want to log in to Azure from the command line. To do this, simply enter the following at the command prompt. After pressing enter, an internet browser will open where you can log into your Azure account. If you have already logged in on the previous step, this will simply allow you to select an account to use.
 
@@ -55,41 +52,57 @@ az login
 
 ![](assets/az-login.gif)
 
+## Create Connection
 
-### Create a Token 
+The `grunID` package comes with a function `gr_db_connect` that will create an authentication token for you and pass it down as your password to the appropriate `DBI::dbConnect` function. All you will need to provide at this point is either a `config.yml` or your username and host to the `gr_db_connect` function. An example of both of these is shown below.
 
-Next, we'll use AZ again to create a "token" that will allow us to authenticate using our username on Azure. Enter the following in command prompt:
 
-```
-az account get-access-token --resource-type oss-rdbms
-```
+### Authentication with Config file
 
-This will return a json formatted response with the following content:
+The easiest and safest way to manage your connection to the database is using a `config.yml` file. The `grundID` package uses the `config` R package to parse the contents of the file and populate an appropriate connection string. The format of the config file is shown below. 
 
-```json
-{
-  "accessToken": "really long string of letters, numbers and symbols, this will be used as your password",
-  "expiresOn": "2023-01-19 12:01:26.000000",
-  "subscription": "a subscription ID",
-  "tenant": "a tenant ID",
-  "tokenType": "Bearer"
-}
-```
+**Note**:
 
-*__Note__ that for security purposes, these tokens have a short expiration date of just a few hours. FlowWest is currently working on switching to using refresh tokens, which will allow for automatic token creation and authentication. Until then, however, you will need to manually update this token by repeating this and the following step.*
+- The name of the file must be **config.yml** and be within your working directory. 
 
-### Create a config file
+- If using source control please be sure to add `config.yml` to your ignores file.
 
-Next, we'll create a `config.yml` file to store our credentials. The file must be named **config.yml** and placed within the R working directory that you plan to use for interacting with the database. The file should have the following contents, the password field should be filled in with the token generated in the previous step. The remaining fields will be provided to you. 
-
-*Note that if you are repeating this step to refresh an expired token, you simply have to replace the existing password value with your new token and re-read this file into the R session.*
-
-```yml
+```yaml
 default:
   dbname: <db-name will be provided>
   username: <your-username will be provided>
-  port: <db-port will be provided>
+  port: 5432
   host: <db-host will be provided>
-  password: <paste token from previous step here>
 ```
 
+All characters between `<>` (including the `<>`) are to be replaced with values provided by the database administrator. 
+
+**Note**:
+
+- The password is left out of the file, as it is filled in by using the `az` tool installed in the previous step.
+
+
+### Authentication with username, dbname and host
+
+The `gr_db_connect` function can also be called with arguments specifying your username, database name and host for the server for the database. Noe that this is a quick way to create a connection to the database but if using source control its also an easy way to accidentally share your credentials. For this reason, we recommend setting up a config file and adding it to your ignores file.
+
+```r
+con <- gr_db_connect(
+  username = "myusername", 
+  dbname = "dbname", 
+  host = "host.com"
+)
+
+dplyr::tbl(con, "agency")
+```
+
+```
+     id code    agency_name active created_at          creat…¹ updated_at          updat…²
+  <int> <chr>   <chr>       <lgl>  <dttm>              <chr>   <dttm>              <chr>  
+1     1 DWR     Department… TRUE   2023-01-12 01:54:44 runida… 2023-01-12 01:54:44 runida…
+2     2 CDFW    California… TRUE   2023-01-12 01:54:44 runida… 2023-01-12 01:54:44 runida…
+3     3 USFWS   United Sta… TRUE   2023-01-12 01:54:44 runida… 2023-01-12 01:54:44 runida…
+4     4 UCDAVIS University… TRUE   2023-01-12 01:54:44 runida… 2023-01-12 01:54:44 runida…
+# … with abbreviated variable names created_by, updated_by
+
+```
