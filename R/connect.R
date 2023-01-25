@@ -33,6 +33,15 @@ db_get_config <- function() {
 #' @details Azure accesstoken will be used for password authentication, users must have the
 #' [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/) tool installed. To verify try running
 #' `az --version` and confirm a version number and additional information is printed to the screen.
+#' @examples
+#' \dontrun{
+#' con <- gr_db_connect(
+#'                      username = "myusername",
+#'                      dbname = "dbname",
+#'                      host = "host.com"
+#' )
+#' dplyr::tbl(con, "agency")
+#' }
 #' @return a "PqConnection" object to be used in queries to database
 #' @md
 #' @export

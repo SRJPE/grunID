@@ -25,3 +25,13 @@ Azure accesstoken will be used for password authentication, users must have the
 \href{https://learn.microsoft.com/en-us/cli/azure/}{Azure CLI} tool installed. To verify try running
 \code{az --version} and confirm a version number and additional information is printed to the screen.
 }
+\examples{
+\dontrun{
+con <- gr_db_connect(
+                     username = "myusername",
+                     dbname = "dbname",
+                     host = "host.com"
+)
+dplyr::tbl(con, "agency")
+}
+}
