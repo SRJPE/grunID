@@ -130,12 +130,8 @@ sampling of a 2 day sampling event</p></dd>
 <span class="r-in"><span>                      port <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">port</span>,</span></span>
 <span class="r-in"><span>                      user <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">username</span>,</span></span>
 <span class="r-in"><span>                      password <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">password</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> could not connect to server: Connection refused (0x0000274D/10061)</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> 	Is the server running on host "localhost" (::1) and accepting</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> 	TCP/IP connections on port 5432?</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> could not connect to server: Connection refused (0x0000274D/10061)</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> 	Is the server running on host "localhost" (127.0.0.1) and accepting</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> 	TCP/IP connections on port 5432?</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> FATAL:  The access token has expired. Please acquire a new token and retry.</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> FATAL:  no pg_hba.conf entry for host "98.252.68.55", user "erodriguez_flowwest.com#EXT#@cawater.onmicrosoft.com", database "runiddb-prod", no encryption</span>
 <span class="r-in"><span><span class="va">wb</span> <span class="op">&lt;-</span> <span class="fu">openxlsx</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/openxlsx/man/createWorkbook.html" class="external-link">createWorkbook</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="co"># Each sample_event will be a tab in a workbook</span></span></span>
 <span class="r-in"><span><span class="va">plan</span> <span class="op">&lt;-</span> <span class="fu"><a href="get_field_sheet_event_plan.html">get_field_sheet_event_plan</a></span><span class="op">(</span><span class="va">con</span>, sample_event_id <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>

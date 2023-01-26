@@ -90,9 +90,9 @@
 been successfully linked to Azure. To do this, navigate to the
 <a href="https://portal.azure.com/" target="_blank" class="external-link">Microsoft Azure
 Portal</a> and log in with your existing credentials or create a new
-one. Once logged in, click on your account as shown below.</p>
+account. Once logged in, click on your account as shown below.</p>
 <p><img src="assets/arrow-to-account-button.png" style="width:75.0%"></p>
-<p>Next click on <strong>Switch Directory</strong></p>
+<p>Next, click on <strong>Switch Directory</strong></p>
 <p><img src="assets/azure-switch-directories.png" style="width:50.0%"></p>
 <p>and confirm you have a directory for the California Department of
 Water Resources. If you are not already switched to this directory do so
@@ -101,7 +101,7 @@ help.</p>
 <p><img src="assets/azure-dir-list.png" style="width:100.0%"></p>
 </div>
 <div class="section level2">
-<h2 id="install-depedencies">Install Depedencies<a class="anchor" aria-label="anchor" href="#install-depedencies"></a>
+<h2 id="install-dependencies">Install Dependencies<a class="anchor" aria-label="anchor" href="#install-dependencies"></a>
 </h2>
 <p>In addition to installing the R package, we need to install the Azure
 Command Line Interface (CLI) to authenticate through Azure Directory.
@@ -116,7 +116,7 @@ Azure CLI on Windows</a> page, or for Mac OS visit the
 for Mac OS</a> page.</p>
 </div>
 <div class="section level2">
-<h2 id="authentication-with-az-tool">Authentication with AZ tool<a class="anchor" aria-label="anchor" href="#authentication-with-az-tool"></a>
+<h2 id="authentication-with-the-az-tool">Authentication with the AZ tool<a class="anchor" aria-label="anchor" href="#authentication-with-the-az-tool"></a>
 </h2>
 <p>The next step requires opening a command prompt. On Windows, this can
 be done by searching for “command prompt” in the Start menu, or by
@@ -140,17 +140,17 @@ simply allow you to select an account to use.</p>
 <code>gr_db_connect</code> that will create an authentication token for
 you and pass it down as your password to the appropriate
 <code><a href="https://dbi.r-dbi.org/reference/dbConnect.html" class="external-link">DBI::dbConnect</a></code> function. All you will need to provide at
-this point is either a <code>config.yml</code> or your username and host
-to the <code>gr_db_connect</code> function. An example of both of these
-is shown below.</p>
+this point is either a <code>config.yml</code> file or your username and
+host to the <code>gr_db_connect</code> function. An example of both of
+these is shown below.</p>
 <div class="section level3">
-<h3 id="authentication-with-config-file">Authentication with Config file<a class="anchor" aria-label="anchor" href="#authentication-with-config-file"></a>
+<h3 id="authentication-with-a-config-file">Authentication with a Config file<a class="anchor" aria-label="anchor" href="#authentication-with-a-config-file"></a>
 </h3>
 <p>The easiest and safest way to manage your connection to the database
-is using a <code>config.yml</code> file. The <code>grundID</code>
-package uses the <code>config</code> R package to parse the contents of
-the file and populate an appropriate connection string. The format of
-the config file is shown below.</p>
+is using a <code>config.yml</code> file. The <code>grunID</code> package
+uses the <code>config</code> R package to parse the contents of the file
+and populate an appropriate connection string. The format of the config
+file is shown below.</p>
 <p><strong>Note</strong>:</p>
 <ul>
 <li><p>The name of the file must be <strong>config.yml</strong> and be
