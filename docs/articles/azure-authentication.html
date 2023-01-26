@@ -174,7 +174,9 @@ the <code>az</code> tool installed in the previous step.</li>
 <p>With this file in place, we create a connection to the database with
 the following:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">con</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/gr_db_connect.html">gr_db_connect</a></span><span class="op">(</span><span class="op">)</span> <span class="co"># a config file will be searched for starting at the working directory.</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">con</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/gr_db_connect.html">gr_db_connect</a></span><span class="op">(</span><span class="op">)</span> <span class="co"># a config file will be searched for starting at the working directory.</span></span>
+<span></span>
+<span><span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/tbl.html" class="external-link">tbl</a></span><span class="op">(</span><span class="va">con</span>, <span class="st">"agency"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="authentication-with-username-dbname-and-host">Authentication with username, dbname and host<a class="anchor" aria-label="anchor" href="#authentication-with-username-dbname-and-host"></a>
