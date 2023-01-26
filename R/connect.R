@@ -35,6 +35,11 @@ db_get_config <- function() {
 #' `az --version` and confirm a version number and additional information is printed to the screen.
 #' @examples
 #' \dontrun{
+#'
+#' # run with config file, file will be searched up directories starting from the working directory
+#' con <- gr_db_connect()
+#'
+#' # run with username, dbname, and host passed in as arguemnts
 #' con <- gr_db_connect(
 #'                      username = "myusername",
 #'                      dbname = "dbname",

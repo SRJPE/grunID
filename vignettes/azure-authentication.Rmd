@@ -81,6 +81,13 @@ All characters between `<>` (including the `<>`) are to be replaced with values 
 
 - The password is left out of the file, as it is filled in by using the `az` tool installed in the previous step.
 
+With this file in place, we create a connection to the database with the following:
+
+```r
+con <- gr_db_connect() # a config file will be searched for starting at the working directory.
+```
+
+
 
 ### Authentication with username, dbname and host
 

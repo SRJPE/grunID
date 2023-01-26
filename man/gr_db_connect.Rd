@@ -27,6 +27,11 @@ Azure accesstoken will be used for password authentication, users must have the
 }
 \examples{
 \dontrun{
+
+# run with config file, file will be searched up directories starting from the working directory
+con <- gr_db_connect()
+
+# run with username, dbname, and host passed in as arguemnts
 con <- gr_db_connect(
                      username = "myusername",
                      dbname = "dbname",
