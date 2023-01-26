@@ -21,7 +21,7 @@ library(grunID)
 
 ## Confirm Account on Azure
 
-The first step in the process is to confirm that your account has been successfully linked to Azure. To do this, navigate to the [Microsoft Azure Portal](https://portal.azure.com/) and log in with your existing credentials or create a new one. Once logged in, click on your account as shown below.
+The first step in the process is to confirm that your account has been successfully linked to Azure. To do this, navigate to the <a href="https://portal.azure.com/" target="_blank">Microsoft Azure Portal</a> and log in with your existing credentials or create a new one. Once logged in, click on your account as shown below.
 
 ![](assets/arrow-to-account-button.png){width=75%}
 
@@ -35,7 +35,7 @@ and confirm you have a directory for the California Department of Water Resource
 
 ## Install Depedencies 
 
-In addition to installing the R package, we need to install the Azure Command Line Interface (CLI) to authenticate through Azure Directory. The Azure CLI allows us to link a local R session with your Azure AD account and authenticate a user with read/write permissions to the database using a "token". An overview of the tool can be found at [https://learn.microsoft.com/en-us/cli/azure/](https://learn.microsoft.com/en-us/cli/azure/). To download and install the tool, visit the [Install Azure CLI on Windows](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli-windows?tabs=azure-cli) page, or for Mac OS visit the [Install for Mac OS](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli-macos) page.
+In addition to installing the R package, we need to install the Azure Command Line Interface (CLI) to authenticate through Azure Directory. The Azure CLI allows us to link a local R session with your Azure AD account and authenticate a user with read/write permissions to the database using a "token". An overview of the tool can be found at <a href="https://learn.microsoft.com/en-us/cli/azure/" target="_blank">https://learn.microsoft.com/en-us/cli/azure/</a>. To download and install the tool, visit the <a href="https://learn.microsoft.com/en-us/cli/azure/install-azure-cli-windows?tabs=azure-cli" target="_blank">Install Azure CLI on Windows</a> page, or for Mac OS visit the <a href="https://learn.microsoft.com/en-us/cli/azure/install-azure-cli-macos" target="_blank">Install for Mac OS</a> page.
 
 
 ## Authentication with AZ tool
