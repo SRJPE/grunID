@@ -21,11 +21,11 @@ library(grunID)
 
 ## Confirm Account on Azure
 
-The first step in the process is to confirm that your account has been successfully linked to Azure. To do this, navigate to the [Microsoft Azure Portal](https://portal.azure.com/) and log in with your existing credentials or create a new one. Once logged in, click on your account as shown below.
+The first step in the process is to confirm that your account has been successfully linked to Azure. To do this, navigate to the [Microsoft Azure Portal](https://portal.azure.com/) and log in with your existing credentials or create a new account. Once logged in, click on your account as shown below.
 
 ![](assets/arrow-to-account-button.png){width=75%}
 
-Next click on **Switch Directory**
+Next, click on **Switch Directory**
 
 ![](assets/azure-switch-directories.png){width=50%}
 
@@ -33,12 +33,12 @@ and confirm you have a directory for the California Department of Water Resource
 
 ![](assets/azure-dir-list.png){width=100%}
 
-## Install Depedencies 
+## Install Dependencies 
 
 In addition to installing the R package, we need to install the Azure Command Line Interface (CLI) to authenticate through Azure Directory. The Azure CLI allows us to link a local R session with your Azure AD account and authenticate a user with read/write permissions to the database using a "token". An overview of the tool can be found at [https://learn.microsoft.com/en-us/cli/azure/](https://learn.microsoft.com/en-us/cli/azure/). To download and install the tool, visit the [Install Azure CLI on Windows](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli-windows?tabs=azure-cli) page, or for Mac OS visit the [Install for Mac OS](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli-macos) page.
 
 
-## Authentication with AZ tool
+## Authentication with the AZ tool
 
 The next step requires opening a command prompt. On Windows, this can be done by searching for "command prompt" in the Start menu, or by right-clicking the Start button and selecting "Windows PowerShell" or "Windows Command prompt" from the pop-up menu. On Mac, you should use the "Terminal" application. The Windows Command Prompt is shown below.
 
@@ -54,12 +54,12 @@ az login
 
 ## Create Connection
 
-The `grunID` package comes with a function `gr_db_connect` that will create an authentication token for you and pass it down as your password to the appropriate `DBI::dbConnect` function. All you will need to provide at this point is either a `config.yml` or your username and host to the `gr_db_connect` function. An example of both of these is shown below.
+The `grunID` package comes with a function `gr_db_connect` that will create an authentication token for you and pass it down as your password to the appropriate `DBI::dbConnect` function. All you will need to provide at this point is either a `config.yml` file or your username and host to the `gr_db_connect` function. An example of both of these is shown below.
 
 
-### Authentication with Config file
+### Authentication with a Config file
 
-The easiest and safest way to manage your connection to the database is using a `config.yml` file. The `grundID` package uses the `config` R package to parse the contents of the file and populate an appropriate connection string. The format of the config file is shown below. 
+The easiest and safest way to manage your connection to the database is using a `config.yml` file. The `grunID` package uses the `config` R package to parse the contents of the file and populate an appropriate connection string. The format of the config file is shown below. 
 
 **Note**:
 
@@ -84,7 +84,7 @@ All characters between `<>` (including the `<>`) are to be replaced with values 
 
 ### Authentication with username, dbname and host
 
-The `gr_db_connect` function can also be called with arguments specifying your username, database name and host for the server for the database. Noe that this is a quick way to create a connection to the database but if using source control its also an easy way to accidentally share your credentials. For this reason, we recommend setting up a config file and adding it to your ignores file.
+The `gr_db_connect` function can also be called with arguments specifying your username, database name and host for the server for the database. Note that this is a quick way to create a connection to the database but if using source control its also an easy way to accidentally share your credentials. For this reason, we recommend setting up a config file and adding it to your ignores file.
 
 ```r
 con <- gr_db_connect(
