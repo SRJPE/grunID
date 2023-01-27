@@ -6,7 +6,7 @@
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
     
 
-    <nav class="navbar fixed-top navbar-light navbar-expand-lg bg-light"><div class="container">
+    <nav class="navbar fixed-top navbar-default navbar-expand-lg bg-light"><div class="container">
     
     <a class="navbar-brand me-2" href="../index.html">grunID</a>
 
@@ -25,13 +25,19 @@
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
     <a class="dropdown-item" href="../articles/azure-authentication.html">Authentication with Azure AD</a>
-    <a class="dropdown-item" href="../articles/process_and_add_assay_results.html">Process and Add Assay Results to Database</a>
+    <a class="dropdown-item" href="../articles/process_and_add_assay_results.html">Process and add assay results to database</a>
   </div>
 </li>
       </ul><form class="form-inline my-2 my-lg-0" role="search">
         <input type="search" class="form-control me-sm-2" aria-label="Toggle navigation" name="search-input" data-search-index="../search.json" id="search-input" placeholder="Search for" autocomplete="off"></form>
 
-      <ul class="navbar-nav"></ul></div>
+      <ul class="navbar-nav"><li class="nav-item">
+  <a class="nav-link" href="https://github.com/FlowWest/grunID" aria-label="github">
+    <span class="fab fa fab fa-github fa-lg"></span>
+     
+  </a>
+</li>
+      </ul></div>
 
     
   </div>
@@ -42,9 +48,9 @@
     </div>
 
     <div class="section level2">
-      <h2 id="all-functions">All functions<a class="anchor" aria-label="anchor" href="#all-functions"></a></h2>
+      <h2 id="adding-data">Adding data<a class="anchor" aria-label="anchor" href="#adding-data"></a></h2>
       
-      
+      <p class="section-desc"></p><p>These functions allow users to add information about samples being run to the database</p>
 
       
     </div><div id="" class="section level2">
@@ -139,10 +145,21 @@
         <dd>Add Status Code</dd>
       </dl><dl><dt>
           
-          <code><a href="create_field_sheet.html">create_field_sheet()</a></code> 
+          <code><a href="template_dataframes.html">protocol_template</a></code> 
         </dt>
-        <dd>Create Field Sheets</dd>
-      </dl><dl><dt>
+        <dd>Templates</dd>
+      </dl></div><div class="section level2">
+      <h2 id="deleting-data">Deleting data<a class="anchor" aria-label="anchor" href="#deleting-data"></a></h2>
+      
+      <p class="section-desc"></p><p>These functions allow users to delete information about samples being run</p>
+
+      
+    </div><div id="" class="section level2">
+      
+      
+      
+
+      <dl><dt>
           
           <code><a href="delete_agency.html">delete_agency()</a></code> 
         </dt>
@@ -187,37 +204,18 @@
           <code><a href="delete_status_code.html">delete_status_code()</a></code> 
         </dt>
         <dd>Delete Status Code</dd>
-      </dl><dl><dt>
-          
-          <code><a href="excel_column_index.html">excel_column_index</a></code> 
-        </dt>
-        <dd>Excel Column Index</dd>
-      </dl><dl><dt>
-          
-          <code><a href="extract_previous_end_row.html">extract_previous_end_row()</a></code> 
-        </dt>
-        <dd>Extract Previous End Row</dd>
-      </dl><dl><dt>
-          
-          <code><a href="extract_sherlock_protocol.html">extract_sherlock_protocol()</a></code> 
-        </dt>
-        <dd>Extract Sherlock Protocol</dd>
-      </dl><dl><dt>
-          
-          <code><a href="generate_range.html">generate_range()</a></code> 
-        </dt>
-        <dd>Generate a cell range</dd>
-      </dl><dl><dt>
-          
-          <code><a href="generate_ranges.html">generate_ranges()</a></code> 
-        </dt>
-        <dd>Generate all cell ranges for tables containing assay results</dd>
-      </dl><dl><dt>
-          
-          <code><a href="generate_threshold.html">generate_threshold()</a></code> 
-        </dt>
-        <dd>Generate Thresholds</dd>
-      </dl><dl><dt>
+      </dl></div><div class="section level2">
+      <h2 id="retrieving-data">Retrieving data<a class="anchor" aria-label="anchor" href="#retrieving-data"></a></h2>
+      
+      <p class="section-desc"></p><p>These functions allow users to retrieve information from the database</p>
+
+      
+    </div><div id="" class="section level2">
+      
+      
+      
+
+      <dl><dt>
           
           <code><a href="get_agencies.html">get_agencies()</a></code> 
         </dt>
@@ -232,11 +230,6 @@
           <code><a href="get_enum_values.html">get_enum_values()</a></code> 
         </dt>
         <dd>Get Enumerated Type Values</dd>
-      </dl><dl><dt>
-          
-          <code><a href="get_field_sheet_event_plan.html">get_field_sheet_event_plan()</a></code> 
-        </dt>
-        <dd>Get Sample Event Information for Creating a Field Sheet</dd>
       </dl><dl><dt>
           
           <code><a href="get_genetic_methods.html">get_genetic_methods()</a></code> 
@@ -282,22 +275,18 @@
           <code><a href="get_status_codes.html">get_status_codes()</a></code> 
         </dt>
         <dd>Retrieve Status Codes</dd>
-      </dl><dl><dt>
-          
-          <code><a href="is_valid_connection.html">is_valid_connection()</a></code> 
-        </dt>
-        <dd>Check Database Connection is Valid</dd>
-      </dl><dl><dt>
-          
-          <code><a href="is_valid_sample_field_data.html">is_valid_sample_field_data()</a></code> 
-        </dt>
-        <dd>Helper function - checks field sheet data format</dd>
-      </dl><dl><dt>
-          
-          <code><a href="process_field_sheet_samples.html">process_field_sheet_samples()</a></code> 
-        </dt>
-        <dd>Process Sample Field Sheet Data</dd>
-      </dl><dl><dt>
+      </dl></div><div class="section level2">
+      <h2 id="processing-data">Processing data<a class="anchor" aria-label="anchor" href="#processing-data"></a></h2>
+      
+      <p class="section-desc"></p><p>These functions convert results into database-ready formats</p>
+
+      
+    </div><div id="" class="section level2">
+      
+      
+      
+
+      <dl><dt>
           
           <code><a href="process_plate_layout.html">process_plate_layout()</a></code> 
         </dt>
@@ -317,16 +306,22 @@
           <code><a href="process_well_sample_details.html">process_well_sample_details()</a></code> 
         </dt>
         <dd>Process layout</dd>
-      </dl><dl><dt>
+      </dl></div><div class="section level2">
+      <h2 id="updating-data">Updating data<a class="anchor" aria-label="anchor" href="#updating-data"></a></h2>
+      
+      <p class="section-desc"></p><p>These functions update data in the database</p>
+
+      
+    </div><div id="" class="section level2">
+      
+      
+      
+
+      <dl><dt>
           
           <code><a href="set_sample_status.html">set_sample_status()</a></code> 
         </dt>
         <dd>Set Status Code</dd>
-      </dl><dl><dt>
-          
-          <code><a href="template_dataframes.html">protocol_template</a></code> 
-        </dt>
-        <dd>Templates</dd>
       </dl><dl><dt>
           
           <code><a href="update_agency.html">update_agency()</a></code> 
@@ -357,11 +352,6 @@
           <code><a href="update_enum_value.html">update_enum_value()</a></code> 
         </dt>
         <dd>Update Enumerated Type Value</dd>
-      </dl><dl><dt>
-          
-          <code><a href="update_field_sheet_samples.html">update_field_sheet_samples()</a></code> 
-        </dt>
-        <dd>Update Sample Field Sheet Data</dd>
       </dl><dl><dt>
           
           <code><a href="update_genetic_method.html">update_genetic_method()</a></code> 
@@ -432,8 +422,91 @@
           <code><a href="update_status_code_status.html">update_status_code_status()</a></code> 
         </dt>
         <dd>Update Status Code Status</dd>
+      </dl></div><div class="section level2">
+      <h2 id="field-sheet-management">Field sheet management<a class="anchor" aria-label="anchor" href="#field-sheet-management"></a></h2>
+      
+      <p class="section-desc"></p><p>These functions relate to creating and processing field sheets</p>
+
+      
+    </div><div id="" class="section level2">
+      
+      
+      
+
+      <dl><dt>
+          
+          <code><a href="create_field_sheet.html">create_field_sheet()</a></code> 
+        </dt>
+        <dd>Create Field Sheets</dd>
+      </dl><dl><dt>
+          
+          <code><a href="get_field_sheet_event_plan.html">get_field_sheet_event_plan()</a></code> 
+        </dt>
+        <dd>Get Sample Event Information for Creating a Field Sheet</dd>
+      </dl><dl><dt>
+          
+          <code><a href="process_field_sheet_samples.html">process_field_sheet_samples()</a></code> 
+        </dt>
+        <dd>Process Sample Field Sheet Data</dd>
+      </dl><dl><dt>
+          
+          <code><a href="update_field_sheet_samples.html">update_field_sheet_samples()</a></code> 
+        </dt>
+        <dd>Update Sample Field Sheet Data</dd>
+      </dl></div><div class="section level2">
+      <h2 id="helper-functions">Helper functions<a class="anchor" aria-label="anchor" href="#helper-functions"></a></h2>
+      
+      <p class="section-desc"></p><p>These functions are generally not used in standard workflow but are employed within functions.</p>
+
+      
+    </div><div id="" class="section level2">
+      
+      
+      
+
+      <dl><dt>
+          
+          <code><a href="excel_column_index.html">excel_column_index</a></code> 
+        </dt>
+        <dd>Excel Column Index</dd>
+      </dl><dl><dt>
+          
+          <code><a href="extract_previous_end_row.html">extract_previous_end_row()</a></code> 
+        </dt>
+        <dd>Extract Previous End Row</dd>
+      </dl><dl><dt>
+          
+          <code><a href="extract_sherlock_protocol.html">extract_sherlock_protocol()</a></code> 
+        </dt>
+        <dd>Extract Sherlock Protocol</dd>
+      </dl><dl><dt>
+          
+          <code><a href="generate_range.html">generate_range()</a></code> 
+        </dt>
+        <dd>Generate a cell range</dd>
+      </dl><dl><dt>
+          
+          <code><a href="generate_ranges.html">generate_ranges()</a></code> 
+        </dt>
+        <dd>Generate all cell ranges for tables containing assay results</dd>
+      </dl><dl><dt>
+          
+          <code><a href="generate_threshold.html">generate_threshold()</a></code> 
+        </dt>
+        <dd>Generate Thresholds</dd>
+      </dl><dl><dt>
+          
+          <code><a href="is_valid_sample_field_data.html">is_valid_sample_field_data()</a></code> 
+        </dt>
+        <dd>Helper function - checks field sheet data format</dd>
+      </dl><dl><dt>
+          
+          <code><a href="is_valid_connection.html">is_valid_connection()</a></code> 
+        </dt>
+        <dd>Check Database Connection is Valid</dd>
       </dl></div>
-  </main></div>
+  </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
+    </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">

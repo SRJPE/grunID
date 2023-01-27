@@ -51,7 +51,7 @@ get_assays <- function(con, is_active=TRUE, all_results=FALSE) {
 #' new_assay <- data.frame(code = "OTS28E1",
 #'                         assay_name = "Ots28_Early1",
 #'                         description = "Targets GREB1L region; 58 bp away from
-#'                                        OTS28L1 and targets a SNP"))
+#'                                        OTS28L1 and targets a SNP")
 #'
 #' add_assay(con, new_assay)
 #' @family assay functions
@@ -95,7 +95,7 @@ add_assay <- function(con, assay) {
 #' View(all_assays) # to view the ID of the assay needing updates
 #' updated_assay <- data.frame(code = "OTS28E1",
 #'                             assay_name = "Ots28 Early 1",
-#'                             description = "Targets GREB1L region"))
+#'                             description = "Targets GREB1L region")
 #'
 #' update_assay(con, 1, updated_assay)
 #' @family assay functions

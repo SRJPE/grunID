@@ -58,7 +58,7 @@ get_sample_locations <- function(con, is_active=TRUE, all_results=FALSE) {
 #'                                   description = "",
 #'                                   managing_agency_id = 1,
 #'                                   latitude = 0,
-#'                                   longitude = 0))
+#'                                   longitude = 0)
 #' add_sample_location(con, new_sample_location)
 #' @family sample location functions
 #' @export
@@ -99,7 +99,7 @@ add_sample_location <- function(con, sample_location) {
 #' all_sample_locations <- get_sample_locations(con)
 #' View(all_sample_locations) # to view the ID of the sample location needing updates
 #' updated_sample_location <- data.frame(code = "UCD",
-#'                          agency_name = "University of California, Davis"))
+#'                          agency_name = "University of California, Davis")
 #' update_sample_location(con, 4, updated_sample_location)
 #' @family sample location functions
 #' @export

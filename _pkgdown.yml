@@ -4,4 +4,134 @@ template:
   bootstrap: 5
   bootswatch: lumen
 
+reference:
+- title: Adding data
+  desc: These functions allow users to add information about samples being run to the database
+  contents:
+  - add_agency
+  - add_assay
+  - add_enum_value
+  - add_genetic_identification
+  - add_genetic_method
+  - add_laboratory
+  - add_plate_run
+  - add_protocol
+  - add_raw_assay_results
+  - add_run_type
+  - add_sample_bins
+  - add_sample_events
+  - add_sample_location
+  - add_sample_plan
+  - add_sample_type
+  - add_samples
+  - add_status_code
+  - protocol_template
+
+- title: Deleting data
+  desc: These functions allow users to delete information about samples being run
+  contents:
+  - delete_agency
+  - delete_assay
+  - delete_genetic_method
+  - delete_laboratory
+  - delete_protocol
+  - delete_run_type
+  - delete_sample_location
+  - delete_sample_type
+  - delete_status_code
+
+- title: Retrieving data
+  desc: These functions allow users to retrieve information from the database
+  contents:
+  - get_agencies
+  - get_assays
+  - get_enum_values
+  - get_genetic_methods
+  - get_laboratories
+  - get_protocols
+  - get_run_types
+  - get_sample_locations
+  - get_sample_status
+  - get_sample_types
+  - get_samples
+  - get_status_codes
+
+- title: Processing data
+  desc: These functions convert results into database-ready formats
+  contents:
+  - process_plate_layout
+  - process_raw_assay_results
+  - process_sherlock
+  - process_well_sample_details
+
+- title: Updating data
+  desc: These functions update data in the database
+  contents:
+  - set_sample_status
+  - update_agency
+  - update_agency_status
+  - update_assay
+  - update_assay_detection
+  - update_assay_status
+  - update_enum_value
+  - update_genetic_method
+  - update_genetic_method_status
+  - update_laboratory
+  - update_laboratory_status
+  - update_protocol
+  - update_protocol_status
+  - update_run_type
+  - update_run_type_status
+  - update_sample_location
+  - update_sample_location_status
+  - update_sample_type
+  - update_sample_type_status
+  - update_status_code
+  - update_status_code_status
+
+- title: Field sheet management
+  desc: These functions relate to creating and processing field sheets
+  contents:
+  - create_field_sheet
+  - get_field_sheet_event_plan
+  - process_field_sheet_samples
+  - update_field_sheet_samples
+
+- title: Helper functions
+  desc: These functions are generally not used in standard workflow but are employed within functions.
+  contents:
+  - excel_column_index
+  - extract_previous_end_row
+  - extract_sherlock_protocol
+  - generate_range
+  - generate_ranges
+  - generate_threshold
+  - is_valid_sample_field_data
+  - is_valid_connection
+
+navbar:
+  structure:
+    left:  [home, reference, articles]
+    right: [github]
+  type: default
+  left:
+  - text: 'Reference'
+    href: reference/index.html
+  - text: 'Articles'
+    menu:
+      - text: 'Authentication with Azure AD'
+        href: 'articles/azure-authentication.html'
+      - text: 'Process and add assay results to database'
+        href: 'articles/process_and_add_assay_results.html'
+
+repo:
+ url:
+  home: https://github.com/FlowWest/grunID
+  issue: https://github.com/FlowWest/grunID/issues
+
+
+
+
+
+
 
