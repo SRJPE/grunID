@@ -33,7 +33,7 @@ con <- DBI::dbConnect(RPostgres::Postgres(),
 all_sample_locations <- get_sample_locations(con)
 View(all_sample_locations) # to view the ID of the sample location needing updates
 updated_sample_location <- data.frame(code = "UCD",
-                         agency_name = "University of California, Davis"))
+                         agency_name = "University of California, Davis")
 update_sample_location(con, 4, updated_sample_location)
 }
 \seealso{

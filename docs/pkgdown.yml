@@ -4,5 +4,8 @@ pkgdown_sha: ~
 articles:
   azure-authentication: azure-authentication.html
   process_and_add_assay_results: process_and_add_assay_results.html
-last_built: 2023-01-26T04:47Z
+last_built: 2023-01-30T20:10Z
+urls:
+  reference: https://github.com/FlowWest/grunID/reference
+  article: https://github.com/FlowWest/grunID/articles
 

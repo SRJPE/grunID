@@ -1,7 +1,6 @@
 # Functions for connecting to the database
 
-#' Azure Token Refresh
-#' @description refresh auth token using az cli
+
 az_refresh_token <- function() {
   res <- tryCatch({
     cli::cli_process_start("refreshing Azure auth token")
@@ -15,7 +14,6 @@ az_refresh_token <- function() {
   cli::cli_process_done("done")
   return(jsonlite::parse_json(res))
 }
-
 
 db_get_config <- function() {
   cfg <- tryCatch(config::get(),

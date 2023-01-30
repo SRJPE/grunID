@@ -29,7 +29,7 @@ con <- DBI::dbConnect(RPostgres::Postgres(),
                       password = cfg$password)
 
 new_agency <- data.frame(code = "USFWS",
-                         agency_name = "United States Fish and Wildlife Service"))
+                         agency_name = "United States Fish and Wildlife Service")
 add_agency(con, new_agency)
 }
 \seealso{

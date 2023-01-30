@@ -33,7 +33,7 @@ con <- DBI::dbConnect(RPostgres::Postgres(),
 all_agencies <- get_agencies(con)
 View(all_agencies) # to view the ID of the agency needing updates
 updated_agency <- data.frame(code = "UCD",
-                         agency_name = "University of California, Davis"))
+                         agency_name = "University of California, Davis")
 update_agency(con, 4, updated_agency)
 }
 \seealso{

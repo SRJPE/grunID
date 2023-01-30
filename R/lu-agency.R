@@ -48,7 +48,7 @@ get_agencies <- function(con, is_active=TRUE, all_results=FALSE) {
 #'                       password = cfg$password)
 #'
 #' new_agency <- data.frame(code = "USFWS",
-#'                          agency_name = "United States Fish and Wildlife Service"))
+#'                          agency_name = "United States Fish and Wildlife Service")
 #' add_agency(con, new_agency)
 #' @family agency functions
 #' @export
@@ -89,7 +89,7 @@ add_agency <- function(con, agency) {
 #' all_agencies <- get_agencies(con)
 #' View(all_agencies) # to view the ID of the agency needing updates
 #' updated_agency <- data.frame(code = "UCD",
-#'                          agency_name = "University of California, Davis"))
+#'                          agency_name = "University of California, Davis")
 #' update_agency(con, 4, updated_agency)
 #' @family agency functions
 #' @export

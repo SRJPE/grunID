@@ -2,7 +2,7 @@
 title: "Process and Add Assay Results to Database"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Process and Add Results to Database}
+  %\VignetteIndexEntry{Process and Add Assay Results to Database}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
