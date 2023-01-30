@@ -35,7 +35,7 @@ all_assays <- get_assays(con)
 View(all_assays) # to view the ID of the assay needing updates
 updated_assay <- data.frame(code = "OTS28E1",
                             assay_name = "Ots28 Early 1",
-                            description = "Targets GREB1L region"))
+                            description = "Targets GREB1L region")
 
 update_assay(con, 1, updated_assay)
 }

@@ -26,7 +26,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">grunID</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -84,11 +84,12 @@
 <h2 id="confirm-account-on-azure">Confirm Account on Azure<a class="anchor" aria-label="anchor" href="#confirm-account-on-azure"></a>
 </h2>
 <p>The first step in the process is to confirm that your account has
-been successfully linked to Azure. To do this, navigate to the <a href="https://portal.azure.com/" class="external-link">Microsoft Azure Portal</a> and log in
-with your existing credentials or create a new one. Once logged in,
-click on your account.</p>
+been successfully linked to Azure. To do this, navigate to the
+<a href="https://portal.azure.com/" target="_blank" class="external-link">Microsoft Azure
+Portal</a> and log in with your existing credentials or create a new
+account. Once logged in, click on your account as shown below.</p>
 <p><img src="assets/arrow-to-account-button.png" style="width:75.0%"></p>
-<p>Next click on <strong>Switch Directory</strong></p>
+<p>Next, click on <strong>Switch Directory</strong></p>
 <p><img src="assets/azure-switch-directories.png" style="width:50.0%"></p>
 <p>and confirm you have a directory for the California Department of
 Water Resources. If you are not already switched to this directory do so
@@ -97,29 +98,30 @@ help.</p>
 <p><img src="assets/azure-dir-list.png" style="width:100.0%"></p>
 </div>
 <div class="section level2">
-<h2 id="install-depedencies">Install Depedencies<a class="anchor" aria-label="anchor" href="#install-depedencies"></a>
+<h2 id="install-dependencies">Install Dependencies<a class="anchor" aria-label="anchor" href="#install-dependencies"></a>
 </h2>
 <p>In addition to installing the R package, we need to install the Azure
 Command Line Interface (CLI) to authenticate through Azure Directory.
 The Azure CLI allows us to link a local R session with your Azure AD
 account and authenticate a user with read/write permissions to the
-database using a “token”. An overview of the tool can be found at <a href="https://learn.microsoft.com/en-us/cli/azure/" class="external-link">https://learn.microsoft.com/en-us/cli/azure/</a>.
-To download and install the tool, visit the <a href="https://learn.microsoft.com/en-us/cli/azure/install-azure-cli-windows?tabs=azure-cli" class="external-link">Install
-Azure CLI on Windows</a> page, or for Mac OS visit the <a href="https://learn.microsoft.com/en-us/cli/azure/install-azure-cli-macos" class="external-link">Install
+database using a “token”. An overview of the tool can be found at
+<a href="https://learn.microsoft.com/en-us/cli/azure/" target="_blank" class="external-link">https://learn.microsoft.com/en-us/cli/azure/</a>.
+To download and install the tool, visit the
+<a href="https://learn.microsoft.com/en-us/cli/azure/install-azure-cli-windows?tabs=azure-cli" target="_blank" class="external-link">Install
+Azure CLI on Windows</a> page, or for Mac OS visit the
+<a href="https://learn.microsoft.com/en-us/cli/azure/install-azure-cli-macos" target="_blank" class="external-link">Install
 for Mac OS</a> page.</p>
 </div>
 <div class="section level2">
-<h2 id="authentication-with-az-tool">Authentication with AZ tool<a class="anchor" aria-label="anchor" href="#authentication-with-az-tool"></a>
+<h2 id="authentication-with-the-az-tool">Authentication with the AZ tool<a class="anchor" aria-label="anchor" href="#authentication-with-the-az-tool"></a>
 </h2>
-<p>The next set of steps require opening a command prompt. On Windows,
-this can be done by searching for “command prompt” in the start menu, or
-by right-clicking the Start button and selecting “Windows PowerShell” or
-“Windows Command prompt” from the pop-up menu. We should see a blank
-screen.</p>
+<p>The next step requires opening a command prompt. On Windows, this can
+be done by searching for “command prompt” in the Start menu, or by
+right-clicking the Start button and selecting “Windows PowerShell” or
+“Windows Command prompt” from the pop-up menu. On Mac, you should use
+the “Terminal” application. The Windows Command Prompt is shown
+below.</p>
 <p><img src="assets/windows-command-prmpt-new.png"></p>
-<div class="section level3">
-<h3 id="log-in-with-az">Log in with AZ<a class="anchor" aria-label="anchor" href="#log-in-with-az"></a>
-</h3>
 <p>Next, we’ll want to log in to Azure from the command line. To do
 this, simply enter the following at the command prompt. After pressing
 enter, an internet browser will open where you can log into your Azure
@@ -128,48 +130,77 @@ simply allow you to select an account to use.</p>
 <pre><code>az login</code></pre>
 <p><img src="assets/az-login.gif"></p>
 </div>
+<div class="section level2">
+<h2 id="create-connection">Create Connection<a class="anchor" aria-label="anchor" href="#create-connection"></a>
+</h2>
+<p>The <code>grunID</code> package comes with a function
+<code>gr_db_connect</code> that will create an authentication token for
+you and pass it down as your password to the appropriate
+<code><a href="https://dbi.r-dbi.org/reference/dbConnect.html" class="external-link">DBI::dbConnect</a></code> function. All you will need to provide at
+this point is either a <code>config.yml</code> file or your username and
+host to the <code>gr_db_connect</code> function. An example of both of
+these is shown below.</p>
 <div class="section level3">
-<h3 id="create-a-token">Create a Token<a class="anchor" aria-label="anchor" href="#create-a-token"></a>
+<h3 id="authentication-with-a-config-file">Authentication with a Config file<a class="anchor" aria-label="anchor" href="#authentication-with-a-config-file"></a>
 </h3>
-<p>Next, we’ll use AZ again to create a “token” that will allow us to
-authenticate using our username on Azure. Enter the following in command
-prompt:</p>
-<pre><code>az account get-access-token --resource-type oss-rdbms</code></pre>
-<p>This will return a json formatted response with the following
-content:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"accessToken"</span><span class="fu">:</span> <span class="st">"really long string of letters, numbers and symbols, this will be used as your password"</span><span class="fu">,</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"expiresOn"</span><span class="fu">:</span> <span class="st">"2023-01-19 12:01:26.000000"</span><span class="fu">,</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"subscription"</span><span class="fu">:</span> <span class="st">"a subscription ID"</span><span class="fu">,</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"tenant"</span><span class="fu">:</span> <span class="st">"a tenant ID"</span><span class="fu">,</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"tokenType"</span><span class="fu">:</span> <span class="st">"Bearer"</span></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
-<p><em><strong>Note</strong> that for security purposes, these tokens
-have a short expiration date of just a few hours. FlowWest is currently
-working on switching to using refresh tokens, which will allow for
-automatic token creation and authentication. Until then, however, you
-will need to manually update this token by repeating this and the
-following step.</em></p>
+<p>The easiest and safest way to manage your connection to the database
+is using a <code>config.yml</code> file. The <code>grunID</code> package
+uses the <code>config</code> R package to parse the contents of the file
+and populate an appropriate connection string. The format of the config
+file is shown below.</p>
+<p><strong>Note</strong>:</p>
+<ul>
+<li><p>The name of the file must be <strong>config.yml</strong> and be
+within your working directory.</p></li>
+<li><p>If using source control please be sure to add
+<code>config.yml</code> to your ignores file.</p></li>
+</ul>
+<div class="sourceCode" id="cb3"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">default</span><span class="kw">:</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">dbname</span><span class="kw">:</span><span class="at"> &lt;db-name will be provided&gt;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">username</span><span class="kw">:</span><span class="at"> &lt;your-username will be provided&gt;</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">port</span><span class="kw">:</span><span class="at"> </span><span class="dv">5432</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">host</span><span class="kw">:</span><span class="at"> &lt;db-host will be provided&gt;</span></span></code></pre></div>
+<p>All characters between <code>&lt;&gt;</code> (including the
+<code>&lt;&gt;</code>) are to be replaced with values provided by the
+database administrator.</p>
+<p><strong>Note</strong>:</p>
+<ul>
+<li>The password is left out of the file, as it is filled in by using
+the <code>az</code> tool installed in the previous step.</li>
+</ul>
+<p>With this file in place, we create a connection to the database with
+the following:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">con</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/gr_db_connect.html">gr_db_connect</a></span><span class="op">(</span><span class="op">)</span> <span class="co"># a config file will be searched for starting at the working directory.</span></span>
+<span></span>
+<span><span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/tbl.html" class="external-link">tbl</a></span><span class="op">(</span><span class="va">con</span>, <span class="st">"agency"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
-<h3 id="create-a-config-file">Create a config file<a class="anchor" aria-label="anchor" href="#create-a-config-file"></a>
+<h3 id="authentication-with-username-dbname-and-host">Authentication with username, dbname and host<a class="anchor" aria-label="anchor" href="#authentication-with-username-dbname-and-host"></a>
 </h3>
-<p>Next, we’ll create a <code>config.yml</code> file to store our
-credentials. The file must be named <strong>config.yml</strong> and
-placed within the R working directory that you plan to use for
-interacting with the database. The file should have the following
-contents, the password field should be filled in with the token
-generated in the previous step. The remaining fields will be provided to
-you.</p>
-<p><em>Note that if you are repeating this step to refresh an expired
-token, you simply have to replace the existing password value with your
-new token and re-read this file into the R session.</em></p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode yml"><code class="sourceCode yaml"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">default</span><span class="kw">:</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">dbname</span><span class="kw">:</span><span class="at"> &lt;db-name will be provided&gt;</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">username</span><span class="kw">:</span><span class="at"> &lt;your-username will be provided&gt;</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">port</span><span class="kw">:</span><span class="at"> &lt;db-port will be provided&gt;</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">host</span><span class="kw">:</span><span class="at"> &lt;db-host will be provided&gt;</span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">password</span><span class="kw">:</span><span class="at"> &lt;paste token from previous step here&gt;</span></span></code></pre></div>
+<p>The <code>gr_db_connect</code> function can also be called with
+arguments specifying your username, database name and host for the
+server for the database. Note that this is a quick way to create a
+connection to the database but if using source control its also an easy
+way to accidentally share your credentials. For this reason, we
+recommend setting up a config file and adding it to your ignores
+file.</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">con</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/gr_db_connect.html">gr_db_connect</a></span><span class="op">(</span></span>
+<span>  username <span class="op">=</span> <span class="st">"myusername"</span>, </span>
+<span>  dbname <span class="op">=</span> <span class="st">"dbname"</span>, </span>
+<span>  host <span class="op">=</span> <span class="st">"host.com"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/tbl.html" class="external-link">tbl</a></span><span class="op">(</span><span class="va">con</span>, <span class="st">"agency"</span><span class="op">)</span></span></code></pre></div>
+<pre><code>     id code    agency_name active created_at          creat…¹ updated_at          updat…²
+  &lt;int&gt; &lt;chr&gt;   &lt;chr&gt;       &lt;lgl&gt;  &lt;dttm&gt;              &lt;chr&gt;   &lt;dttm&gt;              &lt;chr&gt;  
+1     1 DWR     Department… TRUE   2023-01-12 01:54:44 runida… 2023-01-12 01:54:44 runida…
+2     2 CDFW    California… TRUE   2023-01-12 01:54:44 runida… 2023-01-12 01:54:44 runida…
+3     3 USFWS   United Sta… TRUE   2023-01-12 01:54:44 runida… 2023-01-12 01:54:44 runida…
+4     4 UCDAVIS University… TRUE   2023-01-12 01:54:44 runida… 2023-01-12 01:54:44 runida…
+# … with abbreviated variable names created_by, updated_by
+</code></pre>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>

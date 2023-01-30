@@ -39,7 +39,7 @@ new_sample_location <- data.frame(code = "",
                                   description = "",
                                   managing_agency_id = 1,
                                   latitude = 0,
-                                  longitude = 0))
+                                  longitude = 0)
 add_sample_location(con, new_sample_location)
 }
 \seealso{

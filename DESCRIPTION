@@ -1,7 +1,7 @@
 Package: grunID
 Type: Package
 Title: What the Package Does (Title Case)
-Version: 0.1.0
+Version: 0.1.1
 Authors@R: c(
     person("Emanuel", "Rodriguez", email = "erodriguez@flowwest.com", role = c("aut", "cre")), 
     person("Liz", "Stebbins", email = "lstebbins@flowwest.com", role = "aut"))
@@ -19,8 +19,9 @@ Imports:
     readr,
     readxl,
     RPostgres,
-    stringr, 
-    config
+    stringr,
+    config,
+    cli
 Depends: 
     R (>= 2.10)
 RoxygenNote: 7.2.1

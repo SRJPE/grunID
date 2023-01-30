@@ -110,6 +110,10 @@ reference:
   - is_valid_sample_field_data
   - is_valid_connection
 
+- title: Connection functions
+  contents:
+  - gr_db_connect
+
 navbar:
   structure:
     left:  [home, reference, articles]
