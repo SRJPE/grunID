@@ -69,8 +69,8 @@
 <span class="r-in"><span>                      port <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">port</span>,</span></span>
 <span class="r-in"><span>                      user <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">username</span>,</span></span>
 <span class="r-in"><span>                      password <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">password</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> FATAL:  The access token has invalid format. Please ensure the token is passed exactly as returned by the authentication endpoint and retry.</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> FATAL:  no pg_hba.conf entry for host "75.161.130.145", user "lstebbins_flowwest.com#EXT#@cawater.onmicrosoft.com", database "runiddb-prod", no encryption</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> FATAL:  The access token has expired. Please acquire a new token and retry.</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> FATAL:  no pg_hba.conf entry for host "75.198.202.59", user "erodriguez_flowwest.com#EXT#@cawater.onmicrosoft.com", database "runiddb-prod", no encryption</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">sample_plan</span> <span class="op">&lt;-</span> <span class="fu">tibble</span><span class="op">(</span>location_code <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"BTC"</span>, <span class="st">"BUT"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                      sample_event_number <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">2</span>,</span></span>

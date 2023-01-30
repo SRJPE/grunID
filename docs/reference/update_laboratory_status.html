@@ -94,8 +94,8 @@ contexts, but are no longer valid for current data records.</p></dd>
 <span class="r-in"><span>                      port <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">port</span>,</span></span>
 <span class="r-in"><span>                      user <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">username</span>,</span></span>
 <span class="r-in"><span>                      password <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">password</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> FATAL:  The access token has invalid format. Please ensure the token is passed exactly as returned by the authentication endpoint and retry.</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> FATAL:  no pg_hba.conf entry for host "75.161.130.145", user "lstebbins_flowwest.com#EXT#@cawater.onmicrosoft.com", database "runiddb-prod", no encryption</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> FATAL:  The access token has expired. Please acquire a new token and retry.</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> FATAL:  no pg_hba.conf entry for host "75.198.202.59", user "erodriguez_flowwest.com#EXT#@cawater.onmicrosoft.com", database "runiddb-prod", no encryption</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">all_laboratories</span> <span class="op">&lt;-</span> <span class="fu"><a href="get_laboratories.html">get_laboratories</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span></span>
 <span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in h(simpleError(msg, call)):</span> error in evaluating the argument 'dbObj' in selecting a method for function 'dbIsValid': object 'con' not found</span>
