@@ -73,6 +73,7 @@ default:
   username: <your-username will be provided>
   port: 5432
   host: <db-host will be provided>
+
 ```
 
 All characters between `<>` (including the `<>`) are to be replaced with values provided by the database administrator. 
@@ -80,6 +81,8 @@ All characters between `<>` (including the `<>`) are to be replaced with values 
 **Note**:
 
 - The password is left out of the file, as it is filled in by using the `az` tool installed in the previous step.
+
+- An empty line is required at the end of the config.yml file
 
 With this file in place, we create a connection to the database with the following:
 
