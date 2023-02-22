@@ -4,12 +4,12 @@
 \alias{generate_threshold}
 \title{Generate Thresholds}
 \usage{
-generate_threshold(con, plate_run)
+generate_threshold(con, plate_run_identifier)
 }
 \arguments{
 \item{con}{valid connection to the database}
 
-\item{plate_run}{plate run identifier value}
+\item{plate_run_identifier}{plate run identifier value}
 }
 \description{
 `generate_threshold()` calculates the raw fluorescence threshold
