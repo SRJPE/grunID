@@ -2,8 +2,9 @@
 library(DBI)
 library(grunID)
 library(dplyr)
+library(tidyverse)
 
-cfg <- config::get(config = "azure-prod")
+cfg <- config::get()
 con <- DBI::dbConnect(RPostgres::Postgres(),
                dbname = cfg$dbname,
                host = cfg$host,
@@ -21,6 +22,18 @@ tbl(con, "status_code")
 # adds samples with ids
 # updates sample status for each to "created"
 # plan_2022 <- add_sample_plan(con, sample_plan_2022_final)
+
+sample_plan_2022_final <- read_csv("data-raw/2022_sample_plan.csv") |> distinct_all()
+
+feather_61_sample_plan <- sample_plan_2022_final |>
+  filter(location_code == "F61") |>
+  mutate(sample_event_number = as.integer(sample_event_number),
+         min_fork_length = as.integer(min_fork_length),
+         max_fork_length = as.integer(max_fork_length))
+
+feather_61_ids <- add_sample_plan(con, feather_61_sample_plan, verbose = TRUE)
+
+
 
 btc_sample_plan <- sample_plan_2022_final |>
   filter(location_code == "BTC")
