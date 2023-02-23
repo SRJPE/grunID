@@ -149,34 +149,31 @@ add_samples <- function(con, sample_plan, sample_id_insert, verbose = FALSE) {
                               "_", sample_event_number, "_", sample_bin_code, "_", sample_number)) |>
     dplyr::select(id, sample_bin_id)
 
-
   partitioned_inserts <- partition_df_to_size(sample_id, 200)
 
-  if (verbose) {
-    message(paste0("partitioned ", nrow(sample_id), " inserts into ", length(partitioned_inserts), " parts."))
-  }
-
-  sample_ids <- purrr::imap(partitioned_inserts, function(d, idx) {
-    query <- glue::glue_sql("INSERT INTO sample (id, sample_bin_id)
+  sample_ids <- purrr::map(
+    partitioned_inserts,
+    function(part) {
+      query <- glue::glue_sql("INSERT INTO sample (id, sample_bin_id)
                                       VALUES (
-                                        UNNEST(ARRAY[{d$id*}]),
-                                        UNNEST(ARRAY[{d$sample_bin_id*}])
+                                        UNNEST(ARRAY[{part$id*}]),
+                                        UNNEST(ARRAY[{part$sample_bin_id*}])
                                       ) RETURNING id;",
-                                      .con = con)
+                              .con = con)
 
-    res <- DBI::dbSendQuery(con, query)
-    on.exit(DBI::dbClearResult(res))
-    if (verbose) {
-      message("working on partition ", idx, "/", length(partitioned_inserts))
-    }
+      res <- DBI::dbSendQuery(con, query)
+      on.exit(DBI::dbClearResult(res))
 
-    gc(full = TRUE)
+      gc(full = TRUE)
 
-    DBI::dbFetch(res) |>
-      dplyr::pull(id)
+      DBI::dbFetch(res) |>
+        dplyr::pull(id)
 
-
-  })
+    }, .progress = list(
+      type = "iterator",
+      name = "inserting sample_id's for plan",
+      clear = FALSE)
+    )
 
 
 
