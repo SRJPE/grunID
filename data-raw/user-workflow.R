@@ -101,7 +101,7 @@ plate_4_to_7_layout_late <- layout_raw |>
     location = paste0(...1, col_num),
     sample_id,
     sample_type_id = 1,
-    assay_id = 1,
+    assay_id = 2,
     plate_run_id = plate_run_4_7_late_id
   ) |>
   mutate(sample_id = ifelse(sample_id == "NTC", "CONTROL", sample_id))
@@ -125,8 +125,8 @@ plate_4_7_late <- add_raw_assay_results(con, results_plates_4_7_late)
 thresholds_4_7_early <- generate_threshold(con, plate_run_identifier = plate_run_4_7_early_id)
 thresholds_4_7_late <- generate_threshold(con, plate_run_identifier = plate_run_4_7_late_id)
 
-update_assay_detection(con, thresholds_ots_28_e)
-update_assay_detection(con, thresholds_ots_28_l)
+update_assay_detection(con, thresholds_4_7_early)
+update_assay_detection(con, thresholds_4_7_late)
 
 
 # Do the OTS 16
