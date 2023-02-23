@@ -57,13 +57,22 @@ add_sample_events <- function(con, sample_plan) {
         ) RETURNING id, sample_event_number;",
       .con = con)
 
-    res <- DBI::dbSendQuery(con, sample_event_query)
+    res <- tryCatch(DBI::dbSendQuery(con, sample_event_query),
+                    error = function(e) {
+                      if (grepl('duplicate key value violates unique constraint "sample_event_sample_event_number_sample_location_id_first_s_key"', e)) {
+                        stop("Combination (sample_event_number, sample_location_id, first_sample_date) already exists in the database, this insert violates the unique contraints", call. = FALSE)
+                      }
+                    })
     on.exit(DBI::dbClearResult(res))
 
     DBI::dbFetch(res) |>
       dplyr::transmute(sample_event_id = as.numeric(id), sample_event_number)
 
-  })
+  }, .progress = list(
+    type = "iterator",
+    name = "inserting sample events from plan",
+    clear = FALSE)
+  )
 
 
 
@@ -116,7 +125,11 @@ add_sample_bins <- function(con, sample_plan, sample_event_ids) {
 
     return(db_res)
 
-  })
+  },
+  .progress = list(
+    type = "iterator",
+    name = "inserting sample bins from plan",
+    clear = FALSE))
 
 
   return(sample_id_insert)
@@ -134,8 +147,8 @@ add_samples <- function(con, sample_plan, sample_id_insert, verbose = FALSE) {
     collect()
 
   sample_id_inserts <- sample_plan |>
-    left_join(sample_events_for_incoming_samples) |>
-    left_join(sample_id_insert)
+    left_join(sample_events_for_incoming_samples, by = "sample_event_number") |>
+    left_join(sample_id_insert, by = c("sample_bin_code", "sample_event_id"))
 
 
 
