@@ -226,6 +226,8 @@ add_genetic_identification <- function(con, sample_identifiers) {
         !`1` & !`2` ~ 7,
         `1` & is.na(`2`) ~ 6,
         `2` & is.na(`1`) ~ 6,
+        !`1` & is.na(`2`) ~ 6,
+        !`2` & is.na(`1`) ~ 6,
         `1` & !`2` ~ 8,
         `2` & !`1` ~ 11
       ),
@@ -251,14 +253,16 @@ add_genetic_identification <- function(con, sample_identifiers) {
     query <- glue::glue_sql("
   INSERT INTO genetic_run_identification (sample_id, run_type_id)
   VALUES (
-    {run_type_id_data$sample_id*},
-    {run_type_id_data$run_type_id*}
+    {run_type_id_data$sample_id},
+    {run_type_id_data$run_type_id}
   );
   ", .con = con)
 
     total_inserts <- purrr::map_dbl(query, function(q) {
       DBI::dbExecute(con, q)
     })
+  } else {
+    total_inserts <- 0
   }
 
   set_sample_status(con, run_types$sample_id, run_types$status_code_id)
