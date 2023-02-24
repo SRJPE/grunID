@@ -60,7 +60,7 @@ add_sample_events <- function(con, sample_plan) {
     res <- tryCatch(DBI::dbSendQuery(con, sample_event_query),
                     error = function(e) {
                       if (grepl('duplicate key value violates unique constraint "sample_event_sample_event_number_sample_location_id_first_s_key"', e)) {
-                        stop("Combination (sample_event_number, sample_location_id, first_sample_date) already exists in the database, this insert violates the unique contraints", call. = FALSE)
+                        stop("Combination (sample_event_number, sample_location_id, first_sample_date) already exists in the database, this insert violates the unique contraint", call. = FALSE)
                       }
                     })
     on.exit(DBI::dbClearResult(res))

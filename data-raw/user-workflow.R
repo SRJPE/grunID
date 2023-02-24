@@ -71,6 +71,8 @@ plate_run_4_7_late_id <- add_plate_run(con,
                                        lab_work_performed_by = "user",
                                        description = "late run for plates 4-7") # TODO determine the user
 
+
+
 # sample layout, is then created by the user and read in here
 # the plate run must be identified to correspond to
 # layout_ots_28_e <- process_well_sample_details("data-raw/ots_28_early_plate_details.csv",

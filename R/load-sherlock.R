@@ -100,7 +100,12 @@ update_assay_detection <- function(con, thresholds) {
 
   assay_results_added <- purrr::map_dbl(query, function(q) {
     DBI::dbExecute(con, q)
-  })
+  },
+  .progress = list(
+    type = "iterator",
+    clear = FALSE,
+    name = "inserting threshold result into database"
+  ))
 
 
   genetic_ids_added <- add_genetic_identification(con, unique(detection_results$sample_id))
@@ -260,7 +265,12 @@ add_genetic_identification <- function(con, sample_identifiers) {
 
     total_inserts <- purrr::map_dbl(query, function(q) {
       DBI::dbExecute(con, q)
-    })
+    },
+    .progress = list(
+      type = "iterator",
+      name = "adding run-id to samples",
+      clear = FALSE
+    ))
   } else {
     total_inserts <- 0
   }
