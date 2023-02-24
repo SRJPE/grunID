@@ -57,13 +57,22 @@ add_sample_events <- function(con, sample_plan) {
         ) RETURNING id, sample_event_number;",
       .con = con)
 
-    res <- DBI::dbSendQuery(con, sample_event_query)
+    res <- tryCatch(DBI::dbSendQuery(con, sample_event_query),
+                    error = function(e) {
+                      if (grepl('duplicate key value violates unique constraint "sample_event_sample_event_number_sample_location_id_first_s_key"', e)) {
+                        stop("Combination (sample_event_number, sample_location_id, first_sample_date) already exists in the database, this insert violates the unique contraint", call. = FALSE)
+                      }
+                    })
     on.exit(DBI::dbClearResult(res))
 
     DBI::dbFetch(res) |>
       dplyr::transmute(sample_event_id = as.numeric(id), sample_event_number)
 
-  })
+  }, .progress = list(
+    type = "iterator",
+    name = "inserting sample events from plan",
+    clear = FALSE)
+  )
 
 
 
@@ -74,36 +83,54 @@ add_sample_events <- function(con, sample_plan) {
 #' @export
 add_sample_bins <- function(con, sample_plan, sample_event_ids) {
 
-  sample_bin_insert <- dplyr::left_join(sample_plan, sample_event_ids,
+  unique_sample_bins_in_plan <- distinct(.data = sample_plan,
+                                         location_code,
+                                         sample_event_number,
+                                         first_sample_date,
+                                         sample_bin_code,
+                                         min_fork_length,
+                                         max_fork_length,
+                                         expected_number_of_samples)
+
+  sample_bin_insert <- dplyr::left_join(unique_sample_bins_in_plan, sample_event_ids,
                                         by = c("sample_event_number"))
 
 
-  partitioned_inserts <- partition_df_to_size(sample_bin_insert, 100)
+  # partitioned_inserts <- partition_df_to_size(sample_bin_insert, 100)
 
-  sample_id_insert <- purrr::map_df(partitioned_inserts, function(d) {
-    query <- glue::glue_sql(
-      "INSERT INTO sample_bin (sample_event_id, sample_bin_code, min_fork_length,
+  # sample_id_insert <- purrr::map_df(partitioned_inserts, function(d) {
+
+
+  query <- glue::glue_sql(
+    "INSERT INTO sample_bin (sample_event_id, sample_bin_code, min_fork_length,
                                max_fork_length, expected_number_of_samples)
           VALUES (
-           UNNEST(ARRAY[{d$sample_event_id*}]),
-           UNNEST(ARRAY[{d$sample_bin_code*}]::bin_code_enum[]),
-           UNNEST(ARRAY[{d$min_fork_length*}]),
-           UNNEST(ARRAY[{d$max_fork_length*}]),
-           UNNEST(ARRAY[{d$expected_number_of_samples*}])
+           {sample_bin_insert$sample_event_id},
+           {sample_bin_insert$sample_bin_code}::bin_code_enum,
+           {sample_bin_insert$min_fork_length},
+           {sample_bin_insert$max_fork_length},
+           {sample_bin_insert$expected_number_of_samples}
           ) RETURNING id, sample_event_id, sample_bin_code;",
-      .con = con)
+    .con = con)
 
-    res <- DBI::dbSendQuery(con, query)
 
-    sample_bin_id <- DBI::dbFetch(res) |>
+
+  sample_id_insert <- purrr::map_df(query, function(q) {
+    res <- DBI::dbSendQuery(con, q)
+    on.exit(DBI::dbClearResult(res))
+
+    db_res <- DBI::dbFetch(res) |>
       dplyr::transmute(sample_bin_id = as.numeric(id), sample_event_id,
                        sample_bin_code = as.character(sample_bin_code))
 
-    DBI::dbClearResult(res)
+    return(db_res)
 
-    dplyr::left_join(d, sample_bin_id,
-                     by = c("sample_bin_code", "sample_event_id"))
-  })
+  },
+  .progress = list(
+    type = "iterator",
+    name = "inserting sample bins from plan",
+    clear = FALSE))
+
 
   return(sample_id_insert)
 }
@@ -112,43 +139,54 @@ add_sample_bins <- function(con, sample_plan, sample_event_ids) {
 #' @export
 add_samples <- function(con, sample_plan, sample_id_insert, verbose = FALSE) {
 
-  sample_id <- sample_id_insert |>
+  event_ids <- unique(sample_id_insert$sample_event_id)
+
+  sample_events_for_incoming_samples <- tbl(con, "sample_event") |>
+    filter(id %in% event_ids) |>
+    select(id, sample_event_number, sample_event_id = id) |>
+    collect()
+
+  sample_id_inserts <- sample_plan |>
+    left_join(sample_events_for_incoming_samples, by = "sample_event_number") |>
+    left_join(sample_id_insert, by = c("sample_bin_code", "sample_event_id"))
+
+
+
+
+  sample_id <- sample_id_inserts |>
     tidyr::uncount(expected_number_of_samples, .remove = FALSE) |>
-    dplyr::group_by(sample_event_id) |>
+    dplyr::group_by(sample_event_id, sample_bin_code) |>
     dplyr::mutate(sample_number = dplyr::row_number()) |>
     dplyr::ungroup() |>
     dplyr::mutate(id = paste0(location_code, format(as.Date(first_sample_date), "%y"),
                               "_", sample_event_number, "_", sample_bin_code, "_", sample_number)) |>
     dplyr::select(id, sample_bin_id)
 
-
   partitioned_inserts <- partition_df_to_size(sample_id, 200)
 
-  if (verbose) {
-    message(paste0("partitioned ", nrow(sample_id), " inserts into ", length(partitioned_inserts), " parts."))
-  }
-
-  sample_ids <- purrr::imap(partitioned_inserts, function(d, idx) {
-    query <- glue::glue_sql("INSERT INTO sample (id, sample_bin_id)
+  sample_ids <- purrr::map(
+    partitioned_inserts,
+    function(part) {
+      query <- glue::glue_sql("INSERT INTO sample (id, sample_bin_id)
                                       VALUES (
-                                        UNNEST(ARRAY[{d$id*}]),
-                                        UNNEST(ARRAY[{d$sample_bin_id*}])
+                                        UNNEST(ARRAY[{part$id*}]),
+                                        UNNEST(ARRAY[{part$sample_bin_id*}])
                                       ) RETURNING id;",
-                                      .con = con)
+                              .con = con)
 
-    res <- DBI::dbSendQuery(con, query)
-    on.exit(DBI::dbClearResult(res))
-    if (verbose) {
-      message("working on partition ", idx, "/", length(partitioned_inserts))
-    }
+      res <- DBI::dbSendQuery(con, query)
+      on.exit(DBI::dbClearResult(res))
 
-    gc(full = TRUE)
+      gc(full = TRUE)
 
-    DBI::dbFetch(res) |>
-      dplyr::pull(id)
+      DBI::dbFetch(res) |>
+        dplyr::pull(id)
 
-
-  })
+    }, .progress = list(
+      type = "iterator",
+      name = "inserting sample_id's for plan",
+      clear = FALSE)
+    )
 
 
 
@@ -170,7 +208,7 @@ is_valid_sample_plan <- function(sample_plan) {
   # check that the locations in the data match those that exist in the database
   # WARNING this list can get stale
   valid_locations <- c("BTC", "BUT", "CLR", "DER", "FTH_RM17", "MIL", "DEL", "KNL",
-                       "TIS", "FTH_RM61")
+                       "TIS", "FTH_RM61", "F61", "F17")
 
   if (!all(sample_plan$location_code %in% valid_locations)) {
     stop(sprintf("location_code provided not one of valid codes %s",

@@ -33,7 +33,11 @@ set_sample_status <- function(con, sample_ids, status_code_id, comment = NULL) {
   is_valid_connection(con)
 
 
-  status_codes_to_insert <- rep(status_code_id, length(sample_ids))
+  if (length(sample_ids) != length(status_code_id)) {
+    status_codes_to_insert <- rep(status_code_id, length(sample_ids))
+  } else {
+    status_codes_to_insert <- status_code_id
+  }
 
   if (!is.null(comment)) {
     comments <- rep(comment, length(sample_ids))
@@ -48,14 +52,20 @@ set_sample_status <- function(con, sample_ids, status_code_id, comment = NULL) {
   } else {
     sample_status_query <- glue::glue_sql("INSERT INTO sample_status (sample_id, status_code_id)
                                         VALUES (
-                                          UNNEST(ARRAY[{sample_ids*}]),
-                                          UNNEST(ARRAY[{status_codes_to_insert*}])
+                                          {sample_ids},
+                                          {status_codes_to_insert}
                                         );",
                                         .con = con)
   }
 
-  DBI::dbExecute(con, sample_status_query)
+  total_inserts <- purrr::map_dbl(sample_status_query, \(q) DBI::dbExecute(con, q),
+                                  .progress = list(
+                                    type = "iterator",
+                                    name = "updating status codes for uploaded samples",
+                                    clear = FALSE)
+                                  )
 
+  return(sum(total_inserts))
 }
 
 #' Get Sample Status

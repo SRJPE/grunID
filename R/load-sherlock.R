@@ -2,13 +2,13 @@
 #' @description `generate_threshold()` calculates the raw fluorescence threshold
 #' values for an assay.
 #' @param con valid connection to the database
-#' @param plate_run plate run identifier value
+#' @param plate_run_identifier plate run identifier value
 #' @details For each assay on a plate run, the threshold value is calculated as two times
 #' the mean value of the last time step from the control blank wells. Each
 #' assay on a plate will have its own control blanks and threshold value.
 #' @returns
 #' @export
-generate_threshold <- function(con, plate_run) {
+generate_threshold <- function(con, plate_run_identifier) {
 
   if (!DBI::dbIsValid(con)) {
     stop("Connection argument does not have a valid connection the run-id database.
@@ -17,7 +17,7 @@ generate_threshold <- function(con, plate_run) {
   }
 
   protocol_id <- dplyr::tbl(con, "plate_run") |>
-    dplyr::filter(id == plate_run) |>
+    dplyr::filter(id == plate_run_identifier) |>
     dplyr::pull(protocol_id)
 
   runtime <- dplyr::tbl(con, "protocol") |>
@@ -27,7 +27,7 @@ generate_threshold <- function(con, plate_run) {
   control_blanks <- dplyr::tbl(con, "raw_assay_result") |>
     dplyr::filter(time == runtime,
            sample_id == "CONTROL",
-           plate_run_id == plate_run) |>
+           plate_run_id == plate_run_identifier) |>
     dplyr::collect()
 
   thresholds <- control_blanks |>
@@ -90,19 +90,27 @@ update_assay_detection <- function(con, thresholds) {
   INSERT INTO assay_result (sample_id, assay_id, raw_fluorescence, threshold,
                             positive_detection, plate_run_id)
   VALUES (
-          UNNEST(ARRAY[{detection_results$sample_id*}]),
-          UNNEST(ARRAY[{detection_results$assay_id*}]),
-          UNNEST(ARRAY[{detection_results$raw_fluorescence*}]),
-          UNNEST(ARRAY[{detection_results$threshold*}]),
-          UNNEST(ARRAY[{detection_results$positive_detection*}]),
-          UNNEST(ARRAY[{detection_results$plate_run_id*}]::int[])
+          {detection_results$sample_id},
+          {detection_results$assay_id},
+          {detection_results$raw_fluorescence},
+          {detection_results$threshold},
+          {detection_results$positive_detection},
+          {detection_results$plate_run_id}::int
   );", .con = con)
 
-  assay_results_added <- DBI::dbExecute(con, query)
+  assay_results_added <- purrr::map_dbl(query, function(q) {
+    DBI::dbExecute(con, q)
+  },
+  .progress = list(
+    type = "iterator",
+    clear = FALSE,
+    name = "inserting threshold result into database"
+  ))
+
 
   genetic_ids_added <- add_genetic_identification(con, unique(detection_results$sample_id))
 
-  return(c("Assay records added" = assay_results_added,
+  return(c("Assay records added" = sum(assay_results_added),
            "Samples assigned run type" = genetic_ids_added))
 }
 
@@ -147,10 +155,11 @@ check_results_complete <- function(con, sample_identifiers) {
 #' @param genetic_method_id genetic method identifier
 #' @param laboratory_id laboratory identifier
 #' @param lab_work_performed_by name of staff who performed the plate run
+#' @param description a description for the plate run
 #' @param date_run date of plate run
 #' @export
 add_plate_run <- function(con, protocol_id, genetic_method_id,
-                          laboratory_id, lab_work_performed_by, date_run) {
+                          laboratory_id, lab_work_performed_by, description, date_run) {
   if (!DBI::dbIsValid(con)) {
     stop("Connection argument does not have a valid connection the run-id database.
          Please try reconnecting to the database using 'DBI::dbConnect'",
@@ -158,8 +167,8 @@ add_plate_run <- function(con, protocol_id, genetic_method_id,
   }
 
   query <- glue::glue_sql("
-  INSERT INTO plate_run (protocol_id, genetic_method_id,  laboratory_id, lab_work_performed_by, date_run)
-  VALUES ({protocol_id}, {genetic_method_id}, {laboratory_id}, {lab_work_performed_by}, {date_run}) RETURNING id;",
+  INSERT INTO plate_run (protocol_id, genetic_method_id,  laboratory_id, lab_work_performed_by, description, date_run)
+  VALUES ({protocol_id}, {genetic_method_id}, {laboratory_id}, {lab_work_performed_by}, {description}, {date_run}) RETURNING id;",
                  .con = con)
 
   res <- DBI::dbSendQuery(con, query)
@@ -222,6 +231,8 @@ add_genetic_identification <- function(con, sample_identifiers) {
         !`1` & !`2` ~ 7,
         `1` & is.na(`2`) ~ 6,
         `2` & is.na(`1`) ~ 6,
+        !`1` & is.na(`2`) ~ 6,
+        !`2` & is.na(`1`) ~ 6,
         `1` & !`2` ~ 8,
         `2` & !`1` ~ 11
       ),
@@ -243,19 +254,30 @@ add_genetic_identification <- function(con, sample_identifiers) {
 
   run_type_id_data <- run_types |> dplyr::filter(run_type_id != 0)
 
-  query <- glue::glue_sql("
+  if (nrow(run_type_id_data) > 0) {
+    query <- glue::glue_sql("
   INSERT INTO genetic_run_identification (sample_id, run_type_id)
   VALUES (
-    UNNEST(ARRAY[{run_type_id_data$sample_id*}]),
-    UNNEST(ARRAY[{run_type_id_data$run_type_id*}])
+    {run_type_id_data$sample_id},
+    {run_type_id_data$run_type_id}
   );
   ", .con = con)
 
-  run_types_added <- DBI::dbExecute(con, query)
+    total_inserts <- purrr::map_dbl(query, function(q) {
+      DBI::dbExecute(con, q)
+    },
+    .progress = list(
+      type = "iterator",
+      name = "adding run-id to samples",
+      clear = FALSE
+    ))
+  } else {
+    total_inserts <- 0
+  }
 
   set_sample_status(con, run_types$sample_id, run_types$status_code_id)
 
-  return(run_types_added)
+  return(sum(total_inserts))
 
 }
 

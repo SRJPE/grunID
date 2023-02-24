@@ -1,0 +1,166 @@
+﻿site,sampling_event,species,lifestage,sample_type,day ,date,sampling_crew,water_temp (C),DO (mg/L),Notes
+Battle,1,Chinook Salmon,Juvenile,Swab+Fin Clip,1,1/15/2022,Gabby Moreno; Karissa Cunningham,10.8,11.42,Temp measured in Fahrenheit; converted to celsius (SJC)
+Battle,1,Chinook Salmon,Juvenile,Swab+Fin Clip,2,1/16/2022,Gabby Moreno,n/r,n/r,No fish in needed bins on day 2. Did not have DO/temp meter on day 2.
+Battle,2,Chinook Salmon,Juvenile,Swab+Fin Clip,1,1/24/2022,Angie Garelick; Alex Arrow,9.06,11.79,
+Battle,2,Chinook Salmon,Juvenile,Swab+Fin Clip,2,1/25/2022,NS; BF,9.28,13.2,
+Battle,3,Chinook Salmon,Juvenile,Swab+Fin Clip,1,2/7/2022,Greg Aull; Neal Scheraga,8.8,12.48,
+Battle,3,Chinook Salmon,Juvenile,Swab+Fin Clip,2,2/8/2022,Neal Scheraga; Ryan Schaefer,10,12.42,
+Battle,4,Chinook Salmon,Juvenile,Swab+Fin Clip,1,2/21/2022,Bret Fessenden; Melody Scarborough,9,11.2,
+Battle,4,Chinook Salmon,Juvenile,Swab+Fin Clip,2,2/22/2022,Ramona Rapp; Neal Scheraga,7.6,11.9,
+Battle,5,Chinook Salmon,Juvenile,n/a,1,3/8/2022,TU; GB,n/r,n/r,Day 1 (3/8/22) - No fish
+Battle,5,Chinook Salmon,Juvenile,n/a,2,3/9/2022,SV; GB,n/r,n/r,Day 2 (3/9/22) - No fish
+Battle,6,Chinook Salmon,Juvenile,Swab+Fin Clip,1,3/21/2022,MES; TU,n/r,n/r,
+Battle,6,Chinook Salmon,Juvenile,Swab+Fin Clip,2,3/22/2022,BF; JK,n/r,n/r,
+Battle,7,Chinook Salmon,Juvenile,Swab+Fin Clip,1,4/4/2022,BF; TU,11.8,11.03,We don't need to take temp + DO @ BC anymore
+Battle,7,Chinook Salmon,Juvenile,Swab+Fin Clip,2,4/5/2022,GM; CS,n/r,n/r,
+Battle,7,Chinook Salmon,Juvenile,Swab+Fin Clip,3,4/11/2022,MES; BF,n/r,n/r,"Took 4 samples; B3 sample was taken but not written down in datasheet, on 4/12/22. We took ""B3"" - now B4 because the space was blank. Data is correct, vials are correctly labeled as of 4/12/22 - AG"
+Battle,7,Chinook Salmon,Juvenile,Swab+Fin Clip,4,4/12/2022,AG,n/r,n/r,Took 3 samples
+Battle,8,Chinook Salmon,Juvenile,Swab+Fin Clip,1,4/18/2022,AG; RR,n/r,n/r,
+Battle,8,Chinook Salmon,Juvenile,Swab+Fin Clip,2,4/19/2022,n/r,n/r,n/r,
+Battle,9,Chinook Salmon,Juvenile,Swab+Fin Clip,1,5/2/2022,"Ramona Rapp, Sam Provins",n/r,n/r,Temp/DO meter being used for other activities
+Battle,9,Chinook Salmon,Juvenile,Swab+Fin Clip,2,5/3/2022,Greg Aull; Mike Schraml,n/r,n/r,Temp/DO meter being used for other activities
+Battle,10,Chinook Salmon,Juvenile,Swab+Fin Clip,1,5/16/2022,Jacie Knight; Gina Beer,n/r,n/r,
+Battle,10,Chinook Salmon,Juvenile,Swab+Fin Clip,2,5/17/2022,Angie Garelick; Melody Scarborough,n/r,n/r,
+Butte,1,Chinook Salmon,Juvenile,Swab+Fin Clip,1,1/10/2022,JN; CF; CB,7,n/r,
+Butte,1,Chinook Salmon,Juvenile,Swab+Fin Clip,2,1/24/2022,HP; CF,6,n/r,
+Butte,2,Chinook Salmon,Juvenile,Swab+Fin Clip,1,1/24/2022,HP; CF,6,n/r,Completed on day 1
+Butte,3,Chinook Salmon,Juvenile,Swab+Fin Clip,1,2/7/2022,SC; NF,6,n/r,
+Butte,4,Chinook Salmon,Juvenile,Swab+Fin Clip,1,2/21/2022,SC; ChF,7,n/r,
+Butte,5,Chinook Salmon,Juvenile,Swab+Fin Clip,1,3/7/2022,NF; ChF,6.5,n/r,
+Butte,6,Chinook Salmon,Juvenile,Swab+Fin Clip,1,3/21/2022,ChF; GB,8.5,n/r,
+Butte,6,Chinook Salmon,Juvenile,Swab+Fin Clip,2,3/26/2022,BB; ChF,11,n/r,
+Butte,6,Chinook Salmon,Juvenile,Swab+Fin Clip,3,3/28/2022,HP; SO; ChF,11,n/r,
+Butte,7,Chinook Salmon,Juvenile,Swab+Fin Clip,1,4/4/2022,ChF; NF,10,n/r,
+Butte,7,Chinook Salmon,Juvenile,Swab+Fin Clip,2,4/5/2022,CF; LA; CB,10,n/r,
+Butte,8,Chinook Salmon,Juvenile,Swab+Fin Clip,1,4/18/2022,HP; BB,9.5,n/r,
+Butte,9,Chinook Salmon,Juvenile,Swab+Fin Clip,1,5/2/2022,BB; KB; SC,9.5,n/r,
+Butte,9,Chinook Salmon,Juvenile,Swab+Fin Clip,2,5/3/2022,SC; DH,12,n/r,
+Butte,10,Chinook Salmon,Juvenile,Swab+Fin Clip,1,5/16/2022,n/r,n/r,n/r,
+Clear,1,Chinook Salmon,Juvenile,Swab+Fin Clip,1,1/15/2022,Gabby Moreno; Karissa Cunningham,10.1,10.95,Temp measured in Fahrenheit; converted to celsius (SJC)
+Clear,1,Chinook Salmon,Juvenile,Swab+Fin Clip,2,1/16/2022,Gabby Moreno,n/r,n/r,No fish in needed bins on day 2. Did not have DO/temp meter on day 2.
+Clear,2,Chinook Salmon,Juvenile,Swab+Fin Clip,1,1/24/2022,SV; TU,11.11,10.45,
+Clear,2,Chinook Salmon,Juvenile,Swab+Fin Clip,2,1/25/2022,Neal Scheraga; Bret Fesseden,9.4,11.97,
+Clear,3,Chinook Salmon,Juvenile,Swab+Fin Clip,1,2/7/2022,AG; SV,9.5,12.32,
+Clear,3,Chinook Salmon,Juvenile,Swab+Fin Clip,2,2/8/2022,AG; KB,n/r,n/r,No fish in larger bins day 2. No sample collected.
+Clear,4,Chinook Salmon,Juvenile,Swab+Fin Clip,1,2/21/2022,BF; MES,9,12.22,
+Clear,4,Chinook Salmon,Juvenile,Swab+Fin Clip,2,2/22/2022,NS; RR,9.1,12.05,
+Clear,5,Chinook Salmon,Juvenile,Swab+Fin Clip,1,3/8/2022,Ramona Rapp; Sebastian Vassas,15.4,9.54,
+Clear,5,Chinook Salmon,Juvenile,Swab+Fin Clip,2,3/9/2022,Mike Schraml; Teresa Urrutia,9.8,11.62,
+Clear,6,Chinook Salmon,Juvenile,Swab+Fin Clip,1,3/21/2022,BF; RR,n/r,n/r,
+Clear,6,Chinook Salmon,Juvenile,Swab+Fin Clip,2,3/22/2022,Neal Scheraga; Melody Scarborough,10.6,11.27,
+Clear,7,Chinook Salmon,Juvenile,Swab+Fin Clip,1,4/4/2022,Gabriella Moreno; Sam Provins,n/r,n/r,No meter(s) [for temp and DO]
+Clear,7,Chinook Salmon,Juvenile,Swab+Fin Clip,2,4/5/2022,n/r,n/r,n/r,No fish
+Clear,8,Chinook Salmon,Juvenile,Swab+Fin Clip,1,4/18/2022,Angie Garelick; Ramona Rapp,10.3,11.71,
+Clear,8,Chinook Salmon,Juvenile,Swab+Fin Clip,2,4/19/2022,Angie Garelick; Bred Fesseden,11.2,11.57,
+Clear,9,Chinook Salmon,Juvenile,Swab+Fin Clip,1,5/2/2022,Natasha Wingerter; Teresa Urrutia,n/r,n/r,Our DO/temp meter is being used on other projects
+Clear,9,Chinook Salmon,Juvenile,Swab+Fin Clip,2,5/3/2022,Greg Aull; Mike Schraml,n/r,n/r,Our DO/temp meter is being used on other projects
+Clear,10,Chinook Salmon,Juvenile,Swab+Fin Clip,1,5/16/2022,Scarborough; Urrutia,n/r,n/r,Our DO/temp meter is being used on other projects
+Clear,10,Chinook Salmon,Juvenile,Swab+Fin Clip,2,5/17/2022,Natasha Wingerter; Teresa Urrutia,n/r,n/r,Our DO/temp meter is being used on other projects
+Clear,10,Chinook Salmon,Juvenile,Swab+Fin Clip,3,5/18/2022,Angie Garelick; Ramona Rapp,n/r,n/r,Our DO/temp meter is being used on other projects
+Delta Entry,1,Chinook Salmon,Juvenile,n/a,1,n/r,n/r,n/r,n/r,Trap not operational [no fish]
+Delta Entry,2,Chinook Salmon,Juvenile,Swab,1,1/24/2022,RS; WD; DW,12.6,n/r,
+Delta Entry,2,Chinook Salmon,Juvenile,Swab,2,1/25/2022,MA; RS,12.05,n/r,
+Delta Entry,3,Chinook Salmon,Juvenile,Swab,1,2/7/2022,RS; MA,10.1,n/r,
+Delta Entry,3,Chinook Salmon,Juvenile,Swab,2,2/8/2022,RS; LA,9.5,n/r,
+Delta Entry,4,Chinook Salmon,Juvenile,Swab+Fin Clip,1,2/21/2022,LA; MA,10.2,n/r,
+Delta Entry,4,Chinook Salmon,Juvenile,Swab+Fin Clip,2,2/22/2022,RS; CL; LA,11.9,n/r,
+Delta Entry,5,Chinook Salmon,Juvenile,Swab+Fin Clip,1,3/7/2022,RS; LA; MA; CF,12.3,n/r,No DO meter
+Delta Entry,5,Chinook Salmon,Juvenile,Swab+Fin Clip,2,3/8/2022,DC; LA; RS,11.6,n/r,No DO meter
+Delta Entry,6,Chinook Salmon,Juvenile,Swab+Fin Clip,1,3/21/2022,CF; RS,13.1,n/r,No DO meter
+Delta Entry,6,Chinook Salmon,Juvenile,Swab+Fin Clip,2,3/22/2022,RS; WD,14.7,n/r,No DO meter
+Delta Entry,7,Chinook Salmon,Juvenile,Swab+Fin Clip,1,4/4/2022,CF,14.2,n/r,
+Delta Entry,7,Chinook Salmon,Juvenile,Swab+Fin Clip,2,4/5/2022,RS; MA,15.3,n/r,
+Delta Entry,8,Chinook Salmon,Juvenile,Swab+Fin Clip,1,4/18/2022,RS; MK,15.1,n/r,
+Delta Entry,8,Chinook Salmon,Juvenile,Swab+Fin Clip,2,4/19/2022,RS; LA; CF,15.5,n/r,
+Delta Entry,9,Chinook Salmon,Juvenile,Swab+Fin Clip,1,5/2/2022,RS; WD,18.9,n/r,
+Delta Entry,9,Chinook Salmon,Juvenile,Swab+Fin Clip,2,5/3/2022,RS; WD,18.1,92.2,DO measured by percentage
+Delta Entry,10,Chinook Salmon,Juvenile,Swab+Fin Clip,1,5/16/2022,n/r,20,n/r,
+Feather-RM17,3,Chinook Salmon,Juvenile,Swab+Fin Clip,1,2/9/2022,CF; GH,10.2,12.42,Traps not fishing Feb 7/8. Samples taken Feb 9/10
+Feather-RM17,3,Chinook Salmon,Juvenile,Swab+Fin Clip,2,2/10/2022,SC; GH; NF,10.6,12.15,Traps not fishing Feb 7/8. Samples taken Feb 9/10
+Feather-RM17,4,Chinook Salmon,Juvenile,Swab+Fin Clip,1,2/21/2022,CB; BB,16.3,12,
+Feather-RM17,4,Chinook Salmon,Juvenile,Swab+Fin Clip,2,2/22/2022,CF; NF,10.8,11.58,
+Feather-RM17,5,Chinook Salmon,Juvenile,Swab+Fin Clip,1,3/7/2022,CB; BB,12.2,10.87,
+Feather-RM17,5,Chinook Salmon,Juvenile,Swab+Fin Clip,2,3/8/2022,CF; NF,10.2,12.17,
+Feather-RM17,6,Chinook Salmon,Juvenile,Swab+Fin Clip,1,3/21/2022,BB; NF,12.8,11,
+Feather-RM17,6,Chinook Salmon,Juvenile,Swab+Fin Clip,2,3/22/2022,CB; CF,14.3,7.15,
+Feather-RM17,7,Chinook Salmon,Juvenile,Swab+Fin Clip,1,4/4/2022,BB; CB,15.5,9.4,"Feather River Hatchery Spring-Run Release 3/30/22, only 50% of fish were marked so some samples may be of hatchery raised fish"
+Feather-RM17,7,Chinook Salmon,Juvenile,Swab+Fin Clip,2,4/5/2022,GH; VP; NF,15.3,9.75,"Feather River Hatchery Spring-Run Release 3/30/22, only 50% of fish were marked so some samples may be of hatchery raised fish"
+Feather-RM17,8,Chinook Salmon,Juvenile,Swab+Fin Clip,1,4/18/2022,NF; CF,15.1,9.45,
+Feather-RM17,8,Chinook Salmon,Juvenile,Swab+Fin Clip,2,4/20/2022,NF; VP,16,9.44,
+Feather-RM17,9,Chinook Salmon,Juvenile,Swab+Fin Clip,1,5/2/2022,NF; CB,17.7,8.61,
+Feather-RM17,9,Chinook Salmon,Juvenile,Swab+Fin Clip,2,5/3/2022,VP; CB,n/r,n/r,
+Feather-RM17,10,Chinook Salmon,Juvenile,Swab+Fin Clip,1,5/16/2022,NF; CB,18.6,8.34,
+Feather-RM17,10,Chinook Salmon,Juvenile,Swab+Fin Clip,2,5/17/2022,VP; CB,19,8.11,
+Feather-RM61,1,Chinook Salmon,Juvenile,Swab,1,1/10/2022,KLH; AI,9,n/r,
+Feather-RM61,1,Chinook Salmon,Juvenile,Swab,2,1/11/2022,KLH; DH,n/r,n/r,
+Feather-RM61,1,Chinook Salmon,Juvenile,Swab,3,1/12/2022,KLH; DH,n/r,n/r,
+Feather-RM61,2,Chinook Salmon,Juvenile,Swab,1,1/24/2022,n/r,n/r,n/r,Swabs for bin A are in bin C vials. Took swabs on 1/24 in bin A vials but lost datasheets.
+Feather-RM61,2,Chinook Salmon,Juvenile,Swab,2,1/25/2022,MB; PH,n/r,n/r,Swabs for bin A are in bin C vials. Took swabs on 1/24 in bin A vials but lost datasheets.
+Feather-RM61,3,Chinook Salmon,Juvenile,Swab+Fin Clip,1,2/8/2022,KLH; DH,10,n/r,Bin A = 30-50; Bin B = 50-70; Bin C = 70-90
+Feather-RM61,3,Chinook Salmon,Juvenile,Swab+Fin Clip,2,2/9/2022,KLH; DH,10,n/r,Bin A = 30-50; Bin B = 50-70; Bin C = 70-90
+Feather-RM61,4,Chinook Salmon,Juvenile,Swab+Fin Clip,1,2/22/2022,KLH; DH,10,n/r,
+Feather-RM61,5,Chinook Salmon,Juvenile,Swab+Fin Clip,1,3/7/2022,KLH; AI,10,n/r,
+Feather-RM61,5,Chinook Salmon,Juvenile,Swab+Fin Clip,2,3/8/2022,KLH; AI,9.5,n/r,
+Feather-RM61,5,Chinook Salmon,Juvenile,Swab+Fin Clip,3,3/15/2022,n/r,11,n/r,
+Feather-RM61,5,Chinook Salmon,Juvenile,Swab+Fin Clip,4,3/16/2022,n/r,12,n/r,
+Feather-RM61,6,Chinook Salmon,Juvenile,Swab+Fin Clip,1,3/22/2022,MH; KLH,12.5,n/r,Bin A = 30-50; Bin B = 51-70; Bin C = 71-90; Bin D = 91-110
+Feather-RM61,6,Chinook Salmon,Juvenile,Swab+Fin Clip,2,3/23/2022,MH; KLH,13,n/r,Bin A = 30-50; Bin B = 51-70; Bin C = 71-90; Bin D = 91-110
+Feather-RM61,6,Chinook Salmon,Juvenile,Swab+Fin Clip,3,3/28/2022,MH; KLH,12.5,n/r,Bin A = 30-50; Bin B = 51-70; Bin C = 71-90; Bin D = 91-110
+Feather-RM61,6,Chinook Salmon,Juvenile,Swab+Fin Clip,4,3/29/2022,MH,13,n/r,Bin A = 30-50; Bin B = 51-70; Bin C = 71-90; Bin D = 91-110
+Feather-RM61,7,Chinook Salmon,Juvenile,Swab+Fin Clip,1,4/4/2022,MH; KLH,12.5,n/r,Please note: all samples were thawed over night on 4/18. Freezer door left slightly open. Still read -6° in morning but liquid was not frozen. Samples were cold and frozen asap
+Feather-RM61,7,Chinook Salmon,Juvenile,Swab+Fin Clip,2,4/5/2022,AI; KLH,13,n/r,Please note: all samples were thawed over night on 4/18. Freezer door left slightly open. Still read -6° in morning but liquid was not frozen. Samples were cold and frozen asap
+Feather-RM61,7,Chinook Salmon,Juvenile,Swab+Fin Clip,3,4/6/2022,KLH; AI,12.5,n/r,Please note: all samples were thawed over night on 4/18. Freezer door left slightly open. Still read -6° in morning but liquid was not frozen. Samples were cold and frozen asap
+Feather-RM61,7,Chinook Salmon,Juvenile,Swab+Fin Clip,4,4/7/2022,MB; TB,13,n/r,Please note: all samples were thawed over night on 4/18. Freezer door left slightly open. Still read -6° in morning but liquid was not frozen. Samples were cold and frozen asap
+Feather-RM61,7,Chinook Salmon,Juvenile,Swab+Fin Clip,5,4/8/2022,MB; MH; TV,13.5,n/r,Please note: all samples were thawed over night on 4/18. Freezer door left slightly open. Still read -6° in morning but liquid was not frozen. Samples were cold and frozen asap
+Feather-RM61,7,Chinook Salmon,Juvenile,Swab+Fin Clip,6,4/13/2022,KLH; AI,12.5,n/r,Please note: all samples were thawed over night on 4/18. Freezer door left slightly open. Still read -6° in morning but liquid was not frozen. Samples were cold and frozen asap
+Feather-RM61,8,Chinook Salmon,Juvenile,Swab+Fin Clip,1,4/19/2022,MH; MB,13,n/r,
+Feather-RM61,8,Chinook Salmon,Juvenile,Swab+Fin Clip,2,4/20/2022,MH; MB; AI,13,n/r,
+Feather-RM61,8,Chinook Salmon,Juvenile,Swab+Fin Clip,3,4/21/2022,MH; MB,12.8,n/r,
+Feather-RM61,8,Chinook Salmon,Juvenile,Swab+Fin Clip,4,4/22/2022,MB; TV,13,n/r,
+Feather-RM61,8,Chinook Salmon,Juvenile,Swab+Fin Clip,5,4/26/2022,AI; TV,13,n/r,
+Feather-RM61,8,Chinook Salmon,Juvenile,Swab+Fin Clip,6,4/27/2022,AI; KLH,14,n/r,
+Knights Landing,1,Chinook Salmon,Juvenile,Swab,1,1/10/2022,JP; RS; DW; MK,9.6,96.7,DO measured by percentage
+Knights Landing,1,Chinook Salmon,Juvenile,Swab,2,1/11/2022,JP; AS; DC; JF,9.5,96.3,DO measured by percentage
+Knights Landing,2,Chinook Salmon,Juvenile,Swab,1,1/24/2022,JP; CL; KGM,9.6,96.8,DO measured by percentage
+Knights Landing,2,Chinook Salmon,Juvenile,Swab,2,1/25/2022,JP; KGM,9.7,97.9,DO measured by percentage
+Knights Landing,7,Chinook Salmon,Juvenile,Swab+Fin Clip,1,4/4/2022,JF; DW,17.1,97.6,DO measured by percentage
+Knights Landing,7,Chinook Salmon,Juvenile,Swab+Fin Clip,2,4/5/2022,LA; KGM,16.7,98.1,DO measured by percentage
+Mill,3,Chinook Salmon,Juvenile,Swab,1,2/10/2022,ER; CS,9,n/r,
+Mill,4,Chinook Salmon,Juvenile,Swab,1,2/24/2022,CS; MD; ER; AN,4,n/r,
+Mill,5,Chinook Salmon,Juvenile,Swab,1,3/9/2022,CS; ER,8,n/r,
+Mill,5,Chinook Salmon,Juvenile,Swab,2,3/10/2022,MD; ER,8,n/r,No class B or C fish
+Mill,6,Chinook Salmon,Juvenile,Swab,1,3/22/2022,ER; MD; JC,11.5,n/r,
+Mill,6,Chinook Salmon,Juvenile,Swab,2,3/23/2022,ER; MD,11.5,n/r,
+Mill,9,Chinook Salmon,Juvenile,Swab,1,5/4/2022,CS; AJ,13,n/r,
+Mill,9,Chinook Salmon,Juvenile,Swab,2,5/5/2022,CS; RS; RR,13,n/r,
+Mill,10,Chinook Salmon,Juvenile,Swab,1,5/17/2022,CS; RR; RS,16,n/r,
+Mill,10,Chinook Salmon,Juvenile,Swab,2,5/18/2022,CS; RR,16,n/r,
+StarBend,2,Chinook Salmon,Juvenile,Fin Clip,1,1/25/2022,GH; CF,9.6,11.4,SB = FeatherRM17 (SJC)
+StarBend,2,Chinook Salmon,Juvenile,Fin Clip,2,1/26/2022,GH; ChF,9.6,11.58,SB = FeatherRM17 (SJC)
+Tisdale,1,Chinook Salmon,Juvenile,Swab,1,1/10/2022,AH; GH; HP; SC,9.4,n/r,
+Tisdale,1,Chinook Salmon,Juvenile,Swab,2,1/11/2022,AH; BB; VP,9.1,n/r,One fin-clip collected (TIS_1_C_1) (SJC)
+Tisdale,2,Chinook Salmon,Juvenile,Swab,1,1/24/2022,SC; CB; ChF,10.1,11.36,Temp measured in Fahrenheit; converted to celsius (SJC)
+Tisdale,2,Chinook Salmon,Juvenile,Swab,2,1/25/2022,VP; DW; BB,9.5,97.8,Temp measured in Fahrenheit; converted to celsius (SJC); DO appears to have been measured by percentage
+Tisdale,3,Chinook Salmon,Juvenile,Swab,1,2/8/2022,VP; DW,9.8,100.1,Temp measured in Fahrenheit; converted to celsius (SJC); DO measured by percentage
+Tisdale,4,Chinook Salmon,Juvenile,Swab+Fin Clip,2,2/22/2022,DH; VP,11,10.8,
+Tisdale,5,Chinook Salmon,Juvenile,Swab+Fin Clip,1,3/7/2022,HP; SO,11.7,10.74,
+Tisdale,6,Chinook Salmon,Juvenile,Swab+Fin Clip,1,3/25/2022,SC; CB,n/r,n/r,
+Tisdale,7,Chinook Salmon,Juvenile,Swab+Fin Clip,1,4/5/2022,DW; NF,16.6,n/r,
+Tisdale,8,Chinook Salmon,Juvenile,Swab+Fin Clip,1,4/18/2022,SC; SO,18.1,n/r,
+Tisdale,9,Chinook Salmon,Juvenile,Swab+Fin Clip,1,5/2/2022,SC; BB; KB,n/r,n/r,
+Tisdale,10,Chinook Salmon,Juvenile,Swab+Fin Clip,1,5/16/2022,n/r,n/r,n/r,No fish sampled
+Feather-RM61,9,Chinook Salmon,Juvenile,Swab+Fin Clip,1,5/3/2022,KH; AI,13.5,n/r,
+Feather-RM61,9,Chinook Salmon,Juvenile,Swab+Fin Clip,2,5/4/2022,KH; AI,14.0,n/r,
+Feather-RM61,9,Chinook Salmon,Juvenile,Swab+Fin Clip,3,5/5/2022,MB; TV,13.8,n/r,
+Feather-RM61,9,Chinook Salmon,Juvenile,Swab+Fin Clip,4,5/6/2022,AI; TV; MH,13.0,n/r,
+Feather-RM61,9,Chinook Salmon,Juvenile,Swab+Fin Clip,5,5/10/2022,AI; TV,12.5,n/r,
+Feather-RM61,9,Chinook Salmon,Juvenile,Swab+Fin Clip,6,5/11/2022,AI; TV,14.0,n/r,
+Feather-RM61,9,Chinook Salmon,Juvenile,Swab+Fin Clip,7,5/12/2022,AI; TV,13.0,n/r,
+Feather-RM61,9,Chinook Salmon,Juvenile,Swab+Fin Clip,8,5/13/2022,AI; TV,14.0,n/r,
+Feather-RM61,10,Chinook Salmon,Juvenile,Swab+Fin Clip,1,5/17/2022,KLH; MB,16.0,n/r,
+Feather-RM61,10,Chinook Salmon,Juvenile,Swab+Fin Clip,2,5/18/2022,AI; TV,16.0,n/r,
+Feather-RM61,10,Chinook Salmon,Juvenile,Swab+Fin Clip,3,5/19/2022,MB; TV,16.0,n/r,
+Feather-RM61,10,Chinook Salmon,Juvenile,Swab+Fin Clip,4,5/20/2022,AI; TV,15.5,n/r,
+Feather-RM61,10,Chinook Salmon,Juvenile,Swab+Fin Clip,5,5/25/2022,AI; TV; BS,16.5,n/r,
+Feather-RM61,10,Chinook Salmon,Juvenile,Swab+Fin Clip,6,5/26/2022,MH; TV,16.5,n/r,
+Feather-RM61,10,Chinook Salmon,Juvenile,Swab+Fin Clip,7,5/27/2022,AI; TV,16.0,n/r,

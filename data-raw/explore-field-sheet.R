@@ -25,9 +25,9 @@ sample_plan_2022 <- all_data |>
     location_code = str_split(sheet_name, "-", simplify = TRUE)[,1],
     sample_event_number = as.integer(str_match(sheet_name, "-([0-9]+)")[,2]),
     sample_bin_code = Bin,
-    min_fork_length = as.integer(str_match(`Bin FL Range (mm)`, "([0-9]+)-([0-9]+)")[1,2]),
-    max_fork_length = as.integer(str_match(`Bin FL Range (mm)`, "([0-9]+)-([0-9]+)")[1,3])
-  ) |>
+    `Bin FL Range (mm)`) |>
+  tidyr::separate(`Bin FL Range (mm)`,
+                  into = c("min_fork_length", "max_fork_length"), convert = TRUE) |>
   left_join(sampling_events) |>
   select(
     location_code,
@@ -64,12 +64,7 @@ all_sampling_plan_data |> glimpse()
 
 sample_plan_2022_final <- sample_plan_2022 |>
   left_join(all_sampling_plan_data) |>
-  mutate(sample_event_number = as.integer(sample_event_number),
-         location_code = case_when(
-           location_code == "F17" ~ "FTH_RM17",
-           location_code == "F61" ~ "FTH_RM61",
-           TRUE ~ location_code
-         ))
+  mutate(sample_event_number = as.integer(sample_event_number))
 
 
 

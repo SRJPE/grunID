@@ -10,6 +10,7 @@ add_plate_run(
   genetic_method_id,
   laboratory_id,
   lab_work_performed_by,
+  description,
   date_run
 )
 }
@@ -23,6 +24,8 @@ add_plate_run(
 \item{laboratory_id}{laboratory identifier}
 
 \item{lab_work_performed_by}{name of staff who performed the plate run}
+
+\item{description}{a description for the plate run}
 
 \item{date_run}{date of plate run}
 }
