@@ -131,37 +131,6 @@ update_assay_detection(con, thresholds_4_7_early)
 update_assay_detection(con, thresholds_4_7_late)
 
 
-# Do the OTS 16
-
-samples_require_analysis <- function(con, assay_name=c("ots28", "ots16")) {
-
-  samples_that_need_ots16 <- tbl(con, "genetic_run_identification") |>
-    filter(run_type_id == 6)
-
-
-  return(samples_that_need_ots16)
-
-}
-
-
-samples_require_ots16(con)
-
-readr::write_csv(samples_that_need_ots16, "data-raw/ots_16_s1_plate_details.csv")
-
-plate_run_id_ots_16_S <- add_plate_run(con,
-                                       date_run = "2022-10-27",
-                                       protocol_id = protocol_id,
-                                       genetic_method_id = 1,
-                                       laboratory_id = laboratory_id,
-                                       lab_work_performed_by = "user")
-
-layout_ots_16_S <- process_well_sample_details("data-raw/ots_16_s1_plate_details.csv",
-                                               plate_run_id = plate_run_id_ots_16_S)
-
-results_ots_16_S <- process_sherlock(
-  filepath = "data-raw/FAKE_OTS16_S1.xlsx",
-  sample_details = layout_ots_28_e,
-  plate_size = 384)
 
 DBI::dbDisconnect(con)
 
