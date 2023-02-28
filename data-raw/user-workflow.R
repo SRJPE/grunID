@@ -83,30 +83,17 @@ plate_run_4_7_late_id <- add_plate_run(con,
 # layout_ots_28_l <- process_well_sample_details("data-raw/ots_28_late_plate_details.csv",
 #                                       plate_run_id = plate_run_id_ots_28_l)
 
-layout_raw <- read_excel("data-raw/sherlock-example-outputs/JPE_Chnk_Early+Late_Plates4-7_results.xlsx",
-                         sheet = "Plate Map")
+# process plate layout tab
+plate_4_to_7_layout_early <- get_sample_details(filepath = "data-raw/sherlock-example-outputs/JPE_Chnk_Early+Late_Plates4-7_results.xlsx",
+                                                sample_type = "mucus",
+                                                assay_type = "Ots28_Early1",
+                                                plate_run_id = plate_run_4_7_early_id)
 
-plate_4_to_7_layout_early <- layout_raw |>
-  pivot_longer(names_to="col_num", values_to = "sample_id", -...1) |>
-  transmute(
-    location = paste0(...1, col_num),
-    sample_id,
-    sample_type_id = 1,
-    assay_id = 1,
-    plate_run_id = plate_run_4_7_early_id
-  ) |>
-  mutate(sample_id = ifelse(sample_id == "NTC", "CONTROL", sample_id))
+plate_4_to_7_layout_late <- get_sample_details(filepath = "data-raw/sherlock-example-outputs/JPE_Chnk_Early+Late_Plates4-7_results.xlsx",
+                                                sample_type = "mucus",
+                                                assay_type = "Ots28_Late1",
+                                                plate_run_id = plate_run_4_7_late_id)
 
-plate_4_to_7_layout_late <- layout_raw |>
-  pivot_longer(names_to="col_num", values_to = "sample_id", -...1) |>
-  transmute(
-    location = paste0(...1, col_num),
-    sample_id,
-    sample_type_id = 1,
-    assay_id = 2,
-    plate_run_id = plate_run_4_7_late_id
-  ) |>
-  mutate(sample_id = ifelse(sample_id == "NTC", "CONTROL", sample_id))
 
 # process
 results_plates_4_7_early <- process_sherlock(
