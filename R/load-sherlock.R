@@ -225,6 +225,8 @@ add_genetic_identification <- function(con, sample_identifiers) {
         !`3` & !`4` ~ 10,
         `3` & is.na(`4`) ~ 9,
         `4` & is.na(`3`) ~ 9,
+        !`3` & is.na(`4`) ~ 9,
+        !`4` & is.na(`3`) ~ 9, # TODO clean up
         `3` & !`4` ~ 11,
         `4` & !`3` ~ 11,
         `1` & `2` ~ 11,

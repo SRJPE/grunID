@@ -44,20 +44,25 @@ feather_17_total <- add_sample_plan(con, feather_17_sample_plan, verbose = TRUE)
 # check to see if protocol for plate run exists or not
 all_protocols <- get_protocols(con)
 
-
 # View(all_protocols) # review available protocols and select appropriate protocol
-protocol_id <- all_protocols[1, "id", drop = TRUE]
+protocol_id <- all_protocols |>
+  filter(id == 1) |>
+  pull(id)
 
 # get lab id
 laboratory_id <- get_laboratories(con) |>
   filter(stringr::str_detect(code, "DWR")) |> pull(id)
 
+# get genetic method id
+genetic_method_id <- get_genetic_methods(con) |>
+  filter(method_name == "SHERLOCK") |>
+  pull(id)
 
 # ots 28 early run
 plate_run_4_7_early_id <- add_plate_run(con,
                                         date_run = "2022-01-01",
                                         protocol_id = protocol_id,
-                                        genetic_method_id = 1,
+                                        genetic_method_id = genetic_method_id,
                                         laboratory_id = laboratory_id,
                                         lab_work_performed_by = "user",
                                         description = "early run for plates 4-7") # TODO determine the user
@@ -66,7 +71,7 @@ plate_run_4_7_early_id <- add_plate_run(con,
 plate_run_4_7_late_id <- add_plate_run(con,
                                        date_run = "2022-01-01",
                                        protocol_id = protocol_id,
-                                       genetic_method_id = 1,
+                                       genetic_method_id = genetic_method_id,
                                        laboratory_id = laboratory_id,
                                        lab_work_performed_by = "user",
                                        description = "late run for plates 4-7") # TODO determine the user
@@ -84,6 +89,8 @@ plate_run_4_7_late_id <- add_plate_run(con,
 #                                       plate_run_id = plate_run_id_ots_28_l)
 
 # process plate layout tab
+# TODO rename to process_well_sample_details
+# TODO check what colors mean in plate map "sheet"
 plate_4_to_7_layout_early <- get_sample_details(filepath = "data-raw/sherlock-example-outputs/JPE_Chnk_Early+Late_Plates4-7_results.xlsx",
                                                 sample_type = "mucus",
                                                 assay_type = "Ots28_Early1",
