@@ -221,30 +221,30 @@ add_genetic_identification <- function(con, sample_identifiers) {
   ) |>
     dplyr::mutate(
       status_code_id = dplyr::case_when(
-        `3` & `4` ~ 11,
-        !`3` & !`4` ~ 10,
-        `3` & is.na(`4`) ~ 9,
-        `4` & is.na(`3`) ~ 9,
-        !`3` & is.na(`4`) ~ 9,
-        !`4` & is.na(`3`) ~ 9, # TODO clean up
-        `3` & !`4` ~ 11,
-        `4` & !`3` ~ 11,
-        `1` & `2` ~ 11,
-        !`1` & !`2` ~ 7,
         `1` & is.na(`2`) ~ 6,
         `2` & is.na(`1`) ~ 6,
         !`1` & is.na(`2`) ~ 6,
         !`2` & is.na(`1`) ~ 6,
         `1` & !`2` ~ 8,
-        `2` & !`1` ~ 11
+        `2` & !`1` ~ 11,
+        `1` & `2` ~ 11,
+        !`1` & !`2` ~ 7,
+        `3` & is.na(`4`) ~ 9,
+        `4` & is.na(`3`) ~ 9,
+        !`3` & is.na(`4`) ~ 9,
+        !`4` & is.na(`3`) ~ 9,
+        `3` & !`4` ~ 11,
+        `4` & !`3` ~ 11,
+        `3` & `4` ~ 11,
+        !`3` & !`4` ~ 10
       ),
       run_type_id = dplyr::case_when(
         status_code_id == 11 & `3` & `4` ~ 8,
-        status_code_id == 11 & `3` ~ 1,
-        status_code_id == 11 & `4` ~ 4,
+        status_code_id == 11 & `3` & !`4` ~ 1,
+        status_code_id == 11 & `4` & !`3` ~ 4,
         status_code_id == 11 & `1` & `2` ~ 8,
         status_code_id == 11 & `1` ~ 6,
-        status_code_id == 11 & `2` ~ 5,
+        status_code_id == 11 & `2` & !`1` ~ 5,
         status_code_id == 7 ~ 7,
         status_code_id == 10 ~ 7,
         TRUE ~ 0
