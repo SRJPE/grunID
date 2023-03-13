@@ -96,20 +96,20 @@ plate_run_4_7_late_id <- add_plate_run(con,
 # which will then be aligned with the corresponding JPE sample IDs.
 
 # get_sample_details process the layout. User must specify assay type
-# either "mucus" or "fin clip" as well as assay type - see ?get_sample_details()
+# either "mucus" or "fin clip" as well as assay type - see ?process_well_sample_details()
 # for acceptable arguments.
 
 # TODO rename to process_well_sample_details
 # TODO check what colors mean in plate map "sheet"
-plate_4_to_7_layout_early <- get_sample_details(filepath = "data-raw/sherlock-example-outputs/JPE_Chnk_Early+Late_Plates4-7_results.xlsx",
-                                                sample_type = "mucus",
-                                                assay_type = "Ots28_Early1",
-                                                plate_run_id = plate_run_4_7_early_id)
+plate_4_to_7_layout_early <- process_well_sample_details(filepath = "data-raw/sherlock-example-outputs/JPE_Chnk_Early+Late_Plates4-7_results.xlsx",
+                                                         sample_type = "mucus",
+                                                         assay_type = "Ots28_Early1",
+                                                         plate_run_id = plate_run_4_7_early_id)
 
-plate_4_to_7_layout_late <- get_sample_details(filepath = "data-raw/sherlock-example-outputs/JPE_Chnk_Early+Late_Plates4-7_results.xlsx",
-                                                sample_type = "mucus",
-                                                assay_type = "Ots28_Late1",
-                                                plate_run_id = plate_run_4_7_late_id)
+plate_4_to_7_layout_late <- process_well_sample_details(filepath = "data-raw/sherlock-example-outputs/JPE_Chnk_Early+Late_Plates4-7_results.xlsx",
+                                                        sample_type = "mucus",
+                                                        assay_type = "Ots28_Late1",
+                                                        plate_run_id = plate_run_4_7_late_id)
 
 
 # pass sample details (well layout) to process_sherlock, which reads in

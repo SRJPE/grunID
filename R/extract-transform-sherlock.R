@@ -117,16 +117,6 @@ process_raw_assay_results <- function(filepath, ranges, plate_size, layout) {
 }
 
 
-# TODO fix name
-#' Process layout
-#' @description add plate id
-#' @export
-process_well_sample_details <- function(filepath, plate_run_id) {
-  layout <- readr::read_csv(filepath)
-  layout$plate_run_id <- plate_run_id
-  return(layout)
-}
-
 #' Process Plate Layout
 #' @description helper function for mapping of plate layout location to sample identifier
 process_plate_layout <- function(filepath, plate_size) {
@@ -148,7 +138,7 @@ process_plate_layout <- function(filepath, plate_size) {
 }
 
 #' Get Sample Details
-#' @description `get_sample_details` reads in the plate run layout so sample identifiers
+#' @description `process_well_sample_details` reads in the plate run layout so sample identifiers
 #' can be mapped to the output of the Synergy H1 reader.
 #' @param filepath Synergy H1 reader output excel file with corresponding plate run layout
 #' in a sheet titled "Plate Map"
@@ -168,7 +158,7 @@ process_plate_layout <- function(filepath, plate_size) {
 #' * plate_run_id
 #' @export
 #' @md
-get_sample_details <- function(filepath, sample_type, assay_type, plate_run_id) {
+process_well_sample_details <- function(filepath, sample_type, assay_type, plate_run_id) {
 
   sample_type_id <- if_else(sample_type == "mucus", 1, 2)
 
