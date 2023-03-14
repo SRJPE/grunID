@@ -83,8 +83,8 @@
 </h2>
 <p>This tutorial describes how to:</p>
 <ol style="list-style-type: decimal">
-<li>securely manage database credentials</li>
-<li>connect to the genetics run identification database</li>
+<li>connect to the genetics run identification database with
+credentials</li>
 <li>write plate run metadata to the database</li>
 <li>prepare Synergy H1 result data for upload to the database</li>
 <li>upload assay result data to the database</li>
@@ -104,50 +104,29 @@
 <h2 id="database-credentials">Database Credentials<a class="anchor" aria-label="anchor" href="#database-credentials"></a>
 </h2>
 <p>For improved security, we recommend managing your database credential
-information with environment variables. The <code>config</code> package
-makes it easy to manage environment variables. The database
-administrator will provide you with the necessary credential information
-to connect to the database.</p>
-<p>First, you will need to create a <strong>config.yml</strong> file
-with the following information:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">default</span><span class="kw">:</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">dbname</span><span class="kw">:</span><span class="at"> </span><span class="kw">{</span><span class="at">DATABASE_NAME</span><span class="kw">}</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">host</span><span class="kw">:</span><span class="at"> </span><span class="kw">{</span><span class="at">HOST_ADDRESS</span><span class="kw">}</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">port</span><span class="kw">:</span><span class="at"> </span><span class="kw">{</span><span class="at">PORT_NUMBER</span><span class="kw">}</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">username</span><span class="kw">:</span><span class="at"> </span><span class="kw">{</span><span class="at">YOUR_USERNAME</span><span class="kw">}</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">password</span><span class="kw">:</span><span class="at"> </span><span class="kw">{</span><span class="at">YOUR_PASSWORD</span><span class="kw">}</span></span></code></pre></div>
-<p>Replace all <code>{*}</code> place holders with the credential
-information provided by the database administrator.</p>
-<p>It is important to not accidentally share credentials online. If you
-are pushing your analysis to Github make sure to add
-<code>config.yml</code> to your <strong>.gitignore</strong> file.</p>
-<p>By default, the configuration data is read from
-<strong>config.yml</strong> within the current working directory (or
-parent directories if no config file is found in the initially specified
-directory). For more details see the <a href="https://rstudio.github.io/config/" class="external-link">config docs</a>.</p>
-<p>To load the credential information into memory call:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">cfg</span> <span class="op">&lt;-</span> <span class="fu">config</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/config/man/get.html" class="external-link">get</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+information with environment variables. Information on how to set up
+your <strong>config.yml</strong> file and pull information from that
+file to establish a connection to the database can be found in the
+article <code><a href="../articles/azure-authentication.html">vignette("azure-authentication")</a></code> under
+<strong>Authentication with a Config file</strong>.</p>
 </div>
 <div class="section level2">
-<h2 id="database-connection">Database Connection<a class="anchor" aria-label="anchor" href="#database-connection"></a>
+<h2 id="create-database-connection">Create database Connection<a class="anchor" aria-label="anchor" href="#create-database-connection"></a>
 </h2>
-<p>The <code>DBI</code> package provides simple and consistent methods
-for connecting R to database management systems (DBMS). For more details
-see the <a href="https://dbi.r-dbi.org/" class="external-link">DBI docs</a>. The genetic run
-identification DBMS is implemented with PostgreSQL. We use the
-<code>RPostgres</code> package to define the proper operations for
-creating connections and defining data type mappings. For more details
-see the <a href="https://rpostgres.r-dbi.org/" class="external-link">RPostgres docs</a>.</p>
-<p>To create a connection object, we pass our credentials to
-<code><a href="https://dbi.r-dbi.org/reference/dbConnect.html" class="external-link">DBI::dbConnect()</a></code> and specify a PostgreSQL driver.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">con</span> <span class="op">&lt;-</span> <span class="fu">DBI</span><span class="fu">::</span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbConnect.html" class="external-link">dbConnect</a></span><span class="op">(</span><span class="fu">RPostgres</span><span class="fu">::</span><span class="fu"><a href="https://rpostgres.r-dbi.org/reference/Postgres.html" class="external-link">Postgres</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>                      dbname <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">dbname</span>,</span>
-<span>                      host <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">host</span>, </span>
-<span>                      port <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">port</span>,</span>
-<span>                      user <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">username</span>,</span>
-<span>                      password <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">password</span><span class="op">)</span></span></code></pre></div>
+<p>To create a connection object, we run
+<code><a href="../reference/gr_db_connect.html">gr_db_connect()</a></code>:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">con</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/gr_db_connect.html">gr_db_connect</a></span><span class="op">(</span><span class="op">)</span> <span class="co"># a config file will be searched for starting at the working directory.</span></span>
+<span></span>
+<span><span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/tbl.html" class="external-link">tbl</a></span><span class="op">(</span><span class="va">con</span>, <span class="st">"agency"</span><span class="op">)</span></span></code></pre></div>
+<p>You can also call <code><a href="../reference/gr_db_connect.html">gr_db_connect()</a></code> with arguments
+specifying your username, database name and host for the server for the
+database. Note that this is a quick way to create a connection to the
+database but if using source control its also an easy way to
+accidentally share your credentials. For more information on this, and
+to see code, please see the article
+<code><a href="../articles/azure-authentication.html">vignette("azure-authentication")</a></code> under
+<strong>Authentication with username, dbname and host</strong>.</p>
 <p>Every time we use a function to read or write to the database, we
 will pass this connection object to the function.</p>
 </div>
@@ -164,17 +143,17 @@ run ID, we must add a plate run in our database before adding assay
 result data.</p>
 <p>If you do not know the ID for the protocol used, you can review all
 existing protocols stored in the database with the following code:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">all_protocols</span> <span class="op">&lt;-</span> <span class="fu">grunID</span><span class="fu">::</span><span class="fu">get_protocol</span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span></code></pre></div>
 <p>Select appropriate protocol ID with this code:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">protocol_id</span> <span class="op">&lt;-</span> <span class="va">all_protocols</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/stats/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">id</span> <span class="op">==</span> <span class="fl">1</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu">pull</span><span class="op">(</span><span class="va">id</span><span class="op">)</span></span></code></pre></div>
 <p>Similarly, you can call <code>get_genetic_method()</code> and
 <code>get_laboratory_id()</code> to review the IDs associated with
 methods and laboratories within the database.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">genetic_method_id</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_genetic_methods.html">get_genetic_methods</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/stats/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">method_name</span> <span class="op">==</span> <span class="st">"SHERLOCK"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu">pull</span><span class="op">(</span><span class="va">id</span><span class="op">)</span> <span class="co"># SHERLOCK</span></span>
@@ -233,7 +212,7 @@ the tab has to be <code>Plate Map</code>. The function
 <code><a href="../reference/process_well_sample_details.html">process_well_sample_details()</a></code> then reads in that layout and
 maps the JPE sample identifiers to well locations, producing a dataframe
 in the correct format:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sample_details</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/process_well_sample_details.html">process_well_sample_details</a></span><span class="op">(</span>filepath <span class="op">=</span> <span class="st">"path_to/SynergyH1_data.xlsx"</span>,</span>
 <span>                                                         sample_type <span class="op">=</span> <span class="st">"mucus"</span>,</span>
 <span>                                                         assay_type <span class="op">=</span> <span class="st">"Ots28_Early1"</span>,</span>
@@ -261,7 +240,7 @@ filepath to the result data excel workbook, the sample details dataframe
 described above, and the plate size run <em>(either 96 or 384)</em>. The
 function will return a list containing both the raw and final assay
 results.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">results</span> <span class="op">&lt;-</span> <span class="fu">grunID</span><span class="fu">::</span><span class="fu"><a href="../reference/process_sherlock.html">process_sherlock</a></span><span class="op">(</span>sherlock_results_filepath <span class="op">=</span> <span class="st">"path_to/SynergyH1_data.xlsx"</span>,</span>
 <span>                                    sample_details <span class="op">=</span> <span class="va">sample_details</span>,</span>
 <span>                                    plate_size <span class="op">=</span> <span class="fl">96</span><span class="op">)</span></span></code></pre></div>
@@ -272,10 +251,10 @@ results.</p>
 <p>Provide <code>add_assay_results</code> a valid connection to the
 database and the processed assay result data. The function returns the
 number or records added.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">grunID</span><span class="fu">::</span><span class="fu">add_assay_results</span><span class="op">(</span><span class="va">con</span>, <span class="va">results</span><span class="op">)</span></span></code></pre></div>
 <p>And finally, close your open connection to the database:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">DBI</span><span class="fu">::</span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbDisconnect.html" class="external-link">dbDisconnect</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
@@ -289,7 +268,7 @@ number or records added.</p>
 <li>prepare Synergy H1 result data for upload to the database</li>
 <li>upload assay result data to the database</li>
 </ol>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cfg</span> <span class="op">&lt;-</span> <span class="fu">config</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/config/man/get.html" class="external-link">get</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">con</span> <span class="op">&lt;-</span> <span class="fu">DBI</span><span class="fu">::</span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbConnect.html" class="external-link">dbConnect</a></span><span class="op">(</span><span class="fu">RPostgres</span><span class="fu">::</span><span class="fu"><a href="https://rpostgres.r-dbi.org/reference/Postgres.html" class="external-link">Postgres</a></span><span class="op">(</span><span class="op">)</span>,</span>

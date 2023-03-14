@@ -6,13 +6,7 @@ library(tidyverse)
 library(readxl)
 
 # connect to runID database
-cfg <- config::get()
-con <- DBI::dbConnect(RPostgres::Postgres(),
-               dbname = cfg$dbname,
-               host = cfg$host,
-               port = cfg$port,
-               user = cfg$username,
-               password = cfg$password)
+con <- gr_db_connect() # this searches for a config file, starting at the working directory.
 
 # check connection is working - should see head of these tables
 tbl(con, "agency")
