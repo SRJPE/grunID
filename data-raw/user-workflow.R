@@ -22,7 +22,6 @@ tbl(con, "status_code")
 # in the database and contains location codes, sample events, sample bins,
 # min/max fork lengths, sample dates, and sample IDs
 # running this does the following:
-
 sample_plan_2022_final <- read_csv("data-raw/2022_sample_plan.csv") |> distinct_all()
 
 # filter sample plan to locations (this isn't necessary but helpful for
@@ -44,15 +43,16 @@ feather_17_sample_plan <- sample_plan_2022_final |>
 # adds sample bins for each event SAMPLE_BIN
 # adds samples with ids
 # updates sample status for each to "created"
-# returns the number of IDs created
-feather_61_ids <- add_sample_plan(con, feather_61_sample_plan, verbose = TRUE)
+# stores the number of IDs created
+feather_61_total <- add_sample_plan(con, feather_61_sample_plan, verbose = TRUE)
 feather_17_total <- add_sample_plan(con, feather_17_sample_plan, verbose = TRUE)
 
 # now, prepare to run plates
 
 # get metadata for plate run.
 # first, check all protocols to select the correct one:
-all_protocols <- get_protocols(con) |> print(n=Inf)
+all_protocols <- get_protocols(con)
+all_protocols |> View()
 
 # review available protocols and select appropriate protocol id
 protocol_id <- all_protocols |>
@@ -79,7 +79,8 @@ plate_run_4_7_early_id <- add_plate_run(con,
                                         genetic_method_id = genetic_method_id,
                                         laboratory_id = laboratory_id,
                                         lab_work_performed_by = "user",
-                                        description = "early run for plates 4-7") # TODO determine the user
+                                        description = "early run for plates 4-7")
+tbl(con, "plate_run")
 
 # ots 28 late run
 plate_run_4_7_late_id <- add_plate_run(con,
@@ -88,7 +89,7 @@ plate_run_4_7_late_id <- add_plate_run(con,
                                        genetic_method_id = genetic_method_id,
                                        laboratory_id = laboratory_id,
                                        lab_work_performed_by = "user",
-                                       description = "late run for plates 4-7") # TODO determine the user
+                                       description = "late run for plates 4-7")
 
 
 # read in the plate run map that is created before the plate is run.
@@ -99,8 +100,6 @@ plate_run_4_7_late_id <- add_plate_run(con,
 # either "mucus" or "fin clip" as well as assay type - see ?process_well_sample_details()
 # for acceptable arguments.
 
-# TODO rename to process_well_sample_details
-# TODO check what colors mean in plate map "sheet"
 plate_4_to_7_layout_early <- process_well_sample_details(filepath = "data-raw/sherlock-example-outputs/JPE_Chnk_Early+Late_Plates4-7_results.xlsx",
                                                          sample_type = "mucus",
                                                          assay_type = "Ots28_Early1",
@@ -128,8 +127,10 @@ results_plates_4_7_late <- process_sherlock(
   plate_size = 384)
 
 # add raw assay results to database
+tbl(con, "raw_assay_result")
 plate_4_7_early <- add_raw_assay_results(con, results_plates_4_7_early)
 plate_4_7_late <- add_raw_assay_results(con, results_plates_4_7_late)
+tbl(con, "raw_assay_result")
 
 # generate thresholds from raw assay results
 thresholds_4_7_early <- generate_threshold(con, plate_run_identifier = plate_run_4_7_early_id)
