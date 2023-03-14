@@ -221,30 +221,41 @@ add_genetic_identification <- function(con, sample_identifiers) {
   ) |>
     dplyr::mutate(
       status_code_id = dplyr::case_when(
+        # `1`, `2`, `3`, `4` correspond to assay ids (see table "assay")
+        # for cases where only one assay (1 or 2) was run:
         `1` & is.na(`2`) ~ 6,
-        `2` & is.na(`1`) ~ 6,
         !`1` & is.na(`2`) ~ 6,
+        `2` & is.na(`1`) ~ 6,
         !`2` & is.na(`1`) ~ 6,
+        # for cases where assays 1 and 2 have been run:
         `1` & !`2` ~ 8,
         `2` & !`1` ~ 11,
         `1` & `2` ~ 11,
-        !`1` & !`2` ~ 7,
+        !`1` & !`2` ~ 7, # TODO confirm meaning of status code 7 - potential to change description
+        # for cases where one of assay (3, 4) was run:
         `3` & is.na(`4`) ~ 9,
         `4` & is.na(`3`) ~ 9,
         !`3` & is.na(`4`) ~ 9,
         !`4` & is.na(`3`) ~ 9,
+        # for cases where assays 1, 2, 3, and 4 have been run:
         `3` & !`4` ~ 11,
         `4` & !`3` ~ 11,
         `3` & `4` ~ 11,
         !`3` & !`4` ~ 10
       ),
       run_type_id = dplyr::case_when(
+        # assign run type based on status code and specific assay results
+        # see tables "run_type" and "status_code"
+        # for heterozygotes:
         status_code_id == 11 & `3` & `4` ~ 8,
+        status_code_id == 11 & `1` & `2` ~ 8,
+        # for spring/winter:
+        status_code_id == 11 & `1` ~ 6,
         status_code_id == 11 & `3` & !`4` ~ 1,
         status_code_id == 11 & `4` & !`3` ~ 4,
-        status_code_id == 11 & `1` & `2` ~ 8,
-        status_code_id == 11 & `1` ~ 6,
+        # for fall/late fall:
         status_code_id == 11 & `2` & !`1` ~ 5,
+        # for unknowns:
         status_code_id == 7 ~ 7,
         status_code_id == 10 ~ 7,
         TRUE ~ 0
