@@ -1,10 +1,11 @@
-#' Connect to Run ID Database
+# load libraries
 library(DBI)
 library(grunID)
 library(dplyr)
 library(tidyverse)
 library(readxl)
 
+# connect to runID database
 cfg <- config::get()
 con <- DBI::dbConnect(RPostgres::Postgres(),
                dbname = cfg$dbname,
@@ -13,18 +14,19 @@ con <- DBI::dbConnect(RPostgres::Postgres(),
                user = cfg$username,
                password = cfg$password)
 
+# check connection is working - should see head of these tables
 tbl(con, "agency")
 tbl(con, "status_code")
-# running this does the following:
 
+# read in sample plan created for the season. this contains all samples initialized
+# in the database and contains location codes, sample events, sample bins,
+# min/max fork lengths, sample dates, and sample IDs
 # running this does the following:
-# adds sample events to table SAMPLE_EVENT
-# adds sample bins for each event SAMPLE_BIN
-# adds samples with ids
-# updates sample status for each to "created"
 
 sample_plan_2022_final <- read_csv("data-raw/2022_sample_plan.csv") |> distinct_all()
 
+# filter sample plan to locations (this isn't necessary but helpful for
+# partitioning workflow)
 feather_61_sample_plan <- sample_plan_2022_final |>
   filter(location_code == "F61") |>
   mutate(sample_event_number = as.integer(sample_event_number),
@@ -37,27 +39,44 @@ feather_17_sample_plan <- sample_plan_2022_final |>
          min_fork_length = as.integer(min_fork_length),
          max_fork_length = as.integer(max_fork_length))
 
+# add sample plans to database. this code:
+# adds sample events to table SAMPLE_EVENT
+# adds sample bins for each event SAMPLE_BIN
+# adds samples with ids
+# updates sample status for each to "created"
+# returns the number of IDs created
 feather_61_ids <- add_sample_plan(con, feather_61_sample_plan, verbose = TRUE)
 feather_17_total <- add_sample_plan(con, feather_17_sample_plan, verbose = TRUE)
 
+# now, prepare to run plates
 
-# check to see if protocol for plate run exists or not
-all_protocols <- get_protocols(con)
+# get metadata for plate run.
+# first, check all protocols to select the correct one:
+all_protocols <- get_protocols(con) |> print(n=Inf)
 
+# review available protocols and select appropriate protocol id
+protocol_id <- all_protocols |>
+  filter(id == 1) |>
+  pull(id)
 
-# View(all_protocols) # review available protocols and select appropriate protocol
-protocol_id <- all_protocols[1, "id", drop = TRUE]
-
-# get lab id
+# select laboratory ID that corresponds to "DWR"
 laboratory_id <- get_laboratories(con) |>
   filter(stringr::str_detect(code, "DWR")) |> pull(id)
 
+# get genetic method id that corresponds to "SHERLOCK"
+genetic_method_id <- get_genetic_methods(con) |>
+  filter(method_name == "SHERLOCK") |>
+  pull(id)
+
+# add plate run to the database for each assay you plan to run.
+# be clear with names here. this returns an ID for the plate run
+# that will determine where your results are stored.
 
 # ots 28 early run
 plate_run_4_7_early_id <- add_plate_run(con,
                                         date_run = "2022-01-01",
                                         protocol_id = protocol_id,
-                                        genetic_method_id = 1,
+                                        genetic_method_id = genetic_method_id,
                                         laboratory_id = laboratory_id,
                                         lab_work_performed_by = "user",
                                         description = "early run for plates 4-7") # TODO determine the user
@@ -66,48 +85,36 @@ plate_run_4_7_early_id <- add_plate_run(con,
 plate_run_4_7_late_id <- add_plate_run(con,
                                        date_run = "2022-01-01",
                                        protocol_id = protocol_id,
-                                       genetic_method_id = 1,
+                                       genetic_method_id = genetic_method_id,
                                        laboratory_id = laboratory_id,
                                        lab_work_performed_by = "user",
                                        description = "late run for plates 4-7") # TODO determine the user
 
 
+# read in the plate run map that is created before the plate is run.
+# this plate map layout should contain generic sherlock-created sample IDs
+# which will then be aligned with the corresponding JPE sample IDs.
 
-# sample layout, is then created by the user and read in here
-# the plate run must be identified to correspond to
-# layout_ots_28_e <- process_well_sample_details("data-raw/ots_28_early_plate_details.csv",
-#                                       plate_run_id = plate_run_id_ots_28_e)
+# get_sample_details process the layout. User must specify assay type
+# either "mucus" or "fin clip" as well as assay type - see ?process_well_sample_details()
+# for acceptable arguments.
+
+# TODO rename to process_well_sample_details
+# TODO check what colors mean in plate map "sheet"
+plate_4_to_7_layout_early <- process_well_sample_details(filepath = "data-raw/sherlock-example-outputs/JPE_Chnk_Early+Late_Plates4-7_results.xlsx",
+                                                         sample_type = "mucus",
+                                                         assay_type = "Ots28_Early1",
+                                                         plate_run_id = plate_run_4_7_early_id)
+
+plate_4_to_7_layout_late <- process_well_sample_details(filepath = "data-raw/sherlock-example-outputs/JPE_Chnk_Early+Late_Plates4-7_results.xlsx",
+                                                        sample_type = "mucus",
+                                                        assay_type = "Ots28_Late1",
+                                                        plate_run_id = plate_run_4_7_late_id)
 
 
-#
-# layout_ots_28_l <- process_well_sample_details("data-raw/ots_28_late_plate_details.csv",
-#                                       plate_run_id = plate_run_id_ots_28_l)
-
-layout_raw <- read_excel("data-raw/sherlock-example-outputs/JPE_Chnk_Early+Late_Plates4-7_results.xlsx",
-                         sheet = "Plate Map")
-
-plate_4_to_7_layout_early <- layout_raw |>
-  pivot_longer(names_to="col_num", values_to = "sample_id", -...1) |>
-  transmute(
-    location = paste0(...1, col_num),
-    sample_id,
-    sample_type_id = 1,
-    assay_id = 1,
-    plate_run_id = plate_run_4_7_early_id
-  ) |>
-  mutate(sample_id = ifelse(sample_id == "NTC", "CONTROL", sample_id))
-
-plate_4_to_7_layout_late <- layout_raw |>
-  pivot_longer(names_to="col_num", values_to = "sample_id", -...1) |>
-  transmute(
-    location = paste0(...1, col_num),
-    sample_id,
-    sample_type_id = 1,
-    assay_id = 2,
-    plate_run_id = plate_run_4_7_late_id
-  ) |>
-  mutate(sample_id = ifelse(sample_id == "NTC", "CONTROL", sample_id))
-
+# pass sample details (well layout) to process_sherlock, which reads in
+# a file with the output of a sherlock machine. This function also maps
+# the generic IDs with the JPE sample IDs.
 # process
 results_plates_4_7_early <- process_sherlock(
   filepath = "data-raw/sherlock-example-outputs/JPE_Chnk_early_plates_4_7.xlsx",
@@ -120,18 +127,29 @@ results_plates_4_7_late <- process_sherlock(
   sample_details = plate_4_to_7_layout_late,
   plate_size = 384)
 
-
+# add raw assay results to database
 plate_4_7_early <- add_raw_assay_results(con, results_plates_4_7_early)
 plate_4_7_late <- add_raw_assay_results(con, results_plates_4_7_late)
 
+# generate thresholds from raw assay results
 thresholds_4_7_early <- generate_threshold(con, plate_run_identifier = plate_run_4_7_early_id)
 thresholds_4_7_late <- generate_threshold(con, plate_run_identifier = plate_run_4_7_late_id)
 
+# update assay detection results (TRUE or FALSE for a sample and assay type)
+# in the database
 update_assay_detection(con, thresholds_4_7_early)
 update_assay_detection(con, thresholds_4_7_late)
 
+# view assay results.
+# this table contains the sample IDs run, the assay type, and positive detection
+tbl(con, "assay_result")
 
+# see genetic run identification results
+tbl(con, "genetic_run_identification")
+# this is run type IDs and their associated run
+tbl(con, "run_type")
 
+# disconnect!
 DBI::dbDisconnect(con)
 
 
