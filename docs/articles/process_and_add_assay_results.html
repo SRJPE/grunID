@@ -158,7 +158,7 @@ will pass this connection object to the function.</p>
 critical plate run metadata with the assay results from that particular
 run in our database. We call <code><a href="../reference/add_plate_run.html">add_plate_run()</a></code> providing the
 protocol ID, method ID, laboratory ID, and the person who ran the plate.
-The function returns a unique plate run ID, that we will include with
+The function returns a unique plate run ID that will be associated with
 the assay result records. Because our assay results reference the plate
 run ID, we must add a plate run in our database before adding assay
 result data.</p>
@@ -168,15 +168,22 @@ existing protocols stored in the database with the following code:</p>
 <code class="sourceCode R"><span><span class="va">all_protocols</span> <span class="op">&lt;-</span> <span class="fu">grunID</span><span class="fu">::</span><span class="fu">get_protocol</span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span></code></pre></div>
 <p>Select appropriate protocol ID with this code:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">protocol_id</span> <span class="op">&lt;-</span> <span class="va">all_protocols</span><span class="op">[</span><span class="fl">1</span>, <span class="st">"id"</span>, drop <span class="op">=</span> <span class="cn">TRUE</span><span class="op">]</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">protocol_id</span> <span class="op">&lt;-</span> <span class="va">all_protocols</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/stats/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">id</span> <span class="op">==</span> <span class="fl">1</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu">pull</span><span class="op">(</span><span class="va">id</span><span class="op">)</span></span></code></pre></div>
 <p>Similarly, you can call <code>get_genetic_method()</code> and
 <code>get_laboratory_id()</code> to review the IDs associated with
 methods and laboratories within the database.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">genetic_method_id</span> <span class="op">&lt;-</span> <span class="fl">1</span> <span class="co"># SHERLOCK</span></span>
-<span><span class="va">laboratory_id</span> <span class="op">&lt;-</span> <span class="fl">1</span> <span class="co"># DWR GeM</span></span>
-<span><span class="va">plate_run_uid</span> <span class="op">&lt;-</span> <span class="fu">grunID</span><span class="fu">::</span><span class="fu"><a href="../reference/add_plate_run.html">add_plate_run</a></span><span class="op">(</span><span class="va">con</span>, <span class="va">protocol_id</span>, <span class="va">genetic_method_id</span>,</span>
-<span>                                       <span class="va">laboratory_id</span>, lab_work_preformed_by <span class="op">=</span> <span class="st">"Yogi Bear"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">genetic_method_id</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_genetic_methods.html">get_genetic_methods</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/stats/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">method_name</span> <span class="op">==</span> <span class="st">"SHERLOCK"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu">pull</span><span class="op">(</span><span class="va">id</span><span class="op">)</span> <span class="co"># SHERLOCK</span></span>
+<span></span>
+<span><span class="va">laboratory_id</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_laboratories.html">get_laboratories</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/stats/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="fu">stringr</span><span class="fu">::</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_detect.html" class="external-link">str_detect</a></span><span class="op">(</span><span class="va">code</span>, <span class="st">"DWR"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">pull</span><span class="op">(</span><span class="va">id</span><span class="op">)</span> <span class="co"># DWR GeM</span></span>
+<span></span>
+<span><span class="va">plate_run_id</span> <span class="op">&lt;-</span> <span class="fu">grunID</span><span class="fu">::</span><span class="fu"><a href="../reference/add_plate_run.html">add_plate_run</a></span><span class="op">(</span><span class="va">con</span>, <span class="va">protocol_id</span>, <span class="va">genetic_method_id</span>,</span>
+<span>                                       <span class="va">laboratory_id</span>, lab_work_performed_by <span class="op">=</span> <span class="st">"Yogi Bear"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="prepare-sample-details">Prepare Sample Details<a class="anchor" aria-label="anchor" href="#prepare-sample-details"></a>
@@ -184,7 +191,7 @@ methods and laboratories within the database.</p>
 <p>The Synergy H1 result output from plate runs is organized using
 generic identifiers that need to be mapped to the real sample
 identifiers in order to properly associate the results with the correct
-sample id in the database.The output file’s <strong>Layout</strong>
+sample id in the database. The output file’s <strong>Layout</strong>
 section contains the well locations for samples encoded as non-unique
 generic sample ids <em>(e.g., SPL1, BLK)</em>. The number of rows and
 columns in the <strong>Layout</strong> vary based on the plate size. A
@@ -196,7 +203,8 @@ row A and column 3, then the measurements at each time step are recorded
 in a column labeled A3)</em>. To map the sample ids to the generic
 identifiers produced by the Synergy H1 software <em>(e.g., SPL1 and
 A3)</em>, we must provide the true sample ids and other metadata at each
-well location in the as a dataframe containing these columns:</p>
+well location in the results as a dataframe containing these
+columns:</p>
 <ul>
 <li>
 <strong>location:</strong> <em>(character)</em> letter-number
@@ -214,11 +222,23 @@ and 2 for fin clip</li>
 available options.</li>
 <li>
 <strong>plate_run_id:</strong> <em>(numeric)</em> the ID returned
-from running <code><a href="../reference/add_plate_run.html">add_plate_run()</a></code>, to associate important
+from running <code><a href="../reference/add_plate_run.html">add_plate_run()</a></code> to associate important
 metadata with the assay results</li>
 </ul>
-<p>Here is an <strong>example.csv</strong> file that is in the correct
-format for capturing sample details.</p>
+<p>We can map the generic sample identifiers <em>(e.g. SPL1)</em> to the
+JPE sample identifiers <em>(e.g. F1722_3_A_1)</em> using the
+<code>Plate Map</code> tab of the output file. This tab should contain
+the well layout locations with JPE sample identifiers, and the name of
+the tab has to be <code>Plate Map</code>. The function
+<code><a href="../reference/process_well_sample_details.html">process_well_sample_details()</a></code> then reads in that layout and
+maps the JPE sample identifiers to well locations, producing a dataframe
+in the correct format:</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">sample_details</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/process_well_sample_details.html">process_well_sample_details</a></span><span class="op">(</span>filepath <span class="op">=</span> <span class="st">"path_to/SynergyH1_data.xlsx"</span>,</span>
+<span>                                                         sample_type <span class="op">=</span> <span class="st">"mucus"</span>,</span>
+<span>                                                         assay_type <span class="op">=</span> <span class="st">"Ots28_Early1"</span>,</span>
+<span>                                                         plate_run_id <span class="op">=</span> <span class="va">plate_run_4_7_early_id</span><span class="op">)</span></span></code></pre></div>
+<p>The object sample_details is now a data frame that looks like:</p>
 <pre eval="FALSE"><code>location,sample_id,sample_type_id,assay_id,plate_run_id
 A3,BTC22_3_A_1,1,1,1
 A4,BTC22_3_A_2,1,1,1
@@ -229,9 +249,8 @@ B6,BTC22_3_B_3,1,1,1</code></pre>
 <p>The sample details as a dataframe are an argument to
 <code><a href="../reference/process_sherlock.html">process_sherlock()</a></code>, the function that extracts assay result
 data from the Synergy H1 reader output and transforms the data into the
-correct format for the database.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">sample_details</span> <span class="op">&lt;-</span> <span class="fu">readr</span><span class="fu">::</span><span class="fu"><a href="https://readr.tidyverse.org/reference/read_delim.html" class="external-link">read_csv</a></span><span class="op">(</span><span class="st">"path_to/example.csv"</span><span class="op">)</span></span></code></pre></div>
+correct format for the database. This maps the generic sample
+identifiers to the JPE sample identifiers by well location.</p>
 </div>
 <div class="section level2">
 <h2 id="process-sherlock-results">Process SHERLOCK Results<a class="anchor" aria-label="anchor" href="#process-sherlock-results"></a>
@@ -281,9 +300,12 @@ number or records added.</p>
 <span>                      password <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">password</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">plate_run_uid</span> <span class="op">&lt;-</span> <span class="fu">grunID</span><span class="fu">::</span><span class="fu"><a href="../reference/add_plate_run.html">add_plate_run</a></span><span class="op">(</span><span class="va">con</span>, protocol_id <span class="op">=</span> <span class="fl">1</span>, genetic_method_id <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>                                       laboratory_id <span class="op">=</span> <span class="fl">1</span>, lab_work_preformed_by <span class="op">=</span> <span class="st">"Yogi Bear"</span><span class="op">)</span></span>
+<span>                                       laboratory_id <span class="op">=</span> <span class="fl">1</span>, lab_work_performed_by <span class="op">=</span> <span class="st">"Yogi Bear"</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">sample_details</span> <span class="op">&lt;-</span> <span class="fu">readr</span><span class="fu">::</span><span class="fu"><a href="https://readr.tidyverse.org/reference/read_delim.html" class="external-link">read_csv</a></span><span class="op">(</span><span class="st">"path_to/example.csv"</span><span class="op">)</span></span>
+<span><span class="va">sample_details</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/process_well_sample_details.html">process_well_sample_details</a></span><span class="op">(</span>filepath <span class="op">=</span> <span class="st">"path_to/SynergyH1_data.xlsx"</span>,</span>
+<span>                                                         sample_type <span class="op">=</span> <span class="st">"mucus"</span>,</span>
+<span>                                                         assay_type <span class="op">=</span> <span class="st">"Ots28_Early1"</span>,</span>
+<span>                                                         plate_run_id <span class="op">=</span> <span class="va">plate_run_4_7_early_id</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">results</span> <span class="op">&lt;-</span> <span class="fu">grunID</span><span class="fu">::</span><span class="fu"><a href="../reference/process_sherlock.html">process_sherlock</a></span><span class="op">(</span>sherlock_results_filepath <span class="op">=</span> <span class="st">"path_to/SynergyH1_data.xlsx"</span>,</span>
 <span>                                    sample_details <span class="op">=</span> <span class="va">sample_details</span>,</span>
