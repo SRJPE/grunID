@@ -22,7 +22,6 @@ tbl(con, "status_code")
 # in the database and contains location codes, sample events, sample bins,
 # min/max fork lengths, sample dates, and sample IDs
 # running this does the following:
-
 sample_plan_2022_final <- read_csv("data-raw/2022_sample_plan.csv") |> distinct_all()
 
 # filter sample plan to locations (this isn't necessary but helpful for
