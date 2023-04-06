@@ -117,7 +117,10 @@ tbl(con, "assay_result")
 # see genetic run identification results
 tbl(con, "genetic_run_identification")
 # this is run type IDs and their associated run
-tbl(con, "run_type")
+tbl(con, "run_type") |> collect() |> print(n=Inf)
+
+spring_winter_samples <- get_spring_winter_samples(con) |>
+  print(n=10)
 
 # disconnect!
 DBI::dbDisconnect(con)
