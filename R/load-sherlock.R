@@ -264,7 +264,7 @@ add_genetic_identification <- function(con, sample_identifiers) {
     dplyr::filter(sample_id != "DELETE_ME") |>
     dplyr::select(sample_id, run_type_id, status_code_id)
 
-  spring_wiuinter <- run_types |>
+  spring_winter <- run_types |>
     filter(status_code_id == 8)
 
   message(paste0("samples needing OTS16 spring/winter: ", nrow(spring_winter)))
