@@ -264,6 +264,10 @@ add_genetic_identification <- function(con, sample_identifiers) {
     dplyr::filter(sample_id != "DELETE_ME") |>
     dplyr::select(sample_id, run_type_id, status_code_id)
 
+  spring_wiuinter <- run_types |>
+    filter(status_code_id == 8)
+
+  message(paste0("samples needing OTS16 spring/winter: ", nrow(spring_winter)))
 
   run_type_id_data <- run_types |> dplyr::filter(run_type_id != 0)
 
@@ -295,7 +299,24 @@ add_genetic_identification <- function(con, sample_identifiers) {
 }
 
 
+#' @title Samples needing spring/winter assays
+#' @description `get_spring_winter_samples` pulls sample IDs that need the
+#' OTS 16 Spring/Winter assays.
+#' @param con valid connection to database
+#' @details `get_spring_winter_samples` checks the database table `sample_status`
+#' to identify samples that have results for assays 1 and 2 and only had positive
+#' detection for assay 1. These samples require further analysis with the OTS 16 Spring/Winter
+#' assay.
+#' @returns A vector of sample IDs.
+#' @export
+get_spring_winter_samples <- function(con) {
+  spring_winter_samples <- dplyr::tbl(con, "sample_status") |>
+    collect() |>
+    filter(status_code_id == 8) |>
+    select(sample_id)
 
+  return(spring_winter_samples)
+}
 
 
 
