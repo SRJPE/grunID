@@ -16,7 +16,7 @@ con <- DBI::dbConnect(RPostgres::Postgres(),
 
 # for a sample event
 
-generate_subsample <- function(sample_event_ids,
+generate_subsample <- function(con, sample_event_ids,
                                project) {
 
   project <- tolower(project)
@@ -31,6 +31,7 @@ generate_subsample <- function(sample_event_ids,
 
   # initialize subsample
   subsamples <- vector("character")
+  max_no_samples <- 13
 
   # pull sample IDs, bin, and sites
   event_ids <- unique(sample_event_ids)
@@ -63,33 +64,67 @@ generate_subsample <- function(sample_event_ids,
     select(sample_id, bin = sample_bin_code, location = code,
            sample_event_id)
 
+  site_tallies <- all_samples |>
+    group_by(sample_event_id, location) |>
+    tally() |>
+    arrange(n) |>
+    rename(no_samples_from_site = n) |>
+    mutate(add_to_f61 = ifelse(location != "F61" & no_samples_from_site < max_no_samples,
+           (max_no_samples - no_samples_from_site), 0))
+
+  bin_tallies <- all_samples |>
+    group_by(sample_event_id, location, bin) |>
+    tally() |>
+    arrange(n) |>
+    rename(no_samples_from_bin = n)
+
+  all_samples_with_tallies <- all_samples |>
+    left_join(site_tallies, by = c("sample_event_id", "location")) |>
+    left_join(bin_tallies, by = c("sample_event_id", "location", "bin"))
+
+  no_subsamples_per_bin <- all_samples_with_tallies |>
+    distinct(sample_event_id, location, bin,
+             no_samples_from_site, no_samples_from_bin) |>
+    group_by(sample_event_id, location, bin) |>
+    summarise(no_subsamples_to_take = ceiling(max_no_samples *
+                                                (no_samples_from_bin/no_samples_from_site)))
+
+  all_samples_with_subsample_values <- left_join(all_samples_with_tallies,
+                                                 no_subsamples_per_bin,
+                                                 by = c("sample_event_id",
+                                                        "location",
+                                                        "bin"))
   if(project == "jpe") {
-    max_no_samples <- 13
-    no_samples_f61 <- max_no_samples
+
+    no_samples_f61 <- max_no_samples += sum(site_tallies$add_to_f61)
 
     if(length(unique(all_samples$sample_id)) <= 150) {
       subsamples <- unique(all_samples$sample_id)
       return(subsamples)
+
     } else {
 
       # save F61 for last
       if(!str_detect("F61", all_samples$sample_id)) {
 
+        if(all_samples$no_samples_from_site < max_no_samples) {
+          sample_IDs_for_assays <- all_samples_with_tallies |>
+            filter(no_samples_from_site < max_no_samples)
+          subsamples <- append(subsamples, sample_IDs_for_assays$sample_id)
+
+        } else {
+
+          test <- all_samples_with_subsample_values |>
+            group_split(sample_event_id, location, bin) |>
+            purrr::map_dfr(no_subsamples_to_take, ~ slice_sample(.x, n = .y))
+
+          subsample <- append(subsample, sample_IDs_for_assays)
+        }
 
       }
     }
 
   }
-  # if project = JPE:
-
-  subsample <- vector()
-  max_no_samples <- 13
-
-  # pull sample IDs from sample event id, also pull sample bin IDs, and site
-
-  # if length(sample IDs) <= 150 { subsample = sample_IDs}
-
-  no_samples_f61 <- max_no_samples
 
   # else:
 
