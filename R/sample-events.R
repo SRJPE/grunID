@@ -32,7 +32,8 @@ add_sample_plan <- function(con, sample_plan, verbose = FALSE) {
   sample_ids <- add_samples(con, sample_plan, sample_id_insert, verbose = verbose)
   number_of_samples_added <- set_sample_status(con, sample_ids, 1)
 
-  return(number_of_samples_added)
+  return(list("number_of_samples_added" = number_of_samples_added,
+              "sample_ids_created" = sample_event_ids))
 }
 
 #' Create sample events
