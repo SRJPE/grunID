@@ -52,10 +52,16 @@ following logic:
 \itemize{
 \item \code{split_plate_early_late}: columns 1:12 are OTS 28 Early and columns 13:24 are OTS 28 Late
 \item \code{split_plate_spring_winter}: columns 1:12 are OTS 16 Spring and columns 13:24 are OTS 16 Winter
+}
+
 If the \code{layout_type} argument is \code{triplicate}, the assay ids are assigned as follows:
+\itemize{
 \item rows A, E, I, and M are OTS 28 Early
 \item rows B, F, J, and N are OTS 28 Late
 \item rows C, G, K, and O are OTS 16 Spring
 \item rows D, H, L, and P are OTS 16 Winter
 }
+
+If the \code{layout_type} is \code{single_assay}, all sample IDs will be assigned the assay type you
+pass in as \code{single_assay_type}.
 }

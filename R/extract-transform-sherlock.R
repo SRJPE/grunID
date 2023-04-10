@@ -156,11 +156,15 @@ process_plate_layout <- function(filepath, plate_size) {
 #' following logic:
 #' * `split_plate_early_late`: columns 1:12 are OTS 28 Early and columns 13:24 are OTS 28 Late
 #' * `split_plate_spring_winter`: columns 1:12 are OTS 16 Spring and columns 13:24 are OTS 16 Winter
+#'
 #' If the `layout_type` argument is `triplicate`, the assay ids are assigned as follows:
 #' * rows A, E, I, and M are OTS 28 Early
 #' * rows B, F, J, and N are OTS 28 Late
 #' * rows C, G, K, and O are OTS 16 Spring
 #' * rows D, H, L, and P are OTS 16 Winter
+#'
+#' If the `layout_type` is `single_assay`, all sample IDs will be assigned the assay type you
+#' pass in as `single_assay_type`.
 #' @returns a table to be passed to `process_sherlock()`:
 #' ## plate_layout
 #' * location
