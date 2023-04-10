@@ -96,12 +96,14 @@ plate_run_4_7_late_id <- add_plate_run(con,
 
 plate_4_to_7_layout_early <- process_well_sample_details(filepath = "data-raw/sherlock-example-outputs/JPE_Chnk_Early+Late_Plates4-7_results.xlsx",
                                                          sample_type = "mucus",
-                                                         assay_type = "Ots28_Early1",
+                                                         layout_type = "single_assay",
+                                                         single_assay_type = "OTS28 Early",
                                                          plate_run_id = plate_run_4_7_early_id)
 
 plate_4_to_7_layout_late <- process_well_sample_details(filepath = "data-raw/sherlock-example-outputs/JPE_Chnk_Early+Late_Plates4-7_results.xlsx",
                                                         sample_type = "mucus",
-                                                        assay_type = "Ots28_Late1",
+                                                        layout_type = "single_assay",
+                                                        single_assay_type = "OTS28 Late",
                                                         plate_run_id = plate_run_4_7_late_id)
 
 
