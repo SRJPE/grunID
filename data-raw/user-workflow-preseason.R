@@ -44,41 +44,29 @@ feather_17_sample_plan <- sample_plan_2022_final |>
 feather_61_total <- add_sample_plan(con, feather_61_sample_plan, verbose = TRUE)
 feather_17_total <- add_sample_plan(con, feather_17_sample_plan, verbose = TRUE)
 
-# TODO draft function for combining get_field_sheet_event_plan() and
-# create_field_sheet() for all unique sample event IDs in a sample plan
-create_all_field_sheets <- function(added_sample_plan, field_sheet_filepath) {
-  # create workbook to append each sampling event tab
-  wb <- openxlsx::createWorkbook()
 
-  # loop through unique sample event IDs (input to get_field_sheet_event_plan) to append
-  # workbooks
-  unique_sample_ids <- unique(added_sample_plan$sample_ids_created$sample_event_id)
+# open workbook to create field sheets
+wb <- openxlsx::createWorkbook()
 
-  for(i in unique_sample_ids){
-    # use get_field_sheet_event_plan() to create a data frame containing content for the
-    # field sheets for sampling events in feather_61 and feather_17
-    # get_field_sheet_event_plan() retrieves sampling event information from the database
-    # that is needed to prepare field sheets. Looks up based on sampling event ID
-    plan <- get_field_sheet_event_plan(con, sample_event_id = i)
+# use get_field_sheet_event_plan() to create a data frame containing content for the
+# field sheets for sampling events
+# get_field_sheet_event_plan() retrieves sampling event information from the database
+# that is needed to prepare field sheets. Looks up based on sampling event ID
+plan <- get_field_sheet_event_plan(con, sample_event_id = 2)
 
-    # append a field sheet to the workbook for that sample event
-    # create field sheet for sampling crews to use.
-    # Takes in get_field_sheet_sample_plan$field_sheet_sample_plan
-    # leaves columns "Date", "Time", "FL(mm)", "Field run ID", "Fin clip (Y/N)", and "Comments"
-    # blank intentionally so that they can be filled out in the field
-    wb <- create_field_sheet(wb = wb,
-                             field_sheet_sample_plan = plan$field_sheet_sample_plan,
-                             sample_event_number = plan$sample_event_number,
-                             first_sample_date = plan$first_sample_date,
-                             sample_location = plan$location_name,
-                             sample_location_code = plan$location_code)
-  }
-  # then save
-  openxlsx::saveWorkbook(wb, paste0(field_sheet_filepath), overwrite = TRUE)
-}
+# append a field sheet to the workbook for that sample event
+# create field sheet for sampling crews to use.
+# Takes in get_field_sheet_sample_plan$field_sheet_sample_plan
+# leaves columns "Date", "Time", "FL(mm)", "Field run ID", "Fin clip (Y/N)", and "Comments"
+# blank intentionally so that they can be filled out in the field
+wb <- create_field_sheet(wb = wb,
+                         field_sheet_sample_plan = plan$field_sheet_sample_plan,
+                         sample_event_number = plan$sample_event_number,
+                         first_sample_date = plan$first_sample_date,
+                         sample_location = plan$location_name,
+                         sample_location_code = plan$location_code)
 
-create_all_field_sheets(added_sample_plan = feather_61_total, "data-raw/test_LS.xlsx")
-create_all_field_sheets(added_sample_plan = feather_17_total, "data-raw/test_LS.xlsx")
+openxlsx::saveWorkbook(wb, paste0(field_sheet_filepath), overwrite = TRUE)
 
 
 
