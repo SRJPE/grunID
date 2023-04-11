@@ -189,9 +189,10 @@ process_well_sample_details <- function(filepath, sample_type, layout_type, sing
 
     plate_layout <- layout_raw |>
       pivot_longer(names_to="col_num", values_to = "sample_id", -...1) |>
+      rename(row_num = ...1) |>
       mutate(assay_id = ifelse(col_num %in% 1:12, assay_ids[1], assay_ids[2])) |>
       transmute(
-        location = paste0(...1, col_num),
+        location = paste0(row_num, col_num),
         sample_id,
         sample_type_id = sample_type_id,
         assay_id = assay_id,
@@ -205,12 +206,13 @@ process_well_sample_details <- function(filepath, sample_type, layout_type, sing
     assay_ids <- seq(1:4) # all assays
     plate_layout <- layout_raw |>
       pivot_longer(names_to="col_num", values_to = "sample_id", -...1) |>
-      mutate(assay_id = case_when(...1 %in% c("A", "E", "I", "M") ~ 1,
-                                  ...1 %in% c("B", "F", "J", "N") ~ 2,
-                                  ...1 %in% c("C", "G", "K", "O") ~ 3,
-                                  ...1 %in% c("D", "H", "L", "P") ~ 4)) |>
+      rename(row_num = ...1) |>
+      mutate(assay_id = case_when(row_num %in% c("A", "E", "I", "M") ~ 1,
+                                  row_num %in% c("B", "F", "J", "N") ~ 2,
+                                  row_num %in% c("C", "G", "K", "O") ~ 3,
+                                  row_num %in% c("D", "H", "L", "P") ~ 4)) |>
       transmute(
-        location = paste0(...1, col_num),
+        location = paste0(row_num, col_num),
         sample_id,
         sample_type_id = sample_type_id,
         assay_id = assay_id,
@@ -232,8 +234,9 @@ process_well_sample_details <- function(filepath, sample_type, layout_type, sing
 
     plate_layout <- layout_raw |>
       pivot_longer(names_to="col_num", values_to = "sample_id", -...1) |>
+      rename(row_num = ...1) |>
       transmute(
-        location = paste0(...1, col_num),
+        location = paste0(row_num, col_num),
         sample_id,
         sample_type_id = sample_type_id,
         assay_id = assay_id,
