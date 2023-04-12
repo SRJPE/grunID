@@ -184,7 +184,8 @@ process_well_sample_details <- function(filepath, sample_type, layout_type, sing
   # split plate
   if(str_detect(layout_type, "split_plate")) {
 
-    assay_ids <- ifelse(layout_type == "split_plate_early_late", c(1, 2), c(3, 4))
+    assay_ids <- case_when(layout_type == "split_plate_early_late" ~ c(1, 2),
+                           layout_type == "split_plate_spring_winter" ~ c(3, 4))
 
     plate_layout <- layout_raw |>
       pivot_longer(names_to="col_num", values_to = "sample_id", -...1) |>
