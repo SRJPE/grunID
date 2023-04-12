@@ -177,15 +177,14 @@ process_plate_layout <- function(filepath, plate_size) {
 process_well_sample_details <- function(filepath, sample_type, layout_type, single_assay_type, plate_run_id) {
 
   layout_type <- tolower(layout_type)
-  sample_type_id <- if_else(sample_type == "mucus", 1, 2)
+  sample_type_id <- ifelse(sample_type == "mucus", 1, 2)
 
   layout_raw <- suppressMessages(read_excel(filepath,
                                             sheet = "Plate Map"))
   # split plate
   if(str_detect(layout_type, "split_plate")) {
 
-    assay_ids <- case_when(layout_type == "split_plate_early_late" ~ c(1, 2),
-                           layout_type == "split_plate_spring_winter" ~ c(3, 4))
+    assay_ids <- ifelse(layout_type == "split_plate_early_late", c(1, 2), c(3, 4))
 
     plate_layout <- layout_raw |>
       pivot_longer(names_to="col_num", values_to = "sample_id", -...1) |>
@@ -223,14 +222,14 @@ process_well_sample_details <- function(filepath, sample_type, layout_type, sing
 
   # single assay
   if(layout_type == "single_assay") {
-    if(is.null(single_assay_type)){
+    if(missing(single_assay_type)){
       stop("you must provide a single assay type if layout_type == single_assay")
     }
-
-    assay_id <- case_when(single_assay_type == "OTS28 Early" ~ 1,
-                           single_assay_type == "OTS28 Late" ~ 2,
-                           single_assay_type == "OTS16 Spring" ~ 3,
-                           single_assay_type == "OTS16 Winter" ~ 4)
+    single_assay_type <- tolower(single_assay_type)
+    assay_id <- case_when(single_assay_type == "ots28 early" ~ 1,
+                           single_assay_type == "ots28 late" ~ 2,
+                           single_assay_type == "ots16 spring" ~ 3,
+                           single_assay_type == "ots16 winter" ~ 4)
 
     plate_layout <- layout_raw |>
       pivot_longer(names_to="col_num", values_to = "sample_id", -...1) |>
