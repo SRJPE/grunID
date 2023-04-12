@@ -41,74 +41,52 @@ genetic_method_id <- get_genetic_methods(con) |>
 # be clear with names here. this returns an ID for the plate run
 # that will determine where your results are stored.
 
-# ots 28 early run
-plate_run_4_7_early_id <- add_plate_run(con,
+# this is if your plate has two assays
+split_plate_run_4_7_id <- add_plate_run(con,
                                         date_run = "2022-01-01",
                                         protocol_id = protocol_id,
                                         genetic_method_id = genetic_method_id,
                                         laboratory_id = laboratory_id,
                                         lab_work_performed_by = "user",
-                                        description = "early run for plates 4-7")
+                                        description = "early and late assays for plates 4-7")
 tbl(con, "plate_run")
-
-# ots 28 late run
-plate_run_4_7_late_id <- add_plate_run(con,
-                                       date_run = "2022-01-01",
-                                       protocol_id = protocol_id,
-                                       genetic_method_id = genetic_method_id,
-                                       laboratory_id = laboratory_id,
-                                       lab_work_performed_by = "user",
-                                       description = "late run for plates 4-7")
 
 
 # read in the plate run map that is created before the plate is run.
 # this plate map layout should contain generic sherlock-created sample IDs
 # which will then be aligned with the corresponding JPE sample IDs.
 
-# get_sample_details process the layout. User must specify assay type
-# either "mucus" or "fin clip" as well as assay type - see ?process_well_sample_details()
-# for acceptable arguments.
+# get_sample_details process the layout. User must specify layout type and
+# sample_type. See `?process_well_sample_details()` for acceptable arguments.
 
-plate_4_to_7_layout_early <- process_well_sample_details(filepath = "data-raw/sherlock-example-outputs/JPE_Chnk_Early+Late_Plates4-7_results.xlsx",
+# this is for the split plate version
+plate_4_to_7_layout_split <- process_well_sample_details(filepath = "data-raw/sherlock-example-outputs/JPE_Chnk_Early+Late_Plates4-7_results.xlsx",
                                                          sample_type = "mucus",
-                                                         assay_type = "Ots28_Early1",
-                                                         plate_run_id = plate_run_4_7_early_id)
-
-plate_4_to_7_layout_late <- process_well_sample_details(filepath = "data-raw/sherlock-example-outputs/JPE_Chnk_Early+Late_Plates4-7_results.xlsx",
-                                                        sample_type = "mucus",
-                                                        assay_type = "Ots28_Late1",
-                                                        plate_run_id = plate_run_4_7_late_id)
+                                                         layout_type = "split_plate_early_late",
+                                                         plate_run_id = split_plate_run_4_7_id)
 
 
 # pass sample details (well layout) to process_sherlock, which reads in
 # a file with the output of a sherlock machine. This function also maps
 # the generic IDs with the JPE sample IDs.
 # process
-results_plates_4_7_early <- process_sherlock(
+results_plates_4_7_split <- process_sherlock(
   filepath = "data-raw/sherlock-example-outputs/JPE_Chnk_early_plates_4_7.xlsx",
-  sample_details = plate_4_to_7_layout_early,
+  sample_details = plate_4_to_7_layout_split,
   plate_size = 384)
 
-
-results_plates_4_7_late <- process_sherlock(
-  filepath = "data-raw/sherlock-example-outputs/JPE_Chnk_late_plates_4_7.xlsx",
-  sample_details = plate_4_to_7_layout_late,
-  plate_size = 384)
 
 # add raw assay results to database
 tbl(con, "raw_assay_result")
-plate_4_7_early <- add_raw_assay_results(con, results_plates_4_7_early)
-plate_4_7_late <- add_raw_assay_results(con, results_plates_4_7_late)
+plate_4_7_split <- add_raw_assay_results(con, results_plates_4_7_split)
 tbl(con, "raw_assay_result")
 
 # generate thresholds from raw assay results
-thresholds_4_7_early <- generate_threshold(con, plate_run_identifier = plate_run_4_7_early_id)
-thresholds_4_7_late <- generate_threshold(con, plate_run_identifier = plate_run_4_7_late_id)
+thresholds_4_7_split <- generate_threshold(con, plate_run_identifier = split_plate_run_4_7_id)
 
 # update assay detection results (TRUE or FALSE for a sample and assay type)
 # in the database
-update_assay_detection(con, thresholds_4_7_early)
-update_assay_detection(con, thresholds_4_7_late)
+update_assay_detection(con, thresholds_4_7_split)
 
 # view assay results.
 # this table contains the sample IDs run, the assay type, and positive detection
