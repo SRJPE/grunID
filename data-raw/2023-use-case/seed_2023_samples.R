@@ -38,8 +38,7 @@ seed_components <- seed_components_raw |>
          max_fork_length = 200) |> # TODO placeholders
   glimpse()
 
-
-#write_csv(seed_components_raw, here::here("data-raw", "2022-use-case", "2022_seed_components_raw.csv"))
+# TODO add permit information into database
 
 # now insert into database ------------------------------------------------
 
