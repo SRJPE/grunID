@@ -38,7 +38,21 @@ seed_components <- seed_components_raw |>
          max_fork_length = 200) |> # TODO placeholders
   glimpse()
 
-# TODO add permit information into database
+# TODO add permit information into database (see code below) OR
+# TODO check if Emanuel removed permit dependency as noted in his slack message
+
+# INSERT INTO permit (
+# location_name,
+# location_description,
+# survey_type,
+# life_stage,
+# origin,
+# authorized_take,
+# code,
+# recipient,
+# expiration_date,
+# comment
+# ) VALUES ('2022 seeds', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', '2023-10-28', 'this permit is for 2022 seed data');
 
 # now insert into database ------------------------------------------------
 
