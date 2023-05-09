@@ -310,6 +310,7 @@ add_genetic_identification <- function(con, sample_identifiers) {
 #' @returns A vector of sample IDs.
 #' @export
 get_spring_winter_samples <- function(con) {
+  # TODO add "season" argument; defaults to current season
   spring_winter_samples <- dplyr::tbl(con, "sample_status") |>
     collect() |>
     filter(status_code_id == 8) |>
@@ -318,6 +319,8 @@ get_spring_winter_samples <- function(con) {
   return(spring_winter_samples)
 }
 
+# TODO build similar function that queries status code (needs to be rerun)
+# TODO move these to a different R script
 
 
 
