@@ -264,26 +264,6 @@ add_genetic_identification <- function(con, sample_identifiers) {
 }
 
 
-#' @title Samples needing spring/winter assays
-#' @description `get_spring_winter_samples` pulls sample IDs that need the
-#' OTS 16 Spring/Winter assays.
-#' @param con valid connection to database
-#' @details `get_spring_winter_samples` checks the database table `sample_status`
-#' to identify samples that have results for assays 1 and 2 and only had positive
-#' detection for assay 1. These samples require further analysis with the OTS 16 Spring/Winter
-#' assay.
-#' @returns A vector of sample IDs.
-#' @export
-get_spring_winter_samples <- function(con) {
-  # TODO add "season" argument; defaults to current season
-  spring_winter_samples <- dplyr::tbl(con, "sample_status") |>
-    collect() |>
-    filter(status_code_id == 8) |>
-    select(sample_id)
-
-  return(spring_winter_samples)
-}
-
 
 
 
