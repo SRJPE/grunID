@@ -119,8 +119,8 @@ tbl(con, "genetic_run_identification")
 # this is run type IDs and their associated run
 tbl(con, "run_type") |> collect() |> print(n=Inf)
 
-spring_winter_samples <- get_spring_winter_samples(con) |>
-  print(n=10)
+# see samples that need further analysis
+get_samples_needing_action(con)
 
 # disconnect!
 DBI::dbDisconnect(con)
