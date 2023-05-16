@@ -89,7 +89,9 @@ get_samples_needing_action <- function(con) {
 
   repeat_ots_28 <- dplyr::tbl(con, "sample_status") |>
     collect() |>
-    filter(status_code_id == 7) |>
+    left_join(dplyr::tbl(con, "genetic_run_identification") |>
+                collect(), by = "sample_id") |>
+    filter(status_code_id == 7 & run_type_id == 7) |>
     select(sample_id)
 
   repeat_ots_16 <- dplyr::tbl(con, "sample_status") |>
@@ -99,7 +101,9 @@ get_samples_needing_action <- function(con) {
 
   potential_heterozygotes <- dplyr::tbl(con, "sample_status") |>
     collect() |>
-    filter(status_code_id == 11) |>
+    left_join(dplyr::tbl(con, "genetic_run_identification") |>
+                collect(), by = "sample_id") |>
+    filter(status_code_id == 11 & run_type_id == 8) |>
     select(sample_id)
 
   return(list("needs_ots_16" = needs_ots_16,
