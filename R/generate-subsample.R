@@ -1,3 +1,79 @@
+
+
+# draft subsample function ------------------------------------------------
+
+con
+sample_event_numbers <- 3
+season <- 2022
+
+# initialize subsample vector
+subsamples <- vector("character")
+max_no_samples <- 13
+max_no_samples_f61 <- max_no_samples
+
+# get unique sample event IDs
+event_numbers <- unique(sample_event_numbers)
+
+# get sample event number and location code
+sample_event_information <- tbl(con, "sample_event") |>
+  filter(sample_event_number %in% event_numbers,
+         year(first_sample_date) %in% season) |>
+  collect() |>
+  left_join(tbl(con, "sample_location") |>
+              collect() |>
+              select(sample_location_id = id, code),
+            by = "sample_location_id") |>
+  select(sample_event_number, sample_event_id = id, code)
+
+# get sample bin information
+sample_bin_information <- tbl(con, "sample_bin") |>
+  collect()  |>
+  filter(sample_event_id %in% sample_event_information$sample_event_id) |>
+  select(sample_bin_id = id, sample_event_id, sample_bin_code)
+
+# get sample IDs
+sample_id_information <- tbl(con, "sample") |>
+  collect() |>
+  filter(sample_bin_id %in% sample_bin_information$sample_bin_id) |>
+  select(sample_id = id, sample_bin_id)
+
+# join sample bin, sample event number, and location code to sample IDs
+all_samples <- left_join(sample_id_information,
+                         sample_bin_information,
+                         by = "sample_bin_id") |>
+  left_join(sample_event_information,
+            by = "sample_event_id") |>
+  mutate(sample_bin_code = as.character(sample_bin_code)) |>
+  select(sample_id, bin = sample_bin_code, location = code,
+         sample_event_id, sample_event_number)
+
+F61_samples <- all_samples |>
+  filter(location == "F61")
+
+F61_sizes_per_bin <- structure(list(bin = c("A", "B", "C"), n = c(30L, 40L, 50L)),
+                               class = c("tbl_df", "tbl", "data.frame"), row.names = c(NA, -3L))
+
+F61_sizes_per_bin <- F61_samples |>
+  group_by(bin) |>
+  tally() |>
+  arrange(n) |> # TODO how to "sort"/apportion samples if all are equal? tiebreaker
+  mutate(samples_to_take = ceiling(max_no_samples * (n / sum(n))),
+         running_count = cumsum(samples_to_take),
+         threshold = (running_count - max_no_samples),
+         final_samples_to_take = ifelse(threshold > 0, (samples_to_take - threshold), samples_to_take))
+
+F61_samples |>
+  group_by(bin) |>
+  sample_n(size = F61_sizes_per_bin$final_samples_to_take)
+
+
+
+
+
+# scratch -----------------------------------------------------------------
+
+
+
 # get subsample for assays
 #' Set Status Code
 #' @description Set the status code for existing samples
@@ -30,7 +106,7 @@ generate_subsample <- function(con, sample_event_ids,
   }
 
   if(!is.numeric(sample_event_id)) {
-    stop("Sample event IDs must be in the correct format")
+    stop("Sample event IDs must be numeric")
   }
 
   # initialize subsample vector
