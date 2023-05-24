@@ -19,8 +19,8 @@ seed_components_raw <- sample_ids_2023 |>
   mutate(location_code = substr(location_and_date, 1, 3),
          first_sample_year = substr(location_and_date, 4, 5),
          first_sample_date = ifelse(first_sample_year == "", NA_character_, paste0("20", first_sample_year, "-01-01")),
-         location_code = ifelse(location_code == "F17", "FTH_RM17", location_code),
-         location_code = ifelse(location_code == "F61", "FTH_RM61", location_code),
+         # location_code = ifelse(location_code == "F17", "FTH_RM17", location_code),
+         # location_code = ifelse(location_code == "F61", "FTH_RM61", location_code),
          first_sample_date = as.Date(first_sample_date)) |>
   select(-location_and_date) |>
   glimpse()
@@ -37,12 +37,29 @@ seed_components <- seed_components_raw |>
   left_join(sample_location_ids, by = "location_code") |>
   mutate(min_fork_length = 1,
          max_fork_length = 200) |> # these are placeholders for sample_bin table
-  filter(location_code != "YUR",
-         sample_bin_code != "XTRA") |>
+  filter(sample_bin_code != "XTRA") |>
   glimpse()
 
 seed_components_for_event_table <- seed_components |>
   distinct(sample_event_number, location_id, first_sample_date) |> glimpse()
+
+
+# Create sample plan --------------------------------
+sample_plan_2023 <- seed_components |>
+  transmute(
+    location_code,
+    sample_event_number,
+    first_sample_date,
+    sample_bin_code,
+    min_fork_length,
+    max_fork_length,
+    expected_number_of_samples = 50
+  ) |>
+  distinct_all()
+
+
+sample_plan_2023 |> arrange(location_code, sample_bin_code, sample_event_number) |> View()
+
 
 
 # now insert into database ------------------------------------------------

@@ -7,12 +7,9 @@ library(DBI)
 
 # establish connection
 cfg <- config::get()
-con <- DBI::dbConnect(RPostgres::Postgres(),
-                      dbname = cfg$dbname,
-                      host = cfg$host,
-                      port = cfg$port,
-                      user = cfg$username,
-                      password = cfg$password)
+
+con <- gr_db_connect(username = "erodriguez_flowwest.com#EXT#@cawater.onmicrosoft.com", host = "run-id-database.postgres.database.azure.com", dbname = "runiddb-prod")
+
 
 # read in sample plan created for the season. this contains
 # contains location codes, sample events, sample bins,
@@ -20,17 +17,24 @@ con <- DBI::dbConnect(RPostgres::Postgres(),
 # needs to be in tidy format
 # TODO this needs to be made by users at the beginning of the season
 sample_plan_2022_final <- read_csv("data-raw/2022_sample_plan.csv") |> distinct_all()
+sample_plan_2023_final <- read_csv("data-raw/sample_plan_2023.csv") |> distinct_all()
 
 # filter sample plan to locations (this isn't necessary but helpful for
 # partitioning workflow)
-feather_61_sample_plan <- sample_plan_2022_final |>
+feather_61_sample_plan <- sample_plan_2023_final |>
   filter(location_code == "F61") |>
   mutate(sample_event_number = as.integer(sample_event_number),
          min_fork_length = as.integer(min_fork_length),
          max_fork_length = as.integer(max_fork_length))
 
-feather_17_sample_plan <- sample_plan_2022_final |>
+feather_17_sample_plan <- sample_plan_2023_final |>
   filter(location_code == "F17") |>
+  mutate(sample_event_number = as.integer(sample_event_number),
+         min_fork_length = as.integer(min_fork_length),
+         max_fork_length = as.integer(max_fork_length))
+
+deer_sample_plan <- sample_plan_2023_final |>
+  filter(location_code == "DER") |>
   mutate(sample_event_number = as.integer(sample_event_number),
          min_fork_length = as.integer(min_fork_length),
          max_fork_length = as.integer(max_fork_length))
@@ -43,6 +47,7 @@ feather_17_sample_plan <- sample_plan_2022_final |>
 # returns the number of IDs created and the unique sample IDs created
 feather_61_total <- add_sample_plan(con, feather_61_sample_plan, verbose = TRUE)
 feather_17_total <- add_sample_plan(con, feather_17_sample_plan, verbose = TRUE)
+deer_total <- add_sample_plan(con, deer_sample_plan, verbose = TRUE)
 
 # open workbook to create field sheets
 wb <- openxlsx::createWorkbook()
