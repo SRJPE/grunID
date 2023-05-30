@@ -3,12 +3,13 @@
 #' values for an assay.
 #' @param con valid connection to the database
 #' @param plate_run_identifier plate run identifier value
+#' @param .control_id the identifier within the plate run to use as control for calculating thresholds, defaults to "POS-DNA"
 #' @details For each assay on a plate run, the threshold value is calculated as two times
 #' the mean value of the last time step from the control blank wells. Each
 #' assay on a plate will have its own control blanks and threshold value.
 #' @returns
 #' @export
-generate_threshold <- function(con, plate_run_identifier) {
+generate_threshold <- function(con, plate_run_identifier, .control_id="POS-DNA") {
 
   if (!DBI::dbIsValid(con)) {
     stop("Connection argument does not have a valid connection the run-id database.
@@ -26,9 +27,13 @@ generate_threshold <- function(con, plate_run_identifier) {
 
   control_blanks <- dplyr::tbl(con, "raw_assay_result") |>
     dplyr::filter(time == runtime,
-           sample_id == "CONTROL",
+           sample_id == !!.control_id,
            plate_run_id == plate_run_identifier) |>
     dplyr::collect()
+
+  if (nrow(control_blanks) == 0) {
+    stop(paste0("no control variables found in plate run with id: '", plate_run_identifier, "'"), call. = FALSE)
+  }
 
   thresholds <- control_blanks |>
     dplyr::group_by(plate_run_id, assay_id) |>
