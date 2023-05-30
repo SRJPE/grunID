@@ -6,7 +6,7 @@
 #' @details For each assay on a plate run, the threshold value is calculated as two times
 #' the mean value of the last time step from the control blank wells. Each
 #' assay on a plate will have its own control blanks and threshold value.
-#' @returns
+#' @returns a table containing thresholds for an event, to be passed to `update_assay_detections()`
 #' @export
 generate_threshold <- function(con, plate_run_identifier) {
 
@@ -37,7 +37,9 @@ generate_threshold <- function(con, plate_run_identifier) {
     ) |> ungroup() |>
     dplyr::mutate(runtime = runtime)
 
-  return(thresholds)
+  output <- structure(thresholds, comment = "store output of this function to pass as argument to update_assay_detections()")
+  message(attributes(output)$comment)
+  return(output)
 }
 
 #' @title Set detection for assay results
@@ -157,6 +159,9 @@ check_results_complete <- function(con, sample_identifiers) {
 #' @param lab_work_performed_by name of staff who performed the plate run
 #' @param description a description for the plate run
 #' @param date_run date of plate run
+#' @returns the unique plate run identifier assigned by the database. This value needs to be retained
+#' in the workflow so it can be passed as an argument to functions `process_well_sample_details()` and
+#' `generate_threshold()`.
 #' @export
 add_plate_run <- function(con, protocol_id, genetic_method_id,
                           laboratory_id, lab_work_performed_by, description, date_run) {
@@ -175,7 +180,10 @@ add_plate_run <- function(con, protocol_id, genetic_method_id,
   plate_run_id <- DBI::dbFetch(res)
   DBI::dbClearResult(res)
 
-  return(plate_run_id$id)
+  return_id <- structure(plate_run_id$id, comment = "store plate run ID to pass as argument to process_well_sample_details() and generate_threshold()")
+  message(attributes(return_id)$comment)
+  return(return_id)
+  #return(plate_run_id$id)
 }
 
 
@@ -185,7 +193,7 @@ add_raw_assay_results <- function(con, assay_results) {
 
   res <- DBI::dbAppendTable(con, "raw_assay_result", assay_results)
 
-  return(res)
+  return(c("raw assay results added" = res))
 }
 
 

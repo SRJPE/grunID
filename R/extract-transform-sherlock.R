@@ -28,7 +28,7 @@
 #' the function that creates a new plate run record in the database to associate
 #' important metadata with the assay results
 #' @returns
-#' A table:
+#' A table to be passed to `add_raw_assay_results()`:
 #' ## 1) raw_assay_results
 #' * sample_id
 #' * raw_fluorescence
@@ -57,7 +57,9 @@ process_sherlock <- function(filepath, sample_details,
 
   raw_assay_results <- process_raw_assay_results(filepath, ranges = cell_ranges, plate_size, layout)
 
-  return(raw_assay_results)
+  output <- structure(raw_assay_results, comment = "store output to pass as argument to add_raw_assay_results()")
+  message(attributes(output)$comment)
+  return(output)
 
 }
 
@@ -245,7 +247,9 @@ process_well_sample_details <- function(filepath, sample_type, layout_type, sing
       mutate(sample_id = ifelse(sample_id == "NTC", "CONTROL", sample_id))
   }
 
-  return(plate_layout)
+  output <- structure(plate_layout, comment = "store output of this function to pass as argument to process_sherlock()")
+  message(attributes(output)$comment)
+  return(output)
 }
 
 expected_layout_colnames <- function() {
