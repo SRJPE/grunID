@@ -3,6 +3,7 @@
 #' values for an assay.
 #' @param con valid connection to the database
 #' @param plate_run_identifier plate run identifier value
+#' @param .control_id the identifier within the plate run to use as control for calculating thresholds, defaults to "POS-DNA"
 #' @details For each assay on a plate run, the threshold value is calculated as two times
 #' the mean value of the last time step from the control blank wells. Each
 #' assay on a plate will have its own control blanks and threshold value.
