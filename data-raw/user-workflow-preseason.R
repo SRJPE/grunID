@@ -8,7 +8,7 @@ library(DBI)
 # establish connection
 cfg <- config::get()
 
-con <- gr_db_connect(username = "erodriguez_flowwest.com#EXT#@cawater.onmicrosoft.com", host = "run-id-database.postgres.database.azure.com", dbname = "runiddb-prod")
+con <- gr_db_connect()
 
 
 # read in sample plan created for the season. this contains
