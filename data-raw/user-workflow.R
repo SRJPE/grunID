@@ -57,29 +57,15 @@ plate_run_id_event <- add_plate_run(con,
 tbl(con, "plate_run")
 
 
-# read in the plate run map that is created before the plate is run.
-# this plate map layout should contain generic sherlock-created sample IDs
-# which will then be aligned with the corresponding JPE sample IDs.
-
-# get_sample_details process the layout. User must specify layout type and
-# sample_type. See `?process_well_sample_details()` for acceptable arguments.
-
-# this is for the split plate version
-# plate_map_details is a variable you will need to pass to a later function
-plate_map_details_event <- process_well_sample_details(filepath = "data-raw/sherlock-example-outputs/JPE_Chnk_Early+Late_Plates4-7_results.xlsx",
-                                                 sample_type = "mucus",
-                                                 layout_type = "split_plate_early_late",
-                                                 plate_run_id = plate_run_id_event)
-
-
-# pass plate map details (well layout) to process_sherlock, which reads in
-# a file with the output of a sherlock machine. This function also maps
-# the generic IDs with the JPE sample IDs.
-# sherlock_results is a variable you will need to pass to a later function
-sherlock_results_event <- process_sherlock(
-  filepath = "data-raw/sherlock-example-outputs/JPE_Chnk_early_plates_4_7.xlsx",
-  sample_details = plate_map_details_event,
-  plate_size = 384)
+# this function reads in an excel file that contains both sherlock output and the
+# plate map associated with that sherlock run. The plate map tab needs to be titled
+# "plate_map". See templates/ for an example file.
+# the output of this function needs to be stored so it can be passed to add_raw_assay_results()
+sherlock_results_event <- process_sherlock(filepath = "data-raw/sherlock-example-outputs/JPE_Chnk_Early+Late_Plates4-7_results.xlsx",
+                                           sample_type = "mucus",
+                                           layout_type = "split_plate_early_late",
+                                           plate_run_id = plate_run_id_event,
+                                           plate_size = 384)
 
 
 # add raw assay results to database
