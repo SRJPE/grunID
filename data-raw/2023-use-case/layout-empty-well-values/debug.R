@@ -35,3 +35,7 @@ sample_plan_subset <- sample_plan_2023_final |>
 # updates sample status for each to "created" (1)
 # returns the number of IDs created and the unique sample IDs created
 total_inserted <- add_sample_plan(con, sample_plan_subset, verbose = TRUE)
+
+
+sample_plan_subset |>
+  filter(location_code == "DER", sample_bin_code == "C") |> View()

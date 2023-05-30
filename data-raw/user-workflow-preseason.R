@@ -8,7 +8,16 @@ library(DBI)
 # establish connection
 cfg <- config::get()
 
-con <- gr_db_connect(username = "erodriguez_flowwest.com#EXT#@cawater.onmicrosoft.com", host = "run-id-database.postgres.database.azure.com", dbname = "runiddb-prod")
+
+con <- DBI::dbConnect(RPostgres::Postgres(),
+               dbname = cfg$dbname,
+               host = cfg$host,
+               port = 5432,
+               user = cfg$username,
+               password = cfg$password)
+
+
+# con <- gr_db_connect(username = "erodriguez_flowwest.com#EXT#@cawater.onmicrosoft.com", host = "run-id-database.postgres.database.azure.com", dbname = "runiddb-prod")
 
 
 # read in sample plan created for the season. this contains
@@ -16,7 +25,6 @@ con <- gr_db_connect(username = "erodriguez_flowwest.com#EXT#@cawater.onmicrosof
 # min/max fork lengths, sample dates, and sample IDs.
 # needs to be in tidy format
 # TODO this needs to be made by users at the beginning of the season
-sample_plan_2022_final <- read_csv("data-raw/2022_sample_plan.csv") |> distinct_all()
 sample_plan_2023_final <- read_csv("data-raw/sample_plan_2023.csv") |> distinct_all()
 
 # filter sample plan to locations (this isn't necessary but helpful for
