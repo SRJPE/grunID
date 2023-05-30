@@ -179,7 +179,7 @@ process_well_sample_details <- function(filepath, sample_type, layout_type, sing
   layout_type <- tolower(layout_type)
   sample_type_id <- ifelse(sample_type == "mucus", 1, 2)
 
-  layout_raw <- suppressMessages(read_excel(filepath,
+  layout_raw <- suppressMessages(readxl::read_excel(filepath,
                                             sheet = "plate_map"))
   # split plate
   if(str_detect(layout_type, "split_plate")) {
