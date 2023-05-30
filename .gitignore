@@ -6,3 +6,4 @@
 config.yml
 data-raw/~$*
 inst/doc
+*~$*xlsx
