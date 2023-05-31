@@ -14,8 +14,7 @@ protocol_template <- data.frame(software_version = "3.11.19",
                                 gain = 100,
                                 light_source = "Xenon Flash",
                                 lamp_energy = "High",
-                                read_height = 9,
-                                name = "New Name")
+                                read_height = 9)
 
 usethis::use_data(protocol_template, overwrite = TRUE)
 
@@ -51,30 +50,3 @@ sample_plan_template <- raw_sample_plan |>
                 expected_number_of_samples)
 
 usethis::use_data(sample_plan_template, overwrite = TRUE)
-
-
-# protocol templates
-
-d <- get_protocols(con, name == "default", id == 1) |> collect()
-protocol_template <- structure(
-  list(
-    software_version = "3.11.19",
-    reader_type = "Synergy H1",
-    reader_serial_number = "21092224",
-    plate_type = "Greiner 384 F bottom",
-    set_point = 37,
-    preheat_before_moving = TRUE,
-    runtime = "02:00:00",
-    interval = "00:03:00",
-    read_count = 41,
-    run_mode = "Kinetic",
-    excitation = 484,
-    emissions = 530,
-    optics = "Top",
-    gain = 100,
-    light_source = "Xenon Flash",
-    lamp_energy = "High",
-    read_height = 9),
-  class = c("tbl_df", "tbl", "data.frame"))
-
-usethis::use_data()
