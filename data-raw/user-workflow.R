@@ -66,7 +66,7 @@ tbl(con, "plate_run")
 
 # this is for the split plate version
 # plate_map_details is a variable you will need to pass to a later function
-plate_map_details_event <- process_well_sample_details(filepath = "data-raw/sherlock-example-outputs/JPE_Chnk_Early+Late_Plates4-7_results.xlsx",
+plate_map_details_event <- process_well_sample_details(filepath = "templates/sherlock_results_template.xlsx",
                                                  sample_type = "mucus",
                                                  layout_type = "split_plate_early_late",
                                                  plate_run_id = plate_run_id_event)
@@ -77,7 +77,7 @@ plate_map_details_event <- process_well_sample_details(filepath = "data-raw/sher
 # the generic IDs with the JPE sample IDs.
 # sherlock_results is a variable you will need to pass to a later function
 sherlock_results_event <- process_sherlock(
-  filepath = "data-raw/sherlock-example-outputs/JPE_Chnk_early_plates_4_7.xlsx",
+  filepath = "templates/sherlock_results_template.xlsx",
   sample_details = plate_map_details_event,
   plate_size = 384)
 
