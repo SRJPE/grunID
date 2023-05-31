@@ -4,10 +4,12 @@
 \alias{get_protocols}
 \title{Retrieve Protocols}
 \usage{
-get_protocols(con)
+get_protocols(con, ...)
 }
 \arguments{
 \item{con}{A DBI connection object obtained from DBI::dbConnect()}
+
+\item{...}{filter to be passed to dplyr::filter}
 }
 \description{
 \code{get_protocols()} returns all protocols within the database
@@ -22,6 +24,7 @@ con <- DBI::dbConnect(RPostgres::Postgres(),
                       user = cfg$username,
                       password = cfg$password)
 protocols <- get_protocols(con)
+protocols <- get_protocols(con, name == "default") # filter on db
 }
 \seealso{
 Other protocol functions: 

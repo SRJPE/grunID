@@ -4,7 +4,7 @@
 \alias{delete_protocol}
 \title{Delete Protocol}
 \usage{
-delete_protocol(con, protocol_id)
+delete_protocol(con, protocol_name)
 }
 \arguments{
 \item{con}{A DBI connection object obtained from DBI::dbConnect()}

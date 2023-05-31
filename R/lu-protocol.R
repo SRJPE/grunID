@@ -1,6 +1,7 @@
 #' Retrieve Protocols
 #' @description `get_protocols()` returns all protocols within the database
 #' @param con A DBI connection object obtained from DBI::dbConnect()
+#' @param ... filter to be passed to dplyr::filter
 #' @examples
 #' # example database connection
 #' cfg <- config::get()
@@ -28,6 +29,7 @@ get_protocols <- function(con, ...) {
   return(protocols)
 }
 
+
 #' Add Protocol
 #' @description `add_protocol()` adds a new protocol to the protocol lookup table
 #' @param con A DBI connection object obtained from DBI::dbConnect()
@@ -43,6 +45,7 @@ get_protocols <- function(con, ...) {
 #'                       password = cfg$password)
 #'
 #' new_protocol <- protocol_template
+#' new_protocol$name <- "New Protocol Names"
 #' new_protocol$software_version <- "3.11.20"
 #' add_protocol(con, new_protocol)
 #' @family protocol functions
@@ -87,9 +90,10 @@ add_protocol <- function(con, protocol) {
 #' @family protocol functions
 #' @export
 #' @md
-update_protocol <- function(con, protocol_id, protocol) {
+update_protocol <- function(con, protocol_name, protocol) {
   is_valid_connection(con)
   is_valid_protocol(protocol)
+
 
   query <- glue::glue_sql("UPDATE protocol
                            SET software_version = {protocol$software_version},
@@ -109,7 +113,7 @@ update_protocol <- function(con, protocol_id, protocol) {
                                light_source = {protocol$light_source},
                                lamp_energy = {protocol$lamp_energy},
                                read_height = {protocol$read_height}
-                           WHERE id = {protocol_id}
+                           WHERE name = {protocol_name}
                            RETURNING id, updated_at;",
                           .con = con)
 
@@ -191,10 +195,10 @@ update_protocol_status <- function(con, protocol_id, set_active=TRUE) {
 #' @family protocol functions
 #' @export
 #' @md
-delete_protocol <- function(con, protocol_id) {
+delete_protocol <- function(con, protocol_name) {
   is_valid_connection(con)
 
-  query <- glue::glue_sql("DELETE FROM protocol where id = {protocol_id};",
+  query <- glue::glue_sql("DELETE FROM protocol where name = {protocol_name};",
                           .con = con)
 
   result <- DBI::dbExecute(con, query)

@@ -25,6 +25,7 @@ con <- DBI::dbConnect(RPostgres::Postgres(),
                       password = cfg$password)
 
 new_protocol <- protocol_template
+new_protocol$name <- "New Protocol Names"
 new_protocol$software_version <- "3.11.20"
 add_protocol(con, new_protocol)
 }

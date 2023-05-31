@@ -4,14 +4,14 @@
 \alias{update_protocol}
 \title{Update Protocol}
 \usage{
-update_protocol(con, protocol_id, protocol)
+update_protocol(con, protocol_name, protocol)
 }
 \arguments{
 \item{con}{A DBI connection object obtained from DBI::dbConnect()}
 
-\item{protocol_id}{A numeric ID for the targeted protocol \code{\link{get_protocols}}}
-
 \item{protocol}{A valid protocol dataframe, reference \code{\link{protocol_template}} as an example}
+
+\item{protocol_id}{A numeric ID for the targeted protocol \code{\link{get_protocols}}}
 }
 \description{
 \code{update_protocol()} updates an existing protocol in the protocol lookup table
