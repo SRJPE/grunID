@@ -45,7 +45,7 @@ create_multiple_field_sheets(added_sample_plan = feather_61_IDs, "data-raw/F61_t
 # step 4:
 # read in filled-out field sheets and turn them into a tidy format with
 # sample_id, datetime_collected, fork_length_mm, field_run_type_id, fin_clip, field_comment
-filepath <- "data-raw/test_LS.xlsx"
+filepath <- "data-raw/F61_test.xlsx"
 field_data_clean <- process_field_sheet_samples(filepath)
 
 # step 5:
