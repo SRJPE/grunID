@@ -96,7 +96,7 @@ plate_run_id <- grunID::add_plate_run(con, protocol_id, genetic_method_id,
                                       date_run = "07-04-1776")
 ```
 
-**Note: save the output of `add_plate_run_id`. This contains the unique plate run identifier and will be needed
+**Note: save the output of `add_plate_run`. This contains the unique plate run identifier and will be needed
 to pass to later functions**
 
 ## Prepare Sample Details
@@ -162,8 +162,8 @@ results <- grunID::process_sherlock(sherlock_results_filepath = "templates/sherl
                                     plate_size = 384)
 ```
 
-**Note: save the output of `process_sherlock`. This contains the data that will be needed to
-to pass to later functions.**
+**Note: save the output of `process_sherlock`. This contains data that will be needed to
+to pass to `add_assay_results`.**
 
 ## Upload Assay Results
 
@@ -232,11 +232,13 @@ results <- grunID::process_sherlock(sherlock_results_filepath = "templates/sherl
                                     sample_details = sample_details,
                                     plate_size = 384)
 
+# no need to store output
 grunID::add_assay_results(con, results)
 
 thresholds <- grunID::generate_threshold(con, plate_run_id)
 
-grunID::update_assay_detection(con, thresholds_event)
+# no need to store output
+grunID::update_assay_detection(con, thresholds)
 
 DBI::dbDisconnect(con)
 ```
