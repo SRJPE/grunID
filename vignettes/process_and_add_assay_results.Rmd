@@ -22,6 +22,8 @@ This tutorial describes how to:
 2. write plate run metadata to the database
 3. prepare Synergy H1 result data for upload to the database
 4. upload assay result data to the database
+5. generate threshold values from the plate run
+6. update assay detections for a plate run in the database
 
 ## Dependencies
 
@@ -40,16 +42,16 @@ with environment variables. Information on how to set up your **config.yml** fil
 pull information from that file to establish a connection to the database can be found 
 in the article `vignette("azure-authentication")` under **Authentication with a Config file**.
 
-## Create database Connection
+## Create Database Connection
 
-To create a connection object, we run `gr_db_connect()`:
+To create a connection object, we run `gr_db_connect`:
 ```r
 con <- gr_db_connect() # a config file will be searched for starting at the working directory.
 
 dplyr::tbl(con, "agency")
 ```
 
-You can also call `gr_db_connect()` with arguments specifying your username, database name and host for the server for the database. Note that this is a quick way to create a connection to the database but if using source control its also an easy way to accidentally share your credentials. For more information on this, and to see code, please see the article `vignette("azure-authentication")` under **Authentication with username, dbname and host**.
+You can also call `gr_db_connect` with arguments specifying your username, database name and host for the server for the database. Note that this is a quick way to create a connection to the database but if using source control its also an easy way to accidentally share your credentials. For more information on this, and to see code, please see the article `vignette("azure-authentication")` under **Authentication with username, dbname and host**.
 
 Every time we use a function to read or write to the database, we will pass 
 this connection object to the function.
@@ -58,7 +60,7 @@ this connection object to the function.
 
 When a plate is run on the Synergy H1 reader, we want to relate critical plate run 
 metadata with the assay results from that particular run in our database. We call 
-`add_plate_run()` providing the protocol ID, method ID, laboratory ID, and the 
+`add_plate_run` providing the protocol ID, method ID, laboratory ID, and the 
 person who ran the plate. The function returns a unique plate run ID that will be
 associated with the assay result records. Because our assay results reference the
 plate run ID, we must add a plate run in our database before adding assay result
@@ -76,7 +78,7 @@ protocol_id <- all_protocols |>
   filter(id == 1) |>
   pull(id)
 ```
-Similarly, you can call `get_genetic_method()` and `get_laboratory_id()` to
+Similarly, you can call `get_genetic_method` and `get_laboratory_id` to
 review the IDs associated with methods and laboratories within the database.
 
 ```{r, eval=FALSE, cache=TRUE}
@@ -87,9 +89,15 @@ genetic_method_id <- get_genetic_methods(con) |>
 laboratory_id <- get_laboratories(con) |>
   filter(stringr::str_detect(code, "DWR")) |> pull(id) # DWR GeM
 
+# store output of add_plate_run - contains unique plate run ID needed for later functions
 plate_run_id <- grunID::add_plate_run(con, protocol_id, genetic_method_id,
-                                       laboratory_id, lab_work_performed_by = "Yogi Bear")
+                                      laboratory_id, lab_work_performed_by = "Yogi Bear",
+                                      description = "Plate run for sampling event X",
+                                      date_run = "07-04-1776")
 ```
+
+**Note: save the output of `add_plate_run`. This contains the unique plate run identifier and will be needed
+to pass to later functions**
 
 ## Prepare Sample Details
 
@@ -108,22 +116,22 @@ in the results as a dataframe containing these columns:
 * **location:** *(character)* letter-number combination based on Synergy H1 Layout grid (e.g., A3)
 * **sample_id:** *(character)* unique ID of mucus swab or fin clip made up of site code, year, sample event, sampling bin, and count within sampling bin (e.g., BTC22_3_A_1)
 * **sample_type:** *(numeric)* provide 1 for mucus and 2 for fin clip
-* **assay_id:** *(numeric)* the ID for assay types (e.g., 1 = OTS28 Early 1), use `get_assay()` to view all available options.
-* **plate_run_id:** *(numeric)* the ID returned from running `add_plate_run()` to 
+* **assay_id:** *(numeric)* the ID for assay types (e.g., 1 = OTS28 Early 1), use `get_assay` to view all available options.
+* **plate_run_id:** *(numeric)* the ID returned from running `add_plate_run` to 
 associate important metadata with the assay results
 
 We can map the generic sample identifiers *(e.g. SPL1)* to the JPE sample identifiers
-*(e.g. F1722_3_A_1)* using the `Plate Map` tab of the output file. This tab should
+*(e.g. F1722_3_A_1)* using the `plate_map` tab of the output file. This tab should
 contain the well layout locations with JPE sample identifiers, and the name of the 
-tab has to be `Plate Map`. The function `process_well_sample_details()` then reads 
+tab has to be `plate_map`. The function `process_well_sample_details` then reads 
 in that layout and maps the JPE sample identifiers to well locations, producing
 a dataframe in the correct format:
 
 ```{r, eval = FALSE, cache = TRUE}
-sample_details <- process_well_sample_details(filepath = "path_to/SynergyH1_data.xlsx",
-                                                         sample_type = "mucus",
-                                                         assay_type = "Ots28_Early1",
-                                                         plate_run_id = plate_run_4_7_early_id)
+sample_details <- process_well_sample_details(filepath = "templates/sherlock_results_template.xlsx",
+                                              sample_type = "mucus",
+                                              layout_type = "split_plate_early_late",
+                                              plate_run_id = plate_run_id)
 ```
 
 The object sample_details is now a data frame that looks like:
@@ -137,22 +145,25 @@ B4,BTC22_3_B_2,1,1,1
 B6,BTC22_3_B_3,1,1,1
 ```
 
-The sample details as a dataframe are an argument to `process_sherlock()`, the function
+**The sample details as a dataframe are an argument to `process_sherlock`, the function
 that extracts assay result data from the Synergy H1 reader output and transforms
-the data into the correct format for the database. This maps the generic sample 
+the data into the correct format for the database.** This maps the generic sample 
 identifiers to the JPE sample identifiers by well location.
 
 ## Process SHERLOCK Results
 
 To extract and transpose the assay result data from the Synergy H1 reader output,
-provide the `process_sherlock()` function the filepath to the result data excel workbook,
+provide the `process_sherlock` function the filepath to the result data excel workbook,
 the sample details dataframe described above, and the plate size run *(either 96 or 384)*.
 The function will return a list containing both the raw and final assay results.
 ```{r, eval=FALSE, cache=TRUE}
-results <- grunID::process_sherlock(sherlock_results_filepath = "path_to/SynergyH1_data.xlsx",
+results <- grunID::process_sherlock(sherlock_results_filepath = "templates/sherlock_results_template.xlsx",
                                     sample_details = sample_details,
-                                    plate_size = 96)
+                                    plate_size = 384)
 ```
+
+**Note: save the output of `process_sherlock`. This contains data that will be needed to
+to pass to `add_assay_results`.**
 
 ## Upload Assay Results
 
@@ -161,6 +172,31 @@ assay result data. The function returns the number or records added.
 ```{r, eval=FALSE, cache=TRUE}
 grunID::add_assay_results(con, results)
 ```
+
+**Note: you do not need to save the output of `add_assay_results`.**
+
+## Generate Threshold Values
+
+Provide `generate_threshold` a valid connection to the database and the plate run id. The function calculates
+the raw fluorescence threshold values for each assay on a plate run. Currently, this is calculated as two times the mean value
+of the last time step from the control blank wells.
+The function returns a table containing thresholds for a sampling event and needs to be passed to `update_assay_detections` to assign
+detections for assays.
+
+```{r, eval=FALSE, cache=TRUE}
+thresholds <- grunID::generate_threshold(con, plate_run_id)
+```
+**Note: save the output of `generate_threshold`. This contains the threshold values and needs to be passed to `update_assay_detection`**
+
+## Update Assay Detections
+Provide `update_assay_detection` a valid connection to the database and the thresholds calculated for a plate run using `generate_threshold`. The function updates the assay result table with positive detections and, if appicable, the genetic run type identification.
+
+```{r, eval=FALSE, cache=TRUE}
+grunID::update_assay_detection(con, thresholds_event)
+```
+**Note: you do not need to save the output of `update_assay_detection`.**
+
+## End Session
 
 And finally, close your open connection to the database:
 ```{r, eval=FALSE, cache=TRUE}
@@ -176,30 +212,33 @@ Here is the code again to:
 3. write plate run metadata to the database
 4. prepare Synergy H1 result data for upload to the database
 5. upload assay result data to the database
+6. generate threshold values from the plate run
+7. update assay detections for a plate run in the database
 
 ```{r, eval=FALSE, cache=TRUE}
-cfg <- config::get()
+con <- gr_db_connect()
 
-con <- DBI::dbConnect(RPostgres::Postgres(),
-                      dbname = cfg$dbname,
-                      host = cfg$host,
-                      port = cfg$port,
-                      user = cfg$username,
-                      password = cfg$password)
+plate_run_id <- grunID::add_plate_run(con, protocol_id, genetic_method_id,
+                                      laboratory_id, lab_work_performed_by = "Yogi Bear",
+                                      description = "Plate run for sampling event X",
+                                      date_run = "07-04-1776")
 
-plate_run_uid <- grunID::add_plate_run(con, protocol_id = 1, genetic_method_id = 1,
-                                       laboratory_id = 1, lab_work_performed_by = "Yogi Bear")
+sample_details <- process_well_sample_details(filepath = "templates/sherlock_results_template.xlsx",
+                                              sample_type = "mucus",
+                                              layout_type = "split_plate_early_late",
+                                              plate_run_id = plate_run_id)
 
-sample_details <- process_well_sample_details(filepath = "path_to/SynergyH1_data.xlsx",
-                                                         sample_type = "mucus",
-                                                         assay_type = "Ots28_Early1",
-                                                         plate_run_id = plate_run_4_7_early_id)
-
-results <- grunID::process_sherlock(sherlock_results_filepath = "path_to/SynergyH1_data.xlsx",
+results <- grunID::process_sherlock(sherlock_results_filepath = "templates/sherlock_results_template.xlsx",
                                     sample_details = sample_details,
-                                    plate_size = 96)
+                                    plate_size = 384)
 
+# no need to store output
 grunID::add_assay_results(con, results)
+
+thresholds <- grunID::generate_threshold(con, plate_run_id)
+
+# no need to store output
+grunID::update_assay_detection(con, thresholds)
 
 DBI::dbDisconnect(con)
 ```

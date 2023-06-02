@@ -28,7 +28,7 @@
 #' the function that creates a new plate run record in the database to associate
 #' important metadata with the assay results
 #' @returns
-#' A table:
+#' A table to be passed to `add_raw_assay_results()`:
 #' ## 1) raw_assay_results
 #' * sample_id
 #' * raw_fluorescence
@@ -180,8 +180,8 @@ process_well_sample_details <- function(filepath, sample_type, layout_type, sing
   layout_type <- tolower(layout_type)
   sample_type_id <- ifelse(sample_type == "mucus", 1, 2)
 
-  layout_raw <- suppressMessages(read_excel(filepath,
-                                            sheet = "Plate Map"))
+  layout_raw <- suppressMessages(readxl::read_excel(filepath,
+                                            sheet = "plate_map"))
   # split plate
   if(str_detect(layout_type, "split_plate")) {
 
