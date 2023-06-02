@@ -170,19 +170,19 @@ get_field_sheet_event_plan <- function(con, sample_event_id_arg) {
 #' `get_field_sheet_sample_plan()` and `create_field_sheet()` can still be run independently to create one field
 #' sheet at a time.
 #' @param added_sample_plan The object created by running `add_sample_plan()`. This is a named list containing elements
-#' "number_of_samples_added" and "sample_ids_created". "sample_ids_created" is a nested list and must contain an element
+#' "number_of_samples_added" and "sample_ids_created". "sample_ids_created" is a table and must contain a column
 #' "sample_event_id".
 #' @param field_sheet_filepath The filepath and name desired for the workbook containing field sheets.
 #' @returns A Workbook object from \code{\link[openxlsx]{createWorkbook}} with a worksheet for each sampling event in the
 #' sample plan.
 #' @examples
-#' cfg <- gr_db_connect()
+#' con <- gr_db_connect()
 #' # add sample plan
 #' sample_plan_2022_final <- read_csv("data-raw/2022_sample_plan.csv") |> distinct_all()
-#' 2022_sample_plan <- add_sample_plan(con, feather_61_sample_plan, verbose = TRUE)
+#' 2022_sample_plan <- add_sample_plan(con, sample_plan_2022_final, verbose = TRUE)
 #'
 #' # create workbook with field sheets for all sample event IDs in the 2022 sample plan
-#' create_all_field_sheets(added_sample_plan = 2022_sample_plan, "data-raw/example_field_sheets.xlsx")
+#' create_multiple_field_sheets(added_sample_plan = 2022_sample_plan, "data-raw/2022_field_sheets.xlsx")
 #' @export
 #' @family field sheet helpers
 #' @md

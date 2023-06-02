@@ -2,24 +2,11 @@
 #' @description `add_sample_plan` registers new sampling events and generates new sample ids
 #' @param con
 #' @param sample_plan
+#' @return a named list containing the number of samples added and all unique
+#' sampling event IDs created.
 #' @examples
 #' # example database connection
-#' cfg <- config::get()
-#' con <- DBI::dbConnect(RPostgres::Postgres(),
-#'                       dbname = cfg$dbname,
-#'                       host = cfg$host,
-#'                       port = cfg$port,
-#'                       user = cfg$username,
-#'                       password = cfg$password)
-#'
-#' sample_plan <- tibble(location_code = c("BTC", "BUT"),
-#'                       sample_event_number = 1:2,
-#'                       first_sample_date = "2020-01-01",
-#'                       sample_bin_code = "A",
-#'                       min_fork_length = 10,
-#'                       max_fork_length = 95,
-#'                       expected_number_of_samples = 10
-#'                       )
+#' con <- gr_db_connect()
 #' add_sample_plan(con, sample_plan)
 #' @export
 #' @md
