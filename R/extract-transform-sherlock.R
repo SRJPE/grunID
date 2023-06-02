@@ -111,7 +111,8 @@ process_raw_assay_results <- function(filepath, ranges, plate_size, layout) {
     dplyr::left_join(background_fluorescence) |>
     dplyr::select(sample_id, sample_type_id, assay_id, plate_run_id, raw_fluorescence = fluorescence,
                   background_value = background_fluorescence,
-                  time = Time, plate_run_id, well_location = location)
+                  time = Time, plate_run_id, well_location = location) |>
+    dplyr::filter(!is.na(sample_id))
 
   return(raw_assay_results)
 }
@@ -179,8 +180,8 @@ process_well_sample_details <- function(filepath, sample_type, layout_type, sing
   layout_type <- tolower(layout_type)
   sample_type_id <- ifelse(sample_type == "mucus", 1, 2)
 
-  layout_raw <- suppressMessages(read_excel(filepath,
-                                            sheet = "Plate Map"))
+  layout_raw <- suppressMessages(readxl::read_excel(filepath,
+                                            sheet = "plate_map"))
   # split plate
   if(str_detect(layout_type, "split_plate")) {
 
@@ -245,7 +246,8 @@ process_well_sample_details <- function(filepath, sample_type, layout_type, sing
       mutate(sample_id = ifelse(sample_id == "NTC", "CONTROL", sample_id))
   }
 
-  return(plate_layout)
+  return(plate_layout|>
+           dplyr::filter(!is.na(sample_id)))
 }
 
 expected_layout_colnames <- function() {

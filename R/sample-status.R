@@ -125,3 +125,60 @@ get_sample_status <- function(con, sample_ids, full_history = FALSE) {
 #
 # }
 
+#' @title Samples needing further genetic analysis
+#' @description `get_samples_needing_action` pulls sample IDs that need further
+#' genetic analysis.
+#' @param con valid connection to database
+#' @details `get_samples_needing_action` checks the database table `sample_status`
+#' to identify samples in the following categories:
+#'
+#' * Have been run through OTS 28 Early/Late and need to be run through OTS 16 Spring/Winter
+#' * Have been run through OTS 28 Early/Late and produced a negative result for both, indicating
+#' they require to be run again
+#' * Have been run through OTS 16 Spring/Winter and produced a negative result for both,
+#' indicating they require to be run again
+#' * Produced positive results for both assays either within OTS 28 Early/Late OR
+#' OTS 16 Spring/Winter, indicating they are potential heterozygotes
+#'
+#' @returns A list with the following elements, each containing a list of Sample IDs in
+#' that category:
+#'
+#' * needs_ots_16
+#' * repeat_ots_28
+#' * repeat_ots_16
+#' * potential_heterozygotes
+#'
+#' @export
+get_samples_needing_action <- function(con) {
+
+  sample_status_table <- dplyr::tbl(con, "sample_status")
+
+  needs_ots_16 <- sample_status_table |>
+    dplyr::filter(status_code_id == 8) |>
+    dplyr::select(sample_id) |>
+    dplyr::collect()
+
+  repeat_ots_28 <- sample_status_table |>
+    dplyr::left_join(dplyr::tbl(con, "genetic_run_identification") |>
+                       dplyr::collect(), by = "sample_id") |>
+    dplyr::filter(status_code_id == 7 & run_type_id == 7) |>
+    dplyr::select(sample_id) |>
+    dplyr::collect()
+
+  repeat_ots_16 <- sample_status_table |>
+    dplyr::filter(status_code_id == 10) |>
+    dplyr::select(sample_id) |>
+    dplyr::collect()
+
+  potential_heterozygotes <- sample_status_table |>
+    dplyr::left_join(dplyr::tbl(con, "genetic_run_identification") |>
+                       dplyr::collect(), by = "sample_id") |>
+    dplyr::filter(status_code_id == 11 & run_type_id == 8) |>
+    dplyr::select(sample_id) |>
+    dplyr::collect()
+
+  return(list("needs_ots_16" = needs_ots_16,
+              "repeat_ots_28" = repeat_ots_28,
+              "repeat_ots_16" = repeat_ots_16,
+              "potential_heterozygotes" = potential_heterozygotes))
+}
