@@ -37,9 +37,7 @@ generate_threshold <- function(con, plate_run_identifier) {
     ) |> ungroup() |>
     dplyr::mutate(runtime = runtime)
 
-  output <- structure(thresholds, comment = "store output of this function to pass as argument to update_assay_detections()")
-  message(attributes(output)$comment)
-  return(output)
+  return(thresholds)
 }
 
 #' @title Set detection for assay results
@@ -180,10 +178,7 @@ add_plate_run <- function(con, protocol_id, genetic_method_id,
   plate_run_id <- DBI::dbFetch(res)
   DBI::dbClearResult(res)
 
-  return_id <- structure(plate_run_id$id, comment = "store plate run ID to pass as argument to process_well_sample_details() and generate_threshold()")
-  message(attributes(return_id)$comment)
-  return(return_id)
-  #return(plate_run_id$id)
+  return(plate_run_id$id)
 }
 
 
