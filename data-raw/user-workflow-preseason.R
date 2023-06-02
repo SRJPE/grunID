@@ -30,12 +30,6 @@ feather_61_sample_plan <- sample_plan_2022_final |>
          min_fork_length = as.integer(min_fork_length),
          max_fork_length = as.integer(max_fork_length))
 
-BTC_sample_plan <- sample_plan_2022_final |>
-  filter(location_code == "BTC") |>
-  mutate(sample_event_number = as.integer(sample_event_number),
-         min_fork_length = as.integer(min_fork_length),
-         max_fork_length = as.integer(max_fork_length))
-
 # add sample plans to database. this code:
 # adds sample events to table SAMPLE_EVENT
 # adds sample bins for each event SAMPLE_BIN
@@ -43,7 +37,6 @@ BTC_sample_plan <- sample_plan_2022_final |>
 # updates sample status for each to "created" (1)
 # returns the number of IDs created and the unique sample IDs created
 feather_61_IDs <- add_sample_plan(con, feather_61_sample_plan, verbose = TRUE)
-BTC_IDs <- add_sample_plan(con, BTC_sample_plan, verbose = TRUE)
 
 # create workbook containing multiple field sheets
 create_multiple_field_sheets(added_sample_plan = feather_61_IDs, "data-raw/F61_test.xlsx")
