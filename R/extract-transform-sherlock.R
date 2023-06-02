@@ -28,7 +28,7 @@
 #' the function that creates a new plate run record in the database to associate
 #' important metadata with the assay results
 #' @returns
-#' A table:
+#' A table to be passed to `add_raw_assay_results()`:
 #' ## 1) raw_assay_results
 #' * sample_id
 #' * raw_fluorescence

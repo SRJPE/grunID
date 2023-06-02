@@ -15,7 +15,7 @@ see the \strong{Sample Details} section for more information}
 \item{plate_size}{either 96 or 384}
 }
 \value{
-A table:
+A table to be passed to \code{add_raw_assay_results()}:
 \subsection{1) raw_assay_results}{
 \itemize{
 \item sample_id

@@ -24,15 +24,18 @@ all_protocols <- get_protocols(con)
 all_protocols |> View()
 
 # review available protocols and select appropriate protocol id
+# protocol_id is a variable you will need to pass to a later function
 protocol_id <- all_protocols |>
   filter(id == 1) |>
   pull(id)
 
 # select laboratory ID that corresponds to "DWR"
+# laboratory_id is a variable you will need to pass to a later function
 laboratory_id <- get_laboratories(con) |>
   filter(stringr::str_detect(code, "DWR")) |> pull(id)
 
 # get genetic method id that corresponds to "SHERLOCK"
+# genetic_method_id is a variable you will need to pass to a later function
 genetic_method_id <- get_genetic_methods(con) |>
   filter(method_name == "SHERLOCK") |>
   pull(id)
@@ -42,13 +45,15 @@ genetic_method_id <- get_genetic_methods(con) |>
 # that will determine where your results are stored.
 
 # this is if your plate has two assays
-split_plate_run_4_7_id <- add_plate_run(con,
-                                        date_run = "2022-01-01",
-                                        protocol_id = protocol_id,
-                                        genetic_method_id = genetic_method_id,
-                                        laboratory_id = laboratory_id,
-                                        lab_work_performed_by = "user",
-                                        description = "early and late assays for plates 4-7")
+# plate_run_id is a variable you will need to pass to a later function
+plate_run_id_event <- add_plate_run(con,
+                              date_run = "2022-01-01",
+                              protocol_id = protocol_id,
+                              genetic_method_id = genetic_method_id,
+                              laboratory_id = laboratory_id,
+                              lab_work_performed_by = "user",
+                              description = "early and late assays for plates 4-7")
+# query table in database to see what you've added
 tbl(con, "plate_run")
 
 
@@ -60,33 +65,35 @@ tbl(con, "plate_run")
 # sample_type. See `?process_well_sample_details()` for acceptable arguments.
 
 # this is for the split plate version
-plate_4_to_7_layout_split <- process_well_sample_details(filepath = "data-raw/sherlock-example-outputs/JPE_Chnk_Early+Late_Plates4-7_results.xlsx",
-                                                         sample_type = "mucus",
-                                                         layout_type = "split_plate_early_late",
-                                                         plate_run_id = split_plate_run_4_7_id)
+# plate_map_details is a variable you will need to pass to a later function
+plate_map_details_event <- process_well_sample_details(filepath = "templates/sherlock_results_template.xlsx",
+                                                 sample_type = "mucus",
+                                                 layout_type = "split_plate_early_late",
+                                                 plate_run_id = plate_run_id_event)
 
 
-# pass sample details (well layout) to process_sherlock, which reads in
+# pass plate map details (well layout) to process_sherlock, which reads in
 # a file with the output of a sherlock machine. This function also maps
 # the generic IDs with the JPE sample IDs.
-# process
-results_plates_4_7_split <- process_sherlock(
-  filepath = "data-raw/sherlock-example-outputs/JPE_Chnk_early_plates_4_7.xlsx",
-  sample_details = plate_4_to_7_layout_split,
+# sherlock_results is a variable you will need to pass to a later function
+sherlock_results_event <- process_sherlock(
+  filepath = "templates/sherlock_results_template.xlsx",
+  sample_details = plate_map_details_event,
   plate_size = 384)
 
 
 # add raw assay results to database
 tbl(con, "raw_assay_result")
-plate_4_7_split <- add_raw_assay_results(con, results_plates_4_7_split)
+add_raw_assay_results(con, sherlock_results_event)
 tbl(con, "raw_assay_result")
 
 # generate thresholds from raw assay results
-thresholds_4_7_split <- generate_threshold(con, plate_run_identifier = split_plate_run_4_7_id)
+# thresholds is a variable you will need to pass to a later function
+thresholds_event <- generate_threshold(con, plate_run_identifier = plate_run_id_event)
 
 # update assay detection results (TRUE or FALSE for a sample and assay type)
 # in the database
-update_assay_detection(con, thresholds_4_7_split)
+update_assay_detection(con, thresholds_event)
 
 # view assay results.
 # this table contains the sample IDs run, the assay type, and positive detection
