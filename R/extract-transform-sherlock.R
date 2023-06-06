@@ -62,7 +62,8 @@ process_sherlock <- function(filepath, sample_details,
 }
 
 #' Process Raw Assay Results
-#' @description
+#' @description A helper function called in `process_sherlock` that reads in
+#' an excel containing SHERLOCK output.
 process_raw_assay_results <- function(filepath, ranges, plate_size, layout) {
   # raw fluorescence ----
 
@@ -260,7 +261,7 @@ expected_layout_colnames <- function() {
 #' @description helper function used to identify the previous ending range of cells
 #' within the Synergy H1 excel workbook output
 #' @param cell_ranges a vector of strings representing the cell ranges of the tables e.g. c("A1:B10", "A11:B21")
-#' @example extract_previous_end_row(c("A1:B10", "A11:B21")) #21
+#' @examples extract_previous_end_row(c("A1:B10", "A11:B21")) #21
 extract_previous_end_row <- function(cell_ranges) {
   as.numeric(
     stringr::str_extract(

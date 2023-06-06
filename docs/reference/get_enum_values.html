@@ -100,10 +100,13 @@ IDs well location in the assay results</p></li>
 <span class="r-in"><span>                      port <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">port</span>,</span></span>
 <span class="r-in"><span>                      user <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">username</span>,</span></span>
 <span class="r-in"><span>                      password <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">password</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> 	Is the server running on that host and accepting TCP/IP connections?</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> connection to server at "localhost" (::1), port 5432 failed: Connection refused</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> 	Is the server running on that host and accepting TCP/IP connections?</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu">get_enum_values</span><span class="op">(</span><span class="va">con</span>, <span class="st">"bin_code_enum"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       enum_range</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 {ZZ,A,B,C,D,E}</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in h(simpleError(msg, call)):</span> error in evaluating the argument 'dbObj' in selecting a method for function 'dbIsValid': object 'con' not found</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>

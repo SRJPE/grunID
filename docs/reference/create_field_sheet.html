@@ -114,6 +114,7 @@ sampling of a 2 day sampling event</p></dd>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p>Other field sheet helpers: 
+<code><a href="create_multiple_field_sheets.html">create_multiple_field_sheets</a>()</code>,
 <code><a href="get_field_sheet_event_plan.html">get_field_sheet_event_plan</a>()</code>,
 <code><a href="process_field_sheet_samples.html">process_field_sheet_samples</a>()</code>,
 <code><a href="update_field_sheet_samples.html">update_field_sheet_samples</a>()</code></p></div>
@@ -129,25 +130,34 @@ sampling of a 2 day sampling event</p></dd>
 <span class="r-in"><span>                      port <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">port</span>,</span></span>
 <span class="r-in"><span>                      user <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">username</span>,</span></span>
 <span class="r-in"><span>                      password <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">password</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> 	Is the server running on that host and accepting TCP/IP connections?</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> connection to server at "localhost" (::1), port 5432 failed: Connection refused</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> 	Is the server running on that host and accepting TCP/IP connections?</span>
 <span class="r-in"><span><span class="va">wb</span> <span class="op">&lt;-</span> <span class="fu">openxlsx</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/openxlsx/man/createWorkbook.html" class="external-link">createWorkbook</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="co"># Each sample_event will be a tab in a workbook</span></span></span>
 <span class="r-in"><span><span class="va">plan</span> <span class="op">&lt;-</span> <span class="fu"><a href="get_field_sheet_event_plan.html">get_field_sheet_event_plan</a></span><span class="op">(</span><span class="va">con</span>, sample_event_id <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in dplyr::tbl(con, "sample_event"):</span> object 'con' not found</span>
 <span class="r-in"><span><span class="va">wb</span> <span class="op">&lt;-</span> <span class="fu">create_field_sheet</span><span class="op">(</span>wb <span class="op">=</span> <span class="va">wb</span>,</span></span>
 <span class="r-in"><span>                         field_sheet_sample_plan <span class="op">=</span> <span class="va">plan</span><span class="op">$</span><span class="va">field_sheet_sample_plan</span>,</span></span>
 <span class="r-in"><span>                         sample_event_number <span class="op">=</span> <span class="va">plan</span><span class="op">$</span><span class="va">sample_event_number</span>,</span></span>
 <span class="r-in"><span>                         first_sample_date <span class="op">=</span> <span class="va">plan</span><span class="op">$</span><span class="va">first_sample_date</span>,</span></span>
 <span class="r-in"><span>                         sample_location <span class="op">=</span> <span class="va">plan</span><span class="op">$</span><span class="va">location_name</span>,</span></span>
 <span class="r-in"><span>                         sample_location_code <span class="op">=</span> <span class="va">plan</span><span class="op">$</span><span class="va">location_code</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in paste(sample_location_code, sample_event_number, sep = "-"):</span> object 'plan' not found</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">plan</span> <span class="op">&lt;-</span> <span class="fu"><a href="get_field_sheet_event_plan.html">get_field_sheet_event_plan</a></span><span class="op">(</span><span class="va">con</span>, sample_event_id <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in dplyr::tbl(con, "sample_event"):</span> object 'con' not found</span>
 <span class="r-in"><span><span class="va">wb</span> <span class="op">&lt;-</span> <span class="fu">create_field_sheet</span><span class="op">(</span>wb <span class="op">=</span> <span class="va">wb</span>,</span></span>
 <span class="r-in"><span>                         field_sheet_sample_plan <span class="op">=</span> <span class="va">plan</span><span class="op">$</span><span class="va">field_sheet_sample_plan</span>,</span></span>
 <span class="r-in"><span>                         sample_event_number <span class="op">=</span> <span class="va">plan</span><span class="op">$</span><span class="va">sample_event_number</span>,</span></span>
 <span class="r-in"><span>                         first_sample_date <span class="op">=</span> <span class="va">plan</span><span class="op">$</span><span class="va">first_sample_date</span>,</span></span>
 <span class="r-in"><span>                         sample_location <span class="op">=</span> <span class="va">plan</span><span class="op">$</span><span class="va">location_name</span>,</span></span>
 <span class="r-in"><span>                         sample_location_code <span class="op">=</span> <span class="va">plan</span><span class="op">$</span><span class="va">location_code</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in paste(sample_location_code, sample_event_number, sep = "-"):</span> object 'plan' not found</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu">openxlsx</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/openxlsx/man/saveWorkbook.html" class="external-link">saveWorkbook</a></span><span class="op">(</span><span class="va">wb</span>, <span class="st">"test.xlsx"</span>, overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Workbook does not contain any worksheets. A worksheet will be added.</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>

@@ -76,10 +76,19 @@
     <loc>https://github.com/FlowWest/grunID/reference/add_status_code.html</loc>
   </url>
   <url>
+    <loc>https://github.com/FlowWest/grunID/reference/assign_run_types.html</loc>
+  </url>
+  <url>
+    <loc>https://github.com/FlowWest/grunID/reference/assign_status_codes.html</loc>
+  </url>
+  <url>
     <loc>https://github.com/FlowWest/grunID/reference/az_refresh_token.html</loc>
   </url>
   <url>
     <loc>https://github.com/FlowWest/grunID/reference/create_field_sheet.html</loc>
+  </url>
+  <url>
+    <loc>https://github.com/FlowWest/grunID/reference/create_multiple_field_sheets.html</loc>
   </url>
   <url>
     <loc>https://github.com/FlowWest/grunID/reference/delete_agency.html</loc>
@@ -161,6 +170,9 @@
   </url>
   <url>
     <loc>https://github.com/FlowWest/grunID/reference/get_samples.html</loc>
+  </url>
+  <url>
+    <loc>https://github.com/FlowWest/grunID/reference/get_samples_needing_action.html</loc>
   </url>
   <url>
     <loc>https://github.com/FlowWest/grunID/reference/get_status_codes.html</loc>

@@ -58,7 +58,7 @@ from the database that is needed to prepare field sheets.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">get_field_sheet_event_plan</span><span class="op">(</span><span class="va">con</span>, <span class="va">sample_event_id</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">get_field_sheet_event_plan</span><span class="op">(</span><span class="va">con</span>, <span class="va">sample_event_id_arg</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -90,6 +90,7 @@ sampling of a 2 day sampling event</p></li>
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p>Other field sheet helpers: 
 <code><a href="create_field_sheet.html">create_field_sheet</a>()</code>,
+<code><a href="create_multiple_field_sheets.html">create_multiple_field_sheets</a>()</code>,
 <code><a href="process_field_sheet_samples.html">process_field_sheet_samples</a>()</code>,
 <code><a href="update_field_sheet_samples.html">update_field_sheet_samples</a>()</code></p></div>
     </div>
@@ -104,7 +105,12 @@ sampling of a 2 day sampling event</p></li>
 <span class="r-in"><span>                      port <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">port</span>,</span></span>
 <span class="r-in"><span>                      user <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">username</span>,</span></span>
 <span class="r-in"><span>                      password <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">password</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> 	Is the server running on that host and accepting TCP/IP connections?</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> connection to server at "localhost" (::1), port 5432 failed: Connection refused</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> 	Is the server running on that host and accepting TCP/IP connections?</span>
 <span class="r-in"><span><span class="va">plan</span> <span class="op">&lt;-</span> <span class="fu">get_field_sheet_event_plan</span><span class="op">(</span><span class="va">con</span>, sample_event_id <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in dplyr::tbl(con, "sample_event"):</span> object 'con' not found</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>

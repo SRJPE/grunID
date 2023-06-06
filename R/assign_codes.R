@@ -4,7 +4,7 @@
 #' @details `assign_status_codes` takes in assay detections and assigns a status code
 #' based on assay results logic.
 #' @returns a table with `status_code_id` column updated
-#' @export
+#' @keywords internal
 assign_status_codes <- function(assay_detections) {
   assay_detections |>
     dplyr::mutate(
@@ -34,7 +34,7 @@ assign_status_codes <- function(assay_detections) {
 #' @details `assign_run_types` takes in assay detections and assigns a run type ID
 #' based on assay results logic and status codes.
 #' @returns a table with `run_type_id` column
-#' @export
+#' @keywords internal
 assign_run_types <- function(assay_detections_with_status_codes) {
   assay_detections_with_status_codes |>
     dplyr::mutate(run_type_id = dplyr::case_when(

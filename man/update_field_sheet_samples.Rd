@@ -8,6 +8,11 @@ update_field_sheet_samples(con, field_data)
 }
 \arguments{
 \item{con}{A DBI connection object obtained from DBI::dbConnect()}
+
+\item{field_data}{the field data processed using \code{\link{process_field_sheet_samples}}
+See \code{\link{create_field_sheet}} and \code{\link{get_field_sheet_event_plan}} for
+more information on creating field sheet workbooks, and \code{\link{process_field_sheet_samples}}
+for more information on processing raw data before updating in the database.}
 }
 \value{
 Does not return any objects.

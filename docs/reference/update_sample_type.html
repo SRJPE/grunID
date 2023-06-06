@@ -94,16 +94,22 @@
 <span class="r-in"><span>                      port <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">port</span>,</span></span>
 <span class="r-in"><span>                      user <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">username</span>,</span></span>
 <span class="r-in"><span>                      password <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">password</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> 	Is the server running on that host and accepting TCP/IP connections?</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> connection to server at "localhost" (::1), port 5432 failed: Connection refused</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> 	Is the server running on that host and accepting TCP/IP connections?</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">all_sample_types</span> <span class="op">&lt;-</span> <span class="fu"><a href="get_sample_types.html">get_sample_types</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in h(simpleError(msg, call)):</span> error in evaluating the argument 'dbObj' in selecting a method for function 'dbIsValid': object 'con' not found</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/View.html" class="external-link">View</a></span><span class="op">(</span><span class="va">all_sample_types</span><span class="op">)</span> <span class="co"># to view the ID of the sample type needing updates</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in check_for_XQuartz():</span> X11 library is missing: install XQuartz from xquartz.macosforge.org</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in as.data.frame(x):</span> object 'all_sample_types' not found</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">updated_sample_type</span> <span class="op">&lt;-</span> <span class="va">all_sample_types</span><span class="op">[</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">:</span><span class="fl">4</span><span class="op">]</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in eval(expr, envir, enclos):</span> object 'all_sample_types' not found</span>
 <span class="r-in"><span><span class="va">updated_sample_type</span><span class="op">$</span><span class="va">sample_type_name</span> <span class="op">&lt;-</span> <span class="st">"New Name Run"</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in updated_sample_type$sample_type_name &lt;- "New Name Run":</span> object 'updated_sample_type' not found</span>
 <span class="r-in"><span><span class="fu">update_sample_type</span><span class="op">(</span><span class="va">con</span>, <span class="fl">1</span>, <span class="va">updated_sample_type</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   id          updated_at</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1  1 2023-05-16 18:44:42</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in h(simpleError(msg, call)):</span> error in evaluating the argument 'dbObj' in selecting a method for function 'dbIsValid': object 'con' not found</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>

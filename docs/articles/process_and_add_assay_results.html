@@ -167,7 +167,7 @@ and laboratories within the database.</p>
 <span>                                      <span class="va">laboratory_id</span>, lab_work_performed_by <span class="op">=</span> <span class="st">"Yogi Bear"</span>,</span>
 <span>                                      description <span class="op">=</span> <span class="st">"Plate run for sampling event X"</span>,</span>
 <span>                                      date_run <span class="op">=</span> <span class="st">"07-04-1776"</span><span class="op">)</span></span></code></pre></div>
-<p><strong>Note: save the output of <code>add_plate_run_id</code>. This
+<p><strong>Note: save the output of <code>add_plate_run</code>. This
 contains the unique plate run identifier and will be needed to pass to
 later functions</strong></p>
 </div>
@@ -252,8 +252,8 @@ results.</p>
 <span>                                    sample_details <span class="op">=</span> <span class="va">sample_details</span>,</span>
 <span>                                    plate_size <span class="op">=</span> <span class="fl">384</span><span class="op">)</span></span></code></pre></div>
 <p><strong>Note: save the output of <code>process_sherlock</code>. This
-contains the data that will be needed to to pass to later
-functions.</strong></p>
+contains data that will be needed to to pass to
+<code>add_assay_results</code>.</strong></p>
 </div>
 <div class="section level2">
 <h2 id="upload-assay-results">Upload Assay Results<a class="anchor" aria-label="anchor" href="#upload-assay-results"></a>
@@ -333,11 +333,13 @@ identification.</p>
 <span>                                    sample_details <span class="op">=</span> <span class="va">sample_details</span>,</span>
 <span>                                    plate_size <span class="op">=</span> <span class="fl">384</span><span class="op">)</span></span>
 <span></span>
+<span><span class="co"># no need to store output</span></span>
 <span><span class="fu">grunID</span><span class="fu">::</span><span class="fu">add_assay_results</span><span class="op">(</span><span class="va">con</span>, <span class="va">results</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">thresholds</span> <span class="op">&lt;-</span> <span class="fu">grunID</span><span class="fu">::</span><span class="fu"><a href="../reference/generate_threshold.html">generate_threshold</a></span><span class="op">(</span><span class="va">con</span>, <span class="va">plate_run_id</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">grunID</span><span class="fu">::</span><span class="fu"><a href="../reference/update_assay_detection.html">update_assay_detection</a></span><span class="op">(</span><span class="va">con</span>, <span class="va">thresholds_event</span><span class="op">)</span></span>
+<span><span class="co"># no need to store output</span></span>
+<span><span class="fu">grunID</span><span class="fu">::</span><span class="fu"><a href="../reference/update_assay_detection.html">update_assay_detection</a></span><span class="op">(</span><span class="va">con</span>, <span class="va">thresholds</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">DBI</span><span class="fu">::</span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbDisconnect.html" class="external-link">dbDisconnect</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span></code></pre></div>
 </div>

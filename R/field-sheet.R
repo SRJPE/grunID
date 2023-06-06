@@ -222,7 +222,7 @@ create_multiple_field_sheets <- function(added_sample_plan, field_sheet_filepath
 #' Process Sample Field Sheet Data
 #' @description `process_field_sheet_examples()` takes sample field sheets and converts
 #' them to database-ready formatting.
-#' @details See \code{\link{create_field_sheet} and \code{\link{get_field_sheet_event_plan}} for
+#' @details See \code{\link{create_field_sheet}} and \code{\link{get_field_sheet_event_plan}} for
 #' more information on creating field sheet workbooks.
 #' @param filepath the filepath of the field sheet you want to prepare for upload.
 #' @returns
@@ -272,9 +272,9 @@ process_field_sheet_samples <- function(filepath){
 #' @description `update_field_sheet_samples()` takes a formatted tibble of field sample
 #' data and updates those samples in the database.
 #' @param con A DBI connection object obtained from DBI::dbConnect()
-#' @param field_data the field data processed using \code{\link{process_field_sheet_samples}
-#' See \code{\link{create_field_sheet} and \code{\link{get_field_sheet_event_plan}} for
-#' more information on creating field sheet workbooks, and \code{\link{process_field_sheet_samples}
+#' @param field_data the field data processed using \code{\link{process_field_sheet_samples}}
+#' See \code{\link{create_field_sheet}} and \code{\link{get_field_sheet_event_plan}} for
+#' more information on creating field sheet workbooks, and \code{\link{process_field_sheet_samples}}
 #' for more information on processing raw data before updating in the database.
 #' @details This function requires a valid connection to the database and a processed dataset
 #' with all variables in the correct format. Errors may be due to invalid data structure or
@@ -332,7 +332,7 @@ update_field_sheet_samples <- function(con, field_data) {
 
 #' Helper function - checks field sheet data format
 #' @description Helper function for parsing input before updating field sample data in
-#' database. Called in \code{\link{update_field_sheet_samples}.
+#' database. Called in \code{\link{update_field_sheet_samples}}.
 #' @details Checks whether the connection is valid using \code{\link{is_valid_con}} and
 #' checks class of input variables.
 #' @export

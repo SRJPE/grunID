@@ -6,6 +6,13 @@
 \usage{
 add_sample_plan(con, sample_plan, verbose = FALSE)
 }
+\arguments{
+\item{con}{A DBI connection object}
+
+\item{sample_plan}{A table containing the following columns from a sample plan:
+\code{location_code}, \code{sample_event_number}, \code{first_sample_date}, \code{sample_bin_code}, \code{min_fork_length},
+\code{max_fork_length}, and \code{expected_number_of_samples}.}
+}
 \value{
 a named list containing the number of samples added and all unique
 sampling event IDs created.

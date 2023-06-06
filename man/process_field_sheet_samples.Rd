@@ -27,7 +27,8 @@ the following variables:
 them to database-ready formatting.
 }
 \details{
-
+See \code{\link{create_field_sheet}} and \code{\link{get_field_sheet_event_plan}} for
+more information on creating field sheet workbooks.
 }
 \examples{
 filepath <- "data-raw/test.xlsx"
