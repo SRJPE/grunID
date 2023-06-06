@@ -8,12 +8,7 @@ library(grunID)
 
 # establish connection
 cfg <- config::get()
-con <- DBI::dbConnect(RPostgres::Postgres(),
-                      dbname = cfg$dbname,
-                      host = cfg$host,
-                      port = cfg$port,
-                      user = cfg$username,
-                      password = cfg$password)
+con <- gr_db_connect()
 
 # read in sample plan created for the season. this contains
 # contains location codes, sample events, sample bins,

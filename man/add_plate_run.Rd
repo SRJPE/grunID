@@ -29,6 +29,11 @@ add_plate_run(
 
 \item{date_run}{date of plate run}
 }
+\value{
+the unique plate run identifier assigned by the database. This value needs to be retained
+in the workflow so it can be passed as an argument to functions `process_well_sample_details()` and
+`generate_threshold()`.
+}
 \description{
 `add_plate_run()` adds metadata about a plate run to
 the plate_run table in the database.

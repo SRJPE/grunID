@@ -4,12 +4,15 @@
 \alias{generate_threshold}
 \title{Generate Thresholds}
 \usage{
-generate_threshold(con, plate_run_identifier)
+generate_threshold(con, plate_run_identifier, .control_id = "POS-DNA")
 }
 \arguments{
 \item{con}{valid connection to the database}
 
 \item{plate_run_identifier}{plate run identifier value}
+}
+\value{
+a table containing thresholds for an event, to be passed to `update_assay_detections()`
 }
 \description{
 `generate_threshold()` calculates the raw fluorescence threshold

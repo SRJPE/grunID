@@ -71,6 +71,10 @@ add_sample_events <- function(con, sample_plan) {
 #' @export
 add_sample_bins <- function(con, sample_plan, sample_event_ids) {
 
+  sample_locations <- tbl(con, "sample_location") |> collect()
+  sample_event_ids_for_insert <- tbl(con, "sample_event") |>
+    filter(id %in% !!sample_event_ids$sample_event_id) |> collect()
+
   unique_sample_bins_in_plan <- distinct(.data = sample_plan,
                                          location_code,
                                          sample_event_number,
@@ -80,8 +84,13 @@ add_sample_bins <- function(con, sample_plan, sample_event_ids) {
                                          max_fork_length,
                                          expected_number_of_samples)
 
-  sample_bin_insert <- dplyr::left_join(unique_sample_bins_in_plan, sample_event_ids,
-                                        by = c("sample_event_number"))
+  event_ids_with_locations <- dplyr::left_join(sample_event_ids_for_insert,
+                                               sample_locations,
+                                               by=c("sample_location_id"="id")) |>
+    dplyr::select(sample_event_id=id, sample_event_number, sample_location_id, code)
+
+  sample_bin_insert <- dplyr::left_join(unique_sample_bins_in_plan, event_ids_with_locations,
+                                        by = c("sample_event_number", "location_code"="code"))
 
 
   # partitioned_inserts <- partition_df_to_size(sample_bin_insert, 100)
@@ -129,13 +138,17 @@ add_samples <- function(con, sample_plan, sample_id_insert, verbose = FALSE) {
 
   event_ids <- unique(sample_id_insert$sample_event_id)
 
+  all_locations <- get_sample_locations(con) |>
+    select(sample_location_id=id, location_code=code)
+
   sample_events_for_incoming_samples <- tbl(con, "sample_event") |>
     filter(id %in% event_ids) |>
-    select(id, sample_event_number, sample_event_id = id) |>
+    select(id, sample_event_number, sample_event_id = id, sample_location_id) |>
     collect()
 
   sample_id_inserts <- sample_plan |>
-    left_join(sample_events_for_incoming_samples, by = "sample_event_number") |>
+    dplyr::left_join(all_locations, by="location_code") |>
+    left_join(sample_events_for_incoming_samples, by = c("sample_event_number", "sample_location_id"="sample_location_id")) |>
     left_join(sample_id_insert, by = c("sample_bin_code", "sample_event_id"))
 
 
