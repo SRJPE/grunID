@@ -6,4 +6,7 @@
 config.yml
 data-raw/~$*
 inst/doc
+/doc/
+/Meta/
 *~$*xlsx
+
