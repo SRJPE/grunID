@@ -94,19 +94,22 @@ contexts, but are no longer valid for current data records.</p></dd>
 <span class="r-in"><span>                      port <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">port</span>,</span></span>
 <span class="r-in"><span>                      user <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">username</span>,</span></span>
 <span class="r-in"><span>                      password <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">password</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> 	Is the server running on that host and accepting TCP/IP connections?</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> connection to server at "localhost" (::1), port 5432 failed: Connection refused</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> 	Is the server running on that host and accepting TCP/IP connections?</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">all_sample_locations</span> <span class="op">&lt;-</span> <span class="fu"><a href="get_sample_locations.html">get_sample_locations</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in h(simpleError(msg, call)):</span> error in evaluating the argument 'dbObj' in selecting a method for function 'dbIsValid': object 'con' not found</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/View.html" class="external-link">View</a></span><span class="op">(</span><span class="va">all_sample_locations</span><span class="op">)</span> <span class="co"># to view the ID of the sample location needing status change</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in check_for_XQuartz():</span> X11 library is missing: install XQuartz from xquartz.macosforge.org</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in as.data.frame(x):</span> object 'all_sample_locations' not found</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">#deactivate</span></span></span>
 <span class="r-in"><span><span class="fu">update_sample_location_status</span><span class="op">(</span><span class="va">con</span>, <span class="fl">4</span>, set_active<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   id code active          updated_at</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1  4  CLR  FALSE 2023-05-16 18:44:42</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in h(simpleError(msg, call)):</span> error in evaluating the argument 'dbObj' in selecting a method for function 'dbIsValid': object 'con' not found</span>
 <span class="r-in"><span><span class="co">#reactivate</span></span></span>
 <span class="r-in"><span><span class="fu">update_sample_location_status</span><span class="op">(</span><span class="va">con</span>, <span class="fl">4</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   id code active          updated_at</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1  4  CLR   TRUE 2023-05-16 18:44:42</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in h(simpleError(msg, call)):</span> error in evaluating the argument 'dbObj' in selecting a method for function 'dbIsValid': object 'con' not found</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>

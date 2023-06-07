@@ -58,29 +58,39 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">add_sample_plan</span><span class="op">(</span><span class="va">con</span>, <span class="va">sample_plan</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
+    <div class="section level2">
+    <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
+    <dl><dt>con</dt>
+<dd><p>A DBI connection object</p></dd>
+
+
+<dt>sample_plan</dt>
+<dd><p>A table containing the following columns from a sample plan:
+<code>location_code</code>, <code>sample_event_number</code>, <code>first_sample_date</code>, <code>sample_bin_code</code>, <code>min_fork_length</code>,
+<code>max_fork_length</code>, and <code>expected_number_of_samples</code>.</p></dd>
+
+</dl></div>
+    <div class="section level2">
+    <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
+    
+
+<p>a named list containing the number of samples added and all unique
+sampling event IDs created.</p>
+    </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># example database connection</span></span></span>
-<span class="r-in"><span><span class="va">cfg</span> <span class="op">&lt;-</span> <span class="fu">config</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/config/man/get.html" class="external-link">get</a></span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">con</span> <span class="op">&lt;-</span> <span class="fu">DBI</span><span class="fu">::</span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbConnect.html" class="external-link">dbConnect</a></span><span class="op">(</span><span class="fu">RPostgres</span><span class="fu">::</span><span class="fu"><a href="https://rpostgres.r-dbi.org/reference/Postgres.html" class="external-link">Postgres</a></span><span class="op">(</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>                      dbname <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">dbname</span>,</span></span>
-<span class="r-in"><span>                      host <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">host</span>,</span></span>
-<span class="r-in"><span>                      port <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">port</span>,</span></span>
-<span class="r-in"><span>                      user <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">username</span>,</span></span>
-<span class="r-in"><span>                      password <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">password</span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="va">sample_plan</span> <span class="op">&lt;-</span> <span class="fu">tibble</span><span class="op">(</span>location_code <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"BTC"</span>, <span class="st">"BUT"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>                      sample_event_number <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">2</span>,</span></span>
-<span class="r-in"><span>                      first_sample_date <span class="op">=</span> <span class="st">"2020-01-01"</span>,</span></span>
-<span class="r-in"><span>                      sample_bin_code <span class="op">=</span> <span class="st">"A"</span>,</span></span>
-<span class="r-in"><span>                      min_fork_length <span class="op">=</span> <span class="fl">10</span>,</span></span>
-<span class="r-in"><span>                      max_fork_length <span class="op">=</span> <span class="fl">95</span>,</span></span>
-<span class="r-in"><span>                      expected_number_of_samples <span class="op">=</span> <span class="fl">10</span></span></span>
-<span class="r-in"><span>                      <span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in tibble(location_code = c("BTC", "BUT"), sample_event_number = 1:2,     first_sample_date = "2020-01-01", sample_bin_code = "A",     min_fork_length = 10, max_fork_length = 95, expected_number_of_samples = 10):</span> could not find function "tibble"</span>
+<span class="r-in"><span><span class="va">con</span> <span class="op">&lt;-</span> <span class="fu"><a href="gr_db_connect.html">gr_db_connect</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> refreshing Azure auth token</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> refreshing Azure auth token ... done</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> 	Is the server running on that host and accepting TCP/IP connections?</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> connection to server at "localhost" (::1), port 5432 failed: Connection refused</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> 	Is the server running on that host and accepting TCP/IP connections?</span>
 <span class="r-in"><span><span class="fu">add_sample_plan</span><span class="op">(</span><span class="va">con</span>, <span class="va">sample_plan</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in is.data.frame(sample_plan):</span> object 'sample_plan' not found</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in h(simpleError(msg, call)):</span> error in evaluating the argument 'dbObj' in selecting a method for function 'dbIsValid': object 'con' not found</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>

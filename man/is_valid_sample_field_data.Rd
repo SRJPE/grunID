@@ -7,7 +7,8 @@
 is_valid_sample_field_data(data)
 }
 \description{
-
+Helper function for parsing input before updating field sample data in
+database. Called in \code{\link{update_field_sheet_samples}}.
 }
 \details{
 Checks whether the connection is valid using \code{\link{is_valid_con}} and

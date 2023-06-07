@@ -1,7 +1,9 @@
 #' Add Sample Plan
 #' @description `add_sample_plan` registers new sampling events and generates new sample ids
-#' @param con
-#' @param sample_plan
+#' @param con A DBI connection object
+#' @param sample_plan A table containing the following columns from a sample plan:
+#' `location_code`, `sample_event_number`, `first_sample_date`, `sample_bin_code`, `min_fork_length`,
+#' `max_fork_length`, and `expected_number_of_samples`.
 #' @return a named list containing the number of samples added and all unique
 #' sampling event IDs created.
 #' @examples

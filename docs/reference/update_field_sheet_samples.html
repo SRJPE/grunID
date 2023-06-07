@@ -66,6 +66,13 @@ data and updates those samples in the database.</p>
     <dl><dt>con</dt>
 <dd><p>A DBI connection object obtained from DBI::dbConnect()</p></dd>
 
+
+<dt>field_data</dt>
+<dd><p>the field data processed using <code><a href="process_field_sheet_samples.html">process_field_sheet_samples</a></code>
+See <code><a href="create_field_sheet.html">create_field_sheet</a></code> and <code><a href="get_field_sheet_event_plan.html">get_field_sheet_event_plan</a></code> for
+more information on creating field sheet workbooks, and <code><a href="process_field_sheet_samples.html">process_field_sheet_samples</a></code>
+for more information on processing raw data before updating in the database.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -90,6 +97,7 @@ of class "datetime" or ("POSIXct" "POSIXt")</p></li>
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p>Other field sheet helpers: 
 <code><a href="create_field_sheet.html">create_field_sheet</a>()</code>,
+<code><a href="create_multiple_field_sheets.html">create_multiple_field_sheets</a>()</code>,
 <code><a href="get_field_sheet_event_plan.html">get_field_sheet_event_plan</a>()</code>,
 <code><a href="process_field_sheet_samples.html">process_field_sheet_samples</a>()</code></p></div>
     </div>
@@ -103,12 +111,16 @@ of class "datetime" or ("POSIXct" "POSIXt")</p></li>
 <span class="r-in"><span>                      port <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">port</span>,</span></span>
 <span class="r-in"><span>                      user <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">username</span>,</span></span>
 <span class="r-in"><span>                      password <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">password</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> 	Is the server running on that host and accepting TCP/IP connections?</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> connection to server at "localhost" (::1), port 5432 failed: Connection refused</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> 	Is the server running on that host and accepting TCP/IP connections?</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">filepath</span> <span class="op">&lt;-</span> <span class="st">"data-raw/test.xlsx"</span></span></span>
 <span class="r-in"><span><span class="va">field_data_clean</span> <span class="op">&lt;-</span> <span class="fu"><a href="process_field_sheet_samples.html">process_field_sheet_samples</a></span><span class="op">(</span><span class="va">filepath</span><span class="op">)</span></span></span>
 <span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> `path` does not exist: ‘data-raw/test.xlsx’</span>
 <span class="r-in"><span><span class="fu">update_field_sheet_samples</span><span class="op">(</span><span class="va">con</span>, <span class="va">field_data_clean</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in is.data.frame(data):</span> object 'field_data_clean' not found</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in h(simpleError(msg, call)):</span> error in evaluating the argument 'dbObj' in selecting a method for function 'dbIsValid': object 'con' not found</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
