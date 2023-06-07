@@ -55,6 +55,7 @@ reference:
   - get_sample_status
   - get_sample_types
   - get_samples
+  - get_samples_needing_action
   - get_status_codes
 
 - title: Processing data
@@ -94,6 +95,7 @@ reference:
   desc: These functions relate to creating and processing field sheets
   contents:
   - create_field_sheet
+  - create_multiple_field_sheets
   - get_field_sheet_event_plan
   - process_field_sheet_samples
   - update_field_sheet_samples

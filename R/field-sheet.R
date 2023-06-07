@@ -109,17 +109,17 @@ create_field_sheet <- function(wb, field_sheet_sample_plan, sample_event_number,
 #' @export
 #' @family field sheet helpers
 #' @md
-get_field_sheet_event_plan <- function(con, sample_event_id) {
+get_field_sheet_event_plan <- function(con, sample_event_id_arg) {
 
   sample_event <- dplyr::tbl(con, "sample_event") |>
-    dplyr::filter(id == sample_event_id) |>
+    dplyr::filter(id == sample_event_id_arg) |>
     dplyr::select(sample_event_id = id, sample_event_number, sample_location_id, first_sample_date) |>
     dplyr::collect()
 
   sample_bins <- dplyr::tbl(con, "sample_bin") |>
     dplyr::select(sample_bin_id = id, sample_event_id, sample_bin_code, min_fork_length,
            max_fork_length) |>
-    dplyr::filter(sample_event_id == sample_event_id) |>
+    dplyr::filter(sample_event_id == sample_event_id_arg) |>
     dplyr::collect()
 
   sample_bin_ids <- sample_bins |> dplyr::pull(sample_bin_id)
@@ -161,10 +161,68 @@ get_field_sheet_event_plan <- function(con, sample_event_id) {
 
 }
 
+
+#' Create Multiple Field Sheets
+#' @description `create_multiple_field_sheets()` creates an excel workbook and appends
+#' multiple formatted field worksheets for sample event IDs in a given sample plan.
+#' @details `create_multiple_field_sheets()` combines `get_field_sheet_sample_plan()` and `create_field_sheet()` into
+#' one function. Field sheets are created for all unique sample event IDs in a given sample plan.
+#' `get_field_sheet_sample_plan()` and `create_field_sheet()` can still be run independently to create one field
+#' sheet at a time.
+#' @param added_sample_plan The object created by running `add_sample_plan()`. This is a named list containing elements
+#' "number_of_samples_added" and "sample_ids_created". "sample_ids_created" is a table and must contain a column
+#' "sample_event_id".
+#' @param field_sheet_filepath The filepath and name desired for the workbook containing field sheets.
+#' @returns A Workbook object from \code{\link[openxlsx]{createWorkbook}} with a worksheet for each sampling event in the
+#' sample plan.
+#' @examples
+#' con <- gr_db_connect()
+#' # add sample plan
+#' sample_plan_2022_final <- read_csv("data-raw/2022_sample_plan.csv") |> distinct_all()
+#' 2022_sample_plan <- add_sample_plan(con, sample_plan_2022_final, verbose = TRUE)
+#'
+#' # create workbook with field sheets for all sample event IDs in the 2022 sample plan
+#' create_multiple_field_sheets(added_sample_plan = 2022_sample_plan, "data-raw/2022_field_sheets.xlsx")
+#' @export
+#' @family field sheet helpers
+#' @md
+create_multiple_field_sheets <- function(added_sample_plan, field_sheet_filepath) {
+  # create workbook to append each sampling event tab
+  wb <- openxlsx::createWorkbook()
+
+  # loop through unique sample event IDs (input to get_field_sheet_event_plan) to append
+  # workbooks
+  unique_sample_ids <- unique(added_sample_plan$sample_ids_created$sample_event_id)
+
+  for(i in unique_sample_ids){
+    # use get_field_sheet_event_plan() to create a data frame containing content for the
+    # field sheets for sampling events
+    # get_field_sheet_event_plan() retrieves sampling event information from the database
+    # that is needed to prepare field sheets. Looks up based on sampling event ID
+    plan <- get_field_sheet_event_plan(con, sample_event_id = i)
+
+    # append a field sheet to the workbook for that sample event
+    # create field sheet for sampling crews to use.
+    # Takes in get_field_sheet_sample_plan$field_sheet_sample_plan
+    # leaves columns "Date", "Time", "FL(mm)", "Field run ID", "Fin clip (Y/N)", and "Comments"
+    # blank intentionally so that they can be filled out in the field
+    wb <- create_field_sheet(wb = wb,
+                             field_sheet_sample_plan = plan$field_sheet_sample_plan,
+                             sample_event_number = plan$sample_event_number,
+                             first_sample_date = plan$first_sample_date,
+                             sample_location = plan$location_name,
+                             sample_location_code = plan$location_code)
+  }
+  # then save
+  openxlsx::saveWorkbook(wb, paste0(field_sheet_filepath), overwrite = TRUE)
+}
+
+
+
 #' Process Sample Field Sheet Data
 #' @description `process_field_sheet_examples()` takes sample field sheets and converts
 #' them to database-ready formatting.
-#' @details See \code{\link{create_field_sheet} and \code{\link{get_field_sheet_event_plan}} for
+#' @details See \code{\link{create_field_sheet}} and \code{\link{get_field_sheet_event_plan}} for
 #' more information on creating field sheet workbooks.
 #' @param filepath the filepath of the field sheet you want to prepare for upload.
 #' @returns
@@ -214,9 +272,9 @@ process_field_sheet_samples <- function(filepath){
 #' @description `update_field_sheet_samples()` takes a formatted tibble of field sample
 #' data and updates those samples in the database.
 #' @param con A DBI connection object obtained from DBI::dbConnect()
-#' @param field_data the field data processed using \code{\link{process_field_sheet_samples}
-#' See \code{\link{create_field_sheet} and \code{\link{get_field_sheet_event_plan}} for
-#' more information on creating field sheet workbooks, and \code{\link{process_field_sheet_samples}
+#' @param field_data the field data processed using \code{\link{process_field_sheet_samples}}
+#' See \code{\link{create_field_sheet}} and \code{\link{get_field_sheet_event_plan}} for
+#' more information on creating field sheet workbooks, and \code{\link{process_field_sheet_samples}}
 #' for more information on processing raw data before updating in the database.
 #' @details This function requires a valid connection to the database and a processed dataset
 #' with all variables in the correct format. Errors may be due to invalid data structure or
@@ -274,7 +332,7 @@ update_field_sheet_samples <- function(con, field_data) {
 
 #' Helper function - checks field sheet data format
 #' @description Helper function for parsing input before updating field sample data in
-#' database. Called in \code{\link{update_field_sheet_samples}.
+#' database. Called in \code{\link{update_field_sheet_samples}}.
 #' @details Checks whether the connection is valid using \code{\link{is_valid_con}} and
 #' checks class of input variables.
 #' @export

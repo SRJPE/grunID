@@ -147,7 +147,7 @@ get_sample_status <- function(con, sample_ids, full_history = FALSE) {
 #' * repeat_ots_28
 #' * repeat_ots_16
 #' * potential_heterozygotes
-#'
+#' @md
 #' @export
 get_samples_needing_action <- function(con) {
 

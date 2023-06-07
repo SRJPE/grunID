@@ -7,5 +7,6 @@
 process_raw_assay_results(filepath, ranges, plate_size, layout)
 }
 \description{
-Process Raw Assay Results
+A helper function called in `process_sherlock` that reads in
+an excel containing SHERLOCK output.
 }

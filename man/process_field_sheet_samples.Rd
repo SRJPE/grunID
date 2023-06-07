@@ -27,7 +27,8 @@ the following variables:
 them to database-ready formatting.
 }
 \details{
-
+See \code{\link{create_field_sheet}} and \code{\link{get_field_sheet_event_plan}} for
+more information on creating field sheet workbooks.
 }
 \examples{
 filepath <- "data-raw/test.xlsx"
@@ -36,6 +37,7 @@ field_data_clean <- process_field_sheet_samples(filepath)
 \seealso{
 Other field sheet helpers: 
 \code{\link{create_field_sheet}()},
+\code{\link{create_multiple_field_sheets}()},
 \code{\link{get_field_sheet_event_plan}()},
 \code{\link{update_field_sheet_samples}()}
 }

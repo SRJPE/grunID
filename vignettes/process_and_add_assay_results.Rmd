@@ -24,6 +24,7 @@ This tutorial describes how to:
 4. upload assay result data to the database
 5. generate threshold values from the plate run
 6. update assay detections for a plate run in the database
+7. check sample status
 
 ## Dependencies
 
@@ -196,6 +197,27 @@ grunID::update_assay_detection(con, thresholds_event)
 ```
 **Note: you do not need to save the output of `update_assay_detection`.**
 
+## Check Sample Status
+
+There are two ways you can query for sample status: 
+
+1) find the sample status of a specific sample using `get_sample_status` 
+2) find all samples requiring further analysis using `get_samples_needing_action`. This will produce a named list organized into the following categories: 
+
+* needs_ots_16 
+* repeat_ots_28 
+* repeat_ots_16
+* potential_heterozygotes
+
+```{r, eval = FALSE, cache = TRUE}
+# find the status of a specific sample "Sample_ID"
+grunID::get_sample_status(con, "Sample_ID", full_history = FALSE)
+
+# produce a list of Sample IDs organized by the analysis required
+grunID::get_samples_needing_action(con)
+```
+
+
 ## End Session
 
 And finally, close your open connection to the database:
@@ -207,13 +229,13 @@ DBI::dbDisconnect(con)
 
 Here is the code again to:
 
-1. securely manage database credentials
-2. connect to the genetics run identification database
-3. write plate run metadata to the database
-4. prepare Synergy H1 result data for upload to the database
-5. upload assay result data to the database
-6. generate threshold values from the plate run
-7. update assay detections for a plate run in the database
+1. connect to the genetics run identification database with credentials
+2. write plate run metadata to the database
+3. prepare Synergy H1 result data for upload to the database
+4. upload assay result data to the database
+5. generate threshold values from the plate run
+6. update assay detections for a plate run in the database
+7. check sample status
 
 ```{r, eval=FALSE, cache=TRUE}
 con <- gr_db_connect()
@@ -223,10 +245,10 @@ plate_run_id <- grunID::add_plate_run(con, protocol_id, genetic_method_id,
                                       description = "Plate run for sampling event X",
                                       date_run = "07-04-1776")
 
-sample_details <- process_well_sample_details(filepath = "templates/sherlock_results_template.xlsx",
-                                              sample_type = "mucus",
-                                              layout_type = "split_plate_early_late",
-                                              plate_run_id = plate_run_id)
+sample_details <- grunID::process_well_sample_details(filepath = "templates/sherlock_results_template.xlsx",
+                                                      sample_type = "mucus",
+                                                      layout_type = "split_plate_early_late",
+                                                      plate_run_id = plate_run_id)
 
 results <- grunID::process_sherlock(sherlock_results_filepath = "templates/sherlock_results_template.xlsx",
                                     sample_details = sample_details,
@@ -240,5 +262,12 @@ thresholds <- grunID::generate_threshold(con, plate_run_id)
 # no need to store output
 grunID::update_assay_detection(con, thresholds)
 
+# find the status of a specific sample "Sample_ID"
+grunID::get_sample_status(con, "Sample_ID", full_history = FALSE)
+
+# produce a list of Sample IDs organized by the analysis required
+grunID::get_samples_needing_action(con)
+
+# disconnect
 DBI::dbDisconnect(con)
 ```

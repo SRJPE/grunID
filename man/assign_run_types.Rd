@@ -19,3 +19,4 @@ helper function called within `add_genetic_identification`
 `assign_run_types` takes in assay detections and assigns a run type ID
 based on assay results logic and status codes.
 }
+\keyword{internal}

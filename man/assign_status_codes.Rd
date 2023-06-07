@@ -19,3 +19,4 @@ helper function called within `add_genetic_identification`
 `assign_status_codes` takes in assay detections and assigns a status code
 based on assay results logic.
 }
+\keyword{internal}

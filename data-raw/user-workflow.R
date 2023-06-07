@@ -107,6 +107,9 @@ tbl(con, "run_type") |> collect() |> print(n=Inf)
 # see samples that need further analysis
 get_samples_needing_action(con)
 
+# see status of a selected sample ID
+get_sample_status(con, "JPE_Sample_ID", full_history = FALSE)
+
 # disconnect!
 DBI::dbDisconnect(con)
 
