@@ -118,7 +118,7 @@ reference:
 
 navbar:
   structure:
-    left:  [home, reference, articles]
+    left:  [home, reference, articles, templates]
     right: [github]
   type: default
   left:
@@ -130,6 +130,8 @@ navbar:
         href: 'articles/azure-authentication.html'
       - text: 'Process and add assay results to database'
         href: 'articles/process_and_add_assay_results.html'
+  - text: 'Templates'
+    href: "articles/grunID-data-templates.html"
 
 repo:
  url:
