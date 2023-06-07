@@ -12,8 +12,13 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
-```
-
-```{r setup}
 library(grunID)
 ```
+
+
+This page contains a list of data templates used by `grunID`.
+
+- Sherlock results template <button class="btn btn-outline-primary"><a href="`r system.file("sherlock_results_template.xlsx", package = "grunID", mustWork = TRUE)`" download>Download</a></button>
+
+
+
