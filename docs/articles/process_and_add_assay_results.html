@@ -8,8 +8,8 @@
 <meta name="description" content="grunID">
 <title>Process and Add Assay Results to Database • grunID</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.2.2/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.2.2/bootstrap.bundle.min.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
+<link href="../deps/bootstrap-5.1.3/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.1.3/bootstrap.bundle.min.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
 <!-- bootstrap-toc --><script src="https://cdn.jsdelivr.net/gh/afeld/bootstrap-toc@v1.0.1/dist/bootstrap-toc.min.js" integrity="sha256-4veVQbu7//Lk5TSmc7YV48MxtMy98e26cf5MrgZYnwo=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- search --><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Process and Add Assay Results to Database">
 <meta property="og:description" content="grunID">
@@ -93,7 +93,6 @@ credentials</li>
 <li>upload assay result data to the database</li>
 <li>generate threshold values from the plate run</li>
 <li>update assay detections for a plate run in the database</li>
-<li>check sample status</li>
 </ol>
 </div>
 <div class="section level2">
@@ -301,35 +300,10 @@ identification.</p>
 <code>update_assay_detection</code>.</strong></p>
 </div>
 <div class="section level2">
-<h2 id="check-sample-status">Check Sample Status<a class="anchor" aria-label="anchor" href="#check-sample-status"></a>
-</h2>
-<p>There are two ways you can query for sample status:</p>
-<ol style="list-style-type: decimal">
-<li>find the sample status of a specific sample using
-<code>get_sample_status</code>
-</li>
-<li>find all samples requiring further analysis using
-<code>get_samples_needing_action</code>. This will produce a named list
-organized into the following categories:</li>
-</ol>
-<ul>
-<li>needs_ots_16</li>
-<li>repeat_ots_28</li>
-<li>repeat_ots_16</li>
-<li>potential_heterozygotes</li>
-</ul>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># find the status of a specific sample "Sample_ID"</span></span>
-<span><span class="fu">grunID</span><span class="fu">::</span><span class="fu"><a href="../reference/get_sample_status.html">get_sample_status</a></span><span class="op">(</span><span class="va">con</span>, <span class="st">"Sample_ID"</span>, full_history <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># produce a list of Sample IDs organized by the analysis required</span></span>
-<span><span class="fu">grunID</span><span class="fu">::</span><span class="fu"><a href="../reference/get_samples_needing_action.html">get_samples_needing_action</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level2">
 <h2 id="end-session">End Session<a class="anchor" aria-label="anchor" href="#end-session"></a>
 </h2>
 <p>And finally, close your open connection to the database:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">DBI</span><span class="fu">::</span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbDisconnect.html" class="external-link">dbDisconnect</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
@@ -344,9 +318,8 @@ credentials</li>
 <li>upload assay result data to the database</li>
 <li>generate threshold values from the plate run</li>
 <li>update assay detections for a plate run in the database</li>
-<li>check sample status</li>
 </ol>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">con</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/gr_db_connect.html">gr_db_connect</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">plate_run_id</span> <span class="op">&lt;-</span> <span class="fu">grunID</span><span class="fu">::</span><span class="fu"><a href="../reference/add_plate_run.html">add_plate_run</a></span><span class="op">(</span><span class="va">con</span>, <span class="va">protocol_id</span>, <span class="va">genetic_method_id</span>,</span>
@@ -370,12 +343,6 @@ credentials</li>
 <span></span>
 <span><span class="co"># no need to store output</span></span>
 <span><span class="fu">grunID</span><span class="fu">::</span><span class="fu"><a href="../reference/update_assay_detection.html">update_assay_detection</a></span><span class="op">(</span><span class="va">con</span>, <span class="va">thresholds</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># find the status of a specific sample "Sample_ID"</span></span>
-<span><span class="fu">grunID</span><span class="fu">::</span><span class="fu"><a href="../reference/get_sample_status.html">get_sample_status</a></span><span class="op">(</span><span class="va">con</span>, <span class="st">"Sample_ID"</span>, full_history <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># produce a list of Sample IDs organized by the analysis required</span></span>
-<span><span class="fu">grunID</span><span class="fu">::</span><span class="fu"><a href="../reference/get_samples_needing_action.html">get_samples_needing_action</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># disconnect</span></span>
 <span><span class="fu">DBI</span><span class="fu">::</span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbDisconnect.html" class="external-link">dbDisconnect</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span></code></pre></div>

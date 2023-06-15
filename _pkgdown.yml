@@ -130,6 +130,8 @@ navbar:
         href: 'articles/azure-authentication.html'
       - text: 'Process and add assay results to database'
         href: 'articles/process_and_add_assay_results.html'
+      - text: 'Querying Sample Status'
+        href: 'articles/query_sample_status.html'
   - text: 'Templates'
     href: "articles/grunID-data-templates.html"
 

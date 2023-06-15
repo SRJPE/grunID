@@ -24,7 +24,6 @@ This tutorial describes how to:
 4. upload assay result data to the database
 5. generate threshold values from the plate run
 6. update assay detections for a plate run in the database
-7. check sample status
 
 ## Dependencies
 
@@ -197,26 +196,6 @@ grunID::update_assay_detection(con, thresholds_event)
 ```
 **Note: you do not need to save the output of `update_assay_detection`.**
 
-## Check Sample Status
-
-There are two ways you can query for sample status: 
-
-1) find the sample status of a specific sample using `get_sample_status` 
-2) find all samples requiring further analysis using `get_samples_needing_action`. This will produce a named list organized into the following categories: 
-
-* needs_ots_16 
-* repeat_ots_28 
-* repeat_ots_16
-* potential_heterozygotes
-
-```{r, eval = FALSE, cache = TRUE}
-# find the status of a specific sample "Sample_ID"
-grunID::get_sample_status(con, "Sample_ID", full_history = FALSE)
-
-# produce a list of Sample IDs organized by the analysis required
-grunID::get_samples_needing_action(con)
-```
-
 
 ## End Session
 
@@ -235,7 +214,6 @@ Here is the code again to:
 4. upload assay result data to the database
 5. generate threshold values from the plate run
 6. update assay detections for a plate run in the database
-7. check sample status
 
 ```{r, eval=FALSE, cache=TRUE}
 con <- gr_db_connect()
@@ -261,12 +239,6 @@ thresholds <- grunID::generate_threshold(con, plate_run_id)
 
 # no need to store output
 grunID::update_assay_detection(con, thresholds)
-
-# find the status of a specific sample "Sample_ID"
-grunID::get_sample_status(con, "Sample_ID", full_history = FALSE)
-
-# produce a list of Sample IDs organized by the analysis required
-grunID::get_samples_needing_action(con)
 
 # disconnect
 DBI::dbDisconnect(con)
