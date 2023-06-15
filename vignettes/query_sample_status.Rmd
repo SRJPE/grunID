@@ -32,6 +32,7 @@ This tutorial describes how to:
 
 The function `get_sample_status` is helpful for when you already know the sample IDs about which you want more information. The function takes in one or more sample IDs and a connection and returns the following information:
 
+* id (unique identifier generated for the sample status table)
 * sample_id
 * status_code_id
 * status_code_name
@@ -39,7 +40,7 @@ The function `get_sample_status` is helpful for when you already know the sample
 * created_at
 * created_by
 
-If you want the full history of a sample, you can add the argument `full_history = TRUE`.
+The function defaults to `full_history = FALSE`, showing you only the current status of the sample. If you want the full history of a sample, you can change the argument to `full_history = TRUE`.
 
 ```{r, eval = FALSE, cache = TRUE}
 con <- gr_db_connect()

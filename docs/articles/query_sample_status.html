@@ -105,6 +105,7 @@ already know the sample IDs about which you want more information. The
 function takes in one or more sample IDs and a connection and returns
 the following information:</p>
 <ul>
+<li>id (unique identifier generated for the sample status table)</li>
 <li>sample_id</li>
 <li>status_code_id</li>
 <li>status_code_name</li>
@@ -112,7 +113,9 @@ the following information:</p>
 <li>created_at</li>
 <li>created_by</li>
 </ul>
-<p>If you want the full history of a sample, you can add the argument
+<p>The function defaults to <code>full_history = FALSE</code>, showing
+you only the current status of the sample. If you want the full history
+of a sample, you can change the argument to
 <code>full_history = TRUE</code>.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">con</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/gr_db_connect.html">gr_db_connect</a></span><span class="op">(</span><span class="op">)</span></span>
