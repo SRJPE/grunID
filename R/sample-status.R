@@ -151,31 +151,31 @@ get_sample_status <- function(con, sample_ids, full_history = FALSE) {
 #' @export
 get_samples_needing_action <- function(con) {
 
-  sample_status_table <- dplyr::tbl(con, "sample_status")
+  #sample_status_table <- dplyr::tbl(con, "sample_status")
 
-  needs_ots_16 <- sample_status_table |>
+  needs_ots_16 <- dplyr::tbl(con, "sample_status") |>
     dplyr::filter(status_code_id == 8) |>
     dplyr::select(sample_id) |>
     dplyr::collect()
 
-  repeat_ots_28 <- sample_status_table |>
+  repeat_ots_28 <- dplyr::tbl(con, "sample_status") |>
+    dplyr::collect() |>
     dplyr::left_join(dplyr::tbl(con, "genetic_run_identification") |>
                        dplyr::collect(), by = "sample_id") |>
     dplyr::filter(status_code_id == 7 & run_type_id == 7) |>
-    dplyr::select(sample_id) |>
-    dplyr::collect()
+    dplyr::select(sample_id)
 
-  repeat_ots_16 <- sample_status_table |>
+  repeat_ots_16 <- dplyr::tbl(con, "sample_status") |>
     dplyr::filter(status_code_id == 10) |>
     dplyr::select(sample_id) |>
     dplyr::collect()
 
-  potential_heterozygotes <- sample_status_table |>
+  potential_heterozygotes <- dplyr::tbl(con, "sample_status") |>
+    dplyr::collect() |>
     dplyr::left_join(dplyr::tbl(con, "genetic_run_identification") |>
                        dplyr::collect(), by = "sample_id") |>
     dplyr::filter(status_code_id == 11 & run_type_id == 8) |>
-    dplyr::select(sample_id) |>
-    dplyr::collect()
+    dplyr::select(sample_id)
 
   return(list("needs_ots_16" = needs_ots_16,
               "repeat_ots_28" = repeat_ots_28,
