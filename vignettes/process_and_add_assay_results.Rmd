@@ -69,7 +69,7 @@ data.
 If you do not know the ID for the protocol used, you can review all existing 
 protocols stored in the database with the following code: 
 ```{r, eval=FALSE, cache=TRUE}
-all_protocols <- grunID::get_protocol(con)
+all_protocols <- grunID::get_protocols(con)
 ```
 
 Select appropriate protocol ID with this code:
@@ -157,7 +157,7 @@ provide the `process_sherlock` function the filepath to the result data excel wo
 the sample details dataframe described above, and the plate size run *(either 96 or 384)*.
 The function will return a list containing both the raw and final assay results.
 ```{r, eval=FALSE, cache=TRUE}
-results <- grunID::process_sherlock(sherlock_results_filepath = "templates/sherlock_results_template.xlsx",
+results <- grunID::process_sherlock(filepath = "templates/sherlock_results_template.xlsx",
                                     sample_details = sample_details,
                                     plate_size = 384)
 ```
@@ -228,7 +228,7 @@ sample_details <- grunID::process_well_sample_details(filepath = "templates/sher
                                                       layout_type = "split_plate_early_late",
                                                       plate_run_id = plate_run_id)
 
-results <- grunID::process_sherlock(sherlock_results_filepath = "templates/sherlock_results_template.xlsx",
+results <- grunID::process_sherlock(filepath = "templates/sherlock_results_template.xlsx",
                                     sample_details = sample_details,
                                     plate_size = 384)
 
