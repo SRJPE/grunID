@@ -257,18 +257,18 @@ results.</p>
 <span>                                    plate_size <span class="op">=</span> <span class="fl">384</span><span class="op">)</span></span></code></pre></div>
 <p><strong>Note: save the output of <code>process_sherlock</code>. This
 contains data that will be needed to to pass to
-<code>add_assay_results</code>.</strong></p>
+<code>add_raw_assay_results</code>.</strong></p>
 </div>
 <div class="section level2">
 <h2 id="upload-assay-results">Upload Assay Results<a class="anchor" aria-label="anchor" href="#upload-assay-results"></a>
 </h2>
-<p>Provide <code>add_assay_results</code> a valid connection to the
+<p>Provide <code>add_raw_assay_results</code> a valid connection to the
 database and the processed assay result data. The function returns the
 number or records added.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">grunID</span><span class="fu">::</span><span class="fu">add_assay_results</span><span class="op">(</span><span class="va">con</span>, <span class="va">results</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu">grunID</span><span class="fu">::</span><span class="fu"><a href="../reference/add_raw_assay_results.html">add_raw_assay_results</a></span><span class="op">(</span><span class="va">con</span>, <span class="va">results</span><span class="op">)</span></span></code></pre></div>
 <p><strong>Note: you do not need to save the output of
-<code>add_assay_results</code>.</strong></p>
+<code>add_raw_assay_results</code>.</strong></p>
 </div>
 <div class="section level2">
 <h2 id="generate-threshold-values">Generate Threshold Values<a class="anchor" aria-label="anchor" href="#generate-threshold-values"></a>
@@ -338,7 +338,7 @@ credentials</li>
 <span>                                    plate_size <span class="op">=</span> <span class="fl">384</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># no need to store output</span></span>
-<span><span class="fu">grunID</span><span class="fu">::</span><span class="fu">add_assay_results</span><span class="op">(</span><span class="va">con</span>, <span class="va">results</span><span class="op">)</span></span>
+<span><span class="fu">grunID</span><span class="fu">::</span><span class="fu"><a href="../reference/add_raw_assay_results.html">add_raw_assay_results</a></span><span class="op">(</span><span class="va">con</span>, <span class="va">results</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">thresholds</span> <span class="op">&lt;-</span> <span class="fu">grunID</span><span class="fu">::</span><span class="fu"><a href="../reference/generate_threshold.html">generate_threshold</a></span><span class="op">(</span><span class="va">con</span>, <span class="va">plate_run_id</span><span class="op">)</span></span>
 <span></span>
