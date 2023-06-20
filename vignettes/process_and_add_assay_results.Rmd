@@ -163,17 +163,17 @@ results <- grunID::process_sherlock(filepath = "templates/sherlock_results_templ
 ```
 
 **Note: save the output of `process_sherlock`. This contains data that will be needed to
-to pass to `add_assay_results`.**
+to pass to `add_raw_assay_results`.**
 
 ## Upload Assay Results
 
-Provide `add_assay_results` a valid connection to the database and the processed
+Provide `add_raw_assay_results` a valid connection to the database and the processed
 assay result data. The function returns the number or records added.
 ```{r, eval=FALSE, cache=TRUE}
-grunID::add_assay_results(con, results)
+grunID::add_raw_assay_results(con, results)
 ```
 
-**Note: you do not need to save the output of `add_assay_results`.**
+**Note: you do not need to save the output of `add_raw_assay_results`.**
 
 ## Generate Threshold Values
 
@@ -233,7 +233,7 @@ results <- grunID::process_sherlock(filepath = "templates/sherlock_results_templ
                                     plate_size = 384)
 
 # no need to store output
-grunID::add_assay_results(con, results)
+grunID::add_raw_assay_results(con, results)
 
 thresholds <- grunID::generate_threshold(con, plate_run_id)
 
