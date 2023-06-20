@@ -24,7 +24,6 @@ This tutorial describes how to:
 4. upload assay result data to the database
 5. generate threshold values from the plate run
 6. update assay detections for a plate run in the database
-7. check sample status
 
 ## Dependencies
 
@@ -70,7 +69,7 @@ data.
 If you do not know the ID for the protocol used, you can review all existing 
 protocols stored in the database with the following code: 
 ```{r, eval=FALSE, cache=TRUE}
-all_protocols <- grunID::get_protocol(con)
+all_protocols <- grunID::get_protocols(con)
 ```
 
 Select appropriate protocol ID with this code:
@@ -158,7 +157,7 @@ provide the `process_sherlock` function the filepath to the result data excel wo
 the sample details dataframe described above, and the plate size run *(either 96 or 384)*.
 The function will return a list containing both the raw and final assay results.
 ```{r, eval=FALSE, cache=TRUE}
-results <- grunID::process_sherlock(sherlock_results_filepath = "templates/sherlock_results_template.xlsx",
+results <- grunID::process_sherlock(filepath = "templates/sherlock_results_template.xlsx",
                                     sample_details = sample_details,
                                     plate_size = 384)
 ```
@@ -197,26 +196,6 @@ grunID::update_assay_detection(con, thresholds_event)
 ```
 **Note: you do not need to save the output of `update_assay_detection`.**
 
-## Check Sample Status
-
-There are two ways you can query for sample status: 
-
-1) find the sample status of a specific sample using `get_sample_status` 
-2) find all samples requiring further analysis using `get_samples_needing_action`. This will produce a named list organized into the following categories: 
-
-* needs_ots_16 
-* repeat_ots_28 
-* repeat_ots_16
-* potential_heterozygotes
-
-```{r, eval = FALSE, cache = TRUE}
-# find the status of a specific sample "Sample_ID"
-grunID::get_sample_status(con, "Sample_ID", full_history = FALSE)
-
-# produce a list of Sample IDs organized by the analysis required
-grunID::get_samples_needing_action(con)
-```
-
 
 ## End Session
 
@@ -235,7 +214,6 @@ Here is the code again to:
 4. upload assay result data to the database
 5. generate threshold values from the plate run
 6. update assay detections for a plate run in the database
-7. check sample status
 
 ```{r, eval=FALSE, cache=TRUE}
 con <- gr_db_connect()
@@ -250,7 +228,7 @@ sample_details <- grunID::process_well_sample_details(filepath = "templates/sher
                                                       layout_type = "split_plate_early_late",
                                                       plate_run_id = plate_run_id)
 
-results <- grunID::process_sherlock(sherlock_results_filepath = "templates/sherlock_results_template.xlsx",
+results <- grunID::process_sherlock(filepath = "templates/sherlock_results_template.xlsx",
                                     sample_details = sample_details,
                                     plate_size = 384)
 
@@ -261,12 +239,6 @@ thresholds <- grunID::generate_threshold(con, plate_run_id)
 
 # no need to store output
 grunID::update_assay_detection(con, thresholds)
-
-# find the status of a specific sample "Sample_ID"
-grunID::get_sample_status(con, "Sample_ID", full_history = FALSE)
-
-# produce a list of Sample IDs organized by the analysis required
-grunID::get_samples_needing_action(con)
 
 # disconnect
 DBI::dbDisconnect(con)

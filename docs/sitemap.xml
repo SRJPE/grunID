@@ -4,6 +4,9 @@
     <loc>https://github.com/FlowWest/grunID/404.html</loc>
   </url>
   <url>
+    <loc>https://github.com/FlowWest/grunID/LICENSE.html</loc>
+  </url>
+  <url>
     <loc>https://github.com/FlowWest/grunID/articles/azure-authentication.html</loc>
   </url>
   <url>
@@ -16,13 +19,13 @@
     <loc>https://github.com/FlowWest/grunID/articles/process_and_add_assay_results.html</loc>
   </url>
   <url>
+    <loc>https://github.com/FlowWest/grunID/articles/query_sample_status.html</loc>
+  </url>
+  <url>
     <loc>https://github.com/FlowWest/grunID/authors.html</loc>
   </url>
   <url>
     <loc>https://github.com/FlowWest/grunID/index.html</loc>
-  </url>
-  <url>
-    <loc>https://github.com/FlowWest/grunID/LICENSE.html</loc>
   </url>
   <url>
     <loc>https://github.com/FlowWest/grunID/news/index.html</loc>
@@ -58,9 +61,6 @@
     <loc>https://github.com/FlowWest/grunID/reference/add_run_type.html</loc>
   </url>
   <url>
-    <loc>https://github.com/FlowWest/grunID/reference/add_samples.html</loc>
-  </url>
-  <url>
     <loc>https://github.com/FlowWest/grunID/reference/add_sample_bins.html</loc>
   </url>
   <url>
@@ -74,6 +74,9 @@
   </url>
   <url>
     <loc>https://github.com/FlowWest/grunID/reference/add_sample_type.html</loc>
+  </url>
+  <url>
+    <loc>https://github.com/FlowWest/grunID/reference/add_samples.html</loc>
   </url>
   <url>
     <loc>https://github.com/FlowWest/grunID/reference/add_status_code.html</loc>
@@ -163,12 +166,6 @@
     <loc>https://github.com/FlowWest/grunID/reference/get_run_types.html</loc>
   </url>
   <url>
-    <loc>https://github.com/FlowWest/grunID/reference/get_samples.html</loc>
-  </url>
-  <url>
-    <loc>https://github.com/FlowWest/grunID/reference/get_samples_needing_action.html</loc>
-  </url>
-  <url>
     <loc>https://github.com/FlowWest/grunID/reference/get_sample_locations.html</loc>
   </url>
   <url>
@@ -176,6 +173,12 @@
   </url>
   <url>
     <loc>https://github.com/FlowWest/grunID/reference/get_sample_types.html</loc>
+  </url>
+  <url>
+    <loc>https://github.com/FlowWest/grunID/reference/get_samples.html</loc>
+  </url>
+  <url>
+    <loc>https://github.com/FlowWest/grunID/reference/get_samples_needing_action.html</loc>
   </url>
   <url>
     <loc>https://github.com/FlowWest/grunID/reference/get_status_codes.html</loc>

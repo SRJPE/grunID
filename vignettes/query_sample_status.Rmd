@@ -1,0 +1,71 @@
+---
+title: "Querying Sample Status"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Querying Sample Status}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+The following packages are required:
+
+```{r, message=FALSE, warning=FALSE}
+library(grunID)
+library(tidyverse)
+```
+
+## Objective
+
+This tutorial describes how to:
+
+1) Query the database for the status of a specific sample ID (or multiple sample IDs)
+2) Query the database for all sample IDs requiring further analysis
+
+## Check Status of Specific Samples
+
+The function `get_sample_status` is helpful for when you already know the sample IDs about which you want more information. The function takes in one or more sample IDs and a connection and returns the following information:
+
+* id (unique identifier generated for the sample status table)
+* sample_id
+* status_code_id
+* status_code_name
+* comment
+* created_at
+* created_by
+
+The function defaults to `full_history = FALSE`, showing you only the current status of the sample. If you want the full history of a sample, you can change the argument to `full_history = TRUE`.
+
+```{r, eval = FALSE, cache = TRUE}
+con <- gr_db_connect()
+
+# find the status of a specific sample "DER23_1_C_4" without the full history
+grunID::get_sample_status(con, "DER23_1_C_4", full_history = FALSE)
+
+# find the status of a specific sample "DER23_1_C_4" WITH the full history
+grunID::get_sample_status(con, "DER23_1_C_4", full_history = TRUE)
+
+```
+
+
+## Get a List of All Samples Needing Analysis
+
+If you don't have a specific sample ID in mind but want to know which samples in the database need further assays or clarification, you can use the function `get_samples_needing_action`. This function produces a list of Sample IDs organized into the following categories: 
+
+* needs_ots_16 
+* repeat_ots_28 
+* repeat_ots_16
+* potential_heterozygotes
+
+```{r, eval = FALSE, cache = TRUE}
+# produce a list of Sample IDs organized by the analysis required
+grunID::get_samples_needing_action(con)
+```
+
+
