@@ -211,7 +211,7 @@ is_valid_sample_plan <- function(sample_plan) {
   # check that the locations in the data match those that exist in the database
   # WARNING this list can get stale
   valid_locations <- c("BTC", "BUT", "CLR", "DER", "FTH_RM17", "MIL", "DEL", "KNL",
-                       "TIS", "FTH_RM61", "F61", "F17")
+                       "TIS", "FTH_RM61", "F61", "F17", "YUR")
 
   if (!all(sample_plan$location_code %in% valid_locations)) {
     stop(sprintf("location_code provided not one of valid codes %s",
