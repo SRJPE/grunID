@@ -24,16 +24,22 @@ In an ideal setting, sample seeds should all be added to the database before ins
 
 # Sample Plan
 
-The first step is to create a "Sample Plan". A Sample Plan is simply a dataframe with the data needed to create samples. The information required includes:
+The first step is to create a "Sample Plan". A Sample Plan is simply a dataframe with the necessary data to create samples. The required information includes:
 
-* Location Code __required__ (`location_code`) - the location for these samples, use `grunID::get_sample_locations(con)` to retrieve list values that exist in the database.
-* Sample Event Number __required__ (`sample_event_number`) - the sample event number associated with these samples
-* First Sample Date __required__ (`first_sample_date`) - the first sample date for event
-* Sample Bin Code __required__ (`sample_bin_code`) - sample bin codes for samples, note that each bin code must have it's own row
-* Fork Length Range (`min_fork_length` and `max_fork_length`) - fork length for given bin code
-* Expected Number of Samples (`expected_number_of_samples`) - expected number of samples
+* __Required__: Location Code (`location_code`) - The location for these samples. Use `grunID::get_sample_locations(con)` to retrieve a list of values that exist in the database.
+* __Required__: Sample Event Number (`sample_event_number`) - The sample event number associated with these samples.
+* __Required__: First Sample Date (`first_sample_date`) - The first sample date for the event.
+* __Required__: Sample Bin Code (`sample_bin_code`) - Sample bin codes for the samples. Note that each bin code must have its own row.
+* Fork Length Range (`min_fork_length` and `max_fork_length`) - The fork length for the given bin code.
+* Expected Number of Samples (`expected_number_of_samples`) - The expected number of samples.
 
-The dataframe should look like this: 
+A spreadsheet template is available [here](#) or on the [Templates Page](#). You can read this in using R with the following code:
+
+```r
+in_season_seeds <- readxl::read_excel("/path/to/in-season-seeds.xlsx")
+```
+
+The dataframe should look like this, with your own data in place of these examples:
 
 
 |location_code | sample_event_number|first_sample_date |sample_bin_code | min_fork_length| max_fork_length| expected_number_of_samples|
@@ -44,3 +50,18 @@ The dataframe should look like this:
 |FTH_RM17      |                   1|2022-01-10        |D               |             145|             185|                          0|
 |FTH_RM17      |                   1|2022-01-10        |E               |             185|             225|                          0|
 |FTH_RM17      |                   2|2022-01-24        |A               |              25|              65|                          0|
+
+# Insert into Database
+
+Before inserting data into the database, we must first ensure the data types are correct for each column.
+
+```r
+in_season_seeds |> 
+  dplyr::mutate(
+    sample_event_number = as.integer(sample_event_number),
+    min_fork_length = as.integer(min_fork_length),
+    max_fork_length = as.integer(max_fork_length)
+  )
+```
+
+Next, we simply call the grunID::add_sample_plan function to insert additional plan values into the database. This function, under the hood, will add sample events, sample bins, and the samples extracted from this file.
