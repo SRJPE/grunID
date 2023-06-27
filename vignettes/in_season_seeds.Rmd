@@ -1,0 +1,46 @@
+---
+title: "Adding In-season seeds"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Adding In-season seeds}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(grunID)
+```
+
+# Overview
+
+In an ideal setting, sample seeds should all be added to the database before inserting Sherlock output, but things don't always go as planned. In this article, we discuss the process of creating additional samples for any location
+
+# Sample Plan
+
+The first step is to create a "Sample Plan". A Sample Plan is simply a dataframe with the data needed to create samples. The information required includes:
+
+* Location Code __required__ (`location_code`) - the location for these samples, use `grunID::get_sample_locations(con)` to retrieve list values that exist in the database.
+* Sample Event Number __required__ (`sample_event_number`) - the sample event number associated with these samples
+* First Sample Date __required__ (`first_sample_date`) - the first sample date for event
+* Sample Bin Code __required__ (`sample_bin_code`) - sample bin codes for samples, note that each bin code must have it's own row
+* Fork Length Range (`min_fork_length` and `max_fork_length`) - fork length for given bin code
+* Expected Number of Samples (`expected_number_of_samples`) - expected number of samples
+
+The dataframe should look like this: 
+
+
+|location_code | sample_event_number|first_sample_date |sample_bin_code | min_fork_length| max_fork_length| expected_number_of_samples|
+|:-------------|-------------------:|:-----------------|:---------------|---------------:|---------------:|--------------------------:|
+|FTH_RM17      |                   1|2022-01-10        |A               |              25|              65|                          0|
+|FTH_RM17      |                   1|2022-01-10        |B               |              65|             105|                          0|
+|FTH_RM17      |                   1|2022-01-10        |C               |             105|             145|                          0|
+|FTH_RM17      |                   1|2022-01-10        |D               |             145|             185|                          0|
+|FTH_RM17      |                   1|2022-01-10        |E               |             185|             225|                          0|
+|FTH_RM17      |                   2|2022-01-24        |A               |              25|              65|                          0|
