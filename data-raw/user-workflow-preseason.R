@@ -8,6 +8,14 @@ library(grunID)
 
 # establish connection
 cfg <- config::get()
+# at this point config has the creds
+con <- DBI::dbConnect(RPostgres::Postgres(),
+               dbname = cfg$dbname,
+               host = cfg$host,
+               port = 5432,
+               user = cfg$username,
+               password = cfg$password)
+
 con <- gr_db_connect()
 
 # read in sample plan created for the season. this contains
