@@ -27,6 +27,7 @@
     <a class="dropdown-item" href="../articles/azure-authentication.html">Authentication with Azure AD</a>
     <a class="dropdown-item" href="../articles/process_and_add_assay_results.html">Process and add assay results to database</a>
     <a class="dropdown-item" href="../articles/query_sample_status.html">Querying Sample Status</a>
+    <a class="dropdown-item" href="../articles/in_season_seeds.html">Adding In-Season Seeds</a>
   </div>
 </li>
 <li class="nav-item">
@@ -89,10 +90,7 @@
 <span class="r-in"><span>                      port <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">port</span>,</span></span>
 <span class="r-in"><span>                      user <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">username</span>,</span></span>
 <span class="r-in"><span>                      password <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">password</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> FATAL:  The access token has expired. Please acquire a new token and retry.</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> FATAL:  The access token has expired. Please acquire a new token and retry.</span>
 <span class="r-in"><span><span class="va">sample_types</span> <span class="op">&lt;-</span> <span class="fu">get_status_codes</span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in h(simpleError(msg, call)):</span> error in evaluating the argument 'dbObj' in selecting a method for function 'dbIsValid': object 'con' not found</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>

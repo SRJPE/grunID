@@ -29,6 +29,7 @@ containing a formatted field sheet to be used by crew collecting genetic samples
     <a class="dropdown-item" href="../articles/azure-authentication.html">Authentication with Azure AD</a>
     <a class="dropdown-item" href="../articles/process_and_add_assay_results.html">Process and add assay results to database</a>
     <a class="dropdown-item" href="../articles/query_sample_status.html">Querying Sample Status</a>
+    <a class="dropdown-item" href="../articles/in_season_seeds.html">Adding In-Season Seeds</a>
   </div>
 </li>
 <li class="nav-item">
@@ -134,30 +135,26 @@ sampling of a 2 day sampling event</p></dd>
 <span class="r-in"><span>                      port <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">port</span>,</span></span>
 <span class="r-in"><span>                      user <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">username</span>,</span></span>
 <span class="r-in"><span>                      password <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">password</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> FATAL:  The access token has expired. Please acquire a new token and retry.</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> FATAL:  The access token has expired. Please acquire a new token and retry.</span>
 <span class="r-in"><span><span class="va">wb</span> <span class="op">&lt;-</span> <span class="fu">openxlsx</span><span class="fu">::</span><span class="fu">createWorkbook</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in loadNamespace(x):</span> there is no package called 'openxlsx'</span>
 <span class="r-in"><span><span class="co"># Each sample_event will be a tab in a workbook</span></span></span>
 <span class="r-in"><span><span class="va">plan</span> <span class="op">&lt;-</span> <span class="fu"><a href="get_field_sheet_event_plan.html">get_field_sheet_event_plan</a></span><span class="op">(</span><span class="va">con</span>, sample_event_id <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in eval(expr, envir, enclos):</span> object 'con' not found</span>
 <span class="r-in"><span><span class="va">wb</span> <span class="op">&lt;-</span> <span class="fu">create_field_sheet</span><span class="op">(</span>wb <span class="op">=</span> <span class="va">wb</span>,</span></span>
 <span class="r-in"><span>                         field_sheet_sample_plan <span class="op">=</span> <span class="va">plan</span><span class="op">$</span><span class="va">field_sheet_sample_plan</span>,</span></span>
 <span class="r-in"><span>                         sample_event_number <span class="op">=</span> <span class="va">plan</span><span class="op">$</span><span class="va">sample_event_number</span>,</span></span>
 <span class="r-in"><span>                         first_sample_date <span class="op">=</span> <span class="va">plan</span><span class="op">$</span><span class="va">first_sample_date</span>,</span></span>
 <span class="r-in"><span>                         sample_location <span class="op">=</span> <span class="va">plan</span><span class="op">$</span><span class="va">location_name</span>,</span></span>
 <span class="r-in"><span>                         sample_location_code <span class="op">=</span> <span class="va">plan</span><span class="op">$</span><span class="va">location_code</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in eval(expr, envir, enclos):</span> object 'plan' not found</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in loadNamespace(x):</span> there is no package called 'openxlsx'</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">plan</span> <span class="op">&lt;-</span> <span class="fu"><a href="get_field_sheet_event_plan.html">get_field_sheet_event_plan</a></span><span class="op">(</span><span class="va">con</span>, sample_event_id <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in eval(expr, envir, enclos):</span> object 'con' not found</span>
 <span class="r-in"><span><span class="va">wb</span> <span class="op">&lt;-</span> <span class="fu">create_field_sheet</span><span class="op">(</span>wb <span class="op">=</span> <span class="va">wb</span>,</span></span>
 <span class="r-in"><span>                         field_sheet_sample_plan <span class="op">=</span> <span class="va">plan</span><span class="op">$</span><span class="va">field_sheet_sample_plan</span>,</span></span>
 <span class="r-in"><span>                         sample_event_number <span class="op">=</span> <span class="va">plan</span><span class="op">$</span><span class="va">sample_event_number</span>,</span></span>
 <span class="r-in"><span>                         first_sample_date <span class="op">=</span> <span class="va">plan</span><span class="op">$</span><span class="va">first_sample_date</span>,</span></span>
 <span class="r-in"><span>                         sample_location <span class="op">=</span> <span class="va">plan</span><span class="op">$</span><span class="va">location_name</span>,</span></span>
 <span class="r-in"><span>                         sample_location_code <span class="op">=</span> <span class="va">plan</span><span class="op">$</span><span class="va">location_code</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in eval(expr, envir, enclos):</span> object 'plan' not found</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in loadNamespace(x):</span> there is no package called 'openxlsx'</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu">openxlsx</span><span class="fu">::</span><span class="fu">saveWorkbook</span><span class="op">(</span><span class="va">wb</span>, <span class="st">"test.xlsx"</span>, overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in loadNamespace(x):</span> there is no package called 'openxlsx'</span>

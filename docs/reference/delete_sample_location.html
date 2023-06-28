@@ -27,6 +27,7 @@
     <a class="dropdown-item" href="../articles/azure-authentication.html">Authentication with Azure AD</a>
     <a class="dropdown-item" href="../articles/process_and_add_assay_results.html">Process and add assay results to database</a>
     <a class="dropdown-item" href="../articles/query_sample_status.html">Querying Sample Status</a>
+    <a class="dropdown-item" href="../articles/in_season_seeds.html">Adding In-Season Seeds</a>
   </div>
 </li>
 <li class="nav-item">
@@ -99,16 +100,15 @@ retire an sample location while retaining its value for historic records.</p>
 <span class="r-in"><span>                      port <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">port</span>,</span></span>
 <span class="r-in"><span>                      user <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">username</span>,</span></span>
 <span class="r-in"><span>                      password <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">password</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> FATAL:  The access token has expired. Please acquire a new token and retry.</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> FATAL:  The access token has expired. Please acquire a new token and retry.</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">all_sample_locations</span> <span class="op">&lt;-</span> <span class="fu"><a href="get_sample_locations.html">get_sample_locations</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in h(simpleError(msg, call)):</span> error in evaluating the argument 'dbObj' in selecting a method for function 'dbIsValid': object 'con' not found</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/View.html" class="external-link">View</a></span><span class="op">(</span><span class="va">all_sample_locations</span><span class="op">)</span> <span class="co"># to view the ID of the sample location needing deletion</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in eval(expr, envir, enclos):</span> object 'all_sample_locations' not found</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu">delete_sample_location</span><span class="op">(</span><span class="va">con</span>, <span class="fl">4</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in h(simpleError(msg, call)):</span> error in evaluating the argument 'dbObj' in selecting a method for function 'dbIsValid': object 'con' not found</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> Failed to prepare query: ERROR:  operator does not exist: character varying = integer</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> LINE 1: DELETE FROM sample location WHERE id = 4;</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span>                                              ^</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>

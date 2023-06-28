@@ -27,6 +27,7 @@
     <a class="dropdown-item" href="../articles/azure-authentication.html">Authentication with Azure AD</a>
     <a class="dropdown-item" href="../articles/process_and_add_assay_results.html">Process and add assay results to database</a>
     <a class="dropdown-item" href="../articles/query_sample_status.html">Querying Sample Status</a>
+    <a class="dropdown-item" href="../articles/in_season_seeds.html">Adding In-Season Seeds</a>
   </div>
 </li>
 <li class="nav-item">
@@ -100,20 +101,26 @@ contexts, but are no longer valid for current data records.</p></dd>
 <span class="r-in"><span>                      port <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">port</span>,</span></span>
 <span class="r-in"><span>                      user <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">username</span>,</span></span>
 <span class="r-in"><span>                      password <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">password</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> FATAL:  The access token has expired. Please acquire a new token and retry.</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> FATAL:  The access token has expired. Please acquire a new token and retry.</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">all_status_codes</span> <span class="op">&lt;-</span> <span class="fu"><a href="get_status_codes.html">get_status_codes</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in h(simpleError(msg, call)):</span> error in evaluating the argument 'dbObj' in selecting a method for function 'dbIsValid': object 'con' not found</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/View.html" class="external-link">View</a></span><span class="op">(</span><span class="va">all_status_codes</span><span class="op">)</span> <span class="co"># to view the ID of the status code needing status change</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in eval(expr, envir, enclos):</span> object 'all_status_codes' not found</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">#deactivate</span></span></span>
 <span class="r-in"><span><span class="fu">update_status_code_status</span><span class="op">(</span><span class="va">con</span>, <span class="fl">4</span>, set_active<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in h(simpleError(msg, call)):</span> error in evaluating the argument 'dbObj' in selecting a method for function 'dbIsValid': object 'con' not found</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   id</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1  4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                                                                                          status_code</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 (4,"returned from field","sample recieved from field",f,"2023-05-26 16:49:14.388637",emanuel,"2023-05-26 16:49:14.388637",emanuel)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   active          updated_at</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1  FALSE 2023-05-26 16:49:14</span>
 <span class="r-in"><span><span class="co">#reactivate</span></span></span>
 <span class="r-in"><span><span class="fu">update_status_code_status</span><span class="op">(</span><span class="va">con</span>, <span class="fl">4</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in h(simpleError(msg, call)):</span> error in evaluating the argument 'dbObj' in selecting a method for function 'dbIsValid': object 'con' not found</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   id</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1  4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                                                                                          status_code</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 (4,"returned from field","sample recieved from field",t,"2023-05-26 16:49:14.388637",emanuel,"2023-05-26 16:49:14.388637",emanuel)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   active          updated_at</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1   TRUE 2023-05-26 16:49:14</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
