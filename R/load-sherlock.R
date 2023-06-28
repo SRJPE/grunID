@@ -3,13 +3,13 @@
 #' values for an assay.
 #' @param con valid connection to the database
 #' @param plate_run_identifier plate run identifier value
-#' @param .control_id the identifier within the plate run to use as control for calculating thresholds, defaults to "POS-DNA"
+#' @param .control_id the identifier within the plate run to use as control for calculating thresholds, defaults to "NTC"
 #' @details For each assay on a plate run, the threshold value is calculated as two times
 #' the mean value of the last time step from the control blank wells. Each
 #' assay on a plate will have its own control blanks and threshold value.
 #' @returns a table containing thresholds for an event, to be passed to `update_assay_detections()`
 #' @export
-generate_threshold <- function(con, plate_run_identifier, .control_id="POS-DNA") {
+generate_threshold <- function(con, plate_run_identifier, .control_id="NTC") {
 
   if (!DBI::dbIsValid(con)) {
     stop("Connection argument does not have a valid connection the run-id database.
