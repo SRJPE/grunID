@@ -51,8 +51,11 @@ add_sample_events <- function(con, sample_plan) {
                     error = function(e) {
                       if (grepl('duplicate key value violates unique constraint "sample_event_sample_event_number_sample_location_id_first_s_key"', e)) {
                         stop("Combination (sample_event_number, sample_location_id, first_sample_date) already exists in the database, this insert violates the unique contraint", call. = FALSE)
+                      } else {
+                        stop(e)
                       }
                     })
+
     on.exit(DBI::dbClearResult(res))
 
     DBI::dbFetch(res) |>
@@ -61,7 +64,8 @@ add_sample_events <- function(con, sample_plan) {
   }, .progress = list(
     type = "iterator",
     name = "inserting sample events from plan",
-    clear = FALSE)
+    clear = TRUE,
+    format_failed = "an error occured and operation was not complete.")
   )
 
 
@@ -211,7 +215,7 @@ is_valid_sample_plan <- function(sample_plan) {
   # check that the locations in the data match those that exist in the database
   # WARNING this list can get stale
   valid_locations <- c("BTC", "BUT", "CLR", "DER", "FTH_RM17", "MIL", "DEL", "KNL",
-                       "TIS", "FTH_RM61", "F61", "F17")
+                       "TIS", "FTH_RM61", "F61", "F17", "YUR")
 
   if (!all(sample_plan$location_code %in% valid_locations)) {
     stop(sprintf("location_code provided not one of valid codes %s",

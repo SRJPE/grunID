@@ -4,12 +4,14 @@
 \alias{update_assay_detection}
 \title{Set detection for assay results}
 \usage{
-update_assay_detection(con, thresholds)
+update_assay_detection(con, thresholds, .control_id = "NTC")
 }
 \arguments{
 \item{con}{valid connection to the database}
 
 \item{thresholds}{threshold values calculated in `generate_threshold`}
+
+\item{.control_id}{identifier used to find the control variable}
 }
 \value{
 The number of assay results added to the assay_result table

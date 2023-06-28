@@ -51,6 +51,7 @@ generate_threshold <- function(con, plate_run_identifier, .control_id="NTC") {
 #' identification.
 #' @param con valid connection to the database
 #' @param thresholds threshold values calculated in `generate_threshold`
+#' @param .control_id identifier used to find the control variable
 #' @details The assay result table is updated to reflect whether the assays
 #' in a plate run produced raw fluorescence values that exceed the threshold
 #' calculated by `generate_threshold()`, resulting in a positive or negative
@@ -62,7 +63,7 @@ generate_threshold <- function(con, plate_run_identifier, .control_id="NTC") {
 #' @returns The number of assay results added to the assay_result table
 #' and the number of samples updated in the genetic_run_identification table.
 #' @export
-update_assay_detection <- function(con, thresholds) {
+update_assay_detection <- function(con, thresholds, .control_id = "NTC") {
 
   if (!DBI::dbIsValid(con)) {
     stop("Connection argument does not have a valid connection the run-id database.
@@ -83,7 +84,7 @@ update_assay_detection <- function(con, thresholds) {
 
   detection_results <- dplyr::tbl(con, "raw_assay_result") |>
     dplyr::filter(plate_run_id == plate_run,
-           sample_id != "CONTROL",
+           sample_id != .control_id,
            time == runtime) |>
     dplyr::collect() |>
     dplyr::left_join(thresholds, by = c("assay_id" = "assay_id", "plate_run_id" = "plate_run_id")) |>
