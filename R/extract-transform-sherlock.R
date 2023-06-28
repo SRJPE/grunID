@@ -176,7 +176,7 @@ process_plate_layout <- function(filepath, plate_size) {
 #' * plate_run_id
 #' @export
 #' @md
-process_well_sample_details <- function(filepath, sample_type, layout_type, single_assay_type, plate_run_id) {
+process_well_sample_details <- function(filepath, sample_type = c("mucus", "fin clip"), layout_type, single_assay_type, plate_run_id) {
 
   layout_type <- tolower(layout_type)
   sample_type_id <- ifelse(sample_type == "mucus", 1, 2)
@@ -199,12 +199,11 @@ process_well_sample_details <- function(filepath, sample_type, layout_type, sing
         sample_type_id = sample_type_id,
         assay_id = assay_id,
         plate_run_id = plate_run_id
-      ) |>
-      mutate(sample_id = ifelse(sample_id == "NTC", "CONTROL", sample_id))
+      )
   }
 
   # triplicate
-  if(layout_type =="triplicate") {
+  else if(layout_type =="triplicate") {
     assay_ids <- seq(1:4) # all assays
     plate_layout <- layout_raw |>
       pivot_longer(names_to="col_num", values_to = "sample_id", -...1) |>
@@ -219,12 +218,11 @@ process_well_sample_details <- function(filepath, sample_type, layout_type, sing
         sample_type_id = sample_type_id,
         assay_id = assay_id,
         plate_run_id = plate_run_id
-      ) |>
-      mutate(sample_id = ifelse(sample_id == "NTC", "CONTROL", sample_id))
+      )
   }
 
   # single assay
-  if(layout_type == "single_assay") {
+  else if(layout_type == "single_assay") {
     if(missing(single_assay_type)){
       stop("you must provide a single assay type if layout_type == single_assay")
     }
@@ -243,8 +241,7 @@ process_well_sample_details <- function(filepath, sample_type, layout_type, sing
         sample_type_id = sample_type_id,
         assay_id = assay_id,
         plate_run_id = plate_run_id
-      ) |>
-      mutate(sample_id = ifelse(sample_id == "NTC", "CONTROL", sample_id))
+      )
   }
 
   return(plate_layout|>
