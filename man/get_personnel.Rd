@@ -10,7 +10,7 @@ get_personnel(con, collected = TRUE, ...)
 \item{con}{DBI connection object to database}
 
 \item{collected}{boolean indidcated whether the returned object should be collected from database
-or returned as a lazy postgres dataframe.}
+or returned as a postgres lazy_query.}
 
 \item{...}{additional named arguments passed into dplyr::filter,
 use this add filter to be executed on the database before collecting.}
