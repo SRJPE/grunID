@@ -10,6 +10,8 @@ add_genetic_identification(con, sample_identifiers, plate_run_id)
 \item{con}{valid connection to database}
 
 \item{sample_identifiers}{identifiers for samples to be added}
+
+\item{plate_run_id}{plate run id to run genetic identification on}
 }
 \description{
 `add_genetic_identification` assigns genetic identifier to a
