@@ -4,7 +4,7 @@
 \alias{add_genetic_identification}
 \title{Genetic Identification}
 \usage{
-add_genetic_identification(con, sample_identifiers)
+add_genetic_identification(con, sample_identifiers, plate_run_id)
 }
 \arguments{
 \item{con}{valid connection to database}
