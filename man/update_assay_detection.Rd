@@ -11,7 +11,7 @@ update_assay_detection(con, thresholds, plate_run_id, .control_id = "NTC")
 
 \item{thresholds}{threshold values calculated in `generate_threshold`}
 
-\item{plate_run_id}{the plate run to perform threshold calculations on}
+\item{plate_run_id}{the plate run to perform update on}
 
 \item{.control_id}{identifier used to find the control variable}
 }

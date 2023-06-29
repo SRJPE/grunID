@@ -51,7 +51,7 @@ generate_threshold <- function(con, plate_run_identifier, .control_id="NTC") {
 #' identification.
 #' @param con valid connection to the database
 #' @param thresholds threshold values calculated in `generate_threshold`
-#' @param plate_run_id the plate run to perform threshold calculations on
+#' @param plate_run_id the plate run to perform update on
 #' @param .control_id identifier used to find the control variable
 #' @details The assay result table is updated to reflect whether the assays
 #' in a plate run produced raw fluorescence values that exceed the threshold
