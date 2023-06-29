@@ -10,8 +10,8 @@ con <- gr_db_connect() # this searches for a config file, starting at the workin
 
 # check connection is working - should see head of these tables
 dbListTables(con)
-tbl(con, "agency")
-tbl(con, "status_code")
+dplyr::tbl(con, "agency")
+dplyr::tbl(con, "status_code")
 
 # assume you have added your sample plan that initialized all sample IDs you will
 # be processing - see "data-raw/user-workflow-preseason.R"
@@ -66,7 +66,7 @@ tbl(con, "plate_run")
 
 # this is for the split plate version
 # plate_map_details is a variable you will need to pass to a later function
-plate_map_details_event <- process_well_sample_details(filepath = "templates/sherlock_results_template.xlsx",
+plate_map_details_event <- process_well_sample_details(filepath = "inst/sherlock_results_template.xlsx",
                                                  sample_type = "mucus",
                                                  layout_type = "split_plate_early_late",
                                                  plate_run_id = plate_run_id_event)
@@ -77,7 +77,7 @@ plate_map_details_event <- process_well_sample_details(filepath = "templates/she
 # the generic IDs with the JPE sample IDs.
 # sherlock_results is a variable you will need to pass to a later function
 sherlock_results_event <- process_sherlock(
-  filepath = "templates/sherlock_results_template.xlsx",
+  filepath = "inst/sherlock_results_template.xlsx",
   sample_details = plate_map_details_event,
   plate_size = 384)
 
@@ -93,7 +93,7 @@ thresholds_event <- generate_threshold(con, plate_run_identifier = plate_run_id_
 
 # update assay detection results (TRUE or FALSE for a sample and assay type)
 # in the database
-update_assay_detection(con, thresholds_event)
+update_assay_detection(con, thresholds_event, plate_run_id = plate_run_id_event)
 
 # view assay results.
 # this table contains the sample IDs run, the assay type, and positive detection

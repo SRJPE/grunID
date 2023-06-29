@@ -51,6 +51,7 @@ generate_threshold <- function(con, plate_run_identifier, .control_id="NTC") {
 #' identification.
 #' @param con valid connection to the database
 #' @param thresholds threshold values calculated in `generate_threshold`
+#' @param plate_run_id the plate run to perform update on
 #' @param .control_id identifier used to find the control variable
 #' @details The assay result table is updated to reflect whether the assays
 #' in a plate run produced raw fluorescence values that exceed the threshold
@@ -63,7 +64,7 @@ generate_threshold <- function(con, plate_run_identifier, .control_id="NTC") {
 #' @returns The number of assay results added to the assay_result table
 #' and the number of samples updated in the genetic_run_identification table.
 #' @export
-update_assay_detection <- function(con, thresholds, .control_id = "NTC") {
+update_assay_detection <- function(con, thresholds, plate_run_id, .control_id = "NTC") {
 
   if (!DBI::dbIsValid(con)) {
     stop("Connection argument does not have a valid connection the run-id database.
@@ -114,7 +115,7 @@ update_assay_detection <- function(con, thresholds, .control_id = "NTC") {
   ))
 
 
-  genetic_ids_added <- add_genetic_identification(con, unique(detection_results$sample_id))
+  genetic_ids_added <- add_genetic_identification(con, unique(detection_results$sample_id), plate_run_id = plate_run_id)
 
   return(c("Assay records added" = sum(assay_results_added),
            "Samples assigned run type" = genetic_ids_added))
@@ -204,38 +205,36 @@ add_raw_assay_results <- function(con, assay_results) {
 #' sample based on assay results.
 #' @param con valid connection to database
 #' @param sample_identifiers identifiers for samples to be added
+#' @param plate_run_id plate run id to run genetic identification on
 #' @details `add_genetic_identification` checks the database for all existing
 #' assay results for a sample identifier, then uses those to assign a
 #' genetic identification value. The genetic_run_identification table in the
 #' database is updated with the genetic identification value. The genetic
 #' identification values are dependent on the assay results:
 #' 1: high value for
-add_genetic_identification <- function(con, sample_identifiers) {
+add_genetic_identification <- function(con, sample_identifiers, plate_run_id) {
 
   is_valid_connection(con)
 
   assay_detections <- tbl(con, "assay_result") |>
-    dplyr::filter(sample_id %in% sample_identifiers) |>
+    dplyr::filter(sample_id %in% sample_identifiers, plate_run_id == !!plate_run_id) |>
     dplyr::select(sample_id, assay_id, positive_detection) |>
     dplyr::collect() |>
     dplyr::mutate(assay_id_name = case_when(assay_id == 1 ~ "ots_28_e",
                                             assay_id == 2 ~ "ots_28_l",
                                             assay_id == 3 ~ "ots_16_s",
-                                            assay_id == 4 ~ "ots_16_w")) |>
+                                            assay_id == 4 ~ "ots_16_w"),
+                  assay_id_name = factor(assay_id_name, levels = c("ots_28_e","ots_28_l","ots_16_s","ots_16_w"))) |>
     dplyr::select(-assay_id) |>
-    tidyr::pivot_wider(names_from = "assay_id_name", values_from = "positive_detection")
+    tidyr::pivot_wider(names_from = "assay_id_name", values_from = "positive_detection", names_expand = TRUE)
 
   if (nrow(assay_detections) == 0) {
     return(0)
   }
 
-  run_types <- dplyr::bind_rows(
-    tibble::tibble(sample_id = "DELETE_ME", ots_28_e = FALSE, ots_28_l = FALSE, ots_16_s = FALSE, ots_16_w = FALSE),
-    assay_detections
-  ) |>
+  run_types <- assay_detections |>
     assign_status_codes() |>
     assign_run_types() |>
-    dplyr::filter(sample_id != "DELETE_ME") |>
     dplyr::select(sample_id, run_type_id, status_code_id)
 
   spring_winter <- run_types |>
