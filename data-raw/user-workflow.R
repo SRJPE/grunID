@@ -8,6 +8,14 @@ library(readxl)
 # connect to runID database
 con <- gr_db_connect() # this searches for a config file, starting at the working directory.
 
+cfg <- config::get()
+con <- DBI::dbConnect(RPostgres::Postgres(),
+               dbname = cfg$dbname,
+               host = cfg$host,
+               port = 5432,
+               user = cfg$username,
+               password = cfg$password)
+
 # check connection is working - should see head of these tables
 dbListTables(con)
 dplyr::tbl(con, "agency")
@@ -21,7 +29,6 @@ dplyr::tbl(con, "status_code")
 # get metadata for plate run.
 # first, check all protocols to select the correct one:
 all_protocols <- get_protocols(con)
-all_protocols |> View()
 
 # review available protocols and select appropriate protocol id
 # protocol_id is a variable you will need to pass to a later function
@@ -84,7 +91,7 @@ sherlock_results_event <- process_sherlock(
 
 # add raw assay results to database
 tbl(con, "raw_assay_result")
-add_raw_assay_results(con, sherlock_results_event)
+add_raw_assay_results(con, sherlock_results_event$data)
 tbl(con, "raw_assay_result")
 
 # generate thresholds from raw assay results
@@ -93,7 +100,7 @@ thresholds_event <- generate_threshold(con, plate_run_identifier = plate_run_id_
 
 # update assay detection results (TRUE or FALSE for a sample and assay type)
 # in the database
-update_assay_detection(con, thresholds_event, plate_run_id = plate_run_id_event)
+update_assay_detection(con, thresholds_event, plate_run_id = plate_run_id_event, compare_to = 4)
 
 # view assay results.
 # this table contains the sample IDs run, the assay type, and positive detection

@@ -46,6 +46,10 @@
 process_sherlock <- function(filepath, sample_details,
                              plate_size = c(96, 384)) {
 
+  if (!inherits(sample_details, "plate_layout")) {
+    stop(sprintf("the argument 'sample_details' must created using 'process_well_sample_details()'"))
+  }
+
   plate_layout <- process_plate_layout(filepath, plate_size = plate_size)
   wells_used <- sum(!is.na(plate_layout$psuedo_sample_id))
   read_count <- extract_read_count(filepath)
@@ -53,13 +57,28 @@ process_sherlock <- function(filepath, sample_details,
   cell_ranges <- generate_ranges(plate_size = plate_size, wells_used = wells_used,
                                  time_intervals = read_count)
 
-  layout <- dplyr::left_join(sample_details, plate_layout, by="location")
+  layout <- dplyr::left_join(sample_details$data, plate_layout, by="location")
 
   raw_assay_results <- process_raw_assay_results(filepath, ranges = cell_ranges, plate_size, layout)
 
-  return(raw_assay_results)
+  return(
+    structure(
+      list(data = raw_assay_results),
+      class = "sherlock_output",
+      plate_type = attr(sample_details, "plate_type", exact = TRUE)
+    )
+  )
 
 }
+
+#' @export
+print.sherlock_output <- function(x, ...) {
+  cli::cat_bullet(sprintf("A Sherlock Output Object"), bullet_col = "green")
+  cli::cat_bullet(sprintf("Layout Type: '%s'", attr(x, "plate_type", exact = TRUE)), bullet_col = "green")
+  cli::cat_bullet(sprintf("Data:"), bullet_col = "green")
+  cli::cat_print(x$data)
+}
+
 
 #' Process Raw Assay Results
 #' @description A helper function called in `process_sherlock` that reads in
@@ -244,8 +263,26 @@ process_well_sample_details <- function(filepath, sample_type = c("mucus", "fin 
       )
   }
 
-  return(plate_layout|>
-           dplyr::filter(!is.na(sample_id)))
+  plate_layout <- plate_layout|> dplyr::filter(!is.na(sample_id))
+
+  return(
+    structure(
+      list(data = plate_layout),
+      class = "plate_layout",
+      plate_type = layout_type,
+      filepath = filepath
+    )
+  )
+}
+
+#' @export
+print.plate_layout <- function(x, ...) {
+  cli::cat_bullet(sprintf("A Plate layout Object"), bullet_col = "green")
+  cli::cat_bullet(sprintf("Layout Type: '%s'", attr(x, "plate_type", exact = TRUE)), bullet_col = "green")
+  cli::cat_bullet(sprintf("Filepath: '%s'", attr(x, "filepath", exact = TRUE)), bullet_col = "green")
+  cli::cat_bullet(sprintf("Data:"), bullet_col = "green")
+  cli::cat_print(x$data)
+
 }
 
 expected_layout_colnames <- function() {
@@ -364,6 +401,7 @@ extract_read_count <- function(filepath) {
   read_count <- as.integer(stringr::str_extract(raw_read_count, "\\d+(?=\\sReads)"))
   return(read_count)
 }
+
 
 
 

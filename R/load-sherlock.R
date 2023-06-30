@@ -64,7 +64,7 @@ generate_threshold <- function(con, plate_run_identifier, .control_id="NTC") {
 #' @returns The number of assay results added to the assay_result table
 #' and the number of samples updated in the genetic_run_identification table.
 #' @export
-update_assay_detection <- function(con, thresholds, plate_run_id, .control_id = "NTC") {
+update_assay_detection <- function(con, thresholds, plate_run_id, compare_to, .control_id = "NTC") {
 
   if (!DBI::dbIsValid(con)) {
     stop("Connection argument does not have a valid connection the run-id database.
@@ -115,7 +115,7 @@ update_assay_detection <- function(con, thresholds, plate_run_id, .control_id = 
   ))
 
 
-  genetic_ids_added <- add_genetic_identification(con, unique(detection_results$sample_id), plate_run_id = plate_run_id)
+  genetic_ids_added <- add_genetic_identification(con, unique(detection_results$sample_id), plate_run_id = plate_run_id, compare_to=compare_to)
 
   return(c("Assay records added" = sum(assay_results_added),
            "Samples assigned run type" = genetic_ids_added))
@@ -193,6 +193,26 @@ add_plate_run <- function(con, protocol_id, genetic_method_id,
 #' @export
 add_raw_assay_results <- function(con, assay_results) {
 
+  d <- assay_results |>
+    distinct(sample_id, assay_id)
+
+  db_raw_data <- dplyr::tbl(con, "raw_assay_result")
+  total_rows <- nrow(d)
+  row <- 1
+  while (row < total_rows) {
+    this_row <- assay_results[row, ]
+    match <- db_raw_data |>
+      dplyr::filter(sample_id == !!this_row$sample_id,
+             assay_id == !!this_row$assay_id) |>
+      dplyr::collect()
+
+    if (nrow(match) != 0)
+      stop(sprintf("the combination of: sample_id: '%s', assay_id: '%s' already exists",
+                   this_row$sample_id, this_row$assay_id))
+
+    row = row + 1
+  }
+
   res <- DBI::dbAppendTable(con, "raw_assay_result", assay_results)
 
   return(c("raw assay results added" = res))
@@ -212,12 +232,12 @@ add_raw_assay_results <- function(con, assay_results) {
 #' database is updated with the genetic identification value. The genetic
 #' identification values are dependent on the assay results:
 #' 1: high value for
-add_genetic_identification <- function(con, sample_identifiers, plate_run_id) {
+add_genetic_identification <- function(con, sample_identifiers) {
 
   is_valid_connection(con)
 
   assay_detections <- tbl(con, "assay_result") |>
-    dplyr::filter(sample_id %in% sample_identifiers, plate_run_id == !!plate_run_id) |>
+    dplyr::filter(sample_id %in% sample_identifiers) |>
     dplyr::select(sample_id, assay_id, positive_detection) |>
     dplyr::collect() |>
     dplyr::mutate(assay_id_name = case_when(assay_id == 1 ~ "ots_28_e",
@@ -270,10 +290,5 @@ add_genetic_identification <- function(con, sample_identifiers, plate_run_id) {
   return(sum(total_inserts))
 
 }
-
-
-
-
-
 
 

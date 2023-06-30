@@ -4,7 +4,13 @@
 \alias{update_assay_detection}
 \title{Set detection for assay results}
 \usage{
-update_assay_detection(con, thresholds, plate_run_id, .control_id = "NTC")
+update_assay_detection(
+  con,
+  thresholds,
+  plate_run_id,
+  compare_to,
+  .control_id = "NTC"
+)
 }
 \arguments{
 \item{con}{valid connection to the database}
