@@ -55,6 +55,7 @@ reference:
   - get_sample_status
   - get_sample_types
   - get_samples
+  - get_samples_needing_action
   - get_status_codes
 
 - title: Processing data
@@ -94,6 +95,7 @@ reference:
   desc: These functions relate to creating and processing field sheets
   contents:
   - create_field_sheet
+  - create_multiple_field_sheets
   - get_field_sheet_event_plan
   - process_field_sheet_samples
   - update_field_sheet_samples
@@ -116,7 +118,7 @@ reference:
 
 navbar:
   structure:
-    left:  [home, reference, articles]
+    left:  [home, reference, articles, templates]
     right: [github]
   type: default
   left:
@@ -128,6 +130,12 @@ navbar:
         href: 'articles/azure-authentication.html'
       - text: 'Process and add assay results to database'
         href: 'articles/process_and_add_assay_results.html'
+      - text: 'Querying Sample Status'
+        href: 'articles/query_sample_status.html'
+      - text: 'Adding In-Season Seeds'
+        href: 'articles/in_season_seeds.html'
+  - text: 'Templates'
+    href: "articles/grunID-data-templates.html"
 
 repo:
  url:

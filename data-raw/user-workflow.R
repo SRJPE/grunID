@@ -10,8 +10,8 @@ con <- gr_db_connect() # this searches for a config file, starting at the workin
 
 # check connection is working - should see head of these tables
 dbListTables(con)
-tbl(con, "agency")
-tbl(con, "status_code")
+dplyr::tbl(con, "agency")
+dplyr::tbl(con, "status_code")
 
 # assume you have added your sample plan that initialized all sample IDs you will
 # be processing - see "data-raw/user-workflow-preseason.R"
@@ -57,16 +57,16 @@ plate_run_id_event <- add_plate_run(con,
 tbl(con, "plate_run")
 
 
+
 # this function reads in an excel file that contains both sherlock output and the
 # plate map associated with that sherlock run. The plate map tab needs to be titled
-# "plate_map". See templates/ for an example file.
+# "plate_map". See inst/ for an example file.
 # the output of this function needs to be stored so it can be passed to add_raw_assay_results()
-sherlock_results_event <- process_sherlock(filepath = "data-raw/sherlock-example-outputs/JPE_Chnk_Early+Late_Plates4-7_results.xlsx",
+sherlock_results_event <- process_sherlock(filepath = "inst/sherlock_results_template.xlsx",
                                            sample_type = "mucus",
                                            layout_type = "split_plate_early_late",
                                            plate_run_id = plate_run_id_event,
                                            plate_size = 384)
-
 
 # add raw assay results to database
 tbl(con, "raw_assay_result")
@@ -79,7 +79,7 @@ thresholds_event <- generate_threshold(con, plate_run_identifier = plate_run_id_
 
 # update assay detection results (TRUE or FALSE for a sample and assay type)
 # in the database
-update_assay_detection(con, thresholds_event)
+update_assay_detection(con, thresholds_event, plate_run_id = plate_run_id_event)
 
 # view assay results.
 # this table contains the sample IDs run, the assay type, and positive detection
@@ -88,7 +88,13 @@ tbl(con, "assay_result")
 # see genetic run identification results
 tbl(con, "genetic_run_identification")
 # this is run type IDs and their associated run
-tbl(con, "run_type")
+tbl(con, "run_type") |> collect() |> print(n=Inf)
+
+# see samples that need further analysis
+get_samples_needing_action(con)
+
+# see status of a selected sample ID
+get_sample_status(con, "JPE_Sample_ID", full_history = FALSE)
 
 # disconnect!
 DBI::dbDisconnect(con)

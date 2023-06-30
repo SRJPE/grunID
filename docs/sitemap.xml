@@ -7,10 +7,19 @@
     <loc>https://github.com/FlowWest/grunID/articles/azure-authentication.html</loc>
   </url>
   <url>
+    <loc>https://github.com/FlowWest/grunID/articles/grunID-data-templates.html</loc>
+  </url>
+  <url>
     <loc>https://github.com/FlowWest/grunID/articles/index.html</loc>
   </url>
   <url>
+    <loc>https://github.com/FlowWest/grunID/articles/in_season_seeds.html</loc>
+  </url>
+  <url>
     <loc>https://github.com/FlowWest/grunID/articles/process_and_add_assay_results.html</loc>
+  </url>
+  <url>
+    <loc>https://github.com/FlowWest/grunID/articles/query_sample_status.html</loc>
   </url>
   <url>
     <loc>https://github.com/FlowWest/grunID/authors.html</loc>
@@ -76,10 +85,19 @@
     <loc>https://github.com/FlowWest/grunID/reference/add_status_code.html</loc>
   </url>
   <url>
+    <loc>https://github.com/FlowWest/grunID/reference/assign_run_types.html</loc>
+  </url>
+  <url>
+    <loc>https://github.com/FlowWest/grunID/reference/assign_status_codes.html</loc>
+  </url>
+  <url>
     <loc>https://github.com/FlowWest/grunID/reference/az_refresh_token.html</loc>
   </url>
   <url>
     <loc>https://github.com/FlowWest/grunID/reference/create_field_sheet.html</loc>
+  </url>
+  <url>
+    <loc>https://github.com/FlowWest/grunID/reference/create_multiple_field_sheets.html</loc>
   </url>
   <url>
     <loc>https://github.com/FlowWest/grunID/reference/delete_agency.html</loc>
@@ -152,6 +170,9 @@
   </url>
   <url>
     <loc>https://github.com/FlowWest/grunID/reference/get_samples.html</loc>
+  </url>
+  <url>
+    <loc>https://github.com/FlowWest/grunID/reference/get_samples_needing_action.html</loc>
   </url>
   <url>
     <loc>https://github.com/FlowWest/grunID/reference/get_sample_locations.html</loc>

@@ -4,7 +4,7 @@
 \alias{get_field_sheet_event_plan}
 \title{Get Sample Event Information for Creating a Field Sheet}
 \usage{
-get_field_sheet_event_plan(con, sample_event_id)
+get_field_sheet_event_plan(con, sample_event_id_arg)
 }
 \arguments{
 \item{con}{A DBI connection object obtained from DBI::dbConnect()}
@@ -41,6 +41,7 @@ plan <- get_field_sheet_event_plan(con, sample_event_id = 1)
 \seealso{
 Other field sheet helpers: 
 \code{\link{create_field_sheet}()},
+\code{\link{create_multiple_field_sheets}()},
 \code{\link{process_field_sheet_samples}()},
 \code{\link{update_field_sheet_samples}()}
 }

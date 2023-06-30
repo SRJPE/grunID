@@ -68,14 +68,13 @@ process_sherlock <- function(filepath, sample_type, layout_type, plate_run_id,
 
   raw_assay_results <- process_raw_assay_results(filepath, ranges = cell_ranges, plate_size, layout)
 
-  output <- structure(raw_assay_results, comment = "store output to pass as argument to add_raw_assay_results()")
-  message(attributes(output)$comment)
-  return(output)
+  return(raw_assay_results)
 
 }
 
 #' Process Raw Assay Results
-#' @description
+#' @description A helper function called in `process_sherlock` that reads in
+#' an excel containing SHERLOCK output.
 process_raw_assay_results <- function(filepath, ranges, plate_size, layout) {
   # raw fluorescence ----
 
@@ -124,7 +123,8 @@ process_raw_assay_results <- function(filepath, ranges, plate_size, layout) {
     dplyr::left_join(background_fluorescence) |>
     dplyr::select(sample_id, sample_type_id, assay_id, plate_run_id, raw_fluorescence = fluorescence,
                   background_value = background_fluorescence,
-                  time = Time, plate_run_id, well_location = location)
+                  time = Time, plate_run_id, well_location = location) |>
+    dplyr::filter(!is.na(sample_id))
 
   return(raw_assay_results)
 }
@@ -187,13 +187,13 @@ process_plate_layout <- function(filepath, plate_size) {
 #' * plate_run_id
 #' @export
 #' @md
-process_well_sample_details <- function(filepath, sample_type, layout_type, single_assay_type, plate_run_id) {
+process_well_sample_details <- function(filepath, sample_type = c("mucus", "fin clip"), layout_type, single_assay_type, plate_run_id) {
 
   layout_type <- tolower(layout_type)
   sample_type_id <- ifelse(sample_type == "mucus", 1, 2)
 
-  layout_raw <- suppressMessages(read_excel(filepath,
-                                            sheet = "Plate Map"))
+  layout_raw <- suppressMessages(readxl::read_excel(filepath,
+                                            sheet = "plate_map"))
   # split plate
   if(str_detect(layout_type, "split_plate")) {
 
@@ -210,12 +210,11 @@ process_well_sample_details <- function(filepath, sample_type, layout_type, sing
         sample_type_id = sample_type_id,
         assay_id = assay_id,
         plate_run_id = plate_run_id
-      ) |>
-      mutate(sample_id = ifelse(sample_id == "NTC", "CONTROL", sample_id))
+      )
   }
 
   # triplicate
-  if(layout_type =="triplicate") {
+  else if(layout_type =="triplicate") {
     assay_ids <- seq(1:4) # all assays
     plate_layout <- layout_raw |>
       pivot_longer(names_to="col_num", values_to = "sample_id", -...1) |>
@@ -230,12 +229,11 @@ process_well_sample_details <- function(filepath, sample_type, layout_type, sing
         sample_type_id = sample_type_id,
         assay_id = assay_id,
         plate_run_id = plate_run_id
-      ) |>
-      mutate(sample_id = ifelse(sample_id == "NTC", "CONTROL", sample_id))
+      )
   }
 
   # single assay
-  if(layout_type == "single_assay") {
+  else if(layout_type == "single_assay") {
     if(missing(single_assay_type)){
       stop("you must provide a single assay type if layout_type == single_assay")
     }
@@ -254,13 +252,11 @@ process_well_sample_details <- function(filepath, sample_type, layout_type, sing
         sample_type_id = sample_type_id,
         assay_id = assay_id,
         plate_run_id = plate_run_id
-      ) |>
-      mutate(sample_id = ifelse(sample_id == "NTC", "CONTROL", sample_id))
+      )
   }
 
-  output <- structure(plate_layout, comment = "store output of this function to pass as argument to process_sherlock()")
-  message(attributes(output)$comment)
-  return(output)
+  return(plate_layout|>
+           dplyr::filter(!is.na(sample_id)))
 }
 
 expected_layout_colnames <- function() {
@@ -273,7 +269,7 @@ expected_layout_colnames <- function() {
 #' @description helper function used to identify the previous ending range of cells
 #' within the Synergy H1 excel workbook output
 #' @param cell_ranges a vector of strings representing the cell ranges of the tables e.g. c("A1:B10", "A11:B21")
-#' @example extract_previous_end_row(c("A1:B10", "A11:B21")) #21
+#' @examples extract_previous_end_row(c("A1:B10", "A11:B21")) #21
 extract_previous_end_row <- function(cell_ranges) {
   as.numeric(
     stringr::str_extract(

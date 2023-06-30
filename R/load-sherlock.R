@@ -3,12 +3,13 @@
 #' values for an assay.
 #' @param con valid connection to the database
 #' @param plate_run_identifier plate run identifier value
+#' @param .control_id the identifier within the plate run to use as control for calculating thresholds, defaults to "NTC"
 #' @details For each assay on a plate run, the threshold value is calculated as two times
 #' the mean value of the last time step from the control blank wells. Each
 #' assay on a plate will have its own control blanks and threshold value.
 #' @returns a table containing thresholds for an event, to be passed to `update_assay_detections()`
 #' @export
-generate_threshold <- function(con, plate_run_identifier) {
+generate_threshold <- function(con, plate_run_identifier, .control_id="NTC") {
 
   if (!DBI::dbIsValid(con)) {
     stop("Connection argument does not have a valid connection the run-id database.
@@ -26,9 +27,13 @@ generate_threshold <- function(con, plate_run_identifier) {
 
   control_blanks <- dplyr::tbl(con, "raw_assay_result") |>
     dplyr::filter(time == runtime,
-           sample_id == "CONTROL",
+           sample_id == !!.control_id,
            plate_run_id == plate_run_identifier) |>
     dplyr::collect()
+
+  if (nrow(control_blanks) == 0) {
+    stop(paste0("no control variables found in plate run with id: '", plate_run_identifier, "'"), call. = FALSE)
+  }
 
   thresholds <- control_blanks |>
     dplyr::group_by(plate_run_id, assay_id) |>
@@ -37,9 +42,7 @@ generate_threshold <- function(con, plate_run_identifier) {
     ) |> ungroup() |>
     dplyr::mutate(runtime = runtime)
 
-  output <- structure(thresholds, comment = "store output of this function to pass as argument to update_assay_detections()")
-  message(attributes(output)$comment)
-  return(output)
+  return(thresholds)
 }
 
 #' @title Set detection for assay results
@@ -48,6 +51,8 @@ generate_threshold <- function(con, plate_run_identifier) {
 #' identification.
 #' @param con valid connection to the database
 #' @param thresholds threshold values calculated in `generate_threshold`
+#' @param plate_run_id the plate run to perform update on
+#' @param .control_id identifier used to find the control variable
 #' @details The assay result table is updated to reflect whether the assays
 #' in a plate run produced raw fluorescence values that exceed the threshold
 #' calculated by `generate_threshold()`, resulting in a positive or negative
@@ -59,7 +64,7 @@ generate_threshold <- function(con, plate_run_identifier) {
 #' @returns The number of assay results added to the assay_result table
 #' and the number of samples updated in the genetic_run_identification table.
 #' @export
-update_assay_detection <- function(con, thresholds) {
+update_assay_detection <- function(con, thresholds, plate_run_id, .control_id = "NTC") {
 
   if (!DBI::dbIsValid(con)) {
     stop("Connection argument does not have a valid connection the run-id database.
@@ -80,7 +85,7 @@ update_assay_detection <- function(con, thresholds) {
 
   detection_results <- dplyr::tbl(con, "raw_assay_result") |>
     dplyr::filter(plate_run_id == plate_run,
-           sample_id != "CONTROL",
+           sample_id != .control_id,
            time == runtime) |>
     dplyr::collect() |>
     dplyr::left_join(thresholds, by = c("assay_id" = "assay_id", "plate_run_id" = "plate_run_id")) |>
@@ -110,7 +115,7 @@ update_assay_detection <- function(con, thresholds) {
   ))
 
 
-  genetic_ids_added <- add_genetic_identification(con, unique(detection_results$sample_id))
+  genetic_ids_added <- add_genetic_identification(con, unique(detection_results$sample_id), plate_run_id = plate_run_id)
 
   return(c("Assay records added" = sum(assay_results_added),
            "Samples assigned run type" = genetic_ids_added))
@@ -180,10 +185,7 @@ add_plate_run <- function(con, protocol_id, genetic_method_id,
   plate_run_id <- DBI::dbFetch(res)
   DBI::dbClearResult(res)
 
-  return_id <- structure(plate_run_id$id, comment = "store plate run ID to pass as argument to process_well_sample_details() and generate_threshold()")
-  message(attributes(return_id)$comment)
-  return(return_id)
-  #return(plate_run_id$id)
+  return(plate_run_id$id)
 }
 
 
@@ -203,75 +205,42 @@ add_raw_assay_results <- function(con, assay_results) {
 #' sample based on assay results.
 #' @param con valid connection to database
 #' @param sample_identifiers identifiers for samples to be added
+#' @param plate_run_id plate run id to run genetic identification on
 #' @details `add_genetic_identification` checks the database for all existing
 #' assay results for a sample identifier, then uses those to assign a
 #' genetic identification value. The genetic_run_identification table in the
 #' database is updated with the genetic identification value. The genetic
 #' identification values are dependent on the assay results:
 #' 1: high value for
-add_genetic_identification <- function(con, sample_identifiers) {
+add_genetic_identification <- function(con, sample_identifiers, plate_run_id) {
 
   is_valid_connection(con)
 
   assay_detections <- tbl(con, "assay_result") |>
-    dplyr::filter(sample_id %in% sample_identifiers) |>
+    dplyr::filter(sample_id %in% sample_identifiers, plate_run_id == !!plate_run_id) |>
     dplyr::select(sample_id, assay_id, positive_detection) |>
     dplyr::collect() |>
-    tidyr::pivot_wider(names_from = "assay_id", values_from = "positive_detection")
+    dplyr::mutate(assay_id_name = case_when(assay_id == 1 ~ "ots_28_e",
+                                            assay_id == 2 ~ "ots_28_l",
+                                            assay_id == 3 ~ "ots_16_s",
+                                            assay_id == 4 ~ "ots_16_w"),
+                  assay_id_name = factor(assay_id_name, levels = c("ots_28_e","ots_28_l","ots_16_s","ots_16_w"))) |>
+    dplyr::select(-assay_id) |>
+    tidyr::pivot_wider(names_from = "assay_id_name", values_from = "positive_detection", names_expand = TRUE)
 
   if (nrow(assay_detections) == 0) {
     return(0)
   }
 
-  run_types <- dplyr::bind_rows(
-    tibble::tibble(sample_id = "DELETE_ME", `1` = FALSE, `2` = FALSE, `3` = FALSE, `4` = FALSE),
-    assay_detections
-  ) |>
-    dplyr::mutate(
-      status_code_id = dplyr::case_when(
-        # `1`, `2`, `3`, `4` correspond to assay ids (see table "assay")
-        # for cases where only one assay (1 or 2) was run:
-        `1` & is.na(`2`) ~ 6,
-        !`1` & is.na(`2`) ~ 6,
-        `2` & is.na(`1`) ~ 6,
-        !`2` & is.na(`1`) ~ 6,
-        # for cases where assays 1 and 2 have been run:
-        `1` & !`2` ~ 8,
-        `2` & !`1` ~ 11,
-        `1` & `2` ~ 11,
-        !`1` & !`2` ~ 7, # TODO confirm meaning of status code 7 - potential to change description
-        # for cases where one of assay (3, 4) was run:
-        `3` & is.na(`4`) ~ 9,
-        `4` & is.na(`3`) ~ 9,
-        !`3` & is.na(`4`) ~ 9,
-        !`4` & is.na(`3`) ~ 9,
-        # for cases where assays 1, 2, 3, and 4 have been run:
-        `3` & !`4` ~ 11,
-        `4` & !`3` ~ 11,
-        `3` & `4` ~ 11,
-        !`3` & !`4` ~ 10
-      ),
-      run_type_id = dplyr::case_when(
-        # assign run type based on status code and specific assay results
-        # see tables "run_type" and "status_code"
-        # for heterozygotes:
-        status_code_id == 11 & `3` & `4` ~ 8,
-        status_code_id == 11 & `1` & `2` ~ 8,
-        # for spring/winter:
-        status_code_id == 11 & `1` ~ 6,
-        status_code_id == 11 & `3` & !`4` ~ 1,
-        status_code_id == 11 & `4` & !`3` ~ 4,
-        # for fall/late fall:
-        status_code_id == 11 & `2` & !`1` ~ 5,
-        # for unknowns:
-        status_code_id == 7 ~ 7,
-        status_code_id == 10 ~ 7,
-        TRUE ~ 0
-      )
-    ) |>
-    dplyr::filter(sample_id != "DELETE_ME") |>
+  run_types <- assay_detections |>
+    assign_status_codes() |>
+    assign_run_types() |>
     dplyr::select(sample_id, run_type_id, status_code_id)
 
+  spring_winter <- run_types |>
+    filter(status_code_id == 8)
+
+  message(paste0("identified ", nrow(spring_winter), " samples needing OTS16 spring/winter"))
 
   run_type_id_data <- run_types |> dplyr::filter(run_type_id != 0)
 
@@ -301,8 +270,6 @@ add_genetic_identification <- function(con, sample_identifiers) {
   return(sum(total_inserts))
 
 }
-
-
 
 
 

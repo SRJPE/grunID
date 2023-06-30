@@ -13,3 +13,6 @@ extract_previous_end_row(cell_ranges)
 helper function used to identify the previous ending range of cells
 within the Synergy H1 excel workbook output
 }
+\examples{
+extract_previous_end_row(c("A1:B10", "A11:B21")) #21
+}

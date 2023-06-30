@@ -6,7 +6,7 @@
 \usage{
 process_well_sample_details(
   filepath,
-  sample_type,
+  sample_type = c("mucus", "fin clip"),
   layout_type,
   single_assay_type,
   plate_run_id

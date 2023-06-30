@@ -1,25 +1,14 @@
 #' Add Sample Plan
 #' @description `add_sample_plan` registers new sampling events and generates new sample ids
-#' @param con
-#' @param sample_plan
+#' @param con A DBI connection object
+#' @param sample_plan A table containing the following columns from a sample plan:
+#' `location_code`, `sample_event_number`, `first_sample_date`, `sample_bin_code`, `min_fork_length`,
+#' `max_fork_length`, and `expected_number_of_samples`.
+#' @return a named list containing the number of samples added and all unique
+#' sampling event IDs created.
 #' @examples
 #' # example database connection
-#' cfg <- config::get()
-#' con <- DBI::dbConnect(RPostgres::Postgres(),
-#'                       dbname = cfg$dbname,
-#'                       host = cfg$host,
-#'                       port = cfg$port,
-#'                       user = cfg$username,
-#'                       password = cfg$password)
-#'
-#' sample_plan <- tibble(location_code = c("BTC", "BUT"),
-#'                       sample_event_number = 1:2,
-#'                       first_sample_date = "2020-01-01",
-#'                       sample_bin_code = "A",
-#'                       min_fork_length = 10,
-#'                       max_fork_length = 95,
-#'                       expected_number_of_samples = 10
-#'                       )
+#' con <- gr_db_connect()
 #' add_sample_plan(con, sample_plan)
 #' @export
 #' @md
@@ -32,7 +21,8 @@ add_sample_plan <- function(con, sample_plan, verbose = FALSE) {
   sample_ids <- add_samples(con, sample_plan, sample_id_insert, verbose = verbose)
   number_of_samples_added <- set_sample_status(con, sample_ids, 1)
 
-  return(number_of_samples_added)
+  return(list("number_of_samples_added" = number_of_samples_added,
+              "sample_ids_created" = sample_event_ids))
 }
 
 #' Create sample events
@@ -61,8 +51,11 @@ add_sample_events <- function(con, sample_plan) {
                     error = function(e) {
                       if (grepl('duplicate key value violates unique constraint "sample_event_sample_event_number_sample_location_id_first_s_key"', e)) {
                         stop("Combination (sample_event_number, sample_location_id, first_sample_date) already exists in the database, this insert violates the unique contraint", call. = FALSE)
+                      } else {
+                        stop(e)
                       }
                     })
+
     on.exit(DBI::dbClearResult(res))
 
     DBI::dbFetch(res) |>
@@ -71,7 +64,8 @@ add_sample_events <- function(con, sample_plan) {
   }, .progress = list(
     type = "iterator",
     name = "inserting sample events from plan",
-    clear = FALSE)
+    clear = TRUE,
+    format_failed = "an error occured and operation was not complete.")
   )
 
 
@@ -83,6 +77,10 @@ add_sample_events <- function(con, sample_plan) {
 #' @export
 add_sample_bins <- function(con, sample_plan, sample_event_ids) {
 
+  sample_locations <- tbl(con, "sample_location") |> collect()
+  sample_event_ids_for_insert <- tbl(con, "sample_event") |>
+    filter(id %in% !!sample_event_ids$sample_event_id) |> collect()
+
   unique_sample_bins_in_plan <- distinct(.data = sample_plan,
                                          location_code,
                                          sample_event_number,
@@ -92,8 +90,13 @@ add_sample_bins <- function(con, sample_plan, sample_event_ids) {
                                          max_fork_length,
                                          expected_number_of_samples)
 
-  sample_bin_insert <- dplyr::left_join(unique_sample_bins_in_plan, sample_event_ids,
-                                        by = c("sample_event_number"))
+  event_ids_with_locations <- dplyr::left_join(sample_event_ids_for_insert,
+                                               sample_locations,
+                                               by=c("sample_location_id"="id")) |>
+    dplyr::select(sample_event_id=id, sample_event_number, sample_location_id, code)
+
+  sample_bin_insert <- dplyr::left_join(unique_sample_bins_in_plan, event_ids_with_locations,
+                                        by = c("sample_event_number", "location_code"="code"))
 
 
   # partitioned_inserts <- partition_df_to_size(sample_bin_insert, 100)
@@ -141,13 +144,17 @@ add_samples <- function(con, sample_plan, sample_id_insert, verbose = FALSE) {
 
   event_ids <- unique(sample_id_insert$sample_event_id)
 
+  all_locations <- get_sample_locations(con) |>
+    select(sample_location_id=id, location_code=code)
+
   sample_events_for_incoming_samples <- tbl(con, "sample_event") |>
     filter(id %in% event_ids) |>
-    select(id, sample_event_number, sample_event_id = id) |>
+    select(id, sample_event_number, sample_event_id = id, sample_location_id) |>
     collect()
 
   sample_id_inserts <- sample_plan |>
-    left_join(sample_events_for_incoming_samples, by = "sample_event_number") |>
+    dplyr::left_join(all_locations, by="location_code") |>
+    left_join(sample_events_for_incoming_samples, by = c("sample_event_number", "sample_location_id"="sample_location_id")) |>
     left_join(sample_id_insert, by = c("sample_bin_code", "sample_event_id"))
 
 
@@ -208,7 +215,7 @@ is_valid_sample_plan <- function(sample_plan) {
   # check that the locations in the data match those that exist in the database
   # WARNING this list can get stale
   valid_locations <- c("BTC", "BUT", "CLR", "DER", "FTH_RM17", "MIL", "DEL", "KNL",
-                       "TIS", "FTH_RM61", "F61", "F17")
+                       "TIS", "FTH_RM61", "F61", "F17", "YUR")
 
   if (!all(sample_plan$location_code %in% valid_locations)) {
     stop(sprintf("location_code provided not one of valid codes %s",
