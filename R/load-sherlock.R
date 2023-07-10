@@ -83,6 +83,15 @@ update_assay_detection <- function(con, thresholds, .control_id = "NTC") {
     stop("TODO")
   }
 
+  # check if the plate run already exists in the assay_results
+  this_plate_run_exists_in_results <- nrow(
+    dplyr::collect(dplyr::tbl(con, "assay_result") |> dplyr::filter(plate_run_id == plate_run))
+  )
+
+  if (this_plate_run_exists_in_results) {
+    stop("the plate run you are trying to upload already exists in the database", call. = FALSE)
+  }
+
   detection_results <- dplyr::tbl(con, "raw_assay_result") |>
     dplyr::filter(plate_run_id == plate_run,
            sample_id != .control_id,
@@ -115,7 +124,7 @@ update_assay_detection <- function(con, thresholds, .control_id = "NTC") {
   ))
 
 
-  genetic_ids_added <- add_genetic_identification(con, unique(detection_results$sample_id), plate_run_id = plate_run_id, compare_to=compare_to)
+  genetic_ids_added <- add_genetic_identification(con, unique(detection_results$sample_id))
 
   return(c("Assay records added" = sum(assay_results_added),
            "Samples assigned run type" = genetic_ids_added))
@@ -176,6 +185,24 @@ add_plate_run <- function(con, protocol_id, genetic_method_id,
          call. = FALSE)
   }
 
+  plate_run_already_exists_in_db <- dplyr::tbl(con, "plate_run") |>
+    dplyr::filter(protocol_id == !!protocol_id,
+                  genetic_method_id == !!genetic_method_id,
+                  laboratory_id == !!laboratory_id,
+                  lab_work_performed_by == !!lab_work_performed_by,
+                  date_run == !!date_run) |>
+    dplyr::collect()
+
+  proceed_inserting <- TRUE
+
+  if (nrow(plate_run_already_exists_in_db)) {
+    proceed_inserting <- usethis::ui_yeah("Plate run with these values exists in database, do you wish to insert anyway?",
+                                    yes = "Yes", no = "No")
+  }
+
+
+  if (proceed_inserting) {
+
   query <- glue::glue_sql("
   INSERT INTO plate_run (protocol_id, genetic_method_id,  laboratory_id, lab_work_performed_by, description, date_run)
   VALUES ({protocol_id}, {genetic_method_id}, {laboratory_id}, {lab_work_performed_by}, {description}, {date_run}) RETURNING id;",
@@ -185,14 +212,43 @@ add_plate_run <- function(con, protocol_id, genetic_method_id,
   plate_run_id <- DBI::dbFetch(res)
   DBI::dbClearResult(res)
 
-  return(plate_run_id$id)
+
+
+  return(
+    structure(
+      list(plate_run_id=plate_run_id$id),
+      class = "plate_run",
+      protocol_id=protocol_id,
+      genetic_method_id=genetic_method_id,
+      description=description,
+      performed_by=lab_work_performed_by
+    ))
+  } else {
+    cli::cli_alert_info("use the following to view what exists in database")
+    cli::cli_code(lines = glue::glue("grunID::get_plate_run(con, id == {plate_run_already_exists_in_db$id})"), language = "R")
+    stop("aborting operation", call. = FALSE)
+  }
 }
 
+
+#' @export
+print.plate_run <- function(x, ...) {
+  cli::cat_rule(sprintf("A Plate Run Object"))
+  cli::cat_bullet(sprintf("Protocol ID: '%s'", attr(x, "protocol_id", exact = TRUE)), bullet_col = "green")
+  cli::cat_bullet(sprintf("Genetic Method ID: '%s'", attr(x, "genetic_method_id", exact = TRUE)), bullet_col = "green")
+  cli::cat_bullet(sprintf("Description: '%s'", attr(x, "description", exact = TRUE)), bullet_col = "green")
+  cli::cat_bullet(sprintf("Plate Run ID Assigned: %s", x$plate_run_id), bullet_col = "green")
+  cli::cat_bullet(sprintf("Lab Work Performed by: '%s'", attr(x, "performed_by", exact = TRUE)), bullet_col = "green")
+  cli::cat_bullet(sprintf("Data:"), bullet_col = "green")
+  print(x$data)
+
+}
 
 #' @title Add Raw Results
 #' @export
 add_raw_assay_results <- function(con, assay_results) {
 
+  assay_results <- assay_results$data
   d <- assay_results |>
     distinct(sample_id, assay_id)
 
@@ -201,13 +257,19 @@ add_raw_assay_results <- function(con, assay_results) {
   row <- 1
   while (row < total_rows) {
     this_row <- assay_results[row, ]
+
+    if (this_row$sample_id == "NTC") {
+      row = row + 1
+      next
+    }
+
     match <- db_raw_data |>
       dplyr::filter(sample_id == !!this_row$sample_id,
              assay_id == !!this_row$assay_id) |>
       dplyr::collect()
 
     if (nrow(match) != 0)
-      stop(sprintf("the combination of: sample_id: '%s', assay_id: '%s' already exists",
+      stop(sprintf("the combination of: sample_id: '%s', assay_id: '%s' already exists, to overwrite please delete previous assay run",
                    this_row$sample_id, this_row$assay_id))
 
     row = row + 1
