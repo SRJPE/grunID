@@ -4,20 +4,12 @@
 \alias{update_assay_detection}
 \title{Set detection for assay results}
 \usage{
-update_assay_detection(
-  con,
-  thresholds,
-  plate_run_id,
-  compare_to,
-  .control_id = "NTC"
-)
+update_assay_detection(con, thresholds, .control_id = "NTC")
 }
 \arguments{
 \item{con}{valid connection to the database}
 
 \item{thresholds}{threshold values calculated in `generate_threshold`}
-
-\item{plate_run_id}{the plate run to perform update on}
 
 \item{.control_id}{identifier used to find the control variable}
 }

@@ -4,14 +4,14 @@
 \alias{generate_threshold}
 \title{Generate Thresholds}
 \usage{
-generate_threshold(con, plate_run_identifier, .control_id = "NTC")
+generate_threshold(con, plate_run, .control_id = "NTC")
 }
 \arguments{
 \item{con}{valid connection to the database}
 
-\item{plate_run_identifier}{plate run identifier value}
-
 \item{.control_id}{the identifier within the plate run to use as control for calculating thresholds, defaults to "NTC"}
+
+\item{plate_run_identifier}{plate run identifier value}
 }
 \value{
 a table containing thresholds for an event, to be passed to `update_assay_detections()`
