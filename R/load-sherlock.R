@@ -9,26 +9,27 @@
 #' assay on a plate will have its own control blanks and threshold value.
 #' @returns a table containing thresholds for an event, to be passed to `update_assay_detections()`
 #' @export
-generate_threshold <- function(con, plate_run_identifier, .control_id="NTC") {
+generate_threshold <- function(con, plate_run, .control_id="NTC") {
 
   if (!DBI::dbIsValid(con)) {
     stop("Connection argument does not have a valid connection the run-id database.
          Please try reconnecting to the database using 'DBI::dbConnect'",
          call. = FALSE)
   }
+  plate_run_identifier <- plate_run$plate_run_id
 
   protocol_id <- dplyr::tbl(con, "plate_run") |>
-    dplyr::filter(id == plate_run_identifier) |>
+    dplyr::filter(id == !!plate_run_identifier) |>
     dplyr::pull(protocol_id)
 
   runtime <- dplyr::tbl(con, "protocol") |>
-    dplyr::filter(id == protocol_id) |>
+    dplyr::filter(id == !!protocol_id) |>
     dplyr::pull(runtime)
 
   control_blanks <- dplyr::tbl(con, "raw_assay_result") |>
     dplyr::filter(time == runtime,
            sample_id == !!.control_id,
-           plate_run_id == plate_run_identifier) |>
+           plate_run_id == !!plate_run_identifier) |>
     dplyr::collect()
 
   if (nrow(control_blanks) == 0) {
@@ -51,7 +52,6 @@ generate_threshold <- function(con, plate_run_identifier, .control_id="NTC") {
 #' identification.
 #' @param con valid connection to the database
 #' @param thresholds threshold values calculated in `generate_threshold`
-#' @param plate_run_id the plate run to perform update on
 #' @param .control_id identifier used to find the control variable
 #' @details The assay result table is updated to reflect whether the assays
 #' in a plate run produced raw fluorescence values that exceed the threshold
@@ -64,7 +64,7 @@ generate_threshold <- function(con, plate_run_identifier, .control_id="NTC") {
 #' @returns The number of assay results added to the assay_result table
 #' and the number of samples updated in the genetic_run_identification table.
 #' @export
-update_assay_detection <- function(con, thresholds, plate_run_id, compare_to, .control_id = "NTC") {
+update_assay_detection <- function(con, thresholds, .control_id = "NTC") {
 
   if (!DBI::dbIsValid(con)) {
     stop("Connection argument does not have a valid connection the run-id database.
