@@ -168,7 +168,7 @@ and laboratories within the database.</p>
 <span>  <span class="fu"><a href="https://rdrr.io/r/stats/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="fu">stringr</span><span class="fu">::</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_detect.html" class="external-link">str_detect</a></span><span class="op">(</span><span class="va">code</span>, <span class="st">"DWR"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">pull</span><span class="op">(</span><span class="va">id</span><span class="op">)</span> <span class="co"># DWR GeM</span></span>
 <span></span>
 <span><span class="co"># store output of add_plate_run - contains unique plate run ID needed for later functions</span></span>
-<span><span class="va">plate_run_id</span> <span class="op">&lt;-</span> <span class="fu">grunID</span><span class="fu">::</span><span class="fu"><a href="../reference/add_plate_run.html">add_plate_run</a></span><span class="op">(</span><span class="va">con</span>, <span class="va">protocol_id</span>, <span class="va">genetic_method_id</span>,</span>
+<span><span class="va">plate_run</span> <span class="op">&lt;-</span> <span class="fu">grunID</span><span class="fu">::</span><span class="fu"><a href="../reference/add_plate_run.html">add_plate_run</a></span><span class="op">(</span><span class="va">con</span>, <span class="va">protocol_id</span>, <span class="va">genetic_method_id</span>,</span>
 <span>                                      <span class="va">laboratory_id</span>, lab_work_performed_by <span class="op">=</span> <span class="st">"Yogi Bear"</span>,</span>
 <span>                                      description <span class="op">=</span> <span class="st">"Plate run for sampling event X"</span>,</span>
 <span>                                      date_run <span class="op">=</span> <span class="st">"07-04-1776"</span><span class="op">)</span></span></code></pre></div>
@@ -177,71 +177,14 @@ contains the unique plate run identifier and will be needed to pass to
 later functions</strong></p>
 </div>
 <div class="section level2">
-<h2 id="prepare-sample-details">Prepare Sample Details<a class="anchor" aria-label="anchor" href="#prepare-sample-details"></a>
+<h2 id="prepare-sample-details-and-sherlock-output">Prepare Sample Details and Sherlock Output<a class="anchor" aria-label="anchor" href="#prepare-sample-details-and-sherlock-output"></a>
 </h2>
-<p>The Synergy H1 result output from plate runs is organized using
-generic identifiers that need to be mapped to the real sample
-identifiers in order to properly associate the results with the correct
-sample id in the database. The output file’s <strong>Layout</strong>
-section contains the well locations for samples encoded as non-unique
-generic sample ids <em>(e.g., SPL1, BLK)</em>. The number of rows and
-columns in the <strong>Layout</strong> vary based on the plate size. A
-plate size 96 has rows A:H and columns 1:12 and a plate size 384 has
-rows A:P and columns 1:24. The results for each sample are found within
-columns that are the letter-number combination of the well location
-captured in the <strong>Layout</strong> section <em>(e.g., if SPL1 is in
-row A and column 3, then the measurements at each time step are recorded
-in a column labeled A3)</em>. To map the sample ids to the generic
-identifiers produced by the Synergy H1 software <em>(e.g., SPL1 and
-A3)</em>, we must provide the true sample ids and other metadata at each
-well location in the results as a dataframe containing these
-columns:</p>
-<ul>
-<li>
-<strong>location:</strong> <em>(character)</em> letter-number
-combination based on Synergy H1 Layout grid (e.g., A3)</li>
-<li>
-<strong>sample_id:</strong> <em>(character)</em> unique ID of mucus
-swab or fin clip made up of site code, year, sample event, sampling bin,
-and count within sampling bin (e.g., BTC22_3_A_1)</li>
-<li>
-<strong>sample_type:</strong> <em>(numeric)</em> provide 1 for mucus
-and 2 for fin clip</li>
-<li>
-<strong>assay_id:</strong> <em>(numeric)</em> the ID for assay types
-(e.g., 1 = OTS28 Early 1), use <code>get_assay</code> to view all
-available options.</li>
-<li>
-<strong>plate_run_id:</strong> <em>(numeric)</em> the ID returned
-from running <code>add_plate_run</code> to associate important metadata
-with the assay results</li>
-</ul>
-<p>We can map the generic sample identifiers <em>(e.g. SPL1)</em> to the
-JPE sample identifiers <em>(e.g. F1722_3_A_1)</em> using the
-<code>plate_map</code> tab of the output file. This tab should contain
-the well layout locations with JPE sample identifiers, and the name of
-the tab has to be <code>plate_map</code>. The function
-<code>process_well_sample_details</code> then reads in that layout and
-maps the JPE sample identifiers to well locations, producing a dataframe
-in the correct format:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">sample_details</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/process_well_sample_details.html">process_well_sample_details</a></span><span class="op">(</span>filepath <span class="op">=</span> <span class="st">"templates/sherlock_results_template.xlsx"</span>,</span>
-<span>                                              sample_type <span class="op">=</span> <span class="st">"mucus"</span>,</span>
-<span>                                              layout_type <span class="op">=</span> <span class="st">"split_plate_early_late"</span>,</span>
-<span>                                              plate_run_id <span class="op">=</span> <span class="va">plate_run_id</span><span class="op">)</span></span></code></pre></div>
-<p>The object sample_details is now a data frame that looks like:</p>
-<pre eval="FALSE"><code>location,sample_id,sample_type_id,assay_id,plate_run_id
-A3,BTC22_3_A_1,1,1,1
-A4,BTC22_3_A_2,1,1,1
-A6,BTC22_3_A_3,1,1,1
-B3,BTC22_3_B_1,1,1,1
-B4,BTC22_3_B_2,1,1,1
-B6,BTC22_3_B_3,1,1,1</code></pre>
-<p><strong>The sample details as a dataframe are an argument to
-<code>process_sherlock</code>, the function that extracts assay result
-data from the Synergy H1 reader output and transforms the data into the
-correct format for the database.</strong> This maps the generic sample
-identifiers to the JPE sample identifiers by well location.</p>
+<p>The SHERLOCK results file must be formatted into the appropriate
+Excel sheet format. You can view an example of this <a href="https://srjpe.github.io/grunID/articles/grunID-data-templates.html" class="external-link">here</a>.
+To add results to the database, you must have a “plate_run” associated
+with this upload. In this example, we will use the plate run we created
+in the previous step. You can query for an existing plate run using the
+<code>get_plate_run</code> function.</p>
 </div>
 <div class="section level2">
 <h2 id="process-sherlock-results">Process SHERLOCK Results<a class="anchor" aria-label="anchor" href="#process-sherlock-results"></a>
@@ -252,10 +195,11 @@ filepath to the result data excel workbook, the sample details dataframe
 described above, and the plate size run <em>(either 96 or 384)</em>. The
 function will return a list containing both the raw and final assay
 results.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">results</span> <span class="op">&lt;-</span> <span class="fu">grunID</span><span class="fu">::</span><span class="fu"><a href="../reference/process_sherlock.html">process_sherlock</a></span><span class="op">(</span>filepath <span class="op">=</span> <span class="st">"templates/sherlock_results_template.xlsx"</span>,</span>
-<span>                                    sample_details <span class="op">=</span> <span class="va">sample_details</span>,</span>
-<span>                                    plate_size <span class="op">=</span> <span class="fl">384</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>results <span class="ot">&lt;-</span> grunID<span class="sc">::</span><span class="fu">process_sherlock</span>(<span class="at">filepath =</span> <span class="st">"templates/sherlock_results_template.xlsx"</span>,</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>                                    <span class="at">sample_type =</span> <span class="st">"mucus"</span>,</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>                                    <span class="at">layout_type =</span> <span class="st">"split_plate_early_late"</span>,</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>                                    <span class="at">plate_run_id =</span> plate_run</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>                                    <span class="at">plate_size =</span> <span class="dv">384</span>)</span></code></pre></div>
 <p><strong>Note: save the output of <code>process_sherlock</code>. This
 contains data that will be needed to to pass to
 <code>add_raw_assay_results</code>.</strong></p>
@@ -266,7 +210,7 @@ contains data that will be needed to to pass to
 <p>Provide <code>add_raw_assay_results</code> a valid connection to the
 database and the processed assay result data. The function returns the
 number or records added.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">grunID</span><span class="fu">::</span><span class="fu"><a href="../reference/add_raw_assay_results.html">add_raw_assay_results</a></span><span class="op">(</span><span class="va">con</span>, <span class="va">results</span><span class="op">)</span></span></code></pre></div>
 <p><strong>Note: you do not need to save the output of
 <code>add_raw_assay_results</code>.</strong></p>
@@ -282,7 +226,7 @@ from the control blank wells. The function returns a table containing
 thresholds for a sampling event and needs to be passed to
 <code>update_assay_detections</code> to assign detections for
 assays.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">thresholds</span> <span class="op">&lt;-</span> <span class="fu">grunID</span><span class="fu">::</span><span class="fu"><a href="../reference/generate_threshold.html">generate_threshold</a></span><span class="op">(</span><span class="va">con</span>, <span class="va">plate_run_id</span><span class="op">)</span></span></code></pre></div>
 <p><strong>Note: save the output of <code>generate_threshold</code>.
 This contains the threshold values and needs to be passed to
@@ -296,7 +240,7 @@ database and the thresholds calculated for a plate run using
 <code>generate_threshold</code>. The function updates the assay result
 table with positive detections and, if appicable, the genetic run type
 identification.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">grunID</span><span class="fu">::</span><span class="fu"><a href="../reference/update_assay_detection.html">update_assay_detection</a></span><span class="op">(</span><span class="va">con</span>, <span class="va">thresholds_event</span><span class="op">)</span></span></code></pre></div>
 <p><strong>Note: you do not need to save the output of
 <code>update_assay_detection</code>.</strong></p>
@@ -305,7 +249,7 @@ identification.</p>
 <h2 id="end-session">End Session<a class="anchor" aria-label="anchor" href="#end-session"></a>
 </h2>
 <p>And finally, close your open connection to the database:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">DBI</span><span class="fu">::</span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbDisconnect.html" class="external-link">dbDisconnect</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
@@ -321,33 +265,29 @@ credentials</li>
 <li>generate threshold values from the plate run</li>
 <li>update assay detections for a plate run in the database</li>
 </ol>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">con</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/gr_db_connect.html">gr_db_connect</a></span><span class="op">(</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">plate_run_id</span> <span class="op">&lt;-</span> <span class="fu">grunID</span><span class="fu">::</span><span class="fu"><a href="../reference/add_plate_run.html">add_plate_run</a></span><span class="op">(</span><span class="va">con</span>, <span class="va">protocol_id</span>, <span class="va">genetic_method_id</span>,</span>
-<span>                                      <span class="va">laboratory_id</span>, lab_work_performed_by <span class="op">=</span> <span class="st">"Yogi Bear"</span>,</span>
-<span>                                      description <span class="op">=</span> <span class="st">"Plate run for sampling event X"</span>,</span>
-<span>                                      date_run <span class="op">=</span> <span class="st">"07-04-1776"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">sample_details</span> <span class="op">&lt;-</span> <span class="fu">grunID</span><span class="fu">::</span><span class="fu"><a href="../reference/process_well_sample_details.html">process_well_sample_details</a></span><span class="op">(</span>filepath <span class="op">=</span> <span class="st">"templates/sherlock_results_template.xlsx"</span>,</span>
-<span>                                                      sample_type <span class="op">=</span> <span class="st">"mucus"</span>,</span>
-<span>                                                      layout_type <span class="op">=</span> <span class="st">"split_plate_early_late"</span>,</span>
-<span>                                                      plate_run_id <span class="op">=</span> <span class="va">plate_run_id</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">results</span> <span class="op">&lt;-</span> <span class="fu">grunID</span><span class="fu">::</span><span class="fu"><a href="../reference/process_sherlock.html">process_sherlock</a></span><span class="op">(</span>filepath <span class="op">=</span> <span class="st">"templates/sherlock_results_template.xlsx"</span>,</span>
-<span>                                    sample_details <span class="op">=</span> <span class="va">sample_details</span>,</span>
-<span>                                    plate_size <span class="op">=</span> <span class="fl">384</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># no need to store output</span></span>
-<span><span class="fu">grunID</span><span class="fu">::</span><span class="fu"><a href="../reference/add_raw_assay_results.html">add_raw_assay_results</a></span><span class="op">(</span><span class="va">con</span>, <span class="va">results</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">thresholds</span> <span class="op">&lt;-</span> <span class="fu">grunID</span><span class="fu">::</span><span class="fu"><a href="../reference/generate_threshold.html">generate_threshold</a></span><span class="op">(</span><span class="va">con</span>, <span class="va">plate_run_id</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># no need to store output</span></span>
-<span><span class="fu">grunID</span><span class="fu">::</span><span class="fu"><a href="../reference/update_assay_detection.html">update_assay_detection</a></span><span class="op">(</span><span class="va">con</span>, <span class="va">thresholds</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># disconnect</span></span>
-<span><span class="fu">DBI</span><span class="fu">::</span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbDisconnect.html" class="external-link">dbDisconnect</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>con <span class="ot">&lt;-</span> <span class="fu">gr_db_connect</span>()</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a></span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>plate_run_id <span class="ot">&lt;-</span> grunID<span class="sc">::</span><span class="fu">add_plate_run</span>(con, protocol_id, genetic_method_id,</span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>                                      laboratory_id, <span class="at">lab_work_performed_by =</span> <span class="st">"Yogi Bear"</span>,</span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>                                      <span class="at">description =</span> <span class="st">"Plate run for sampling event X"</span>,</span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a>                                      <span class="at">date_run =</span> <span class="st">"07-04-1776"</span>)</span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a></span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a>results <span class="ot">&lt;-</span> grunID<span class="sc">::</span><span class="fu">process_sherlock</span>(<span class="at">filepath =</span> <span class="st">"templates/sherlock_results_template.xlsx"</span>,</span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a>                                    <span class="at">sample_type =</span> <span class="st">"mucus"</span>,</span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a>                                    <span class="at">layout_type =</span> <span class="st">"split_plate_early_late"</span>,</span>
+<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a>                                    <span class="at">plate_run_id =</span> plate_run_id</span>
+<span id="cb11-12"><a href="#cb11-12" tabindex="-1"></a>                                    <span class="at">plate_size =</span> <span class="dv">384</span>)</span>
+<span id="cb11-13"><a href="#cb11-13" tabindex="-1"></a></span>
+<span id="cb11-14"><a href="#cb11-14" tabindex="-1"></a><span class="co"># no need to store output</span></span>
+<span id="cb11-15"><a href="#cb11-15" tabindex="-1"></a>grunID<span class="sc">::</span><span class="fu">add_raw_assay_results</span>(con, results)</span>
+<span id="cb11-16"><a href="#cb11-16" tabindex="-1"></a></span>
+<span id="cb11-17"><a href="#cb11-17" tabindex="-1"></a>thresholds <span class="ot">&lt;-</span> grunID<span class="sc">::</span><span class="fu">generate_threshold</span>(con, plate_run_id)</span>
+<span id="cb11-18"><a href="#cb11-18" tabindex="-1"></a></span>
+<span id="cb11-19"><a href="#cb11-19" tabindex="-1"></a><span class="co"># no need to store output</span></span>
+<span id="cb11-20"><a href="#cb11-20" tabindex="-1"></a>grunID<span class="sc">::</span><span class="fu">update_assay_detection</span>(con, thresholds)</span>
+<span id="cb11-21"><a href="#cb11-21" tabindex="-1"></a></span>
+<span id="cb11-22"><a href="#cb11-22" tabindex="-1"></a><span class="co"># disconnect</span></span>
+<span id="cb11-23"><a href="#cb11-23" tabindex="-1"></a>DBI<span class="sc">::</span><span class="fu">dbDisconnect</span>(con)</span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside>

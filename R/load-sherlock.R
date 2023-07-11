@@ -2,33 +2,34 @@
 #' @description `generate_threshold()` calculates the raw fluorescence threshold
 #' values for an assay.
 #' @param con valid connection to the database
-#' @param plate_run_identifier plate run identifier value
+#' @param plate_run plate run object obtained from either `add_plate_run` or `get_plate_run`
 #' @param .control_id the identifier within the plate run to use as control for calculating thresholds, defaults to "NTC"
 #' @details For each assay on a plate run, the threshold value is calculated as two times
 #' the mean value of the last time step from the control blank wells. Each
 #' assay on a plate will have its own control blanks and threshold value.
 #' @returns a table containing thresholds for an event, to be passed to `update_assay_detections()`
 #' @export
-generate_threshold <- function(con, plate_run_identifier, .control_id="NTC") {
+generate_threshold <- function(con, plate_run, .control_id="NTC") {
 
   if (!DBI::dbIsValid(con)) {
     stop("Connection argument does not have a valid connection the run-id database.
          Please try reconnecting to the database using 'DBI::dbConnect'",
          call. = FALSE)
   }
+  plate_run_identifier <- plate_run$plate_run_id
 
   protocol_id <- dplyr::tbl(con, "plate_run") |>
-    dplyr::filter(id == plate_run_identifier) |>
+    dplyr::filter(id == !!plate_run_identifier) |>
     dplyr::pull(protocol_id)
 
   runtime <- dplyr::tbl(con, "protocol") |>
-    dplyr::filter(id == protocol_id) |>
+    dplyr::filter(id == !!protocol_id) |>
     dplyr::pull(runtime)
 
   control_blanks <- dplyr::tbl(con, "raw_assay_result") |>
     dplyr::filter(time == runtime,
            sample_id == !!.control_id,
-           plate_run_id == plate_run_identifier) |>
+           plate_run_id == !!plate_run_identifier) |>
     dplyr::collect()
 
   if (nrow(control_blanks) == 0) {
@@ -51,7 +52,6 @@ generate_threshold <- function(con, plate_run_identifier, .control_id="NTC") {
 #' identification.
 #' @param con valid connection to the database
 #' @param thresholds threshold values calculated in `generate_threshold`
-#' @param plate_run_id the plate run to perform update on
 #' @param .control_id identifier used to find the control variable
 #' @details The assay result table is updated to reflect whether the assays
 #' in a plate run produced raw fluorescence values that exceed the threshold
@@ -64,7 +64,7 @@ generate_threshold <- function(con, plate_run_identifier, .control_id="NTC") {
 #' @returns The number of assay results added to the assay_result table
 #' and the number of samples updated in the genetic_run_identification table.
 #' @export
-update_assay_detection <- function(con, thresholds, plate_run_id, .control_id = "NTC") {
+update_assay_detection <- function(con, thresholds, .control_id = "NTC") {
 
   if (!DBI::dbIsValid(con)) {
     stop("Connection argument does not have a valid connection the run-id database.
@@ -81,6 +81,15 @@ update_assay_detection <- function(con, thresholds, plate_run_id, .control_id = 
 
   if (length(runtime) > 1) {
     stop("TODO")
+  }
+
+  # check if the plate run already exists in the assay_results
+  this_plate_run_exists_in_results <- nrow(
+    dplyr::collect(dplyr::tbl(con, "assay_result") |> dplyr::filter(plate_run_id == plate_run))
+  )
+
+  if (this_plate_run_exists_in_results) {
+    stop("the plate run you are trying to upload already exists in the database", call. = FALSE)
   }
 
   detection_results <- dplyr::tbl(con, "raw_assay_result") |>
@@ -115,7 +124,7 @@ update_assay_detection <- function(con, thresholds, plate_run_id, .control_id = 
   ))
 
 
-  genetic_ids_added <- add_genetic_identification(con, unique(detection_results$sample_id), plate_run_id = plate_run_id)
+  genetic_ids_added <- add_genetic_identification(con, unique(detection_results$sample_id))
 
   return(c("Assay records added" = sum(assay_results_added),
            "Samples assigned run type" = genetic_ids_added))
@@ -176,6 +185,24 @@ add_plate_run <- function(con, protocol_id, genetic_method_id,
          call. = FALSE)
   }
 
+  plate_run_already_exists_in_db <- dplyr::tbl(con, "plate_run") |>
+    dplyr::filter(protocol_id == !!protocol_id,
+                  genetic_method_id == !!genetic_method_id,
+                  laboratory_id == !!laboratory_id,
+                  lab_work_performed_by == !!lab_work_performed_by,
+                  date_run == !!date_run) |>
+    dplyr::collect()
+
+  proceed_inserting <- TRUE
+
+  if (nrow(plate_run_already_exists_in_db)) {
+    proceed_inserting <- usethis::ui_yeah("Plate run with these values exists in database, do you wish to insert anyway?",
+                                    yes = "Yes", no = "No")
+  }
+
+
+  if (proceed_inserting) {
+
   query <- glue::glue_sql("
   INSERT INTO plate_run (protocol_id, genetic_method_id,  laboratory_id, lab_work_performed_by, description, date_run)
   VALUES ({protocol_id}, {genetic_method_id}, {laboratory_id}, {lab_work_performed_by}, {description}, {date_run}) RETURNING id;",
@@ -185,13 +212,68 @@ add_plate_run <- function(con, protocol_id, genetic_method_id,
   plate_run_id <- DBI::dbFetch(res)
   DBI::dbClearResult(res)
 
-  return(plate_run_id$id)
+
+
+  return(
+    structure(
+      list(plate_run_id=plate_run_id$id),
+      class = "plate_run",
+      protocol_id=protocol_id,
+      genetic_method_id=genetic_method_id,
+      description=description,
+      performed_by=lab_work_performed_by
+    ))
+  } else {
+    cli::cli_alert_info("use the following to view what exists in database")
+    cli::cli_code(lines = glue::glue("grunID::get_plate_run(con, id == {plate_run_already_exists_in_db$id})"), language = "R")
+    stop("aborting operation", call. = FALSE)
+  }
 }
 
+
+#' @export
+print.plate_run <- function(x, ...) {
+  cli::cat_rule(sprintf("A Plate Run Object"))
+  cli::cat_bullet(sprintf("Protocol ID: '%s'", attr(x, "protocol_id", exact = TRUE)), bullet_col = "green")
+  cli::cat_bullet(sprintf("Genetic Method ID: '%s'", attr(x, "genetic_method_id", exact = TRUE)), bullet_col = "green")
+  cli::cat_bullet(sprintf("Description: '%s'", attr(x, "description", exact = TRUE)), bullet_col = "green")
+  cli::cat_bullet(sprintf("Plate Run ID Assigned: %s", x$plate_run_id), bullet_col = "green")
+  cli::cat_bullet(sprintf("Lab Work Performed by: '%s'", attr(x, "performed_by", exact = TRUE)), bullet_col = "green")
+  cli::cat_bullet(sprintf("Data:"), bullet_col = "green")
+  print(x$data)
+
+}
 
 #' @title Add Raw Results
 #' @export
 add_raw_assay_results <- function(con, assay_results) {
+
+  assay_results <- assay_results$data
+  d <- assay_results |>
+    distinct(sample_id, assay_id)
+
+  db_raw_data <- dplyr::tbl(con, "raw_assay_result")
+  total_rows <- nrow(d)
+  row <- 1
+  while (row < total_rows) {
+    this_row <- assay_results[row, ]
+
+    if (this_row$sample_id == "NTC") {
+      row = row + 1
+      next
+    }
+
+    match <- db_raw_data |>
+      dplyr::filter(sample_id == !!this_row$sample_id,
+             assay_id == !!this_row$assay_id) |>
+      dplyr::collect()
+
+    if (nrow(match) != 0)
+      stop(sprintf("the combination of: sample_id: '%s', assay_id: '%s' already exists, to overwrite please delete previous assay run",
+                   this_row$sample_id, this_row$assay_id))
+
+    row = row + 1
+  }
 
   res <- DBI::dbAppendTable(con, "raw_assay_result", assay_results)
 
@@ -205,19 +287,18 @@ add_raw_assay_results <- function(con, assay_results) {
 #' sample based on assay results.
 #' @param con valid connection to database
 #' @param sample_identifiers identifiers for samples to be added
-#' @param plate_run_id plate run id to run genetic identification on
 #' @details `add_genetic_identification` checks the database for all existing
 #' assay results for a sample identifier, then uses those to assign a
 #' genetic identification value. The genetic_run_identification table in the
 #' database is updated with the genetic identification value. The genetic
 #' identification values are dependent on the assay results:
 #' 1: high value for
-add_genetic_identification <- function(con, sample_identifiers, plate_run_id) {
+add_genetic_identification <- function(con, sample_identifiers) {
 
   is_valid_connection(con)
 
   assay_detections <- tbl(con, "assay_result") |>
-    dplyr::filter(sample_id %in% sample_identifiers, plate_run_id == !!plate_run_id) |>
+    dplyr::filter(sample_id %in% sample_identifiers) |>
     dplyr::select(sample_id, assay_id, positive_detection) |>
     dplyr::collect() |>
     dplyr::mutate(assay_id_name = case_when(assay_id == 1 ~ "ots_28_e",
@@ -270,10 +351,5 @@ add_genetic_identification <- function(con, sample_identifiers, plate_run_id) {
   return(sum(total_inserts))
 
 }
-
-
-
-
-
 
 

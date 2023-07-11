@@ -90,65 +90,20 @@ laboratory_id <- get_laboratories(con) |>
   filter(stringr::str_detect(code, "DWR")) |> pull(id) # DWR GeM
 
 # store output of add_plate_run - contains unique plate run ID needed for later functions
-plate_run_id <- grunID::add_plate_run(con, protocol_id, genetic_method_id,
+plate_run <- grunID::add_plate_run(con, protocol_id, genetic_method_id,
                                       laboratory_id, lab_work_performed_by = "Yogi Bear",
                                       description = "Plate run for sampling event X",
                                       date_run = "07-04-1776")
 ```
 
+
 **Note: save the output of `add_plate_run`. This contains the unique plate run identifier and will be needed
 to pass to later functions**
 
-## Prepare Sample Details
+## Prepare Sample Details and Sherlock Output
 
-The Synergy H1 result output from plate runs is organized using generic identifiers 
-that need to be mapped to the real sample identifiers in order to properly associate
-the results with the correct sample id in the database. The output file’s **Layout** 
-section contains the well locations for samples encoded as non-unique generic 
-sample ids *(e.g., SPL1, BLK)*. The number of rows and columns in the **Layout** vary based on the plate size. A plate size 96 has rows A:H and columns 1:12 and a 
-plate size 384 has rows A:P and columns 1:24. The results for each sample are found 
-within columns that are the letter-number combination of the well location captured 
-in the **Layout** section *(e.g., if SPL1 is in row A and column 3, then the measurements at each time step are recorded in a column labeled A3)*. To map the sample ids to 
-the generic identifiers produced by the Synergy H1 software *(e.g., SPL1 and A3)*, 
-we must provide the true sample ids and other metadata at each well location
-in the results as a dataframe containing these columns:
+The SHERLOCK results file must be formatted into the appropriate Excel sheet format. You can view an example of this [here](https://srjpe.github.io/grunID/articles/grunID-data-templates.html). To add results to the database, you must have a "plate_run" associated with this upload. In this example, we will use the plate run we created in the previous step. You can query for an existing plate run using the `get_plate_run` function.
 
-* **location:** *(character)* letter-number combination based on Synergy H1 Layout grid (e.g., A3)
-* **sample_id:** *(character)* unique ID of mucus swab or fin clip made up of site code, year, sample event, sampling bin, and count within sampling bin (e.g., BTC22_3_A_1)
-* **sample_type:** *(numeric)* provide 1 for mucus and 2 for fin clip
-* **assay_id:** *(numeric)* the ID for assay types (e.g., 1 = OTS28 Early 1), use `get_assay` to view all available options.
-* **plate_run_id:** *(numeric)* the ID returned from running `add_plate_run` to 
-associate important metadata with the assay results
-
-We can map the generic sample identifiers *(e.g. SPL1)* to the JPE sample identifiers
-*(e.g. F1722_3_A_1)* using the `plate_map` tab of the output file. This tab should
-contain the well layout locations with JPE sample identifiers, and the name of the 
-tab has to be `plate_map`. The function `process_well_sample_details` then reads 
-in that layout and maps the JPE sample identifiers to well locations, producing
-a dataframe in the correct format:
-
-```{r, eval = FALSE, cache = TRUE}
-sample_details <- process_well_sample_details(filepath = "templates/sherlock_results_template.xlsx",
-                                              sample_type = "mucus",
-                                              layout_type = "split_plate_early_late",
-                                              plate_run_id = plate_run_id)
-```
-
-The object sample_details is now a data frame that looks like:
-```{eval=FALSE}
-location,sample_id,sample_type_id,assay_id,plate_run_id
-A3,BTC22_3_A_1,1,1,1
-A4,BTC22_3_A_2,1,1,1
-A6,BTC22_3_A_3,1,1,1
-B3,BTC22_3_B_1,1,1,1
-B4,BTC22_3_B_2,1,1,1
-B6,BTC22_3_B_3,1,1,1
-```
-
-**The sample details as a dataframe are an argument to `process_sherlock`, the function
-that extracts assay result data from the Synergy H1 reader output and transforms
-the data into the correct format for the database.** This maps the generic sample 
-identifiers to the JPE sample identifiers by well location.
 
 ## Process SHERLOCK Results
 
@@ -156,9 +111,12 @@ To extract and transpose the assay result data from the Synergy H1 reader output
 provide the `process_sherlock` function the filepath to the result data excel workbook,
 the sample details dataframe described above, and the plate size run *(either 96 or 384)*.
 The function will return a list containing both the raw and final assay results.
+
 ```{r, eval=FALSE, cache=TRUE}
 results <- grunID::process_sherlock(filepath = "templates/sherlock_results_template.xlsx",
-                                    sample_details = sample_details,
+                                    sample_type = "mucus",
+                                    layout_type = "split_plate_early_late",
+                                    plate_run_id = plate_run
                                     plate_size = 384)
 ```
 
@@ -223,13 +181,10 @@ plate_run_id <- grunID::add_plate_run(con, protocol_id, genetic_method_id,
                                       description = "Plate run for sampling event X",
                                       date_run = "07-04-1776")
 
-sample_details <- grunID::process_well_sample_details(filepath = "templates/sherlock_results_template.xlsx",
-                                                      sample_type = "mucus",
-                                                      layout_type = "split_plate_early_late",
-                                                      plate_run_id = plate_run_id)
-
 results <- grunID::process_sherlock(filepath = "templates/sherlock_results_template.xlsx",
-                                    sample_details = sample_details,
+                                    sample_type = "mucus",
+                                    layout_type = "split_plate_early_late",
+                                    plate_run_id = plate_run_id
                                     plate_size = 384)
 
 # no need to store output
