@@ -102,10 +102,8 @@ to pass to later functions**
 
 ## Prepare Sample Details and Sherlock Output
 
-The SHERLOCK resusts file must be formatted into the appropriate excel sheet format, you can view an example
-of this [here](https://srjpe.github.io/grunID/articles/grunID-data-templates.html). To add results to the
-database you must have a "plate_run" associated with this upload. In this example we will use the plate run
-we created in the previous step. You can query for existing plate run using the `get_plate_run` function.
+The SHERLOCK results file must be formatted into the appropriate Excel sheet format. You can view an example of this [here](https://srjpe.github.io/grunID/articles/grunID-data-templates.html). To add results to the database, you must have a "plate_run" associated with this upload. In this example, we will use the plate run we created in the previous step. You can query for an existing plate run using the `get_plate_run` function.
+
 
 ## Process SHERLOCK Results
 
