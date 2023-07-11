@@ -2,7 +2,7 @@
 #' @description `generate_threshold()` calculates the raw fluorescence threshold
 #' values for an assay.
 #' @param con valid connection to the database
-#' @param plate_run_identifier plate run identifier value
+#' @param plate_run plate run object obtained from either `add_plate_run` or `get_plate_run`
 #' @param .control_id the identifier within the plate run to use as control for calculating thresholds, defaults to "NTC"
 #' @details For each assay on a plate run, the threshold value is calculated as two times
 #' the mean value of the last time step from the control blank wells. Each
@@ -287,7 +287,6 @@ add_raw_assay_results <- function(con, assay_results) {
 #' sample based on assay results.
 #' @param con valid connection to database
 #' @param sample_identifiers identifiers for samples to be added
-#' @param plate_run_id plate run id to run genetic identification on
 #' @details `add_genetic_identification` checks the database for all existing
 #' assay results for a sample identifier, then uses those to assign a
 #' genetic identification value. The genetic_run_identification table in the
