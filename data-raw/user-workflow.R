@@ -53,16 +53,27 @@ genetic_method_id <- get_genetic_methods(con) |>
 
 # this is if your plate has two assays
 # plate_run_id is a variable you will need to pass to a later function
-plate_run_id_event <- add_plate_run(con,
-                              date_run = "2022-01-01",
+plate_run_event <- add_plate_run(con,
+                              date_run = "2023-07-10",
                               protocol_id = protocol_id,
                               genetic_method_id = genetic_method_id,
                               laboratory_id = laboratory_id,
                               lab_work_performed_by = "user",
-                              description = "early and late assays for plates 4-7")
+                              description = "error testing on 7/10")
+
+plate_run_event2 <- add_plate_run(con,
+                                 date_run = "2022-01-01",
+                                 protocol_id = protocol_id,
+                                 genetic_method_id = genetic_method_id,
+                                 laboratory_id = laboratory_id,
+                                 lab_work_performed_by = "user",
+                                 description = "error testing on 7/10")
+
 # query table in database to see what you've added
 tbl(con, "plate_run")
 
+
+res <- get_plate_run(con, id == 35)
 
 # read in the plate run map that is created before the plate is run.
 # this plate map layout should contain generic sherlock-created sample IDs
@@ -73,34 +84,40 @@ tbl(con, "plate_run")
 
 # this is for the split plate version
 # plate_map_details is a variable you will need to pass to a later function
-plate_map_details_event <- process_well_sample_details(filepath = "inst/sherlock_results_template.xlsx",
-                                                 sample_type = "mucus",
-                                                 layout_type = "split_plate_early_late",
-                                                 plate_run_id = plate_run_id_event)
-
 
 # pass plate map details (well layout) to process_sherlock, which reads in
 # a file with the output of a sherlock machine. This function also maps
 # the generic IDs with the JPE sample IDs.
 # sherlock_results is a variable you will need to pass to a later function
 sherlock_results_event <- process_sherlock(
-  filepath = "inst/sherlock_results_template.xlsx",
-  sample_details = plate_map_details_event,
+  filepath = "../misc/sherlock_results_part_1.xlsx",
+  sample_type = "mucus",
+  layout_type = "split_plate_early_late",
+  plate_run_id = plate_run_event,
+  plate_size = 384)
+
+sherlock_results_event_2 <- process_sherlock(
+  filepath = "../misc/sherlock_results_part_2.xlsx",
+  sample_type = "mucus",
+  layout_type = "split_plate_early_late",
+  plate_run_id = plate_run_event2,
   plate_size = 384)
 
 
 # add raw assay results to database
 tbl(con, "raw_assay_result")
-add_raw_assay_results(con, sherlock_results_event$data)
+add_raw_assay_results(con, sherlock_results_event_2)
 tbl(con, "raw_assay_result")
 
 # generate thresholds from raw assay results
 # thresholds is a variable you will need to pass to a later function
-thresholds_event <- generate_threshold(con, plate_run_identifier = plate_run_id_event)
+thresholds_event <- generate_threshold(con, plate_run = plate_run_event2)
 
 # update assay detection results (TRUE or FALSE for a sample and assay type)
 # in the database
-update_assay_detection(con, thresholds_event, plate_run_id = plate_run_id_event, compare_to = 4)
+update_assay_detection(con, thresholds_event)
+
+
 
 # view assay results.
 # this table contains the sample IDs run, the assay type, and positive detection
