@@ -80,9 +80,11 @@ add_plate_run <- function(con, protocol_id, genetic_method_id,
   if (proceed_inserting) {
 
     existing_plate_run_ids <- plate_run_already_exists_in_db |>
-      dplyr::select(id)
+      dplyr::pull(id)
 
-    delete_plate_run(con, existing_plate_run_ids)
+    if(length(existing_plate_run_ids) > 0) {
+      deactivate_plate_run(con, existing_plate_run_ids)
+    }
 
     query <- glue::glue_sql("
                             INSERT INTO plate_run (protocol_id, genetic_method_id,  laboratory_id, lab_work_performed_by, description, date_run)
@@ -123,14 +125,14 @@ print.plate_run <- function(x, ...) {
 
 }
 
-#' @title Delete Plate Run
-#' @description `delete_plate_run()` deactivates an existing plate run entry in
+#' @title Deactivate Plate Run
+#' @description `deactivate_plate_run()` deactivates an existing plate run entry in
 #' the plate_run table in the database.
 #' @param con valid connection to the database
 #' @param plate_run_id plate run identifier
 #' @returns no return value
 #' @export
-delete_plate_run <- function(con, plate_run_id) {
+deactivate_plate_run <- function(con, plate_run_id) {
   if (!DBI::dbIsValid(con)) {
     stop("Connection argument does not have a valid connection to the run-id database.
          Please try reconnecting to the database using 'DBI::dbConnect'",
@@ -139,10 +141,10 @@ delete_plate_run <- function(con, plate_run_id) {
 
   is_plate_run_active <- dplyr::tbl(con, "plate_run") |>
     dplyr::filter(id == !!plate_run_id) |>
-    dplyr::select(active) |>
-    dplyr::collect()
+    dplyr::collect() |>
+    dplyr::pull(active)
 
-  if(nrow(is_plate_run_active) == 0) {
+  if(length(is_plate_run_active) == 0) {
     stop("this plate run ID does not exist in the database")
   }
 
@@ -151,6 +153,7 @@ delete_plate_run <- function(con, plate_run_id) {
   }
 
   else {
+
     query <- glue::glue_sql("UPDATE plate_run
                            SET active = FALSE
                            WHERE id = {plate_run_id}
