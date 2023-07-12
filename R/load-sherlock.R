@@ -268,9 +268,10 @@ add_raw_assay_results <- function(con, assay_results) {
              assay_id == !!this_row$assay_id) |>
       dplyr::collect()
 
-    if (nrow(match) != 0)
+    if (nrow(match) != 0) {
       stop(sprintf("the combination of: sample_id: '%s', assay_id: '%s' already exists, to overwrite please delete previous assay run",
                    this_row$sample_id, this_row$assay_id))
+    }
 
     row = row + 1
   }
