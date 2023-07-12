@@ -75,19 +75,19 @@ all_protocols <- grunID::get_protocols(con)
 Select appropriate protocol ID with this code:
 ```{r, eval=FALSE, cache=TRUE}
 protocol_id <- all_protocols |>
-  filter(id == 1) |>
-  pull(id)
+  dplyr::filter(id == 1) |>
+  dplyr::pull(id)
 ```
 Similarly, you can call `get_genetic_method` and `get_laboratory_id` to
 review the IDs associated with methods and laboratories within the database.
 
 ```{r, eval=FALSE, cache=TRUE}
-genetic_method_id <- get_genetic_methods(con) |>
-  filter(method_name == "SHERLOCK") |>
-  pull(id) # SHERLOCK
+genetic_method_id <- grunID::get_genetic_methods(con) |>
+  dplyr::filter(method_name == "SHERLOCK") |>
+  dplyr::pull(id) # SHERLOCK
 
-laboratory_id <- get_laboratories(con) |>
-  filter(stringr::str_detect(code, "DWR")) |> pull(id) # DWR GeM
+laboratory_id <- grunID::get_laboratories(con) |>
+  dplyr::filter(stringr::str_detect(code, "DWR")) |> dplyr::pull(id) # DWR GeM
 
 # store output of add_plate_run - contains unique plate run ID needed for later functions
 plate_run <- grunID::add_plate_run(con, protocol_id, genetic_method_id,
@@ -174,7 +174,7 @@ Here is the code again to:
 6. update assay detections for a plate run in the database
 
 ```{r, eval=FALSE, cache=TRUE}
-con <- gr_db_connect()
+con <- grunID::gr_db_connect()
 
 plate_run_id <- grunID::add_plate_run(con, protocol_id, genetic_method_id,
                                       laboratory_id, lab_work_performed_by = "Yogi Bear",

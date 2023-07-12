@@ -87,7 +87,7 @@ All characters between `<>` (including the `<>`) are to be replaced with values 
 With this file in place, we create a connection to the database with the following:
 
 ```r
-con <- gr_db_connect() # a config file will be searched for starting at the working directory.
+con <- grunID::gr_db_connect() # a config file will be searched for starting at the working directory.
 
 dplyr::tbl(con, "agency")
 ```
@@ -99,7 +99,7 @@ dplyr::tbl(con, "agency")
 The `gr_db_connect` function can also be called with arguments specifying your username, database name and host for the server for the database. Note that this is a quick way to create a connection to the database but if using source control its also an easy way to accidentally share your credentials. For this reason, we recommend setting up a config file and adding it to your ignores file.
 
 ```r
-con <- gr_db_connect(
+con <- grunID::gr_db_connect(
   username = "myusername", 
   dbname = "dbname", 
   host = "host.com"

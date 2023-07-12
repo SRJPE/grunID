@@ -43,7 +43,7 @@ The function `get_sample_status` is helpful for when you already know the sample
 The function defaults to `full_history = FALSE`, showing you only the current status of the sample. If you want the full history of a sample, you can change the argument to `full_history = TRUE`.
 
 ```{r, eval = FALSE, cache = TRUE}
-con <- gr_db_connect()
+con <- grunID::gr_db_connect()
 
 # find the status of a specific sample "DER23_1_C_4" without the full history
 grunID::get_sample_status(con, "DER23_1_C_4", full_history = FALSE)

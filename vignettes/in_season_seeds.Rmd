@@ -67,6 +67,6 @@ in_season_seeds |>
 Next, we simply call the grunID::add_sample_plan function to insert additional plan values into the database. This function, under the hood, will add sample events, sample bins, and the samples extracted from this file.
 
 ```r
-con <- gr_db_connect()
-add_sample_plan(con, in_season_seeds, verbose = TRUE) # verbose = TRUE will give some progress bars
+con <- grunID::gr_db_connect()
+grunID::add_sample_plan(con, in_season_seeds, verbose = TRUE) # verbose = TRUE will give some progress bars
 ```
