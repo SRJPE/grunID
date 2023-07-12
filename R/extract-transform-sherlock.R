@@ -236,7 +236,7 @@ process_well_sample_details <- function(filepath,
                                   layout_type == "split_plate_spring_winter" ~ c(3, 4))
 
     plate_layout <- layout_raw |>
-      dplyr::pivot_longer(names_to="col_num", values_to = "sample_id", -...1) |>
+      tidyr::pivot_longer(names_to="col_num", values_to = "sample_id", -...1) |>
       dplyr::rename(row_num = ...1) |>
       dplyr::mutate(assay_id = ifelse(col_num %in% 1:12, assay_ids[1], assay_ids[2])) |>
       dplyr::transmute(
@@ -252,7 +252,7 @@ process_well_sample_details <- function(filepath,
   else if(layout_type == "triplicate") {
     assay_ids <- seq(1:4) # all assays
     plate_layout <- layout_raw |>
-      dplyr::pivot_longer(names_to="col_num", values_to = "sample_id", -...1) |>
+      tidyr::pivot_longer(names_to="col_num", values_to = "sample_id", -...1) |>
       dplyr::rename(row_num = ...1) |>
       dplyr::mutate(assay_id = dplyr::case_when(row_num %in% c("A", "E", "I", "M") ~ 1,
                                                 row_num %in% c("B", "F", "J", "N") ~ 2,
@@ -279,7 +279,7 @@ process_well_sample_details <- function(filepath,
                                  single_assay_type == "ots16 winter" ~ 4)
 
     plate_layout <- layout_raw |>
-      dplyr::pivot_longer(names_to="col_num", values_to = "sample_id", -...1) |>
+      tidyr::pivot_longer(names_to="col_num", values_to = "sample_id", -...1) |>
       dplyr::rename(row_num = ...1) |>
       dplyr::transmute(
         location = paste0(row_num, col_num),
