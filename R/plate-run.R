@@ -145,11 +145,11 @@ deactivate_plate_run <- function(con, plate_run_id) {
     dplyr::pull(active)
 
   if(length(is_plate_run_active) == 0) {
-    stop("this plate run ID does not exist in the database")
+    stop(sprintf("plate run ID '%s' does not exist in the database", plate_run_id))
   }
 
   else if(!is_plate_run_active) {
-    stop("plate run ID is already deactivated")
+    stop(sprintf("plate run ID '%s' is already deactivated", plate_run_id))
   }
 
   else {
@@ -161,7 +161,8 @@ deactivate_plate_run <- function(con, plate_run_id) {
                            .con = con)
 
     res <- DBI::dbSendQuery(con, query)
-    plate_run_id <- DBI::dbFetch(res)
     DBI::dbClearResult(res)
+
+    cli::cat_bullet(sprintf("Plate run ID '%s' successfully deactivated", plate_run_id), bullet_col = "green")
   }
 }
