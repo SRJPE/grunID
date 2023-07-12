@@ -15,6 +15,6 @@ deactivate_plate_run(con, plate_run_id)
 no return value
 }
 \description{
-`deactivate_plate_run()` deactivates an existing plate run entry in
+\code{deactivate_plate_run()} deactivates an existing plate run entry in
 the plate_run table in the database.
 }

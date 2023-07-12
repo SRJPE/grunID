@@ -132,6 +132,7 @@ print.plate_run <- function(x, ...) {
 #' @param plate_run_id plate run identifier
 #' @returns no return value
 #' @export
+#' @md
 deactivate_plate_run <- function(con, plate_run_id) {
   if (!DBI::dbIsValid(con)) {
     stop("Connection argument does not have a valid connection to the run-id database.
