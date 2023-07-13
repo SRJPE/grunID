@@ -6,8 +6,11 @@
 \usage{
 process_sherlock(
   filepath,
-  sample_type,
-  layout_type,
+  sample_type = c("mucus", "fin clip"),
+  layout_type = c("split_plate_early_late", "split_plate_spring_winter", "triplicate",
+    "single_assay"),
+  single_assay_type = c("ots28 early", "ots28 late", "ots16 spring", "ots16 winter",
+    NULL),
   plate_run_id,
   plate_size = c(96, 384)
 )
@@ -25,8 +28,8 @@ in a sheet titled "plate_map"}
 
 \item{plate_size}{either 96 or 384}
 
-\item{`single_assay_type`}{assay type if running a plate with only one assay. Either \verb{OTS28 Early},
-\verb{OTS28 Late}, \verb{OTS16 Spring}, or \verb{OTS16 Winter}. If not running a single assay for the plate, leave
+\item{`single_assay_type`}{assay type if running a plate with only one assay. Either \verb{ots28 early},
+\verb{ots28 late}, \verb{ots16 spring}, or \verb{ots16 winter}. If not running a single assay for the plate, leave
 this argument empty.}
 }
 \value{
