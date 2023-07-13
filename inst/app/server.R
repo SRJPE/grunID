@@ -1,16 +1,27 @@
 function(input, output, session) {
 
-
   observeEvent(input$show_protocol_details, {
     showModal(modalDialog(
       title = "Protocol Details",
-      renderTable(all_protocols)
+      renderTable(all_protocols |>
+                    filter(active == TRUE) |>
+                    select(name, reader = reader_type, serial_no = reader_serial_number,
+                           plate = plate_type, set_point, preheat = preheat_before_moving,
+                           runtime, interval, read_count, mode = run_mode, excitation,
+                           emissions, optics, gain, light_source, lamp_energy, height = read_height))
     ))
   })
+
+  # output$protocol_tbl = renderDT(all_protocols |>
+  #                                  filter(active == TRUE) |>
+  #                                  select(-c(id, updated_at, updated_by,
+  #                                            created_at, created_by,
+  #                                            software_version)))
 
   observeEvent(input$show_lab_details, {
     showModal(modalDialog(
       title = "Laboratories Details",
+      size = "l",
       renderTable(all_labs)
     ))
   })
