@@ -21,16 +21,44 @@ function(input, output, session) {
   observeEvent(input$show_lab_details, {
     showModal(modalDialog(
       title = "Laboratories Details",
-      size = "l",
       renderTable(all_labs)
     ))
   })
 
-  # TODO add a little question icon for some of these
   observeEvent(input$show_methods_details, {
     showModal(modalDialog(
       title = "Genetic Methods Details",
       renderTable(all_gen_methods)
+    ))
+  })
+
+  observeEvent(input$info_performed_by, {
+    showModal(modalDialog(
+      "You can add the user peforming lab work to be stored in the database"
+    ))
+  })
+
+  observeEvent(input$info_run_description, {
+    showModal(modalDialog(
+      "Add any comments associated with the plate run in this field. This can be left blank"
+    ))
+  })
+
+  observeEvent(input$info_sample_type, {
+    showModal(modalDialog(
+      "What type of sample are you processing? Current options are `mucus` or `fin clip`"
+    ))
+  })
+
+  observeEvent(input$info_layout_type, {
+    showModal(modalDialog(
+      "What plate map layout are you using? This refers to which assays are being run and in what organization on the plate"
+    ))
+  })
+
+  observeEvent(input$info_single_assay_type, {
+    showModal(modalDialog(
+      "This only needs to be filled out if your layout type is `single assay`. Otherwise it can be left blank"
     ))
   })
 
