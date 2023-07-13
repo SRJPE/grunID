@@ -19,8 +19,15 @@ navbarPage(
       dateInput("date_run", "Date of Run"),
 
       fileInput("sherlock_results", "Upload Sherlock Results"),
-      selectInput("sample_type", "Select Sample Type", choices = "mucus"),
-      selectInput("layout_type", "Select Layout Type", choices = "split_plate_early_late"),
+      selectInput("sample_type", "Select Sample Type", choices = c("mucus", "fin clip")),
+      selectInput("layout_type", "Select Layout Type", choices = c("split_plate_early_late",
+                                                                   "split_plate_spring_winter",
+                                                                   "triplicate", "single_assay_type")),
+      selectInput("single_assay_type", "Select Single Assay Type", choices = c("",
+                                                                               "ots28_early",
+                                                                               "ots28_late",
+                                                                               "ots16_spring",
+                                                                               "ots16_winter"), selected = NULL),
       selectInput("plate_size", "Select Plate Size", choices = c(384, 96)),
 
 
