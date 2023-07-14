@@ -66,7 +66,8 @@ function(input, output, session) {
 
 
   observeEvent(input$do_upload, {
-    tryCatch({grunID::add_new_plate_results(con, protocol_name = input$protocol,
+    tryCatch({
+      messages <- capture.output(grunID::add_new_plate_results(con, protocol_name = input$protocol,
                                            genetic_method = input$genetic_method,
                                            laboratory = input$laboratory,
                                            lab_work_performed_by = input$performed_by,
@@ -75,16 +76,17 @@ function(input, output, session) {
                                            filepath = input$sherlock_results$datapath,
                                            sample_type = input$sample_type,
                                            layout_type = input$layout_type,
-                                           plate_size = input$plate_size)
+                                           plate_size = input$plate_size))
+      #shinyCatch({message(paste0(messages))}, prefix = '') # this prints out messages (only at the end of the function) to shiny
       shinyCatch({message("Success!")})},
-             error = function(e) {
-                  shinyCatch({stop(paste(e))}, prefix = '')
-                  # showModal(
-                  #   modalDialog(
-                  #     paste(e)
-                  #   )
-                  # )
-                })
+      error = function(e) {
+          shinyCatch({stop(paste(e))}, prefix = '')
+          # showModal(
+          #   modalDialog(
+          #     paste(e)
+          #   )
+          # )
+      })
     }
   )
 
