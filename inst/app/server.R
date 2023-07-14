@@ -8,7 +8,7 @@ function(input, output, session) {
                     select(name, reader = reader_type, serial_no = reader_serial_number,
                            plate = plate_type, set_point, preheat = preheat_before_moving,
                            runtime, interval, read_count, mode = run_mode, excitation,
-                           emissions, optics, gain, light_source, lamp_energy, height = read_height))
+                           emissions, light_source, lamp = lamp_energy, height = read_height))
     ))
   })
 
@@ -40,19 +40,21 @@ function(input, output, session) {
 
   observeEvent(input$info_run_description, {
     showModal(modalDialog(
-      "Add any comments associated with the plate run in this field. This can be left blank"
+      "Add any lab comments associated with the plate run in this field. This can be left blank"
     ))
   })
 
   observeEvent(input$info_sample_type, {
     showModal(modalDialog(
-      "What type of sample are you processing? Current options are `mucus` or `fin clip`"
+      "What type of sample are you processing? Current options are mucus or fin clip"
     ))
   })
 
   observeEvent(input$info_layout_type, {
     showModal(modalDialog(
-      "What plate map layout are you using? This refers to which assays are being run and in what organization on the plate"
+      "What plate map layout are you using? This refers to which assays are being run and in what organization on the plate.
+      Current options are split_plate_early_late, split_plate_spring_winter, triplicate, or single_assay. If you
+      select single_assay, you must fill out the single assay type box"
     ))
   })
 
