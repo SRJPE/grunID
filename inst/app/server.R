@@ -64,7 +64,6 @@ function(input, output, session) {
     ))
   })
 
-  # TODO show error in app / prevents app from crashing
   observeEvent(input$do_upload, {
 
     tryCatch(grunID::add_new_plate_results(con, protocol_name = input$protocol,
@@ -78,6 +77,13 @@ function(input, output, session) {
                                            layout_type = input$layout_type,
                                            plate_size = input$plate_size),
              error = function(e) {
+               if(grepl("there was an error attempting to add new raw data, removing plate run", e)) {
+                 showModal(
+                   modalDialog(
+                     "There was an error attempting to add new raw data, removing plate run associated with this from database"
+                   )
+                 )
+               }
                if (grepl("There are no protocols with name", e)) {
                  showModal(
                    modalDialog(
@@ -103,7 +109,12 @@ function(input, output, session) {
                    )
                  )
                 } else {
-                 stop(e)
+                  showModal(
+                    modalDialog(
+                      "Oops! There was an error. Please check your R console for more details."
+                    )
+                  )
+                 #stop(e)
                 }
              })
            }
