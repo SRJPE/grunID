@@ -64,8 +64,8 @@ function(input, output, session) {
     ))
   })
 
-  observeEvent(input$do_upload, {
 
+  observeEvent(input$do_upload, {
     tryCatch(grunID::add_new_plate_results(con, protocol_name = input$protocol,
                                            genetic_method = input$genetic_method,
                                            laboratory = input$laboratory,
@@ -77,61 +77,13 @@ function(input, output, session) {
                                            layout_type = input$layout_type,
                                            plate_size = input$plate_size),
              error = function(e) {
-               if(grepl("there was an error attempting to add new raw data, removing plate run", e)) {
-                 showModal(
-                   modalDialog(
-                     "There was an error attempting to add new raw data, removing plate run associated with this from database"
-                   )
-                 )
-               }
-               if (grepl("There are no protocols with name", e)) {
-                 showModal(
-                   modalDialog(
-                     "There is no record in the database with that protocol name"
-                   )
-                 )
-               } else if (grepl("There are no genetic methods with name", e)) {
-                 showModal(
-                   modalDialog(
-                     "There is no record in the database with that genetic methods name"
-                   )
-                 )
-               } else if (grepl("There are no laboratories with name", e)) {
-                 showModal(
-                   modalDialog(
-                     "There is no record in the database with that laboratory name"
-                   )
-                 )
-               } else if (grepl("there was an error attempting to add new raw data", e)) {
-                 showModal(
-                   modalDialog(
-                     "There was an error attempting to insert new raw data; plate run removed from database. Please check your files and try again"
-                   )
-                 )
-                } else {
-                  showModal(
-                    modalDialog(
-                      "Oops! There was an error. Please check your R console for more details."
-                    )
-                  )
-                 #stop(e)
-                }
-             })
+                  shinyCatch({stop(paste(e))}, prefix = '')
+                  # showModal(
+                  #   modalDialog(
+                  #     paste(e)
+                  #   )
+                  # )
+                })
            }
     )
 }
-
-
-    # add_new_plate_results(con, protocol_name = input$protocol,
-    #                       genetic_method = input$genetic_method,
-    #                       laboratory = input$laboratory,
-    #                       lab_work_performed_by = input$performed_by,
-    #                       description = input$run_description,
-    #                       date_run = input$date_run,
-    #                       filepath = input$sherlock_results$datapath,
-    #                       sample_type = input$sample_type,
-    #                       layout_type = input$layout_type,
-    #                       plate_run_id = NULL,
-    #                       plate_size = input$plate_size)
-#   })
-# }
