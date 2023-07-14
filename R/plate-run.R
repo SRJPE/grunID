@@ -12,7 +12,7 @@
 #' @export
 add_new_plate_results <- function(con, protocol_name, genetic_method,
                               laboratory, lab_work_performed_by, description, date_run,
-                              filepath, sample_type, layout_type, plate_run_id,
+                              filepath, sample_type, layout_type,
                               plate_size = c(96, 384), .control_id = "NTC") {
 
   is_valid_connection(con)

@@ -66,16 +66,61 @@ function(input, output, session) {
 
   # TODO show error in app / prevents app from crashing
   observeEvent(input$do_upload, {
-    add_new_plate_results(con, protocol_name = input$protocol,
-                          genetic_method = input$genetic_method,
-                          laboratory = input$laboratory,
-                          lab_work_performed_by = input$performed_by,
-                          description = input$run_description,
-                          date_run = input$date_run,
-                          filepath = input$sherlock_results$datapath,
-                          sample_type = input$sample_type,
-                          layout_type = input$layout_type,
-                          plate_run_id = NULL,
-                          plate_size = input$plate_size)
-  })
+
+    tryCatch(grunID::add_new_plate_results(con, protocol_name = input$protocol,
+                                           genetic_method = input$genetic_method,
+                                           laboratory = input$laboratory,
+                                           lab_work_performed_by = input$performed_by,
+                                           description = input$run_description,
+                                           date_run = input$date_run,
+                                           filepath = input$sherlock_results$datapath,
+                                           sample_type = input$sample_type,
+                                           layout_type = input$layout_type,
+                                           plate_size = input$plate_size),
+             error = function(e) {
+               if (grepl("There are no protocols with name", e)) {
+                 showModal(
+                   modalDialog(
+                     "There is no record in the database with that protocol name"
+                   )
+                 )
+               } else if (grepl("There are no genetic methods with name", e)) {
+                 showModal(
+                   modalDialog(
+                     "There is no record in the database with that genetic methods name"
+                   )
+                 )
+               } else if (grepl("There are no laboratories with name", e)) {
+                 showModal(
+                   modalDialog(
+                     "There is no record in the database with that laboratory name"
+                   )
+                 )
+               } else if (grepl("there was an error attempting to add new raw data", e)) {
+                 showModal(
+                   modalDialog(
+                     "There was an error attempting to insert new raw data; plate run removed from database. Please check your files and try again"
+                   )
+                 )
+                } else {
+                 stop(e)
+                }
+             })
+           }
+    )
 }
+
+
+    # add_new_plate_results(con, protocol_name = input$protocol,
+    #                       genetic_method = input$genetic_method,
+    #                       laboratory = input$laboratory,
+    #                       lab_work_performed_by = input$performed_by,
+    #                       description = input$run_description,
+    #                       date_run = input$date_run,
+    #                       filepath = input$sherlock_results$datapath,
+    #                       sample_type = input$sample_type,
+    #                       layout_type = input$layout_type,
+    #                       plate_run_id = NULL,
+    #                       plate_size = input$plate_size)
+#   })
+# }

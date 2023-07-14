@@ -9,6 +9,7 @@ navbarPage(
   sidebarLayout(
     sidebarPanel(
       h4("More Information"),
+      tags$br(),
       actionButton("show_protocol_details", "Protocol Details", icon = icon("circle-info")),
       tags$br(),
       tags$br(),
@@ -41,6 +42,7 @@ navbarPage(
       textInput("run_description", "Plate Run Description:"),
       dateInput("date_run", "Date of Run"),
       fileInput("sherlock_results", "Upload Sherlock Results"),
+      selectInput("sample_type", "Select a Sample Type", choices = c("mucus", "fin clip")),
       selectInput("layout_type", "Select Layout Type", choices = c("split_plate_early_late",
                                                                    "split_plate_spring_winter",
                                                                    "triplicate", "single_assay_type")),
