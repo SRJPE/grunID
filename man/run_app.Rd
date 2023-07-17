@@ -2,10 +2,18 @@
 % Please edit documentation in R/run-app.R
 \name{run_app}
 \alias{run_app}
-\title{Launch}
+\title{Launch App}
 \usage{
 run_app(x, ...)
 }
 \description{
-Launch
+\code{run_app()} launches a shiny application that allows the user to
+upload data to the run ID database.
+}
+\details{
+the grunID application can be run when the user has a completed plate run
+with assay results. This application calls \code{add_new_plate_results()}.
+}
+\examples{
+grunID::run_app()
 }
