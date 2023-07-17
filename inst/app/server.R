@@ -74,9 +74,9 @@ function(input, output, session) {
                                            plate_size = input$plate_size)
       #)
       #shinyCatch({message(paste0(messages))}, prefix = '') # this prints out messages (only at the end of the function) to shiny
-      shinyCatch({message("Success!")})},
+      spsComps::shinyCatch({message("Success!")}, position = "top-center")},
       error = function(e) {
-          shinyCatch({stop(paste(e))}, prefix = '')
+          spsComps::shinyCatch({stop(paste(e))}, prefix = '', position = "top-center")
           # showModal(
           #   modalDialog(
           #     paste(e)

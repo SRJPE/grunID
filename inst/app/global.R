@@ -3,7 +3,6 @@ library(shiny)
 library(tidyverse)
 library(shinyBS)
 library(DT)
-library(spsComps)
 
 config_path <- Sys.getenv("CONFIG_PATH")
 cfg <- config::get(file = config_path)

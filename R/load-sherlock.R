@@ -195,9 +195,11 @@ add_plate_run <- function(con, protocol_id, genetic_method_id,
 
   proceed_inserting <- TRUE
 
-  if (nrow(plate_run_already_exists_in_db)) {
-    proceed_inserting <- usethis::ui_yeah("Plate run with these values exists in database, do you wish to insert anyway?",
-                                    yes = "Yes", no = "No")
+  if (!shiny::isRunning()) {
+    if (nrow(plate_run_already_exists_in_db)) {
+      proceed_inserting <- usethis::ui_yeah("Plate run with these values exists in database, do you wish to insert anyway?",
+                                            yes = "Yes", no = "No")
+    }
   }
 
 
