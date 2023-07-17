@@ -167,3 +167,46 @@ deactivate_plate_run <- function(con, plate_run_id) {
     cli::cat_bullet(sprintf("Plate run ID '%s' successfully deactivated", plate_run_id), bullet_col = "green")
   }
 }
+
+#' @title Activate Plate Run
+#' @description `activate_plate_run()` activates an existing plate run entry in
+#' the plate_run table in the database.
+#' @param con valid connection to the database
+#' @param plate_run_id plate run identifier
+#' @returns no return value
+#' @export
+#' @md
+activate_plate_run <- function(con, plate_run_id) {
+  if (!DBI::dbIsValid(con)) {
+    stop("Connection argument does not have a valid connection to the run-id database.
+         Please try reconnecting to the database using 'DBI::dbConnect'",
+         call. = FALSE)
+  }
+
+  is_plate_run_active <- dplyr::tbl(con, "plate_run") |>
+    dplyr::filter(id == !!plate_run_id) |>
+    dplyr::collect() |>
+    dplyr::pull(active)
+
+  if(length(is_plate_run_active) == 0) {
+    stop(sprintf("plate run ID '%s' does not exist in the database", plate_run_id))
+  }
+
+  else if(is_plate_run_active) {
+    stop(sprintf("plate run ID '%s' is already activated", plate_run_id))
+  }
+
+  else {
+
+    query <- glue::glue_sql("UPDATE plate_run
+                           SET active = TRUE
+                           WHERE id = {plate_run_id}
+                           RETURNING id, updated_at;",
+                           .con = con)
+
+    res <- DBI::dbSendQuery(con, query)
+    DBI::dbClearResult(res)
+
+    cli::cat_bullet(sprintf("Plate run ID '%s' successfully avtivated", plate_run_id), bullet_col = "green")
+  }
+}
