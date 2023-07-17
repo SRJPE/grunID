@@ -12,12 +12,6 @@ function(input, output, session) {
     ))
   })
 
-  # output$protocol_tbl = renderDT(all_protocols |>
-  #                                  filter(active == TRUE) |>
-  #                                  select(-c(id, updated_at, updated_by,
-  #                                            created_at, created_by,
-  #                                            software_version)))
-
   observeEvent(input$show_lab_details, {
     showModal(modalDialog(
       title = "Laboratories Details",
@@ -67,7 +61,8 @@ function(input, output, session) {
 
   observeEvent(input$do_upload, {
     tryCatch({
-      messages <- capture.output(grunID::add_new_plate_results(con, protocol_name = input$protocol,
+      #messages <- capture.output(
+        grunID::add_new_plate_results(con, protocol_name = input$protocol,
                                            genetic_method = input$genetic_method,
                                            laboratory = input$laboratory,
                                            lab_work_performed_by = input$performed_by,
@@ -76,7 +71,8 @@ function(input, output, session) {
                                            filepath = input$sherlock_results$datapath,
                                            sample_type = input$sample_type,
                                            layout_type = input$layout_type,
-                                           plate_size = input$plate_size))
+                                           plate_size = input$plate_size)
+      #)
       #shinyCatch({message(paste0(messages))}, prefix = '') # this prints out messages (only at the end of the function) to shiny
       shinyCatch({message("Success!")})},
       error = function(e) {
