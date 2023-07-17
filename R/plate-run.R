@@ -1,3 +1,93 @@
+
+#' @param con connection to the database
+#' @param protocol name pf the protocol used for this run
+#' @param genetic_method the genetic method used for this run
+#' @param laboratory the lab used for this run
+#' @param description a description to ne associated with the plate run
+#' @param date_run the date that the assat was run
+#' @param filepath the filepath to the Sherlock results
+#' @param sample_type the sample type
+#' @param layout_type the layout that was used for this assay
+#' @param plate_size either 96 or 384
+#' @export
+add_new_plate_results <- function(con, protocol_name, genetic_method,
+                              laboratory, lab_work_performed_by, description, date_run,
+                              filepath, sample_type, layout_type,
+                              plate_size = c(96, 384), .control_id = "NTC") {
+
+  is_valid_connection(con)
+
+  protocol_id <- get_protocols(con, name == !!protocol_name) |> dplyr::pull(id)
+
+  if (length(protocol_id) == 0) {
+    stop(cli::format_error(c("x" = "There are no protocols with name = '{protocol_name}'",
+                             "i" = "Use `grunID::get_protocols` to see existing protocol names")), call. = FALSE)
+  }
+
+  genetic_method_id <- get_genetic_methods(con, code == !!genetic_method) |> dplyr::pull(id)
+
+  if (length(genetic_method_id) == 0) {
+    stop(cli::format_error(c(
+      "x" = "There are no genetic methods with name = '{genetic_method}'",
+      "i" = "Use `grunID::get_genetic_methods` to see existing method codes")), call. = FALSE)
+  }
+
+  lab_id <- get_laboratories(con, is_active = TRUE, all_results = FALSE, code == laboratory) |> dplyr::pull(id)
+
+  if (length(lab_id) == 0) {
+    stop(cli::format_error(c(
+      "x" = "There are no laboratories with name = '{laboratory}'",
+      "i" = "Use `grunID::get_laboratories` to see existing lab codes")), call. = FALSE)
+  }
+
+  cli::cli_alert_info("Adding plate run to database")
+  # create a new plate run in db for these results
+  plate_run <- add_plate_run(con,
+                            date_run = date_run,
+                            protocol_id = protocol_id,
+                            genetic_method_id = genetic_method_id,
+                            laboratory_id = lab_id,
+                            lab_work_performed_by = lab_work_performed_by,
+                            description = description)
+  cli::cli_alert_success("Plate run added to database with id = {plate_run$plate_run_id}")
+
+
+  cli::cli_alert_info("Processing sherlock data")
+  sherlock_results_event <- suppressMessages(
+    process_sherlock(
+      filepath = filepath,
+      sample_type = sample_type,
+      layout_type = layout_type,
+      plate_run_id = plate_run,
+      plate_size = plate_size)
+  )
+  cli::cli_alert_success("Sherlock results processing complete")
+
+  cli::cli_alert_info("adding results to database")
+  add_raw_res <- tryCatch(
+    add_raw_assay_results(con, sherlock_results_event),
+    error = function(e) {
+      cli::cli_alert_danger("there was an error attempting to add new raw data, removing plate run associated with this from database, see the error below for more details:")
+      sql_query <- glue::glue_sql("DELETE FROM plate_run where id = {plate_run$plate_run_id}", .con = con)
+      res <- DBI::dbSendQuery(con, sql_query)
+      DBI::dbClearResult(res)
+      stop(e)
+    }
+  )
+
+  cli::cli_alert_success("Added {as.numeric(add_raw_res)} results to the database")
+
+  cli::cli_alert_info("Generating thresholds for plate run")
+
+  thresholds_event <- generate_threshold(con, plate_run = plate_run, .control_id = .control_id)
+  cli::cli_alert_success("Threshold done")
+
+
+  update_assay_detection(con, thresholds_event)
+}
+
+
+
 #' @title Query for plate run
 #' @export
 get_plate_run <- function(con, ...) {
@@ -35,3 +125,7 @@ as_plate_run <- function(x, ...) {
       performed_by=x$lab_work_performed_by
     ))
 }
+
+
+
+

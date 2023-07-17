@@ -14,10 +14,11 @@
 #' @family genetic method functions
 #' @export
 #' @md
-get_genetic_methods <- function(con) {
+get_genetic_methods <- function(con, ...) {
   is_valid_connection(con)
 
   genetic_methods <- dplyr::tbl(con, "genetic_method") |>
+    dplyr::filter(...) |>
     dplyr::collect()
   return(genetic_methods)
 

@@ -56,7 +56,96 @@ You can also call `gr_db_connect` with arguments specifying your username, datab
 Every time we use a function to read or write to the database, we will pass 
 this connection object to the function.
 
-## Add Plate Run Metadata
+
+## Add Results to Database
+
+As of version 0.5, `grunID` includes a function called `add_new_plate_results`, which allows you to pass all 
+arguments at once for uploading data to the database. This method offers a more convenient and faster way of
+adding data, but it abstracts away some of the details that may be useful to inspect visually. We recommend 
+starting with this function, as it is likely to work well. However, in case of any errors, you may need to 
+switch to the longer, more verbose method of uploading. In this guide, we will walk through a few scenarios to 
+help you understand each of the methods for uploading data.
+
+### Single Function Call with `add_new_plate_results`
+
+`add_new_plate_results` offers a convenient way to quickly add data to the database. However, it requires you to have all the necessary information ready to pass as arguments to the function. Additionally, it does not return data for further manipulation since it essentially performs multiple steps at once. The following data is required:
+
+- `protocol_name`: The name of the plate run you are uploading data for.
+- `laboratory`: The code for the lab associated with this plate run data.
+- `genetic_method`: The genetic method code for the plate run you are uploading data for.
+- `lab_work_performed_by`: The person who performed the lab work.
+- `description`: A description to associate with the plate run.
+- `date_run`: The date when the plate was run through the Sherlock machine.
+- `filepath`: The filepath to the spreadsheet containing the results and plate map layout.
+- `sample_type`: The sample type.
+- `layout_type`: The layout type for the plate map.
+- `plate_size`: The size of the plate layout.
+
+You can call `add_new_plate_results` as follows:
+
+```r
+add_new_plate_results(con, protocol_name = "new protocol", genetic_method = "SHLK",
+                      laboratory = "DWR_GeM", lab_work_performed_by = "user", 
+                      description = "a test run", date_run = "2023-07-12",
+                      filepath = "../misc/sherlock_results_part_1.xlsx",
+                      sample_type = "mucus",
+                      layout_type = "split_plate_early_late",
+                      plate_size = 384)
+```
+
+A successful run of the function should return messages like this:
+
+```
+ℹ Adding plate run to database
+✔ Plate run added to database with id = 65
+ℹ Processing sherlock data
+✔ Sherlock results processing complete
+ℹ adding results to database
+✔ Added 14883 results to the database
+ℹ Generating thresholds for plate run
+✔ Threshold done
+inserting threshold result into database ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  100% |  ETA:  0s
+identified 0 samples needing OTS16 spring/winter
+updating status codes for uploaded samples ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  100% |  ETA:  0s
+      Assay records added Samples assigned run type 
+                      359                         0 
+```
+
+`add_new_plate_results` also provides helpful messages when something goes wrong. For example, when a plate run with the same parameters already exists, it prompts you to verify if you want to insert it anyway:
+
+```
+ℹ Adding plate run to database
+Plate run with these values exists in database, do you wish to insert anyway?
+
+1: Yes
+2: No
+
+Selection:
+```
+
+Or when there is a duplicate error from the database:
+
+```
+✔ Plate run added to database with id = 66
+ℹ Processing sherlock data
+✔ Sherlock results processing complete
+ℹ adding results to database
+✖ there was an error attempting to add new raw data, removing plate run associated with this from database, see the error below for more details:
+Error in add_raw_assay_results(con, sherlock_results_event) :
+the combination of: sample_id: 'F1722_3_A_1', assay_id: '1' already exists, to overwrite please delete previous assay run
+```
+
+**Coming Soon** An R Shiny UI for the `add_new_plate_results` function is currently in the making, and should
+be avaialable soon. Check back on these docs for more information on how to use once the new version 
+is released.
+
+
+### Muli-step Approach
+
+The multi-step approach can be used in cases where you want to each step and do some visual inspection 
+of the data. The result is the same but broken up into steps.
+
+#### Step 1: Add Plate Run Metadata
 
 When a plate is run on the Synergy H1 reader, we want to relate critical plate run 
 metadata with the assay results from that particular run in our database. We call 
@@ -100,12 +189,10 @@ plate_run <- grunID::add_plate_run(con, protocol_id, genetic_method_id,
 **Note: save the output of `add_plate_run`. This contains the unique plate run identifier and will be needed
 to pass to later functions**
 
-## Prepare Sample Details and Sherlock Output
+#### Step 2: Prepare Sample Details and Sherlock Output
 
 The SHERLOCK results file must be formatted into the appropriate Excel sheet format. You can view an example of this [here](https://srjpe.github.io/grunID/articles/grunID-data-templates.html). To add results to the database, you must have a "plate_run" associated with this upload. In this example, we will use the plate run we created in the previous step. You can query for an existing plate run using the `get_plate_run` function.
 
-
-## Process SHERLOCK Results
 
 To extract and transpose the assay result data from the Synergy H1 reader output,
 provide the `process_sherlock` function the filepath to the result data excel workbook,
@@ -123,7 +210,7 @@ results <- grunID::process_sherlock(filepath = "templates/sherlock_results_templ
 **Note: save the output of `process_sherlock`. This contains data that will be needed to
 to pass to `add_raw_assay_results`.**
 
-## Upload Assay Results
+#### Step 4: Upload Assay Results
 
 Provide `add_raw_assay_results` a valid connection to the database and the processed
 assay result data. The function returns the number or records added.
@@ -133,7 +220,7 @@ grunID::add_raw_assay_results(con, results)
 
 **Note: you do not need to save the output of `add_raw_assay_results`.**
 
-## Generate Threshold Values
+#### Step 5: Generate Threshold Values
 
 Provide `generate_threshold` a valid connection to the database and the plate run id. The function calculates
 the raw fluorescence threshold values for each assay on a plate run. Currently, this is calculated as two times the mean value
@@ -146,7 +233,7 @@ thresholds <- grunID::generate_threshold(con, plate_run_id)
 ```
 **Note: save the output of `generate_threshold`. This contains the threshold values and needs to be passed to `update_assay_detection`**
 
-## Update Assay Detections
+#### Step 6: Update Assay Detections
 Provide `update_assay_detection` a valid connection to the database and the thresholds calculated for a plate run using `generate_threshold`. The function updates the assay result table with positive detections and, if appicable, the genetic run type identification.
 
 ```{r, eval=FALSE, cache=TRUE}
@@ -155,14 +242,14 @@ grunID::update_assay_detection(con, thresholds_event)
 **Note: you do not need to save the output of `update_assay_detection`.**
 
 
-## End Session
+#### End Session
 
 And finally, close your open connection to the database:
 ```{r, eval=FALSE, cache=TRUE}
 DBI::dbDisconnect(con)
 ```
 
-## Summary
+#### Summary of Multi-step Approach
 
 Here is the code again to:
 
@@ -175,6 +262,9 @@ Here is the code again to:
 
 ```{r, eval=FALSE, cache=TRUE}
 con <- grunID::gr_db_connect()
+
+# S
+
 
 plate_run_id <- grunID::add_plate_run(con, protocol_id, genetic_method_id,
                                       laboratory_id, lab_work_performed_by = "Yogi Bear",

@@ -4,7 +4,7 @@
 \alias{get_laboratories}
 \title{Retrieve Laboratories}
 \usage{
-get_laboratories(con, is_active = TRUE, all_results = FALSE)
+get_laboratories(con, is_active = TRUE, all_results = FALSE, ...)
 }
 \arguments{
 \item{con}{A DBI connection object obtained from DBI::dbConnect()}
