@@ -4,7 +4,7 @@
 \alias{run_app}
 \title{Launch}
 \usage{
-run_app(x, ...)
+run_app(x, config_path, ...)
 }
 \description{
 Launch
