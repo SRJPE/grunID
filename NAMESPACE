@@ -3,6 +3,7 @@
 S3method(print,plate_layout)
 S3method(print,plate_run)
 S3method(print,sherlock_output)
+export(activate_plate_run)
 export(add_agency)
 export(add_assay)
 export(add_enum_value)
