@@ -88,8 +88,10 @@ add_new_plate_results <- function(con, protocol_name, genetic_method,
   thresholds_event <- generate_threshold(con, plate_run = plate_run, .control_id = .control_id)
   cli::cli_alert_success("Threshold done")
 
+  return(thresholds_event)
 
-  update_assay_detection(con, thresholds_event)
+  #  dont do this for now just generate thresholds
+  # update_assay_detection(con, thresholds_event)
 }
 
 

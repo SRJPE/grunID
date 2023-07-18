@@ -250,35 +250,7 @@ print.plate_run <- function(x, ...) {
 #' @export
 add_raw_assay_results <- function(con, assay_results) {
 
-  assay_results <- assay_results$data
-  d <- assay_results |>
-    dplyr::distinct(sample_id, assay_id)
-
-  db_raw_data <- dplyr::tbl(con, "raw_assay_result")
-  total_rows <- nrow(d)
-  row <- 1
-  while (row < total_rows) {
-    this_row <- assay_results[row, ]
-
-    if (this_row$sample_id == "NTC") {
-      row = row + 1
-      next
-    }
-
-    match <- db_raw_data |>
-      dplyr::filter(sample_id == !!this_row$sample_id,
-             assay_id == !!this_row$assay_id) |>
-      dplyr::collect()
-
-    if (nrow(match) != 0) {
-      stop(sprintf("the combination of: sample_id: '%s', assay_id: '%s' already exists, to overwrite please delete previous assay run",
-                   this_row$sample_id, this_row$assay_id))
-    }
-
-    row = row + 1
-  }
-
-  res <- DBI::dbAppendTable(con, "raw_assay_result", assay_results)
+  res <- DBI::dbAppendTable(con, "raw_assay_result", assay_results$data)
 
   return(c("raw assay results added" = res))
 }
