@@ -17,6 +17,12 @@ add_new_plate_results <- function(con, protocol_name, genetic_method,
 
   is_valid_connection(con)
 
+  if(is.null(filepath)) {
+    stop(cli::format_error(c("x" = "No results file was provided",
+                             "i" = "Please upload a valid plate layout and results excel file")), call. = FALSE)
+  }
+  # TODO add check for if single assay type is selected and no single assay type is presented
+
   protocol_id <- get_protocols(con, name == !!protocol_name) |> dplyr::pull(id)
 
   if (length(protocol_id) == 0) {
