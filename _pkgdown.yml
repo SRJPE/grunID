@@ -70,6 +70,8 @@ reference:
 - title: Updating data
   desc: These functions update data in the database
   contents:
+  - activate_plate_run
+  - deactivate_plate_run
   - set_sample_status
   - update_agency
   - update_agency_status
