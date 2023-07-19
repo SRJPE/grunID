@@ -86,4 +86,22 @@ function(input, output, session) {
     }
   )
 
+  output$sample_status_table <- DT::renderDataTable(DT::datatable({
+    data <- all_sample_status
+
+    if(input$sample_status_filter != "All") {
+      data <- data |>
+        dplyr::filter(status == input$sample_status_filter)
+    }
+    data
+  },
+  extensions = "Buttons",
+  options = list(autoWidth = TRUE,
+                 dom = "Bfrtip",
+                 buttons = c("copy", "csv", "excel"),
+                 rownames = FALSE,
+                 pageLength = 20)),
+  server = FALSE
+)
+
 }
