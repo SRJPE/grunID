@@ -167,34 +167,7 @@ check_results_complete <- function(con, sample_identifiers) {
 #' @export
 add_raw_assay_results <- function(con, assay_results) {
 
-  assay_results <- assay_results$data
-  d <- assay_results |>
-    distinct(sample_id, assay_id)
-
-  db_raw_data <- dplyr::tbl(con, "raw_assay_result")
-  total_rows <- nrow(d)
-  row <- 1
-  while (row < total_rows) {
-    this_row <- assay_results[row, ]
-
-    if (this_row$sample_id == "NTC") {
-      row = row + 1
-      next
-    }
-
-    match <- db_raw_data |>
-      dplyr::filter(sample_id == !!this_row$sample_id,
-             assay_id == !!this_row$assay_id) |>
-      dplyr::collect()
-
-    if (nrow(match) != 0)
-      stop(sprintf("the combination of: sample_id: '%s', assay_id: '%s' already exists, to overwrite please delete previous assay run",
-                   this_row$sample_id, this_row$assay_id))
-
-    row = row + 1
-  }
-
-  res <- DBI::dbAppendTable(con, "raw_assay_result", assay_results)
+  res <- DBI::dbAppendTable(con, "raw_assay_result", assay_results$data)
 
   return(c("raw assay results added" = res))
 }
@@ -216,14 +189,14 @@ add_genetic_identification <- function(con, sample_identifiers) {
 
   is_valid_connection(con)
 
-  assay_detections <- tbl(con, "assay_result") |>
+  assay_detections <- dplyr::tbl(con, "assay_result") |>
     dplyr::filter(sample_id %in% sample_identifiers) |>
     dplyr::select(sample_id, assay_id, positive_detection) |>
     dplyr::collect() |>
-    dplyr::mutate(assay_id_name = case_when(assay_id == 1 ~ "ots_28_e",
-                                            assay_id == 2 ~ "ots_28_l",
-                                            assay_id == 3 ~ "ots_16_s",
-                                            assay_id == 4 ~ "ots_16_w"),
+    dplyr::mutate(assay_id_name = dplyr::case_when(assay_id == 1 ~ "ots_28_e",
+                                                   assay_id == 2 ~ "ots_28_l",
+                                                   assay_id == 3 ~ "ots_16_s",
+                                                   assay_id == 4 ~ "ots_16_w"),
                   assay_id_name = factor(assay_id_name, levels = c("ots_28_e","ots_28_l","ots_16_s","ots_16_w"))) |>
     dplyr::select(-assay_id) |>
     tidyr::pivot_wider(names_from = "assay_id_name", values_from = "positive_detection", names_expand = TRUE)
@@ -238,7 +211,7 @@ add_genetic_identification <- function(con, sample_identifiers) {
     dplyr::select(sample_id, run_type_id, status_code_id)
 
   spring_winter <- run_types |>
-    filter(status_code_id == 8)
+    dplyr::filter(status_code_id == 8)
 
   message(paste0("identified ", nrow(spring_winter), " samples needing OTS16 spring/winter"))
 

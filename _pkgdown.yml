@@ -9,6 +9,7 @@ reference:
 - title: Adding data
   desc: These functions allow users to add information about samples being run to the database
   contents:
+  - add_new_plate_results
   - add_agency
   - add_assay
   - add_enum_value

@@ -4,7 +4,7 @@
 \alias{get_genetic_methods}
 \title{Retrieve Genetic Methods}
 \usage{
-get_genetic_methods(con)
+get_genetic_methods(con, ...)
 }
 \arguments{
 \item{con}{A DBI connection object obtained from DBI::dbConnect()}

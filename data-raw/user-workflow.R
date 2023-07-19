@@ -39,13 +39,13 @@ protocol_id <- all_protocols |>
 # select laboratory ID that corresponds to "DWR"
 # laboratory_id is a variable you will need to pass to a later function
 laboratory_id <- get_laboratories(con) |>
-  filter(stringr::str_detect(code, "DWR")) |> pull(id)
+  dplyr::filter(stringr::str_detect(code, "DWR")) |> dplyr::pull(id)
 
 # get genetic method id that corresponds to "SHERLOCK"
 # genetic_method_id is a variable you will need to pass to a later function
 genetic_method_id <- get_genetic_methods(con) |>
-  filter(method_name == "SHERLOCK") |>
-  pull(id)
+  dplyr::filter(method_name == "SHERLOCK") |>
+  dplyr::pull(id)
 
 # add plate run to the database for each assay you plan to run.
 # be clear with names here. this returns an ID for the plate run
@@ -54,23 +54,23 @@ genetic_method_id <- get_genetic_methods(con) |>
 # this is if your plate has two assays
 # plate_run_id is a variable you will need to pass to a later function
 plate_run_event <- add_plate_run(con,
-                              date_run = "2023-07-10",
-                              protocol_id = protocol_id,
-                              genetic_method_id = genetic_method_id,
-                              laboratory_id = laboratory_id,
-                              lab_work_performed_by = "user",
-                              description = "error testing on 7/10")
-
-plate_run_event2 <- add_plate_run(con,
-                                 date_run = "2022-01-01",
+                                 date_run = "2023-07-10",
                                  protocol_id = protocol_id,
                                  genetic_method_id = genetic_method_id,
                                  laboratory_id = laboratory_id,
                                  lab_work_performed_by = "user",
                                  description = "error testing on 7/10")
 
+plate_run_event2 <- add_plate_run(con,
+                                  date_run = "2022-01-01",
+                                  protocol_id = protocol_id,
+                                  genetic_method_id = genetic_method_id,
+                                  laboratory_id = laboratory_id,
+                                  lab_work_performed_by = "user",
+                                  description = "error testing on 7/10")
+
 # query table in database to see what you've added
-tbl(con, "plate_run")
+dplyr::tbl(con, "plate_run")
 
 
 res <- get_plate_run(con, id == 35)
@@ -105,9 +105,9 @@ sherlock_results_event_2 <- process_sherlock(
 
 
 # add raw assay results to database
-tbl(con, "raw_assay_result")
+dplyr::tbl(con, "raw_assay_result")
 add_raw_assay_results(con, sherlock_results_event_2)
-tbl(con, "raw_assay_result")
+dplyr::tbl(con, "raw_assay_result")
 
 # generate thresholds from raw assay results
 # thresholds is a variable you will need to pass to a later function
@@ -121,12 +121,12 @@ update_assay_detection(con, thresholds_event)
 
 # view assay results.
 # this table contains the sample IDs run, the assay type, and positive detection
-tbl(con, "assay_result")
+dplyr::tbl(con, "assay_result")
 
 # see genetic run identification results
-tbl(con, "genetic_run_identification")
+dplyr::tbl(con, "genetic_run_identification")
 # this is run type IDs and their associated run
-tbl(con, "run_type") |> collect() |> print(n=Inf)
+dplyr::tbl(con, "run_type") |> dplyr::collect() |> print(n=Inf)
 
 # see samples that need further analysis
 get_samples_needing_action(con)
