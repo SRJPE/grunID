@@ -29,3 +29,7 @@ sample_status_options <- dplyr::tbl(con, "status_code") |>
   dplyr::distinct(status_code_name) |>
   dplyr::collect() |>
   dplyr::pull()
+all_locations <- dplyr::tbl(con, "sample_location") |>
+  dplyr::distinct(code) |>
+  dplyr::filter(!code %in% c("CONTROL", "TEST2", "TEST")) |>
+  dplyr::pull(code)

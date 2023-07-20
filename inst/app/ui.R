@@ -72,7 +72,9 @@ navbarPage(
                sidebarPanel(
                  # TODO add options for filtering to location, sample event
                  selectInput("sample_status_filter", "Sample Status",
-                             c("All", sample_status_options))
+                             c("All", sample_status_options)),
+                 selectInput("location_filter", "Location",
+                             c("All", all_locations))
                ),
                mainPanel(
                  DT::dataTableOutput("sample_status_table"))

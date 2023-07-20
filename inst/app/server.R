@@ -93,6 +93,10 @@ function(input, output, session) {
       data <- data |>
         dplyr::filter(status == input$sample_status_filter)
     }
+    if(input$location_filter != "All") {
+      data <- data |>
+        dplyr::filter(stringr::str_detect(sample_id, input$location_filter))
+    }
     data
   },
   extensions = "Buttons",
