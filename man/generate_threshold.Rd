@@ -16,6 +16,8 @@ generate_threshold(
 
 \item{plate_run}{plate run object obtained from either `add_plate_run` or `get_plate_run`}
 
+\item{strategy}{the strategy to use for computing thresholds}
+
 \item{.control_id}{the identifier within the plate run to use as control for calculating thresholds, defaults to "NTC"}
 }
 \value{

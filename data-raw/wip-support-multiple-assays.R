@@ -127,6 +127,7 @@ out <- map(ids, ~safe_version(con, ., strategy = "recent"))
 out_2 <- out |> transpose()
 
 out_2$result
+e <-out_2$error[[77]]
 
 
 w <- safe_version(con, "F1722_3_A_7", strategy = "recent")
