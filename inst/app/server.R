@@ -86,4 +86,32 @@ function(input, output, session) {
     }
   )
 
+  output$sample_status_table <- DT::renderDataTable(DT::datatable({
+    data <- all_sample_status
+
+    if(input$sample_status_filter != "All") {
+      data <- data |>
+        dplyr::filter(status == input$sample_status_filter)
+    }
+    if(input$location_filter != "All") {
+      data <- data |>
+        dplyr::filter(stringr::str_detect(sample_id, input$location_filter))
+    }
+    data
+  },
+  extensions = "Buttons",
+  rownames = FALSE,
+  options = list(autoWidth = TRUE,
+                 dom = "Bfrtip",
+                 buttons = c("copy", "csv", "excel"),
+                 lengthChange = TRUE,
+                 pageLength = 20)) |>
+    formatStyle("status",
+                backgroundColor = styleEqual(
+                  levels = sample_status_options,
+                  values = sample_status_colors
+                )),
+  server = FALSE
+)
+
 }
