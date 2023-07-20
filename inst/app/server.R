@@ -111,12 +111,6 @@ function(input, output, session) {
                   levels = sample_status_options,
                   values = sample_status_colors
                 )),
-    # formatStyle("status",
-    #             backgroundColor = styleEqual(
-    #               levels = "analysis complete",
-    #               values = "#d5ead5",
-    #               default = NULL
-    #             )),
   server = FALSE
 )
 
