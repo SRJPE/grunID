@@ -4,7 +4,12 @@
 \alias{generate_threshold}
 \title{Generate Thresholds}
 \usage{
-generate_threshold(con, plate_run, .control_id = "NTC")
+generate_threshold(
+  con,
+  plate_run,
+  strategy = "twice average",
+  .control_id = "NTC"
+)
 }
 \arguments{
 \item{con}{valid connection to the database}
