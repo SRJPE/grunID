@@ -10,8 +10,6 @@
 run_app <- function(config_path = NULL, ...)
 {
   if (is.null(config_path)) {
-    print("config is null")
-    print(getwd())
     config_path <- attr(config::get(), "file")
   }
   Sys.setenv("CONFIG_PATH" = config_path)
