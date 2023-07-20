@@ -100,10 +100,11 @@ function(input, output, session) {
     data
   },
   extensions = "Buttons",
+  rownames = FALSE,
   options = list(autoWidth = TRUE,
                  dom = "Bfrtip",
                  buttons = c("copy", "csv", "excel"),
-                 rownames = FALSE,
+                 lengthChange = TRUE,
                  pageLength = 20)) |>
     formatStyle("status",
                 backgroundColor = styleEqual(
