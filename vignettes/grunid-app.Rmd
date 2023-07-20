@@ -34,3 +34,9 @@ grunID::run_app()
 ```
 
 ![](assets/app-landing.png)
+
+
+The options available for each element of the form are the latest data from the database. Additionally, each form value has a corresponding 'More Information' window that either lists the available options in more detail or provides a more detailed explanation of the input.
+
+
+![](assets/grunid-app-more-info.gif)
