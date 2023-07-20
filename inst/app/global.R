@@ -20,7 +20,8 @@ if (!is.na(in_dev_mode) && in_dev_mode == 1) {
                         password = cfg$password)
 
 } else {
-  con <- grunID::gr_db_connect()
+  cfg <- config::get(file = config_path)
+  con <- grunID::gr_db_connect(username = cfg$username, host = cfg$host, dbname = cfg$dbname)
 }
 
 all_protocols <- get_protocols(con) |> collect()
