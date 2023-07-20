@@ -5,10 +5,12 @@ library(shinyBS)
 library(DT)
 
 config_path <- Sys.getenv("CONFIG_PATH")
-in_dev_mode <- as.logical(Sys.getenv("GRUNID_IS_DEV"))
+print(config_path)
+in_dev_mode <- Sys.getenv("GRUNID_IS_DEV")
 
-if (!is.na(in_dev_mode) && in_dev_mode) {
+if (!is.na(in_dev_mode) && in_dev_mode == 1) {
 
+  message("in development mode, using local database")
   cfg <- config::get(file = config_path)
   con <- DBI::dbConnect(RPostgres::Postgres(),
                         dbname = cfg$dbname,
