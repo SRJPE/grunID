@@ -104,7 +104,18 @@ function(input, output, session) {
                  dom = "Bfrtip",
                  buttons = c("copy", "csv", "excel"),
                  rownames = FALSE,
-                 pageLength = 20)),
+                 pageLength = 20)) |>
+    formatStyle("status",
+                backgroundColor = styleEqual(
+                  levels = sample_status_options,
+                  values = sample_status_colors
+                )),
+    # formatStyle("status",
+    #             backgroundColor = styleEqual(
+    #               levels = "analysis complete",
+    #               values = "#d5ead5",
+    #               default = NULL
+    #             )),
   server = FALSE
 )
 

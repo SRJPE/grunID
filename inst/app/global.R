@@ -29,6 +29,8 @@ sample_status_options <- dplyr::tbl(con, "status_code") |>
   dplyr::distinct(status_code_name) |>
   dplyr::collect() |>
   dplyr::pull()
+sample_status_colors = c(rep("#ead8d5", 2), rep("#e7f2f1", 3),
+                         "#d5ead5", "#ead8d5", rep("#e7f2f1", 6))
 all_locations <- dplyr::tbl(con, "sample_location") |>
   dplyr::distinct(code) |>
   dplyr::filter(!code %in% c("CONTROL", "TEST2", "TEST")) |>
