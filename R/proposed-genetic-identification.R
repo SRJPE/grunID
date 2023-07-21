@@ -86,7 +86,9 @@ ots_early_late_detection <- function(con, sample_id,
 }
 
 
-ots_winter_spring_detection <- function(con, sample_id, selection_strategy) {
+#' @export
+ots_winter_spring_detection <- function(con, sample_id,
+                                        selection_strategy = c("positive priority", "recent priority")) {
   selection_strategy <- match.arg(selection_strategy)
 
   assay_results <- dplyr::tbl(con, "assay_result") |>
@@ -104,11 +106,11 @@ ots_winter_spring_detection <- function(con, sample_id, selection_strategy) {
 
   ots_spring <- assay_results |> dplyr::filter(assay_id == 3)
 
-  if (nrow(collect(ots_early)) > 1) {
+  if (nrow(collect(ots_spring)) > 1) {
     cli::cli_alert_info("using '{selection_strategy}' to identify a unique assay run")
     if (selection_strategy == "positive priority") {
-      ots_early_priority_results <-
-        ots_early |> filter(positive_detection) |>
+      ots_spring_priority_results <-
+        ots_spring |> filter(positive_detection) |>
         collect()
       if (nrow(ots_early_priority_results) > 1) {
         cli::cli_abort(c(
@@ -117,49 +119,49 @@ ots_winter_spring_detection <- function(con, sample_id, selection_strategy) {
         ))
       }
     } else if (selection_strategy == "recent priority") {
-      ots_early_priority_results <-
-        ots_early |> arrange(desc(created_at)) |>
+      ots_spring_priority_results <-
+        ots_spring |> arrange(desc(created_at)) |>
         head(1) |>
         collect()
     }
   } else {
-    ots_early_priority_results <- collect(ots_early)
+    ots_spring_priority_results <- collect(ots_spring)
   }
 
 
 
 
-  ots_late <- assay_results |> filter(assay_id == 2)
+  ots_winter <- assay_results |> filter(assay_id == 4)
 
-  if (nrow(collect(ots_late)) > 1) {
+  if (nrow(collect(ots_winter)) > 1) {
     cli::cli_alert_info("using '{selection_strategy}' to identify a unique assay run")
     if (selection_strategy == "positive priority") {
-      ots_late_priority_results <-
-        ots_late |> filter(positive_detection) |>
+      ots_winter_priority_results <-
+        ots_winter |> filter(positive_detection) |>
         collect()
-      if (nrow(ots_late_priority_results) > 1) {
+      if (nrow(ots_winter_priority_results) > 1) {
         cli::cli_abort(c(
           "x" = "'positive priority' did not identify a unique assay run",
           "i" = "try a different strategy or pass plate id of run to use for identification"
         ))
       }
     } else if (selection_strategy == "recent priority") {
-      ots_late_priority_results <-
-        ots_late |> arrange(desc(created_at)) |>
+      ots_winter_priority_results <-
+        ots_winter |> arrange(desc(created_at)) |>
         head(1) |>
         collect()
     }
   } else {
-    ots_late_priority_results <- collect(ots_late)
+    ots_winter_priority_results <- collect(ots_winter)
   }
 
-  if (!ots_early_priority_results$positive_detection && ots_late_priority_results$positive_detection) {
-    # sample is fall or late-fall
-    return(list(sample_Id = sample_id, status_code = "analysis complete", run_type="FAL"))
-  } else if (ots_early_priority_results$positive_detection && ots_late_priority_results$positive_detection) {
-    return(list(sample_Id = sample_id, status_code = "analysis complete", run_type="UNK"))
-  } else if (ots_early_priority_results$positive_detection && !ots_late_priority_results$positive_detection) {
-    return(list(sample_Id = sample_id, status_code = "need ots16", run_type = NA))
+  if (!ots_spring_priority_results$positive_detection && ots_winter_priority_results$positive_detection) {
+    # sample is winter
+    return(list(sample_Id = sample_id, status_code = "analysis complete", run_type="WIN"))
+  } else if (ots_spring_priority_results$positive_detection && ots_winter_priority_results$positive_detection) {
+    return(list(sample_Id = sample_id, status_code = "analysis complete", run_type="HET"))
+  } else if (ots_spring_priority_results$positive_detection && !ots_winter_priority_results$positive_detection) {
+    return(list(sample_Id = sample_id, status_code = "analysis complete", run_type = "SPR"))
   } else {
     return(list(sample_Id = sample_id, status_code = NA, run_type = NA))
   }
