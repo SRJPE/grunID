@@ -7,7 +7,7 @@
 ots_early_late_detection(
   con,
   sample_id,
-  strategy = c("positive priority", "recent priority")
+  selection_strategy = c("positive priority", "recent priority")
 )
 }
 \arguments{
