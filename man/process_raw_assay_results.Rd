@@ -4,7 +4,7 @@
 \alias{process_raw_assay_results}
 \title{Process Raw Assay Results}
 \usage{
-process_raw_assay_results(filepath, ranges, plate_size, layout)
+process_raw_assay_results(filepath, ranges, plate_size, layout, online_mode)
 }
 \description{
 A helper function called in `process_sherlock` that reads in
