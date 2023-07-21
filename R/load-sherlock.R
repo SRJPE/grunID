@@ -71,6 +71,8 @@ generate_threshold <- function(con, plate_run, .control_id="NTC", online_mode = 
 #' @param con valid connection to the database
 #' @param thresholds threshold values calculated in `generate_threshold`
 #' @param .control_id identifier used to find the control variable
+#' @param online_mode whether the function is to be run in online (interacting with database) or offline mode
+#' @param offline_sherlock_results if in offline mode, provide the sherlock results directly
 #' @details The assay result table is updated to reflect whether the assays
 #' in a plate run produced raw fluorescence values that exceed the threshold
 #' calculated by `generate_threshold()`, resulting in a positive or negative
@@ -82,45 +84,47 @@ generate_threshold <- function(con, plate_run, .control_id="NTC", online_mode = 
 #' @returns The number of assay results added to the assay_result table
 #' and the number of samples updated in the genetic_run_identification table.
 #' @export
-update_assay_detection <- function(con, thresholds, .control_id = "NTC") {
+update_assay_detection <- function(con, thresholds, .control_id = "NTC", online_mode = TRUE/FALSE,
+                                   offline_sherlock_results) {
 
-  if (!DBI::dbIsValid(con)) {
-    stop("Connection argument does not have a valid connection the run-id database.
+  if(online_mode) {
+    if (!DBI::dbIsValid(con)) {
+      stop("Connection argument does not have a valid connection the run-id database.
          Please try reconnecting to the database using 'DBI::dbConnect'",
          call. = FALSE)
-  }
+    }
 
-  plate_run <- unique(thresholds$plate_run_id)
-  runtime <- unique(thresholds$runtime)
+    plate_run <- unique(thresholds$plate_run_id)
+    runtime <- unique(thresholds$runtime)
 
-  if (length(plate_run) > 1) {
-    stop("TODO")
-  }
+    if (length(plate_run) > 1) {
+      stop("TODO")
+    }
 
-  if (length(runtime) > 1) {
-    stop("TODO")
-  }
+    if (length(runtime) > 1) {
+      stop("TODO")
+    }
 
-  # check if the plate run already exists in the assay_results
-  this_plate_run_exists_in_results <- nrow(
-    dplyr::collect(dplyr::tbl(con, "assay_result") |> dplyr::filter(plate_run_id == plate_run))
-  )
+    # check if the plate run already exists in the assay_results
+    this_plate_run_exists_in_results <- nrow(
+      dplyr::collect(dplyr::tbl(con, "assay_result") |> dplyr::filter(plate_run_id == plate_run))
+    )
 
-  if (this_plate_run_exists_in_results) {
-    stop("the plate run you are trying to upload already exists in the database", call. = FALSE)
-  }
+    if (this_plate_run_exists_in_results) {
+      stop("the plate run you are trying to upload already exists in the database", call. = FALSE)
+    }
 
-  detection_results <- dplyr::tbl(con, "raw_assay_result") |>
-    dplyr::filter(plate_run_id == plate_run,
-           sample_id != .control_id,
-           time == runtime) |>
-    dplyr::collect() |>
-    dplyr::left_join(thresholds, by = c("assay_id" = "assay_id", "plate_run_id" = "plate_run_id")) |>
-    dplyr::mutate(positive_detection = raw_fluorescence > threshold) |>
-    dplyr::select(sample_id, assay_id, raw_fluorescence,
-                  threshold, positive_detection, plate_run_id)
+    detection_results <- dplyr::tbl(con, "raw_assay_result") |>
+      dplyr::filter(plate_run_id == plate_run,
+                    sample_id != .control_id,
+                    time == runtime) |>
+      dplyr::collect() |>
+      dplyr::left_join(thresholds, by = c("assay_id" = "assay_id", "plate_run_id" = "plate_run_id")) |>
+      dplyr::mutate(positive_detection = raw_fluorescence > threshold) |>
+      dplyr::select(sample_id, assay_id, raw_fluorescence,
+                    threshold, positive_detection, plate_run_id)
 
-  query <- glue::glue_sql("
+    query <- glue::glue_sql("
   INSERT INTO assay_result (sample_id, assay_id, raw_fluorescence, threshold,
                             positive_detection, plate_run_id)
   VALUES (
@@ -132,20 +136,37 @@ update_assay_detection <- function(con, thresholds, .control_id = "NTC") {
           {detection_results$plate_run_id}::int
   );", .con = con)
 
-  assay_results_added <- purrr::map_dbl(query, function(q) {
-    DBI::dbExecute(con, q)
-  },
-  .progress = list(
-    type = "iterator",
-    clear = FALSE,
-    name = "inserting threshold result into database"
-  ))
+    assay_results_added <- purrr::map_dbl(query, function(q) {
+      DBI::dbExecute(con, q)
+    },
+    .progress = list(
+      type = "iterator",
+      clear = FALSE,
+      name = "inserting threshold result into database"
+    ))
 
 
-  genetic_ids_added <- add_genetic_identification(con, unique(detection_results$sample_id))
+    genetic_ids_added <- add_genetic_identification(con, unique(detection_results$sample_id),
+                                                    online_mode = !!online_mode)
 
-  return(c("Assay records added" = sum(assay_results_added),
-           "Samples assigned run type" = genetic_ids_added))
+    return(c("Assay records added" = sum(assay_results_added),
+             "Samples assigned run type" = genetic_ids_added))
+  } else if (!online_mode) {
+    runtime <- unique(thresholds$runtime)
+
+    detection_results <- offline_sherlock_results |>
+      dplyr::filter(sample_id != .control_id,
+                    time == runtime) |>
+      dplyr::left_join(thresholds, by = "assay_id") |>
+      dplyr::mutate(positive_detection = raw_fluorescence > threshold) |>
+      dplyr::select(sample_id, assay_id, raw_fluorescence,
+                    threshold, positive_detection)
+
+    genetic_ids_added <- add_genetic_identification(unique(detection_results$sample_id),
+                                                    online_mode = !!online_mode)
+
+    return(detection_results)
+  }
 }
 
 
@@ -197,46 +218,49 @@ add_raw_assay_results <- function(con, assay_results) {
 #' sample based on assay results.
 #' @param con valid connection to database
 #' @param sample_identifiers identifiers for samples to be added
+#' @param online_mode whether the function is to be run in online (interacting with database) or offline mode
+#' @param offline_assay_results results produced in offline mode, table with assay IDs and positive/negative detection
 #' @details `add_genetic_identification` checks the database for all existing
 #' assay results for a sample identifier, then uses those to assign a
 #' genetic identification value. The genetic_run_identification table in the
 #' database is updated with the genetic identification value. The genetic
 #' identification values are dependent on the assay results:
 #' 1: high value for
-add_genetic_identification <- function(con, sample_identifiers) {
+add_genetic_identification <- function(con, sample_identifiers, online_mode = TRUE/FALSE) {
 
-  is_valid_connection(con)
+  if(online_mode) {
+    is_valid_connection(con)
 
-  assay_detections <- dplyr::tbl(con, "assay_result") |>
-    dplyr::filter(sample_id %in% sample_identifiers) |>
-    dplyr::select(sample_id, assay_id, positive_detection) |>
-    dplyr::collect() |>
-    dplyr::mutate(assay_id_name = dplyr::case_when(assay_id == 1 ~ "ots_28_e",
-                                                   assay_id == 2 ~ "ots_28_l",
-                                                   assay_id == 3 ~ "ots_16_s",
-                                                   assay_id == 4 ~ "ots_16_w"),
-                  assay_id_name = factor(assay_id_name, levels = c("ots_28_e","ots_28_l","ots_16_s","ots_16_w"))) |>
-    dplyr::select(-assay_id) |>
-    tidyr::pivot_wider(names_from = "assay_id_name", values_from = "positive_detection", names_expand = TRUE)
+    assay_detections <- dplyr::tbl(con, "assay_result") |>
+      dplyr::filter(sample_id %in% sample_identifiers) |>
+      dplyr::select(sample_id, assay_id, positive_detection) |>
+      dplyr::collect() |>
+      dplyr::mutate(assay_id_name = dplyr::case_when(assay_id == 1 ~ "ots_28_e",
+                                                     assay_id == 2 ~ "ots_28_l",
+                                                     assay_id == 3 ~ "ots_16_s",
+                                                     assay_id == 4 ~ "ots_16_w"),
+                    assay_id_name = factor(assay_id_name, levels = c("ots_28_e","ots_28_l","ots_16_s","ots_16_w"))) |>
+      dplyr::select(-assay_id) |>
+      tidyr::pivot_wider(names_from = "assay_id_name", values_from = "positive_detection", names_expand = TRUE)
 
-  if (nrow(assay_detections) == 0) {
-    return(0)
-  }
+    if (nrow(assay_detections) == 0) {
+      return(0)
+    }
 
-  run_types <- assay_detections |>
-    assign_status_codes() |>
-    assign_run_types() |>
-    dplyr::select(sample_id, run_type_id, status_code_id)
+    run_types <- assay_detections |>
+      assign_status_codes() |>
+      assign_run_types() |>
+      dplyr::select(sample_id, run_type_id, status_code_id)
 
-  spring_winter <- run_types |>
-    dplyr::filter(status_code_id == 8)
+    spring_winter <- run_types |>
+      dplyr::filter(status_code_id == 8)
 
-  message(paste0("identified ", nrow(spring_winter), " samples needing OTS16 spring/winter"))
+    message(paste0("identified ", nrow(spring_winter), " samples needing OTS16 spring/winter"))
 
-  run_type_id_data <- run_types |> dplyr::filter(run_type_id != 0)
+    run_type_id_data <- run_types |> dplyr::filter(run_type_id != 0)
 
-  if (nrow(run_type_id_data) > 0) {
-    query <- glue::glue_sql("
+    if (nrow(run_type_id_data) > 0) {
+      query <- glue::glue_sql("
   INSERT INTO genetic_run_identification (sample_id, run_type_id)
   VALUES (
     {run_type_id_data$sample_id},
@@ -244,22 +268,51 @@ add_genetic_identification <- function(con, sample_identifiers) {
   );
   ", .con = con)
 
-    total_inserts <- purrr::map_dbl(query, function(q) {
-      DBI::dbExecute(con, q)
-    },
-    .progress = list(
-      type = "iterator",
-      name = "adding run-id to samples",
-      clear = FALSE
-    ))
-  } else {
-    total_inserts <- 0
+      total_inserts <- purrr::map_dbl(query, function(q) {
+        DBI::dbExecute(con, q)
+      },
+      .progress = list(
+        type = "iterator",
+        name = "adding run-id to samples",
+        clear = FALSE
+      ))
+    } else {
+      total_inserts <- 0
+    }
+
+    set_sample_status(con, run_types$sample_id, run_types$status_code_id)
+
+    return(sum(total_inserts))
+
+  } else if (!online_mode) {
+
+    assay_detections <- offline_assay_results |>
+      dplyr::filter(sample_id %in% sample_identifiers) |>
+      dplyr::select(sample_id, assay_id, positive_detection) |>
+      dplyr::mutate(assay_id_name = dplyr::case_when(assay_id == 1 ~ "ots_28_e",
+                                                     assay_id == 2 ~ "ots_28_l",
+                                                     assay_id == 3 ~ "ots_16_s",
+                                                     assay_id == 4 ~ "ots_16_w"),
+                    assay_id_name = factor(assay_id_name, levels = c("ots_28_e","ots_28_l","ots_16_s","ots_16_w"))) |>
+      dplyr::select(-assay_id) |>
+      tidyr::pivot_wider(names_from = "assay_id_name", values_from = "positive_detection", names_expand = TRUE)
+
+    if (nrow(assay_detections) == 0) {
+      return(0)
+    }
+
+    run_types <- assay_detections |>
+      assign_status_codes() |>
+      assign_run_types() |>
+      dplyr::select(sample_id, run_type_id, status_code_id)
+
+    spring_winter <- run_types |>
+      dplyr::filter(status_code_id == 8)
+
+    message(paste0("identified ", nrow(spring_winter), " samples needing OTS16 spring/winter"))
+
+    return(run_types)
   }
-
-  set_sample_status(con, run_types$sample_id, run_types$status_code_id)
-
-  return(sum(total_inserts))
-
 }
 
 
