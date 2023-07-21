@@ -4,7 +4,13 @@
 \alias{generate_threshold}
 \title{Generate Thresholds}
 \usage{
-generate_threshold(con, plate_run, .control_id = "NTC")
+generate_threshold(
+  con,
+  plate_run,
+  .control_id = "NTC",
+  online_mode = TRUE/FALSE,
+  offline_sherlock_results = NULL
+)
 }
 \arguments{
 \item{con}{valid connection to the database}
@@ -12,6 +18,10 @@ generate_threshold(con, plate_run, .control_id = "NTC")
 \item{plate_run}{plate run object obtained from either `add_plate_run` or `get_plate_run`}
 
 \item{.control_id}{the identifier within the plate run to use as control for calculating thresholds, defaults to "NTC"}
+
+\item{online_mode}{whether the function is being run in online (connected to database) or offline mode}
+
+\item{offline_sherlock_results}{if running offline, this function requires a table of sherlock results}
 }
 \value{
 a table containing thresholds for an event, to be passed to `update_assay_detections()`

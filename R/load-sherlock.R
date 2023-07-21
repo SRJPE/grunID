@@ -4,44 +4,62 @@
 #' @param con valid connection to the database
 #' @param plate_run plate run object obtained from either `add_plate_run` or `get_plate_run`
 #' @param .control_id the identifier within the plate run to use as control for calculating thresholds, defaults to "NTC"
+#' @param online_mode whether the function is being run in online (connected to database) or offline mode
+#' @param offline_sherlock_results if running offline, this function requires a table of sherlock results
 #' @details For each assay on a plate run, the threshold value is calculated as two times
 #' the mean value of the last time step from the control blank wells. Each
 #' assay on a plate will have its own control blanks and threshold value.
 #' @returns a table containing thresholds for an event, to be passed to `update_assay_detections()`
 #' @export
-generate_threshold <- function(con, plate_run, .control_id="NTC") {
+generate_threshold <- function(con, plate_run, .control_id="NTC", online_mode = TRUE/FALSE,
+                               offline_sherlock_results = NULL) {
 
-  if (!DBI::dbIsValid(con)) {
-    stop("Connection argument does not have a valid connection the run-id database.
+  if(online_mode) {
+    if (!DBI::dbIsValid(con)) {
+      stop("Connection argument does not have a valid connection the run-id database.
          Please try reconnecting to the database using 'DBI::dbConnect'",
          call. = FALSE)
+    }
+    plate_run_identifier <- plate_run$plate_run_id
+
+    protocol_id <- dplyr::tbl(con, "plate_run") |>
+      dplyr::filter(id == !!plate_run_identifier) |>
+      dplyr::pull(protocol_id)
+
+    runtime <- dplyr::tbl(con, "protocol") |>
+      dplyr::filter(id == !!protocol_id) |>
+      dplyr::pull(runtime)
+
+    control_blanks <- dplyr::tbl(con, "raw_assay_result") |>
+      dplyr::filter(time == runtime,
+                    sample_id == !!.control_id,
+                    plate_run_id == !!plate_run_identifier) |>
+      dplyr::collect()
+
+    if (nrow(control_blanks) == 0) {
+      stop(paste0("no control variables found in plate run with id: '", plate_run_identifier, "'"), call. = FALSE)
+    }
+
+    thresholds <- control_blanks |>
+      dplyr::group_by(plate_run_id, assay_id) |>
+      dplyr::summarise(
+        threshold = mean(as.numeric(raw_fluorescence)) * 2
+      ) |> dplyr::ungroup() |>
+      dplyr::mutate(runtime = runtime)
+  } else if (!online_mode) {
+    if(missing(offline_sherlock_results)) {
+      stop("If running offline, you must provide the sherlock results directly to the generate threshold function")
+    }
+
+    control_blanks <- offline_sherlock_results |>
+      dplyr::filter(sample_id == !!.control_id)
+
+    thresholds <- control_blanks |>
+      dplyr::group_by(assay_id) |>
+      dplyr::summarise(
+        threshold = mean(as.numeric(raw_fluorescence)) * 2
+      ) |> dplyr::ungroup()
   }
-  plate_run_identifier <- plate_run$plate_run_id
-
-  protocol_id <- dplyr::tbl(con, "plate_run") |>
-    dplyr::filter(id == !!plate_run_identifier) |>
-    dplyr::pull(protocol_id)
-
-  runtime <- dplyr::tbl(con, "protocol") |>
-    dplyr::filter(id == !!protocol_id) |>
-    dplyr::pull(runtime)
-
-  control_blanks <- dplyr::tbl(con, "raw_assay_result") |>
-    dplyr::filter(time == runtime,
-           sample_id == !!.control_id,
-           plate_run_id == !!plate_run_identifier) |>
-    dplyr::collect()
-
-  if (nrow(control_blanks) == 0) {
-    stop(paste0("no control variables found in plate run with id: '", plate_run_identifier, "'"), call. = FALSE)
-  }
-
-  thresholds <- control_blanks |>
-    dplyr::group_by(plate_run_id, assay_id) |>
-    dplyr::summarise(
-      threshold = mean(as.numeric(raw_fluorescence)) * 2
-    ) |> ungroup() |>
-    dplyr::mutate(runtime = runtime)
 
   return(thresholds)
 }
