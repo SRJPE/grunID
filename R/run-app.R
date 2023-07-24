@@ -7,9 +7,11 @@
 #' grunID::run_app()
 #' @md
 #' @export
-run_app <- function(x,...)
+run_app <- function(config_path = NULL, ...)
 {
-  config_path <- attr(config::get(), "file")
+  if (is.null(config_path)) {
+    config_path <- attr(config::get(), "file")
+  }
   Sys.setenv("CONFIG_PATH" = config_path)
   shiny::runApp(appDir = system.file("app", package = "grunID"),
                 ...)

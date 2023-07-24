@@ -26,7 +26,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">grunID</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -45,6 +45,7 @@
     <a class="dropdown-item" href="../articles/process_and_add_assay_results.html">Process and add assay results to database</a>
     <a class="dropdown-item" href="../articles/query_sample_status.html">Querying Sample Status</a>
     <a class="dropdown-item" href="../articles/in_season_seeds.html">Adding In-Season Seeds</a>
+    <a class="dropdown-item" href="../articles/grunid-app.html">grunID Shiny App</a>
   </div>
 </li>
 <li class="nav-item">
@@ -224,8 +225,8 @@ additional plan values into the database. This function, under the hood,
 will add sample events, sample bins, and the samples extracted from this
 file.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">con</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/gr_db_connect.html">gr_db_connect</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/add_sample_plan.html">add_sample_plan</a></span><span class="op">(</span><span class="va">con</span>, <span class="va">in_season_seeds</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="co"># verbose = TRUE will give some progress bars</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">con</span> <span class="op">&lt;-</span> <span class="fu">grunID</span><span class="fu">::</span><span class="fu"><a href="../reference/gr_db_connect.html">gr_db_connect</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="fu">grunID</span><span class="fu">::</span><span class="fu"><a href="../reference/add_sample_plan.html">add_sample_plan</a></span><span class="op">(</span><span class="va">con</span>, <span class="va">in_season_seeds</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="co"># verbose = TRUE will give some progress bars</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside>
