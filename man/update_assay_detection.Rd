@@ -2,7 +2,7 @@
 % Please edit documentation in R/load-sherlock.R
 \name{update_assay_detection}
 \alias{update_assay_detection}
-\title{Set detection for assay results}
+\title{Set detection for assay results online}
 \usage{
 update_assay_detection(con, thresholds, .control_id = "NTC")
 }
