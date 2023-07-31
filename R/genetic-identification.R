@@ -477,3 +477,24 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
 }
 
 
+parse_detection_results <- function(detection_results) {
+  purrr::map_df(detection_results, function(x) {
+    data.frame(sample_id = x$sample_id,
+               status_code = x$status_code,
+               run_type = x$run_type,
+               early_plate = x$early_plate,
+               late_plate = x$late_plate)
+  })
+
+}
+
+parse_spring_winter_detection_results <- function(detection_results) {
+  purrr::map_df(detection_results, function(x) {
+    data.frame(sample_id = x$sample_id,
+               status_code = x$status_code,
+               run_type = x$run_type,
+               spr_wint_plate_id = x$spr_wint_plate_id
+    )
+  })
+
+}
