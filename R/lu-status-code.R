@@ -14,15 +14,17 @@
 #' @family status code functions
 #' @export
 #' @md
-get_status_codes <- function(con, is_active=TRUE, all_results=FALSE) {
+get_status_codes <- function(con, is_active=TRUE, all_results=FALSE, ...) {
   is_valid_connection(con)
 
   if(all_results) {
     status_codes <- dplyr::tbl(con, "status_code") |>
+      dplyr::filter(...) |>
       dplyr::collect()
   } else {
     status_codes <- dplyr::tbl(con, "status_code") |>
       dplyr::filter(active == is_active) |>
+      dplyr::filter(...) |>
       dplyr::collect()
   }
 

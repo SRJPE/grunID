@@ -4,7 +4,7 @@
 \alias{get_run_types}
 \title{Retrieve Run Types}
 \usage{
-get_run_types(con, is_active = TRUE, all_results = FALSE)
+get_run_types(con, is_active = TRUE, all_results = FALSE, ...)
 }
 \arguments{
 \item{con}{A DBI connection object obtained from DBI::dbConnect()}

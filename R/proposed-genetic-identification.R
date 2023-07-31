@@ -15,10 +15,43 @@ ots_early_late_detection <- function(con, sample_id,
 
   assay_needed_not_found <- which(!(1:2 %in% assays_for_existing_for_sample ))
 
-  if (length(assay_needed_not_found)) {
-    cli::cli_abort(c(
-      "x" = "late and early assay needed to run early/late detection but assay = {assay_needed_not_found} was not found for sample {sample_id}"
-    ))
+  # check for what assays are needed
+  if (length(assay_needed_not_found) > 0) {
+
+    if (length(assay_needed_not_found) == 2) { # both are missing
+      cli::cli_warn(c(
+        "x" = "late and early assay needed to run early/late detection but assay = {assay_needed_not_found} was not found for sample {sample_id}"
+      ))
+      return(list(
+        sample_id = sample_id,
+        status_code = "created",
+        run_type = NA_character_,
+        early_plate = NA,
+        late_plate = NA
+      ))
+    } else if (assay_needed_not_found == 1) {
+      cli::cli_warn(c(
+        "x" = "early assay needed to run early/late detection but assay = {assay_needed_not_found} was not found for sample {sample_id}"
+      ))
+      return(list(
+        sample_id = sample_id,
+        status_code = "ots28 in progress",
+        run_type = NA_character_,
+        early_plate = NA,
+        late_plate = NA
+      ))
+    } else if (assay_needed_not_found == 2){
+      cli::cli_warn(c(
+        "x" = "late assay needed to run early/late detection but assay = {assay_needed_not_found} was not found for sample {sample_id}"
+      ))
+      return(list(
+        sample_id = sample_id,
+        status_code = "ots28 in progress",
+        run_type = NA_character_,
+        early_plate = NA,
+        late_plate = NA
+      ))
+    }
   }
 
   ots_early <- assay_results |> filter(assay_id == 1)
@@ -72,15 +105,24 @@ ots_early_late_detection <- function(con, sample_id,
     ots_late_priority_results <- collect(ots_late)
   }
 
+  # positive late negative early --> late/fall run
   if (!ots_early_priority_results$positive_detection && ots_late_priority_results$positive_detection) {
-    # sample is fall or late-fall
-    return(list(sample_Id = sample_id, status_code = "analysis complete", run_type="FAL"))
-  } else if (ots_early_priority_results$positive_detection && ots_late_priority_results$positive_detection) {
-    return(list(sample_Id = sample_id, status_code = "analysis complete", run_type="UNK"))
-  } else if (ots_early_priority_results$positive_detection && !ots_late_priority_results$positive_detection) {
-    return(list(sample_Id = sample_id, status_code = "need ots16", run_type = NA))
-  } else {
-    return(list(sample_Id = sample_id, status_code = NA, run_type = NA))
+    return(list(sample_id = sample_id, status_code = "analysis complete", run_type="FAL", early_plate = ots_early_priority_results$plate_run_id, late_plate = ots_late_priority_results$plate_run_id))
+  }
+  # positive late and positive early --> HET more testing needed
+  else if (ots_early_priority_results$positive_detection && ots_late_priority_results$positive_detection) {
+    return(list(sample_id = sample_id, status_code = "analysis complete", run_type="HET", early_plate = ots_early_priority_results$plate_run_id, late_plate = ots_late_priority_results$plate_run_id))
+  }
+  # negative late and positive early --> UNK need ots 16
+  else if (ots_early_priority_results$positive_detection && !ots_late_priority_results$positive_detection) {
+    return(list(sample_id = sample_id, status_code = "need ots16", run_type = NA, early_plate = ots_early_priority_results$plate_run_id, late_plate = ots_late_priority_results$plate_run_id))
+  }
+  # negative late and negative early --> repeat
+  else if (!ots_early_priority_results$positive_detection && !ots_late_priority_results$positive_detection){
+    return(list(sample_id = sample_id, status_code = NA, run_type = NA, early_plate = ots_early_priority_results$plate_run_id, late_plate = ots_late_priority_results$plate_run_id))
+  }
+  else {
+    cli::cli_abort(c("x" = "uknown combination of test results for {sample_id}, unable to proceed"))
   }
 
 }
@@ -168,3 +210,9 @@ ots_winter_spring_detection <- function(con, sample_id,
 
 
 }
+
+
+
+
+
+
