@@ -1,0 +1,479 @@
+#' @title Determine Run identifcation after Early and Late Assays
+#' @param con a database connection
+#' @param sample_id the sample id to perform run identification on
+#' @param strategy the strategy to use when multi same assays are found for a sample see "details" for more
+#' @details
+#' The system allows users to submit as manu assays per sample as desired, however at the end in order to assign
+#' a genetic run type to a sample a single early, late, spring, and winter assay must be used. The selection
+#' strategy gives the function a way to select when it finds multiple assays for a sample.
+#'
+#' - "positive priority" - will choose the the postitive results from the available assays needed
+#' - "recent prioritt" - will choose the most recent assays from the available assays needed.
+#' @export
+#' @md
+ots_early_late_detection <- function(con, sample_id,
+                                     selection_strategy = c("positive priority", "recent priority")) {
+
+  selection_strategy <- match.arg(selection_strategy)
+
+  assay_results <- tbl(con, "assay_result") |>
+    filter(sample_id == !!sample_id)
+
+  assays_for_existing_for_sample <- assay_results |> dplyr::distinct(assay_id) |> dplyr::pull()
+
+  assay_needed_not_found <- which(!(1:2 %in% assays_for_existing_for_sample ))
+
+  # check for what assays are needed
+  if (length(assay_needed_not_found) > 0) {
+
+    if (length(assay_needed_not_found) == 2) { # both are missing
+      cli::cli_warn(c(
+        "x" = "late and early assay needed to run early/late detection but assay = {assay_needed_not_found} was not found for sample {sample_id}"
+      ))
+      return(list(
+        sample_id = sample_id,
+        status_code = "created",
+        run_type = NA_character_,
+        early_plate = NA,
+        late_plate = NA
+      ))
+    } else if (assay_needed_not_found == 1) {
+      cli::cli_warn(c(
+        "x" = "early assay needed to run early/late detection but assay = {assay_needed_not_found} was not found for sample {sample_id}"
+      ))
+      return(list(
+        sample_id = sample_id,
+        status_code = "ots28 in progress",
+        run_type = NA_character_,
+        early_plate = NA,
+        late_plate = NA
+      ))
+    } else if (assay_needed_not_found == 2){
+      cli::cli_warn(c(
+        "x" = "late assay needed to run early/late detection but assay = {assay_needed_not_found} was not found for sample {sample_id}"
+      ))
+      return(list(
+        sample_id = sample_id,
+        status_code = "ots28 in progress",
+        run_type = NA_character_,
+        early_plate = NA,
+        late_plate = NA
+      ))
+    }
+  }
+
+  ots_early <- assay_results |> filter(assay_id == 1)
+
+  if (nrow(collect(ots_early)) > 1) {
+    cli::cli_alert_info("using '{selection_strategy}' to identify a unique assay run")
+    if (selection_strategy == "positive priority") {
+      ots_early_priority_results <-
+        ots_early |> filter(positive_detection) |>
+        collect()
+      if (nrow(ots_early_priority_results) > 1) {
+        cli::cli_abort(c(
+          "x" = "'positive priority' did not identify a unique assay run",
+          "i" = "try a different strategy or pass plate id of run to use for identification"
+        ))
+      }
+    } else if (selection_strategy == "recent priority") {
+      ots_early_priority_results <-
+        ots_early |> arrange(desc(created_at)) |>
+        head(1) |>
+        collect()
+    }
+  } else {
+    ots_early_priority_results <- collect(ots_early)
+  }
+
+
+
+
+  ots_late <- assay_results |> filter(assay_id == 2)
+
+  if (nrow(collect(ots_late)) > 1) {
+    cli::cli_alert_info("using '{selection_strategy}' to identify a unique assay run")
+    if (selection_strategy == "positive priority") {
+      ots_late_priority_results <-
+        ots_late |> filter(positive_detection) |>
+        collect()
+      if (nrow(ots_late_priority_results) > 1) {
+        cli::cli_abort(c(
+          "x" = "'positive priority' did not identify a unique assay run",
+          "i" = "try a different strategy or pass plate id of run to use for identification"
+        ))
+      }
+    } else if (selection_strategy == "recent priority") {
+      ots_late_priority_results <-
+        ots_late |> arrange(desc(created_at)) |>
+        head(1) |>
+        collect()
+    }
+  } else {
+    ots_late_priority_results <- collect(ots_late)
+  }
+
+  # positive late negative early --> late/fall run
+  if (!ots_early_priority_results$positive_detection && ots_late_priority_results$positive_detection) {
+    return(list(sample_id = sample_id, status_code = "analysis complete", run_type="FAL", early_plate = ots_early_priority_results$plate_run_id, late_plate = ots_late_priority_results$plate_run_id))
+  }
+  # positive late and positive early --> HET more testing needed
+  else if (ots_early_priority_results$positive_detection && ots_late_priority_results$positive_detection) {
+    return(list(sample_id = sample_id, status_code = "analysis complete", run_type="HET", early_plate = ots_early_priority_results$plate_run_id, late_plate = ots_late_priority_results$plate_run_id))
+  }
+  # negative late and positive early --> UNK need ots 16
+  else if (ots_early_priority_results$positive_detection && !ots_late_priority_results$positive_detection) {
+    return(list(sample_id = sample_id, status_code = "need ots16", run_type = NA, early_plate = ots_early_priority_results$plate_run_id, late_plate = ots_late_priority_results$plate_run_id))
+  }
+  # negative late and negative early --> repeat
+  else if (!ots_early_priority_results$positive_detection && !ots_late_priority_results$positive_detection){
+    return(list(sample_id = sample_id, status_code = NA, run_type = NA, early_plate = ots_early_priority_results$plate_run_id, late_plate = ots_late_priority_results$plate_run_id))
+  }
+  else {
+    cli::cli_abort(c("x" = "uknown combination of test results for {sample_id}, unable to proceed"))
+  }
+
+}
+
+
+#' @title Determine Run identifcation after Spring and Winter Assays
+#' @param con a database connection
+#' @param sample_id the sample id to perform run identification on
+#' @param strategy the strategy to use when multi same assays are found for a sample see "details" for more
+#' @details
+#' The system allows users to submit as manu assays per sample as desired, however at the end in order to assign
+#' a genetic run type to a sample a single early, late, spring, and winter assay must be used. The selection
+#' strategy gives the function a way to select when it finds multiple assays for a sample.
+#'
+#' - "positive priority" - will choose the the postitive results from the available assays needed
+#' - "recent prioritt" - will choose the most recent assays from the available assays needed.
+#' @export
+#' @md
+ots_winter_spring_detection <- function(con, sample_id,
+                                        selection_strategy = c("positive priority", "recent priority")) {
+  selection_strategy <- match.arg(selection_strategy)
+
+  assay_results <- dplyr::tbl(con, "assay_result") |>
+    dplyr::filter(sample_id == !!sample_id)
+
+  assays_for_existing_for_sample <- assay_results |> dplyr::distinct(assay_id) |> dplyr::pull()
+
+  assay_needed_not_found <- 3:4 %in% assays_for_existing_for_sample
+
+  if (any(assay_needed_not_found)) {
+
+    if (sum(assay_needed_not_found) == 2) {
+      cli::cli_warn(c(
+        "x" = "late and early assay needed to run early/late detection but assay = 3 and 4 were not found for sample {sample_id}"
+      ))
+
+      return(list(
+        sample_id = sample_id,
+        status_code = "need ots16",
+        run_type = NA,
+        spr_wint_plate_id = NA
+      ))
+    } else if ((3:4)[which(!assay_needed_not_found)] == 3) { # TODO so ugly FIXME asap!!
+      cli::cli_warn(c(
+        "x" = "late and early assay needed to run early/late detection but assay = 3 was not found for sample {sample_id}"
+      ))
+
+      return(list(
+        sample_id = sample_id,
+        status_code = "ots16 inprogress",
+        run_type = NA_character_,
+        spr_wint_plate_id = NA
+      ))
+    } else if ((3:4)[which(!assay_needed_not_found)] == 4) { # TODO so ugly FIXME asap!! {
+      cli::cli_warn(c(
+        "x" = "late and early assay needed to run early/late detection but assay = 4 was not found for sample {sample_id}"
+      ))
+
+      return(list(
+        sample_id = sample_id,
+        status_code = "ots16 inprogress",
+        run_type = NA_character_,
+        spr_wint_plate_id = NA
+      ))
+    }
+
+
+  }
+
+  # at this point the sample has both 3 an 4, we do selection strategy here
+  ots_spring <- assay_results |> dplyr::filter(assay_id == 3)
+
+
+  if (nrow(collect(ots_spring)) > 1) {
+    cli::cli_alert_info("using '{selection_strategy}' to identify a unique assay run")
+    if (selection_strategy == "positive priority") {
+      ots_spring_priority_results <-
+        ots_spring |> filter(positive_detection) |>
+        collect()
+      if (nrow(ots_early_priority_results) > 1) {
+        cli::cli_abort(c(
+          "x" = "'positive priority' did not identify a unique assay run",
+          "i" = "try a different strategy or pass plate id of run to use for identification"
+        ))
+      }
+    } else if (selection_strategy == "recent priority") {
+      ots_spring_priority_results <-
+        ots_spring |> arrange(desc(created_at)) |>
+        head(1) |>
+        collect()
+    }
+  } else {
+    ots_spring_priority_results <- collect(ots_spring)
+  }
+
+
+
+
+  ots_winter <- assay_results |> filter(assay_id == 4)
+
+  if (nrow(collect(ots_winter)) > 1) {
+    cli::cli_alert_info("using '{selection_strategy}' to identify a unique assay run")
+    if (selection_strategy == "positive priority") {
+      ots_winter_priority_results <-
+        ots_winter |> filter(positive_detection) |>
+        collect()
+      if (nrow(ots_winter_priority_results) > 1) {
+        cli::cli_abort(c(
+          "x" = "'positive priority' did not identify a unique assay run",
+          "i" = "try a different strategy or pass plate id of run to use for identification"
+        ))
+      }
+    } else if (selection_strategy == "recent priority") {
+      ots_winter_priority_results <-
+        ots_winter |> arrange(desc(created_at)) |>
+        head(1) |>
+        collect()
+    }
+  } else {
+    ots_winter_priority_results <- collect(ots_winter)
+  }
+
+
+  # positive winter and negative spring ---> WIN
+  if (!ots_spring_priority_results$positive_detection && ots_winter_priority_results$positive_detection) {
+    return(list(sample_Id = sample_id, status_code = "analysis complete", run_type="WIN"))
+  }
+  # positive winter and positive spring ---> HET
+  else if (ots_spring_priority_results$positive_detection && ots_winter_priority_results$positive_detection) {
+    return(list(sample_Id = sample_id, status_code = "analysis complete", run_type="HET"))
+  }
+  # negative winter and positive spring --> SPR
+  else if (ots_spring_priority_results$positive_detection && !ots_winter_priority_results$positive_detection) {
+    return(list(sample_Id = sample_id, status_code = "analysis complete", run_type = "SPR"))
+  }
+  # both negative
+  else if (!ots_spring_priority_results$positive_detection && !ots_winter_priority_results$positive_detection){
+    return(list(sample_Id = sample_id, status_code = "need ots16", run_type = NA))
+  }
+
+
+}
+
+#' @title Run genetic identification
+#' @param con a connection to the database
+#' @param sample_id optional sample id to run identification on
+#' @param location optional location to identification on
+#' @param year optional year to identifcation on
+#' @param selection_strategy a selection strategy to help resolve cases where many assays exists per sample
+#' @export
+run_genetic_identification <- function(con, sample_id = NULL, location = NULL, year = NULL, selection_strategy = "positive priority") {
+
+  if (is.null(year)) {
+    year <- as.integer(format(Sys.Date(), "%Y"))
+  }
+
+  if (!is.null(sample_id)) {
+
+    sample_to_run_on <- dplyr::tbl(con, "sample") |>
+      dplyr::filter(id == sample_id) |>
+      dplyr::collect()
+
+    if (nrow(sample_to_run_on) == 0) {
+      cli::cli_abort(c("x" = "location specified did not return any data"))
+    }
+  } else if (!is.null(location)) {
+
+    query <- glue::glue_sql("select distinct(sample.id), sample_location.code from sample
+    join sample_bin on sample.sample_bin_id = sample_bin.id
+    join sample_event on sample_bin.sample_event_id = sample_event.id
+    join sample_location on sample_event.sample_location_id = sample_location.id
+where date_part('year', sample_event.first_sample_date) = {year} and sample_location.code = {location}", .con = con)
+
+    res <- DBI::dbSendQuery(con, query)
+    sample_to_run_on <- DBI::dbFetch(res)
+    DBI::dbClearResult(res)
+
+    if (nrow(sample_to_run_on) == 0) {
+      cli::cli_abort(c("x" = "location specified did not return any data"))
+    }
+
+
+
+  }
+
+  early_late_resp <- purrr::map(
+    sample_to_run_on$id, ~ots_early_late_detection(con, ., selection_strategy = selection_strategy),
+    .progress = list(
+      type = "iterator",
+      name = "running early late detections",
+      clear = FALSE
+    ))
+
+  early_late_resp_data <- parse_detection_results(early_late_resp)
+
+  analysis_complete_status_insert <- early_late_resp_data |>
+    dplyr::filter(status_code == "analysis complete")
+
+  # updates status code to complete
+  all_status_codes <- grunID::get_status_codes(con)
+  status_code_name_to_id <- all_status_codes$id
+  names(status_code_name_to_id) <- all_status_codes$status_code_name
+
+
+
+  analysis_complete_status_insert$comment <- "auto-generated comment added when running this sample through run_genetic_identification"
+  analysis_complete_status_insert$status_code_id <- status_code_name_to_id["analysis complete"]
+  analysis_complete_status_insert <- dplyr::select(analysis_complete_status_insert, sample_id, status_code_id, comment)
+  DBI::dbAppendTable(con, "sample_status", analysis_complete_status_insert)
+
+  # updates run type
+  all_run_type_id <- grunID::get_run_types(con)
+  run_type_name_to_id <- all_run_type_id$id
+  names(run_type_name_to_id) <- all_run_type_id$code
+
+  analysis_complete_gen_insert <- early_late_resp_data |>
+    dplyr::filter(status_code == "analysis complete")
+
+
+  analysis_complete_gen_insert$run_type_id = as.numeric(run_type_name_to_id[analysis_complete_gen_insert$run_type])
+  analysis_complete_gen_insert <- dplyr::select(analysis_complete_gen_insert, sample_id, run_type_id, early_plate, late_plate)
+  analysis_complete_gen_insert$updated_at <- lubridate::now(tzone = "UTC")
+
+  purrr::walk(1:nrow(analysis_complete_gen_insert), function(row) {
+    this_sample_id <- analysis_complete_gen_insert$sample_id[row]
+    this_run_type_id <- analysis_complete_gen_insert$run_type_id[row]
+    this_early_plate <- analysis_complete_gen_insert$early_plate[row]
+    this_late_plate <- analysis_complete_gen_insert$late_plate[row]
+
+    insert_safely_Q <- glue::glue_sql(
+      "INSERT INTO genetic_run_identification (sample_id, run_type_id, early_plate_id, late_plate_id, updated_at)
+    VALUES
+      ({this_sample_id}, {this_run_type_id}, {this_early_plate}, {this_late_plate}, CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
+    ON CONFLICT (sample_id) DO UPDATE
+    SET
+      run_type_id = EXCLUDED.run_type_id,
+      early_plate_id = EXCLUDED.early_plate_id,
+      late_plate_id = EXCLUDED.late_plate_id,
+      updated_at = EXCLUDED.updated_at;
+    ",
+      .con = con
+    )
+
+    DBI::dbExecute(con, insert_safely_Q)
+  })
+
+  # at this point we have inserted all of the samples that were complete, we update created status
+  created_status_to_insert <-
+    early_late_resp_data |> dplyr::filter(status_code == "created")
+
+  created_status_to_insert$comment <- "auto-generated comment added when running this sample through run_genetic_identification"
+  created_status_to_insert$status_code_id <- status_code_name_to_id["created"]
+  created_status_to_insert <- dplyr::select(created_status_to_insert, sample_id, status_code_id, comment)
+  DBI::dbAppendTable(con, "sample_status", created_status_to_insert)
+
+  # created cannot do any gen id updates
+
+  # OTS28 in progress / eihter assay 1 or 2 is not done
+
+  ots28_inprogress_to_insert <- early_late_resp_data |>
+    dplyr::filter(status_code == "ots28 in progress")
+
+  ots28_inprogress_to_insert$comment <- "auto-generated comment added when running this sample through run_genetic_identification"
+  ots28_inprogress_to_insert$status_code_id <- status_code_name_to_id["ots28 in progress"]
+  ots28_inprogress_to_insert <- dplyr::select(ots28_inprogress_to_insert, sample_id, status_code_id, comment)
+  DBI::dbAppendTable(con, "sample_status", ots28_inprogress_to_insert)
+
+  # needs ots 16 will be passed into function that tries to assign run based on assay 3 and 4
+  ots16_in_progress_to_insert <- early_late_resp_data |>
+    dplyr::filter(status_code == "need ots16")
+
+  spring_winter_resp <- purrr::map(
+    ots16_in_progress_to_insert$sample_id , ~ots_winter_spring_detection(con, ., selection_strategy = selection_strategy),
+    .progress = list(
+      type = "iterator",
+      name = "running spring/winter detections",
+      clear = FALSE
+    ))
+
+  spring_winter_resp_data <- parse_spring_winter_detection_results(spring_winter_resp)
+
+  sw_analysis_complete_status_insert <- spring_winter_resp_data |>
+    dplyr::filter(status_code == "analysis complete")
+
+  # if any of the detection results in gen id for spring or winter then update here
+  if (nrow(sw_analysis_complete_status_insert) > 0) {
+
+    sw_analysis_complete_status_insert$comment <- "auto-generated comment added when running this sample through run_genetic_identification"
+    sw_analysis_complete_status_insert$status_code_id <- status_code_name_to_id["analysis complete"]
+    sw_analysis_complete_status_insert <- dplyr::select(sw_analysis_complete_status_insert, sample_id, status_code_id, comment)
+    DBI::dbAppendTable(con, "sample_status", sw_analysis_complete_status_insert)
+
+    sw_analysis_complete_gen_insert <- spring_winter_resp_data |>
+      dplyr::filter(status_code == "analysis complete")
+
+
+    sw_analysis_complete_gen_insert$run_type_id = as.numeric(run_type_name_to_id[sw_analysis_complete_gen_insert$run_type])
+    sw_analysis_complete_gen_insert <- dplyr::select(sw_analysis_complete_gen_insert, sample_id, run_type_id, early_plate, late_plate)
+    sw_analysis_complete_gen_insert$updated_at <- lubridate::now(tzone = "UTC")
+
+    purrr::walk(1:nrow(sw_analysis_complete_gen_insert), function(row) {
+      this_sample_id <- sw_analysis_complete_gen_insert$sample_id[row]
+      this_run_type_id <- sw_analysis_complete_gen_insert$run_type_id[row]
+      this_early_plate <- sw_analysis_complete_gen_insert$early_plate[row]
+      this_late_plate <- sw_analysis_complete_gen_insert$late_plate[row]
+
+      insert_safely_Q <- glue::glue_sql(
+        "INSERT INTO genetic_run_identification (sample_id, run_type_id, early_plate_id, late_plate_id, updated_at)
+    VALUES
+      ({this_sample_id}, {this_run_type_id}, {this_early_plate}, {this_late_plate}, CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
+    ON CONFLICT (sample_id) DO UPDATE
+    SET
+      run_type_id = EXCLUDED.run_type_id,
+      early_plate_id = EXCLUDED.early_plate_id,
+      late_plate_id = EXCLUDED.late_plate_id,
+      updated_at = EXCLUDED.updated_at;
+    ",
+        .con = con
+      )
+
+      DBI::dbExecute(con, insert_safely_Q)
+    })
+
+  }
+
+  # ots 16 in progress status updates
+  ots16_inprogress_inserts <- spring_winter_resp_data |>
+    dplyr::filter(status_code == "ots16 inprogress")
+
+  ots16_inprogress_inserts$comment <- "auto-generated comment added when running this sample through run_genetic_identification"
+  ots16_inprogress_inserts$status_code_id <- status_code_name_to_id["ots16 inprogress"]
+  ots16_inprogress_inserts <- dplyr::select(ots16_inprogress_inserts, sample_id, status_code_id, comment)
+  DBI::dbAppendTable(con, "sample_status", ots16_inprogress_inserts)
+
+  # need ots 16
+  ots16_need_inserts <- spring_winter_resp_data |>
+    dplyr::filter(status_code == "need ots16")
+
+  ots16_need_inserts$comment <- "auto-generated comment added when running this sample through run_genetic_identification"
+  ots16_need_inserts$status_code_id <- status_code_name_to_id["need ots16"]
+  ots16_need_inserts <- dplyr::select(ots16_need_inserts, sample_id, status_code_id, comment)
+  DBI::dbAppendTable(con, "sample_status", ots16_need_inserts)
+
+}
+
+

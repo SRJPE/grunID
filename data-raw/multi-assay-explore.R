@@ -1,4 +1,3 @@
-
 run_genetic_identification <- function(con, sample_id = NULL, location = NULL, year = NULL, selection_strategy = "positive priority") {
 
   if (is.null(year)) {
@@ -117,16 +116,81 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
   DBI::dbAppendTable(con, "sample_status", ots28_inprogress_to_insert)
 
   # needs ots 16 will be passed into function that tries to assign run based on assay 3 and 4
+  ots16_in_progress_to_insert <- early_late_resp_data |>
+    dplyr::filter(status_code == "need ots16")
 
-  ots_28_ids <- early_late_resp_data |> dplyr::filter(status_code == "need ots16")
+  spring_winter_resp <- purrr::map(
+    ots16_in_progress_to_insert$sample_id , ~ots_winter_spring_detection(con, ., selection_strategy = selection_strategy),
+    .progress = list(
+      type = "iterator",
+      name = "running spring/winter detections",
+      clear = FALSE
+    ))
 
-  if (nrow(ots_28_ids) == 0) {
-    cli::cli_warn(c("x" = "no samples are ready for ots 16"))
+  spring_winter_resp_data <- parse_spring_winter_detection_results(spring_winter_resp)
+
+  sw_analysis_complete_status_insert <- spring_winter_resp_data |>
+    dplyr::filter(status_code == "analysis complete")
+
+  # if any of the detection results in gen id for spring or winter then update here
+  if (nrow(sw_analysis_complete_status_insert) > 0) {
+
+    sw_analysis_complete_status_insert$comment <- "auto-generated comment added when running this sample through run_genetic_identification"
+    sw_analysis_complete_status_insert$status_code_id <- status_code_name_to_id["analysis complete"]
+    sw_analysis_complete_status_insert <- dplyr::select(sw_analysis_complete_status_insert, sample_id, status_code_id, comment)
+    DBI::dbAppendTable(con, "sample_status", sw_analysis_complete_status_insert)
+
+    sw_analysis_complete_gen_insert <- spring_winter_resp_data |>
+      dplyr::filter(status_code == "analysis complete")
+
+
+    sw_analysis_complete_gen_insert$run_type_id = as.numeric(run_type_name_to_id[sw_analysis_complete_gen_insert$run_type])
+    sw_analysis_complete_gen_insert <- dplyr::select(sw_analysis_complete_gen_insert, sample_id, run_type_id, early_plate, late_plate)
+    sw_analysis_complete_gen_insert$updated_at <- lubridate::now(tzone = "UTC")
+
+    purrr::walk(1:nrow(sw_analysis_complete_gen_insert), function(row) {
+      this_sample_id <- sw_analysis_complete_gen_insert$sample_id[row]
+      this_run_type_id <- sw_analysis_complete_gen_insert$run_type_id[row]
+      this_early_plate <- sw_analysis_complete_gen_insert$early_plate[row]
+      this_late_plate <- sw_analysis_complete_gen_insert$late_plate[row]
+
+      insert_safely_Q <- glue::glue_sql(
+        "INSERT INTO genetic_run_identification (sample_id, run_type_id, early_plate_id, late_plate_id, updated_at)
+    VALUES
+      ({this_sample_id}, {this_run_type_id}, {this_early_plate}, {this_late_plate}, CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
+    ON CONFLICT (sample_id) DO UPDATE
+    SET
+      run_type_id = EXCLUDED.run_type_id,
+      early_plate_id = EXCLUDED.early_plate_id,
+      late_plate_id = EXCLUDED.late_plate_id,
+      updated_at = EXCLUDED.updated_at;
+    ",
+        .con = con
+      )
+
+      DBI::dbExecute(con, insert_safely_Q)
+    })
+
   }
 
+  # ots 16 in progress status updates
+  ots16_inprogress_inserts <- spring_winter_resp_data |>
+    dplyr::filter(status_code == "ots16 inprogress")
 
+  ots16_inprogress_inserts$comment <- "auto-generated comment added when running this sample through run_genetic_identification"
+  ots16_inprogress_inserts$status_code_id <- status_code_name_to_id["ots16 inprogress"]
+  ots16_inprogress_inserts <- dplyr::select(ots16_inprogress_inserts, sample_id, status_code_id, comment)
+  DBI::dbAppendTable(con, "sample_status", ots16_inprogress_inserts)
 
-  return(early_late_resp)
+  # need ots 16
+  ots16_need_inserts <- spring_winter_resp_data |>
+    dplyr::filter(status_code == "need ots16")
+
+  ots16_need_inserts$comment <- "auto-generated comment added when running this sample through run_genetic_identification"
+  ots16_need_inserts$status_code_id <- status_code_name_to_id["need ots16"]
+  ots16_need_inserts <- dplyr::select(ots16_need_inserts, sample_id, status_code_id, comment)
+  DBI::dbAppendTable(con, "sample_status", ots16_need_inserts)
+
 }
 
 
@@ -192,6 +256,17 @@ parse_detection_results <- function(detection_results) {
                run_type = x$run_type,
                early_plate = x$early_plate,
                late_plate = x$late_plate)
+  })
+
+}
+
+parse_spring_winter_detection_results <- function(detection_results) {
+  purrr::map_df(detection_results, function(x) {
+    data.frame(sample_id = x$sample_id,
+               status_code = x$status_code,
+               run_type = x$run_type,
+               spr_wint_plate_id = x$spr_wint_plate_id
+    )
   })
 
 }
