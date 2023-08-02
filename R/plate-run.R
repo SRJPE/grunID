@@ -1,4 +1,3 @@
-
 #' @param con connection to the database
 #' @param protocol name pf the protocol used for this run
 #' @param genetic_method the genetic method used for this run
@@ -88,10 +87,11 @@ add_new_plate_results <- function(con, protocol_name, genetic_method,
   thresholds_event <- generate_threshold(con, plate_run = plate_run, .control_id = .control_id)
   cli::cli_alert_success("Threshold done")
 
+
+  add_plate_thresholds(con, thresholds_event, .control_id = .control_id)
+
   return(thresholds_event)
 
-  #  dont do this for now just generate thresholds
-  # update_assay_detection(con, thresholds_event)
 }
 
 
