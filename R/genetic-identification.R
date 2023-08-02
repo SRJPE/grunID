@@ -169,6 +169,7 @@ ots_early_late_detection <- function(con, sample_id,
       ots_late_priority_results <-
         ots_late |> filter(positive_detection) |>
         collect()
+      # if this results in more than one, abort with error
       if (nrow(ots_late_priority_results) > 1) {
         cli::cli_abort(c(
           "x" = "'positive priority' did not identify a unique assay run",
@@ -369,7 +370,7 @@ run_genetic_identification <- function(con, sample_id = NULL, location = NULL, y
   if (!is.null(sample_id)) {
 
     sample_to_run_on <- dplyr::tbl(con, "sample") |>
-      dplyr::filter(id == sample_id) |>
+      dplyr::filter(id %in% sample_id) |>
       dplyr::collect()
 
     if (nrow(sample_to_run_on) == 0) {
