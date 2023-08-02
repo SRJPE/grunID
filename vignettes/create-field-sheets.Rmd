@@ -73,7 +73,7 @@ grunID::create_multiple_field_sheets(added_sample_plan = sample_plan_created,
                                      field_sheet_filepath = filepath)
 ```
 
-Running this function creates a workbook with the title you selected and a tab for each sampling event. If you wish, you can create one field sheet as a time by using the subfunctions `get_field_sheet_sample_plan()` and `create_field_sheet()`. You will need the sampling event ID (stored in the database table `sample_event`):
+Running this function creates a workbook with the title you selected and a tab for each sampling event. If you wish, you can create one field sheet at a time by using the sub-functions `get_field_sheet_sample_plan()` and `create_field_sheet()`. You will need the sampling event ID (stored in the database table `sample_event`):
 
 ```{r, eval = FALSE}
 con <- grunID::gr_db_connect()
@@ -101,4 +101,39 @@ openxlsx::saveWorkbook(wb, paste0(filepath), overwrite = TRUE)
 
 ## Processing field sheets returned from the field
 
+When a field sheet has been filled out with biological data from the field, it can be processed and inserted back into the database. First, use the function `process_field_sheet()` to read in the data in a field sheet in a tidy format.
 
+```{r, eval = FALSE}
+filled_field_sheet_filepath <- "completed-field-sheet.xlsx"
+processed_field_sheet <- grunID::process_field_sheet_samples(filled_field_sheet_filepath)
+```
+|sample_id   |datetime_collected  | fork_length_mm| field_run_type_id|fin_clip |field_comment                                 |
+|:-----------|:-------------------|--------------:|-----------------:|:--------|:---------------------------------------------|
+|MIL22_3_A_1 |2022-08-01 04:15:00 |             75|                NA|TRUE     |These are for testing the pre-season workflow |
+|MIL22_3_A_2 |2022-08-01 04:15:00 |             65|                NA|FALSE    |These are for testing the pre-season workflow |
+|MIL22_3_A_3 |2022-08-01 04:15:00 |             30|                NA|TRUE     |These are for testing the pre-season workflow |
+|MIL22_3_A_4 |2022-08-01 04:15:00 |             55|                NA|TRUE     |These are for testing the pre-season workflow |
+|MIL22_3_A_5 |2022-08-01 04:15:00 |             75|                NA|FALSE    |These are for testing the pre-season workflow |
+|MIL22_3_A_6 |2022-08-01 04:15:00 |             65|                NA|TRUE     |These are for testing the pre-season workflow |
+
+Once the data is tidy, you can insert it into the database using `update_field_sheet_samples()`.
+
+```{r, eval = FALSE}
+update_field_sheet_samples(con, processed_field_sheet)
+
+# check for biological data in sample table on database 
+dplyr::tbl(con, "sample") |> 
+  dplyr::filter(id %in% processed_field_sheet$sample_id) |> 
+  dplyr::glimpse()
+```
+
+Now that you have added biological sampling information from the field, the database's `sample` table should look like this: 
+
+|id          | sample_bin_id|datetime_collected  | fork_length_mm| field_run_type_id|fin_clip |field_comment                                 |updated_at          |updated_by |
+|:-----------|-------------:|:-------------------|--------------:|-----------------:|:--------|:---------------------------------------------|:-------------------|:----------|
+|MIL22_3_A_3 |            59|2022-08-01 04:15:00 |             30|                NA|TRUE     |These are for testing the pre-season workflow |2023-08-02 02:55:34 |liz        |
+|MIL22_3_A_4 |            59|2022-08-01 04:15:00 |             55|                NA|TRUE     |These are for testing the pre-season workflow |2023-08-02 02:55:34 |liz        |
+|MIL22_3_A_6 |            59|2022-08-01 04:15:00 |             65|                NA|TRUE     |These are for testing the pre-season workflow |2023-08-02 02:55:34 |liz        |
+|MIL22_3_A_8 |            59|2022-08-01 04:15:00 |             55|                NA|FALSE    |These are for testing the pre-season workflow |2023-08-02 02:55:34 |liz        |
+|MIL22_3_B_2 |            60|2022-08-01 04:15:00 |             65|                NA|TRUE     |These are for testing the pre-season workflow |2023-08-02 02:55:34 |liz        |
+|MIL22_3_B_4 |            60|2022-08-01 04:15:00 |             55|                NA|TRUE     |These are for testing the pre-season workflow |2023-08-02 02:55:34 |liz        |
