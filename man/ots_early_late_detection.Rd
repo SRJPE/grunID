@@ -21,11 +21,11 @@ ots_early_late_detection(
 Determine Run identifcation after Early and Late Assays
 }
 \details{
-The system allows users to submit as manu assays per sample as desired, however at the end in order to assign
+The system allows users to submit as many assays per sample as desired, however at the end in order to assign
 a genetic run type to a sample a single early, late, spring, and winter assay must be used. The selection
 strategy gives the function a way to select when it finds multiple assays for a sample.
 \itemize{
-\item "positive priority" - will choose the the postitive results from the available assays needed
-\item "recent prioritt" - will choose the most recent assays from the available assays needed.
+\item "positive priority" - will choose the the positive results from the available assays needed
+\item "recent priority" - will choose the most recent assays from the available assays needed.
 }
 }
