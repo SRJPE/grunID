@@ -175,6 +175,13 @@ ots_early_late_detection <- function(con, sample_id,
           "i" = "try a different strategy or pass plate id of run to use for identification"
         ))
       }
+      # if this results in no positive then return
+      else if (nrow(ots_late_priority_results) == 0) {
+        cli::cli_abort(c(
+          "x" = "'positive priority' did not yield any results",
+          "i" = "no results from this query typically means that there are no positive detections for this sample, you can use 'recent priority' to run genetic identification on whatever the most recent sample results are."
+        ))
+      }
     } else if (selection_strategy == "recent priority") {
       ots_late_priority_results <-
         ots_late |> arrange(desc(created_at)) |>
