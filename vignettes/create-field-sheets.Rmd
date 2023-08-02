@@ -19,7 +19,7 @@ library(grunID)
 library(tidyverse)
 ```
 
-## Introduction {.tabset}
+## Introduction
 
 grunID has several functions to assist in automating the pre-field season workflow. This includes: 
 
@@ -41,10 +41,10 @@ The run-id database requires that a sample plan contain the following variables:
 * expected number of samples per bin
 
 
-```{r}
-sample_plan <- read.csv("data-raw/2022_sample_plan.csv") |> 
+```r
+sample_plan <- read.csv("inst/example_sample_plan.csv") |> 
   dplyr::distinct_all() |> 
-  glimpse()
+  dplyr::glimpse()
 ```
 
 An example sample plan can be downloaded here:
@@ -56,7 +56,7 @@ Once you have a formatted sample plan, you can add it to the database using the 
 
 When you run `add_sample_plan()`, you are initializing sample IDs for the upcoming season. You will want to store this as an object, as it contains both a) the number of samples created and b) a list of the sample IDs initialized
 
-```{r, eval = FALSE}
+```r
 con <- grunID::gr_db_connect() # establish connection with the database
 sample_plan_created <- grunID::add_sample_plan(con, sample_plan) # add sample plan
 ```
@@ -67,7 +67,7 @@ Once the sample plan is added to the database and the associated sample IDs are 
 
 First, create the filepath with the desired name of your field sheets. Then run `create_multiple_field_sheets()`:
 
-```{r, eval = FALSE}
+```r
 filepath <- "field_sheets/my_new_field_sheets.xlsx"
 grunID::create_multiple_field_sheets(added_sample_plan = sample_plan_created,
                                      field_sheet_filepath = filepath)
@@ -75,8 +75,7 @@ grunID::create_multiple_field_sheets(added_sample_plan = sample_plan_created,
 
 Running this function creates a workbook with the title you selected and a tab for each sampling event. If you wish, you can create one field sheet at a time by using the sub-functions `get_field_sheet_sample_plan()` and `create_field_sheet()`. You will need the sampling event ID (stored in the database table `sample_event`):
 
-```{r, eval = FALSE}
-con <- grunID::gr_db_connect()
+```r
 dplyr::tbl(con, "sample_event") # pull sample event ID
 sample_event_id <- 2
 
@@ -103,7 +102,7 @@ openxlsx::saveWorkbook(wb, paste0(filepath), overwrite = TRUE)
 
 When a field sheet has been filled out with biological data from the field, it can be processed and inserted back into the database. First, use the function `process_field_sheet()` to read in the data in a field sheet in a tidy format.
 
-```{r, eval = FALSE}
+```r
 filled_field_sheet_filepath <- "completed-field-sheet.xlsx"
 processed_field_sheet <- grunID::process_field_sheet_samples(filled_field_sheet_filepath)
 ```
@@ -118,7 +117,7 @@ processed_field_sheet <- grunID::process_field_sheet_samples(filled_field_sheet_
 
 Once the data is tidy, you can insert it into the database using `update_field_sheet_samples()`.
 
-```{r, eval = FALSE}
+```r
 update_field_sheet_samples(con, processed_field_sheet)
 
 # check for biological data in sample table on database 
