@@ -12,7 +12,9 @@
 add_new_plate_results <- function(con, protocol_name, genetic_method,
                               laboratory, lab_work_performed_by, description, date_run,
                               filepath, sample_type, layout_type,
-                              plate_size = c(96, 384), .control_id = "NTC") {
+                              plate_size = c(96, 384), .control_id = "NTC",
+                              selection_strategy = c("recent priority", "positive priority"),
+                              run_gen_id = FALSE) {
 
   is_valid_connection(con)
 
@@ -89,6 +91,18 @@ add_new_plate_results <- function(con, protocol_name, genetic_method,
 
 
   add_plate_thresholds(con, thresholds_event, .control_id = .control_id)
+
+  if (run_gen_id) {
+    # for now just get the samples based on the plate runs
+    samples_not_valid <- c("POS-DNA", "NEG-DNA", "CONTROL", .control_id)
+    samples_to_use <- dplyr::tbl(con, "raw_assay_result") |>
+      dplyr::filter(plate_run_id %in% !!thresholds$plate_run_id) |>
+      dplyr::filter(!(sample_id %in% samples_not_valid)) |>
+      dplyr::collect() |>
+      dplyr::pull(sample_id)
+
+    run_genetic_identification(con, samples_to_use, selection_strategy = selection_strategy)
+  }
 
   return(thresholds_event)
 
