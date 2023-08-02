@@ -75,12 +75,12 @@ add_plate_thresholds <- function(con, thresholds, .control_id = "NTC") {
 #' @param sample_id the sample id to perform run identification on
 #' @param strategy the strategy to use when multi same assays are found for a sample see "details" for more
 #' @details
-#' The system allows users to submit as manu assays per sample as desired, however at the end in order to assign
+#' The system allows users to submit as many assays per sample as desired, however at the end in order to assign
 #' a genetic run type to a sample a single early, late, spring, and winter assay must be used. The selection
 #' strategy gives the function a way to select when it finds multiple assays for a sample.
 #'
-#' - "positive priority" - will choose the the postitive results from the available assays needed
-#' - "recent prioritt" - will choose the most recent assays from the available assays needed.
+#' - "positive priority" - will choose the the positive results from the available assays needed
+#' - "recent priority" - will choose the most recent assays from the available assays needed.
 #' @export
 #' @md
 ots_early_late_detection <- function(con, sample_id,
@@ -547,7 +547,6 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
   DBI::dbAppendTable(con, "sample_status", ots16_need_inserts)
 
 }
-
 
 parse_detection_results <- function(detection_results) {
   purrr::map_df(detection_results, function(x) {
