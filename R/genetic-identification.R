@@ -84,7 +84,7 @@ add_plate_thresholds <- function(con, thresholds, .control_id = "NTC") {
 #' @export
 #' @md
 ots_early_late_detection <- function(con, sample_id,
-                                     selection_strategy = c("positive priority", "recent priority")) {
+                                     selection_strategy = "recent priority") {
 
   selection_strategy <- match.arg(selection_strategy)
 
@@ -461,11 +461,15 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
   created_status_to_insert <-
     early_late_resp_data |> dplyr::filter(status_code == "created")
 
+  if (nrow(created_status_to_insert) > 0) {
+
+
   created_status_to_insert$comment <- "auto-generated comment added when running this sample through run_genetic_identification"
   created_status_to_insert$status_code_id <- status_code_name_to_id["created"]
   created_status_to_insert <- dplyr::select(created_status_to_insert, sample_id, status_code_id, comment)
   DBI::dbAppendTable(con, "sample_status", created_status_to_insert)
 
+  }
   # created cannot do any gen id updates
 
   # OTS28 in progress / eihter assay 1 or 2 is not done
@@ -473,14 +477,24 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
   ots28_inprogress_to_insert <- early_late_resp_data |>
     dplyr::filter(status_code == "ots28 in progress")
 
+  if (nrow(ots28_inprogress_to_insert) > 0) {
+
+
   ots28_inprogress_to_insert$comment <- "auto-generated comment added when running this sample through run_genetic_identification"
   ots28_inprogress_to_insert$status_code_id <- status_code_name_to_id["ots28 in progress"]
   ots28_inprogress_to_insert <- dplyr::select(ots28_inprogress_to_insert, sample_id, status_code_id, comment)
   DBI::dbAppendTable(con, "sample_status", ots28_inprogress_to_insert)
 
+  }
+
   # needs ots 16 will be passed into function that tries to assign run based on assay 3 and 4
   ots16_in_progress_to_insert <- early_late_resp_data |>
     dplyr::filter(status_code == "need ots16")
+
+  # FIXME - a hack to make things work for now
+  if (nrow(ots16_in_progress_to_insert) == 0) {
+    return()
+  }
 
   spring_winter_resp <- purrr::map(
     ots16_in_progress_to_insert$sample_id , ~ots_winter_spring_detection(con, ., selection_strategy = selection_strategy),
