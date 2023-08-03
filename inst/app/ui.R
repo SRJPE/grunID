@@ -76,7 +76,29 @@ navbarPage(
                DT::dataTableOutput("sample_status_table"))
            )
   ),
-  tabPanel(title = "Query")
+  tabPanel(
+    title = "Query",
+
+    sidebarLayout(
+
+      # Sidebar with a slider input
+      sidebarPanel(
+          width = 3,
+          selectInput("query_data", "Select Data", choices = c("Genetic Identification", "Raw Results")),
+          textInput("filter_sample_id", label = "sample id"),
+          selectInput("filter_location", "Location", choices = c("F17", "F61", "BUT")),
+          dateInput("filter_event_date", "Event Date"),
+          selectInput("filter_bin", "Bin Code", choices = LETTERS[1:6]),
+          actionButton("do_query", "Query", class = "btn-success")
+      ),
+
+      # Show a plot of the generated distribution
+      mainPanel(
+        tableOutput("query_results")
+      )
+    )
+
+  )
 )
 
-# grunID::add_new_plate_results()
+  # grunID::add_new_plate_results()

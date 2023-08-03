@@ -131,4 +131,13 @@ function(input, output, session) {
       )
   })
 
+  output$query_results <- renderTable({
+    if (input$query_data == "Genetic Identification") {
+      genetic_results_data |> dplyr::collect()
+
+    } else {
+
+    }
+  }, width = "auto")
+
 }

@@ -81,3 +81,8 @@ all_locations <- dplyr::tbl(con, "sample_location") |>
   dplyr::distinct(code) |>
   dplyr::filter(!code %in% c("CONTROL", "TEST2", "TEST")) |>
   dplyr::pull(code)
+
+
+genetic_results_data <- dplyr::tbl(con, "genetic_run_identification") |>
+  dplyr::left_join(dplyr::tbl(con, "run_type"),  by = c("run_type_id" = "id")) |>
+  dplyr::select(sample = sample_id, run_id = "run_name", early_plate_id, late_plate_id, spr_wint_plate_id)
