@@ -358,7 +358,7 @@ ots_winter_spring_detection <- function(con, sample_id,
 #' @param con a connection to the database
 #' @param sample_id optional sample id to run identification on
 #' @param location optional location to identification on
-#' @param year optional year to identifcation on
+#' @param year optional year to identification on
 #' @param selection_strategy a selection strategy to help resolve cases where many assays exists per sample
 #' @export
 run_genetic_identification <- function(con, sample_id = NULL, location = NULL, year = NULL, selection_strategy = "positive priority") {
