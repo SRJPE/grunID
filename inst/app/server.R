@@ -115,6 +115,7 @@ function(input, output, session) {
                  lengthChange = TRUE,
                  pageLength = 20)) |>
     formatStyle("status",
+                target = "cell",
                 backgroundColor = styleEqual(
                   levels = names(sample_status_options),
                   values = as.character(sample_status_options)
