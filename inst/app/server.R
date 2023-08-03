@@ -78,7 +78,8 @@ function(input, output, session) {
                                            filepath = input$sherlock_results$datapath,
                                            sample_type = input$sample_type,
                                            layout_type = input$layout_type,
-                                           plate_size = input$plate_size)
+                                           plate_size = input$plate_size,
+                                      run_gen_id = input$perform_genetics_id)
       #)
       #shinyCatch({message(paste0(messages))}, prefix = '') # this prints out messages (only at the end of the function) to shiny
       spsComps::shinyCatch({message("Success!")}, position = "top-center")},

@@ -50,6 +50,7 @@ navbarPage(
                                                                                       "ots16_spring",
                                                                                       "ots16_winter"), selected = NULL),
              selectInput("plate_size", "Select Plate Size", choices = c(384, 96)),
+             checkboxInput("perform_genetics_id", label = "Run genetic calculations for samples after upload", value = FALSE),
              actionButton("do_upload", "Upload Results", class = "btn-success", icon = icon("rocket")),
              tags$br(),
              tags$br()
