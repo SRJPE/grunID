@@ -4,6 +4,14 @@ library(tidyverse)
 library(shinyBS)
 library(DT)
 
+renderTableWithScrollOnX <- function(...) {
+  tags$div(
+    style = 'overflow-x: scroll',
+    renderTable(...)
+  )
+}
+
+
 config_path <- Sys.getenv("CONFIG_PATH")
 print(config_path)
 in_dev_mode <- Sys.getenv("GRUNID_IS_DEV")

@@ -3,19 +3,19 @@ function(input, output, session) {
   observeEvent(input$show_protocol_details, {
     showModal(modalDialog(
       title = "Protocol Details",
-      renderTable(all_protocols |>
+      renderTableWithScrollOnX(all_protocols |>
                     filter(active == TRUE) |>
                     select(name, reader = reader_type, serial_no = reader_serial_number,
                            plate = plate_type, set_point, preheat = preheat_before_moving,
                            runtime, interval, read_count, mode = run_mode, excitation,
-                           emissions, light_source, lamp = lamp_energy, height = read_height)),
+                           emissions, light_source, lamp = lamp_energy, height = read_height), striped = TRUE, width = "auto"),
     size = "l"))
   })
 
   observeEvent(input$show_lab_details, {
     showModal(modalDialog(
       title = "Laboratories Details",
-      renderTable(all_labs),
+      renderTableWithScrollOnX(all_labs),
       size = "l"
     ))
   })
@@ -23,7 +23,7 @@ function(input, output, session) {
   observeEvent(input$show_methods_details, {
     showModal(modalDialog(
       title = "Genetic Methods Details",
-      renderTable(all_gen_methods),
+      renderTableWithScrollOnX(all_gen_methods),
       size = "l"
     ))
   })
