@@ -115,8 +115,8 @@ function(input, output, session) {
                  pageLength = 20)) |>
     formatStyle("status",
                 backgroundColor = styleEqual(
-                  levels = sample_status_options,
-                  values = sample_status_colors
+                  levels = names(sample_status_options),
+                  values = as.character(sample_status_options)
                 )),
   server = FALSE
 )
