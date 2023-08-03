@@ -64,7 +64,7 @@ navbarPage(
              sidebarPanel(
                width = 3,
                selectInput("sample_status_filter", "Sample Status",
-                           c("All", sample_status_options)),
+                           c("All", names(sample_status_options))),
                selectInput("location_filter", "Location",
                            c("All", all_locations)),
                tags$hr(),

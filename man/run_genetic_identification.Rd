@@ -19,7 +19,7 @@ run_genetic_identification(
 
 \item{location}{optional location to identification on}
 
-\item{year}{optional year to identifcation on}
+\item{year}{optional year to identification on}
 
 \item{selection_strategy}{a selection strategy to help resolve cases where many assays exists per sample}
 }

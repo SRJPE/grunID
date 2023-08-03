@@ -43,12 +43,12 @@ all_sample_status <- DBI::dbGetQuery(
 #   dput()
 
 colors <- c(
-  "green" = "#afdeab",
-  "orange" = "#b58653",
-  "red" = "#b55353",
+  "green" = "#77dd77",
+  "orange" = "#ffb347",
+  "red" = "#fa675f",
   "purple" = "#b09ab8",
-  "blue" = "#6c97cc",
-  "yellow" = "#fbfcc5"
+  "blue" = "#aec6cf",
+  "yellow" = "#fdfd96"
 )
 
 sample_status_options <- c(
