@@ -1,6 +1,8 @@
 linters: linters_with_defaults(
     line_length_linter(120), 
-    commented_code_linter = NULL
+    commented_code_linter = NULL, 
+    object_length_linter = 100, 
+    object_usage_linter=NULL
   )
 exclusions: list(
     "inst/doc/creating_linters.R" = 1, 

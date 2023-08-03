@@ -3,13 +3,14 @@
 #' values for an assay.
 #' @param con valid connection to the database
 #' @param plate_run plate run object obtained from either `add_plate_run` or `get_plate_run`
+#' @param strategy the strategy to use for computing thresholds
 #' @param .control_id the identifier within the plate run to use as control for calculating thresholds, defaults to "NTC"
 #' @details For each assay on a plate run, the threshold value is calculated as two times
 #' the mean value of the last time step from the control blank wells. Each
 #' assay on a plate will have its own control blanks and threshold value.
 #' @returns a table containing thresholds for an event, to be passed to `update_assay_detections()`
 #' @export
-generate_threshold <- function(con, plate_run, .control_id="NTC") {
+generate_threshold <- function(con, plate_run, strategy = "twice average",.control_id="NTC") {
 
   if (!DBI::dbIsValid(con)) {
     stop("Connection argument does not have a valid connection the run-id database.
@@ -36,12 +37,19 @@ generate_threshold <- function(con, plate_run, .control_id="NTC") {
     stop(paste0("no control variables found in plate run with id: '", plate_run_identifier, "'"), call. = FALSE)
   }
 
-  thresholds <- control_blanks |>
-    dplyr::group_by(plate_run_id, assay_id) |>
-    dplyr::summarise(
-      threshold = mean(as.numeric(raw_fluorescence)) * 2
-    ) |> ungroup() |>
-    dplyr::mutate(runtime = runtime)
+  if (is.character(strategy)) {
+
+    thresholds <- switch (strategy,
+                          "twice average" = {
+                            control_blanks |>
+                              dplyr::group_by(plate_run_id, assay_id) |>
+                              dplyr::summarise(
+                                threshold = mean(as.numeric(raw_fluorescence)) * 2
+                              ) |> ungroup() |>
+                              dplyr::mutate(runtime = runtime)
+                          }
+    )
+  }
 
   return(thresholds)
 }

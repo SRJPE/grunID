@@ -4,7 +4,7 @@
 \alias{get_status_codes}
 \title{Retrieve Status Codes}
 \usage{
-get_status_codes(con, is_active = TRUE, all_results = FALSE)
+get_status_codes(con, is_active = TRUE, all_results = FALSE, ...)
 }
 \arguments{
 \item{con}{A DBI connection object obtained from DBI::dbConnect()}

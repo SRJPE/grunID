@@ -4,12 +4,19 @@
 \alias{generate_threshold}
 \title{Generate Thresholds}
 \usage{
-generate_threshold(con, plate_run, .control_id = "NTC")
+generate_threshold(
+  con,
+  plate_run,
+  strategy = "twice average",
+  .control_id = "NTC"
+)
 }
 \arguments{
 \item{con}{valid connection to the database}
 
 \item{plate_run}{plate run object obtained from either `add_plate_run` or `get_plate_run`}
+
+\item{strategy}{the strategy to use for computing thresholds}
 
 \item{.control_id}{the identifier within the plate run to use as control for calculating thresholds, defaults to "NTC"}
 }

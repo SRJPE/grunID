@@ -35,10 +35,38 @@ all_sample_status <- dplyr::tbl(con, "sample_status") |>
                 updated_at = as.Date(updated_at)) |>
   dplyr::select(sample_id, status, created_at, updated_at) |>
   dplyr::collect()
-sample_status_options <- dplyr::tbl(con, "status_code") |>
-  dplyr::distinct(status_code_name) |>
-  dplyr::collect() |>
-  dplyr::pull()
+
+# sample_status_options <- dplyr::tbl(con, "status_code") |>
+#   dplyr::distinct(status_code_name) |>
+#   dplyr::collect() |>
+#   dplyr::pull() |>
+#   dput()
+
+colors <- c(
+  "green" = "#afdeab",
+  "orange" = "#b58653",
+  "red" = "#b55353",
+  "purple" = "#b09ab8",
+  "blue" = "#6c97cc",
+  "yellow" = "#fbfcc5"
+)
+
+sample_status_options <- c(
+  "other lab" = as.character(colors["purple"]),
+  "need ots28" = as.character(colors["orange"]),
+  "out to field" = as.character(colors["purple"]),
+  "prepped" = as.character(colors["orange"]),
+  "returned from field" = as.character(colors["blue"]),
+  "analysis complete" = as.character(colors["green"]),
+  "need ots16" = as.character(colors["orange"]),
+  "archived" = as.character(colors["purple"]),
+  "ots28 in progress" = as.character(colors["orange"]),
+  "ots16 complete" = as.character(colors["green"]),
+  "ots16 inprogress" = as.character(colors["orange"]),
+  "ots28 complete" = as.character(colors["green"]),
+  "created" = as.character(colors["yellow"])
+)
+
 sample_status_colors = c(rep("#ead8d5", 2), rep("#e7f2f1", 3),
                          "#d5ead5", "#ead8d5", rep("#e7f2f1", 6))
 all_locations <- dplyr::tbl(con, "sample_location") |>
