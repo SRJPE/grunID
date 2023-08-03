@@ -121,4 +121,12 @@ function(input, output, session) {
   server = FALSE
 )
 
+  output$season_summary <- renderTable({
+    all_sample_status |>
+      group_by(status) |>
+      summarise(
+        total = n()
+      )
+  })
+
 }
