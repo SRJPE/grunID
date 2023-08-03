@@ -3,7 +3,7 @@ navbarPage(
   title = "grunID UI",
   tabPanel(title = "About"),
   tabPanel("Upload Results",
-           tags$style(".modal-dialog {max-width: 95vw;}"),
+           # tags$style(".modal-dialog {max-width: 95vw;}"),
            #tags$style(type = 'text/css',
            #".modal-dialog {width: fit-content !important;}"),
            fluidRow(
@@ -66,9 +66,19 @@ navbarPage(
 
 
   ),
-  tabPanel(title = "Sample Status"),
+  tabPanel(title = "Sample Status",
+           fluidRow(
+             sidebarPanel(
+               # TODO add options for filtering to location, sample event
+               selectInput("sample_status_filter", "Sample Status",
+                           c("All", sample_status_options)),
+               selectInput("location_filter", "Location",
+                           c("All", all_locations))
+             ),
+             mainPanel(
+               DT::dataTableOutput("sample_status_table"))
+           )),
   tabPanel(title = "Query")
-
 )
 
 # grunID::add_new_plate_results()
