@@ -27,15 +27,15 @@ if (!is.na(in_dev_mode) && in_dev_mode == 1) {
 all_protocols <- get_protocols(con) |> collect()
 all_labs <- get_laboratories(con) |> select(id, code, laboratory_name, description) |> collect()
 all_gen_methods <- get_genetic_methods(con) |> select(id, code, method_name, description) |> collect()
-all_sample_status <- dplyr::tbl(con, "sample_status") |>
-  dplyr::left_join(dplyr::tbl(con, "status_code") |>
-                     select(status_code_id = id, status = status_code_name),
-                   by = "status_code_id") |>
-  dplyr::mutate(created_at = as.Date(created_at),
-                updated_at = as.Date(updated_at)) |>
-  dplyr::select(sample_id, status, created_at, updated_at) |>
-  dplyr::collect()
 
+# the actual current status for a given sample is always the latest update
+all_sample_status <- DBI::dbGetQuery(
+  con,
+  "SELECT d.sample_id as sample_id, sc.status_code_name as status, d.most_recent_update as updated_at from sample_status as s
+    RIGHT JOIN (SELECT sample_id,  MAX(updated_at) as most_recent_update FROM sample_status GROUP BY sample_id) as d
+        on s.sample_id = d.sample_id and s.updated_at = d.most_recent_update
+    JOIN status_code as sc on s.status_code_id = sc.id;"
+)
 # sample_status_options <- dplyr::tbl(con, "status_code") |>
 #   dplyr::distinct(status_code_name) |>
 #   dplyr::collect() |>

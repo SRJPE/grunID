@@ -66,7 +66,10 @@ navbarPage(
                selectInput("sample_status_filter", "Sample Status",
                            c("All", sample_status_options)),
                selectInput("location_filter", "Location",
-                           c("All", all_locations))
+                           c("All", all_locations)),
+               tags$hr(),
+               tags$h3("Season Summary"),
+               tableOutput("season_summary")
              ),
              mainPanel(
                DT::dataTableOutput("sample_status_table"))
