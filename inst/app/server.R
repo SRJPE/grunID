@@ -85,11 +85,6 @@ function(input, output, session) {
       spsComps::shinyCatch({message("Success!")}, position = "top-center")},
       error = function(e) {
           spsComps::shinyCatch({stop(paste(e))}, prefix = '', position = "top-center")
-          # showModal(
-          #   modalDialog(
-          #     paste(e)
-          #   )
-          # )
       })
     }
   )

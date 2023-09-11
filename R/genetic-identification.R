@@ -415,33 +415,35 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
   names(status_code_name_to_id) <- all_status_codes$status_code_name
 
 
+  if (nrow(analysis_complete_status_insert) > 0) {
 
-  analysis_complete_status_insert$comment <- "auto-generated comment added when running this sample through run_genetic_identification"
-  analysis_complete_status_insert$status_code_id <- status_code_name_to_id["analysis complete"]
-  analysis_complete_status_insert <- dplyr::select(analysis_complete_status_insert, sample_id, status_code_id, comment)
-  DBI::dbAppendTable(con, "sample_status", analysis_complete_status_insert)
-
-  # updates run type
-  all_run_type_id <- grunID::get_run_types(con)
-  run_type_name_to_id <- all_run_type_id$id
-  names(run_type_name_to_id) <- all_run_type_id$code
-
-  analysis_complete_gen_insert <- early_late_resp_data |>
-    dplyr::filter(status_code == "analysis complete")
+    analysis_complete_status_insert$comment <- "auto-generated comment added when running this sample through run_genetic_identification"
+    analysis_complete_status_insert$status_code_id <- status_code_name_to_id["analysis complete"]
+    analysis_complete_status_insert <- dplyr::select(analysis_complete_status_insert, sample_id, status_code_id, comment)
+    DBI::dbAppendTable(con, "sample_status", analysis_complete_status_insert)
 
 
-  analysis_complete_gen_insert$run_type_id = as.numeric(run_type_name_to_id[analysis_complete_gen_insert$run_type])
-  analysis_complete_gen_insert <- dplyr::select(analysis_complete_gen_insert, sample_id, run_type_id, early_plate, late_plate)
-  analysis_complete_gen_insert$updated_at <- lubridate::now(tzone = "UTC")
+    # updates run type
+    all_run_type_id <- grunID::get_run_types(con)
+    run_type_name_to_id <- all_run_type_id$id
+    names(run_type_name_to_id) <- all_run_type_id$code
 
-  purrr::walk(1:nrow(analysis_complete_gen_insert), function(row) {
-    this_sample_id <- analysis_complete_gen_insert$sample_id[row]
-    this_run_type_id <- analysis_complete_gen_insert$run_type_id[row]
-    this_early_plate <- analysis_complete_gen_insert$early_plate[row]
-    this_late_plate <- analysis_complete_gen_insert$late_plate[row]
+    analysis_complete_gen_insert <- early_late_resp_data |>
+      dplyr::filter(status_code == "analysis complete")
 
-    insert_safely_Q <- glue::glue_sql(
-      "INSERT INTO genetic_run_identification (sample_id, run_type_id, early_plate_id, late_plate_id, updated_at)
+
+    analysis_complete_gen_insert$run_type_id = as.numeric(run_type_name_to_id[analysis_complete_gen_insert$run_type])
+    analysis_complete_gen_insert <- dplyr::select(analysis_complete_gen_insert, sample_id, run_type_id, early_plate, late_plate)
+    analysis_complete_gen_insert$updated_at <- lubridate::now(tzone = "UTC")
+
+    purrr::walk(1:nrow(analysis_complete_gen_insert), function(row) {
+      this_sample_id <- analysis_complete_gen_insert$sample_id[row]
+      this_run_type_id <- analysis_complete_gen_insert$run_type_id[row]
+      this_early_plate <- analysis_complete_gen_insert$early_plate[row]
+      this_late_plate <- analysis_complete_gen_insert$late_plate[row]
+
+      insert_safely_Q <- glue::glue_sql(
+        "INSERT INTO genetic_run_identification (sample_id, run_type_id, early_plate_id, late_plate_id, updated_at)
     VALUES
       ({this_sample_id}, {this_run_type_id}, {this_early_plate}, {this_late_plate}, CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
     ON CONFLICT (sample_id) DO UPDATE
@@ -451,11 +453,12 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
       late_plate_id = EXCLUDED.late_plate_id,
       updated_at = EXCLUDED.updated_at;
     ",
-      .con = con
-    )
+        .con = con
+      )
 
-    DBI::dbExecute(con, insert_safely_Q)
-  })
+      DBI::dbExecute(con, insert_safely_Q)
+    })
+  }
 
   # at this point we have inserted all of the samples that were complete, we update created status
   created_status_to_insert <-
