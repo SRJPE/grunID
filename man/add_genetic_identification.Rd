@@ -4,7 +4,7 @@
 \alias{add_genetic_identification}
 \title{Genetic Identification}
 \usage{
-add_genetic_identification(con, sample_identifiers, online_mode = TRUE/FALSE)
+add_genetic_identification(con, sample_identifiers)
 }
 \arguments{
 \item{con}{valid connection to database}

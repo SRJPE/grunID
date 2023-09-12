@@ -4,12 +4,12 @@
 \alias{generate_threshold_offline}
 \title{Generate Thresholds Offline}
 \usage{
-generate_threshold_offline(.control_id = "NTC", offline_sherlock_results)
+generate_threshold_offline(offline_sherlock_results, .control_id = "NTC")
 }
 \arguments{
-\item{.control_id}{the identifier within the plate run to use as control for calculating thresholds, defaults to "NTC"}
-
 \item{offline_sherlock_results}{if running offline, this function requires a table of sherlock results}
+
+\item{.control_id}{the identifier within the plate run to use as control for calculating thresholds, defaults to "NTC"}
 }
 \value{
 a table containing thresholds for an event, to be passed to `update_assay_detections()`

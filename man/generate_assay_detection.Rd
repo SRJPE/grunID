@@ -5,9 +5,9 @@
 \title{Generate detection for assay results offline}
 \usage{
 generate_assay_detection(
-  .control_id = "NTC",
   thresholds,
-  offline_sherlock_results
+  offline_sherlock_results,
+  .control_id = "NTC"
 )
 }
 \arguments{
@@ -29,5 +29,6 @@ The sherlock results are updated to reflect whether the assays
 in a plate run produced raw fluorescence values that exceed the threshold
 calculated by `generate_threshold_offline`, resulting in a positive or negative
 detection (TRUE or FALSE, where TRUE means the assay is a positive
-detection).
+detection). The function currently uses the positive detection value for the
+sample ID at the end of the run time (i.e. the max run time).
 }

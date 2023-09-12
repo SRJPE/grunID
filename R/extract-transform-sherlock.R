@@ -411,7 +411,7 @@ process_well_sample_details_offline <- function(filepath,
   # single assay
   else if (layout_type %in% c("single_assay_ots28_early", "single_assay_ots28_late",
                              "single_assay_ots16_spring", "single_assay_ots16_winter")) {
-    assay_id <- dplyr::case_When(layout_type == "single_assay_ots28_early" ~ 1,
+    assay_id <- dplyr::case_when(layout_type == "single_assay_ots28_early" ~ 1,
                                  layout_type == "single_assay_ots28_late" ~ 2,
                                  layout_type == "single_assay_ots16_spring" ~ 3,
                                  layout_type == "single_assay_ots16_winter" ~ 4)
