@@ -57,7 +57,7 @@ generate_threshold <- function(con, plate_run, .control_id="NTC") {
 #' assay on a plate will have its own control blanks and threshold value.
 #' @returns a table containing thresholds for an event, to be passed to `update_assay_detections()`
 #' @export
-generate_threshold_offline <- function(.control_id="NTC", offline_sherlock_results) {
+generate_threshold_offline <- function(offline_sherlock_results, .control_id="NTC") {
 
   control_blanks <- offline_sherlock_results |>
     dplyr::filter(sample_id == !!.control_id)
