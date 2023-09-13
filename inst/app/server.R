@@ -126,4 +126,21 @@ function(input, output, session) {
       )
   })
 
+  output$season_table <- DT::renderDataTable(DT::datatable({
+
+    season_filter <- input$season_filter |>
+      substr(3, 4)
+    data <- grunID::get_samples_by_season(con, season_filter)
+    data
+  },
+  extensions = "Buttons",
+  rownames = FALSE,
+  options = list(autoWidth = FALSE,
+                 dom = "Bfrtip",
+                 buttons = c("copy", "csv", "excel"),
+                 lengthChange = TRUE,
+                 pageLength = 20)),
+  server = FALSE
+  )
+
 }

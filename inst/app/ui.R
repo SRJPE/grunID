@@ -76,7 +76,17 @@ navbarPage(
                DT::dataTableOutput("sample_status_table"))
            )
   ),
-  tabPanel(title = "Query")
+  tabPanel(title = "Query",
+           sidebarLayout(
+             sidebarPanel(
+               width = 3,
+               selectInput("season_filter", "Season Filter",
+                           c("2022", "2023"))
+             ),
+             mainPanel(
+               DT::dataTableOutput("season_table")
+             )
+           ))
 )
 
 # grunID::add_new_plate_results()
