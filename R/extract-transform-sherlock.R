@@ -67,7 +67,10 @@ process_sherlock <- function(filepath,
 
   plate_layout <- process_plate_layout(filepath, plate_size = plate_size)
   wells_used <- sum(!is.na(plate_layout$psuedo_sample_id))
-  read_count <- extract_read_count(filepath)
+  metadata_keys <- readxl::read_excel(filepath, range = "A1:A100") |> pull()
+
+  read_count_range <- ifelse("Eject plate on completion" %in% metadata_keys, "B18", "B17")
+  read_count <- extract_read_count(filepath, at_range = read_count_range)
 
   cell_ranges <- generate_ranges(plate_size = plate_size, wells_used = wells_used,
                                  time_intervals = read_count)
@@ -422,8 +425,8 @@ generate_range <- function(table_type = c("raw fluorescence", "background fluore
   return(cell_ranges)
 }
 
-extract_read_count <- function(filepath) {
-  raw_read_count <- readxl::read_excel(filepath, range = "B18", col_names = FALSE) |>
+extract_read_count <- function(filepath, at_range) {
+  raw_read_count <- readxl::read_excel(filepath, range = at_range, col_names = FALSE) |>
     dplyr::pull(...1)
   read_count <- as.integer(stringr::str_extract(raw_read_count, "\\d+(?=\\sReads)"))
   return(read_count)
