@@ -268,4 +268,70 @@ partition_df_to_size <- function(df, chunk_size) {
   split(df, (seq(nrow(df))-1) %/% chunk_size)
 }
 
+#' Process Raw Sample Plan
+#' @description `process_raw_sample_plan`
+#' @param filepath
+#' @return a list object containing a data frame `clean_sample_plan` with the columns
+#' * location_code
+#' * sample_event_number
+#' * first_sample_date
+#' * sample_bin_code
+#' * min_fork_length
+#' * max_fork_length
+#' * expected_number_of_samples
+#'
+#' and a data frame `location_code_sample_summaries` with the columns
+#' * location_code
+#' * max_allowed
+#' * catch_22
+#' * catch_23
+#' * total_samples
+#' @examples
+#' # example database connection
+#' process_raw_sample_plan(filepath = "data-raw/2024_raw_sample_plan.xlsx")
+#' @export
+#' @md
+process_raw_sample_plan <- function(filepath) {
+
+  # read in file and skip first row
+  raw_sample_plan <- suppressMessages(readxl::read_xlsx(filepath, skip = 1))
+
+  # manipulate into long data frame format
+  clean_sample_plan <- raw_sample_plan |>
+    tidyr::fill(Site) |>
+    tidyr::pivot_longer(cols = E1:E14,
+                        names_to = "sample_event_number",
+                        values_to = "expected_number_of_samples") |>
+    dplyr::mutate(fork_lengths = ifelse(stringr::str_detect(`Bin FL ranges (mm)`, "\\+"),
+                                        stringr::str_replace(`Bin FL ranges (mm)`, "\\+", "- \\+"),
+                                        `Bin FL ranges (mm)`),
+                  sample_event_number = stringr::str_remove_all(sample_event_number, "E")) |>
+    tidyr::separate_wider_delim(Site, delim = "(",
+                                names = c("Name", "location_code")) |>
+    tidyr::separate_wider_delim(fork_lengths, delim = "-",
+                                names = c("min_fork_length", "max_fork_length")) |>
+    dplyr::mutate(location_code = stringr::str_remove_all(location_code, "\\)"),
+                  max_fork_length = ifelse(max_fork_length == " +", NA, max_fork_length),
+                  first_sample_date = NA) |>
+    dplyr::select(location_code, sample_event_number, first_sample_date,
+                  sample_bin_code = Bin, min_fork_length, max_fork_length,
+                  expected_number_of_samples)
+
+  # extract summary rows
+  summaries <- raw_sample_plan |>
+    dplyr::select(Site,
+                  total_samples = ...18,
+                  max_allowed = ...19,
+                  catch_22 = ...20,
+                  catch_23 = ...21) |>
+    tidyr::drop_na(Site) |>
+    tidyr::separate_wider_delim(Site, delim = "(", names = c("Name", "location_code")) |>
+    dplyr::mutate(location_code = stringr::str_remove_all(location_code, "\\)")) |>
+    dplyr::select(-Name)
+
+  return(list("clean_sample_plan" = clean_sample_plan,
+              "location_code_sample_summaries" = summaries))
+
+}
+
 

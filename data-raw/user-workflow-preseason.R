@@ -18,11 +18,11 @@ con <- DBI::dbConnect(RPostgres::Postgres(),
 
 con <- gr_db_connect()
 
-# read in sample plan created for the season. this contains
-# contains location codes, sample events, sample bins,
-# min/max fork lengths, sample dates, and sample IDs.
-# needs to be in tidy format
-# TODO this needs to be made by users at the beginning of the season
+# read in raw sample plan created for the season.
+# if in raw format, can process it:
+clean_sample_plan <- process_raw_sample_plan("data-raw/2024_raw_sample_plan.xlsx")
+
+# if already in tidy format, can just read in:
 sample_plan_2022_final <- read_csv("data-raw/2022_sample_plan.csv") |> distinct_all()
 
 # filter sample plan to locations (this isn't necessary but helpful for
