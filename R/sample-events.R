@@ -35,6 +35,8 @@ add_sample_events <- function(con, sample_plan) {
     dplyr::distinct(sample_event_number, first_sample_date,
                     sample_location_id = id)
 
+
+
   partitioned_inserts <- partition_df_to_size(sample_event_insert, 50)
 
   sample_event_ids <- purrr::map_df(partitioned_inserts, function(d) {
@@ -44,7 +46,13 @@ add_sample_events <- function(con, sample_plan) {
          UNNEST(ARRAY[{d$sample_event_number*}]),
          UNNEST(ARRAY[{d$sample_location_id*}]),
          UNNEST(ARRAY[{d$first_sample_date*}]::DATE[])
-        ) RETURNING id, sample_event_number;",
+        )
+        ON CONFLICT (sample_event_number, sample_location_id, first_sample_date)
+        DO UPDATE SET
+          sample_event_number = EXCLUDED.sample_event_number,
+          sample_location_id = EXCLUDED.sample_location_id,
+          first_sample_date = EXCLUDED.first_sample_date
+      RETURNING id, sample_event_number;",
       .con = con)
 
     res <- tryCatch(DBI::dbSendQuery(con, sample_event_query),
@@ -113,7 +121,16 @@ add_sample_bins <- function(con, sample_plan, sample_event_ids) {
            {sample_bin_insert$min_fork_length},
            {sample_bin_insert$max_fork_length},
            {sample_bin_insert$expected_number_of_samples}
-          ) RETURNING id, sample_event_id, sample_bin_code;",
+          )
+          ON CONFLICT (sample_event_id, sample_bin_code)
+          DO UPDATE SET
+            sample_event_id=EXCLUDED.sample_event_id,
+            sample_bin_code=EXCLUDED.sample_bin_code,
+            min_fork_length=EXCLUDED.min_fork_length,
+            max_fork_length=EXCLUDED.max_fork_length,
+            expected_number_of_samples=EXCLUDED.expected_number_of_samples,
+            number_of_samples_received=EXCLUDED.number_of_samples_received
+          RETURNING id, sample_event_id, sample_bin_code;",
     .con = con)
 
 
@@ -178,7 +195,8 @@ add_samples <- function(con, sample_plan, sample_id_insert, verbose = FALSE) {
                                       VALUES (
                                         UNNEST(ARRAY[{part$id*}]),
                                         UNNEST(ARRAY[{part$sample_bin_id*}])
-                                      ) RETURNING id;",
+                                      ) ON CONFLICT (id) DO NOTHING
+                              RETURNING id;",
                               .con = con)
 
       res <- DBI::dbSendQuery(con, query)
