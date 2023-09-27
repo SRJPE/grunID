@@ -4,14 +4,16 @@
 \alias{create_multiple_field_sheets}
 \title{Create Multiple Field Sheets}
 \usage{
-create_multiple_field_sheets(added_sample_plan, field_sheet_filepath)
+create_multiple_field_sheets(con, sample_event_ids, field_sheet_filepath)
 }
 \arguments{
+\item{con}{A valid connection to the database}
+
+\item{field_sheet_filepath}{The filepath and name desired for the workbook containing field sheets.}
+
 \item{added_sample_plan}{The object created by running \code{add_sample_plan()}. This is a named list containing elements
 "number_of_samples_added" and "sample_ids_created". "sample_ids_created" is a table and must contain a column
 "sample_event_id".}
-
-\item{field_sheet_filepath}{The filepath and name desired for the workbook containing field sheets.}
 }
 \value{
 A Workbook object from \code{\link[openxlsx]{createWorkbook}} with a worksheet for each sampling event in the
@@ -34,7 +36,7 @@ sample_plan_2022_final <- read_csv("data-raw/2022_sample_plan.csv") |> distinct_
 2022_sample_plan <- add_sample_plan(con, sample_plan_2022_final, verbose = TRUE)
 
 # create workbook with field sheets for all sample event IDs in the 2022 sample plan
-create_multiple_field_sheets(added_sample_plan = 2022_sample_plan, "data-raw/2022_field_sheets.xlsx")
+create_multiple_field_sheets(con, added_sample_plan = 2022_sample_plan, "data-raw/2022_field_sheets.xlsx")
 }
 \seealso{
 Other field sheet helpers: 
