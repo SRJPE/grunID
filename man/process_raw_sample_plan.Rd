@@ -4,7 +4,10 @@
 \alias{process_raw_sample_plan}
 \title{Process Raw Sample Plan}
 \usage{
-process_raw_sample_plan(filepath)
+process_raw_sample_plan(filepath, season)
+}
+\arguments{
+\item{season}{format YYYY}
 }
 \value{
 a list object containing a data frame \code{clean_sample_plan} with the columns

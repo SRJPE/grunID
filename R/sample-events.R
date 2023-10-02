@@ -271,6 +271,7 @@ partition_df_to_size <- function(df, chunk_size) {
 #' Process Raw Sample Plan
 #' @description `process_raw_sample_plan`
 #' @param filepath
+#' @param season format YYYY
 #' @return a list object containing a data frame `clean_sample_plan` with the columns
 #' * location_code
 #' * sample_event_number
@@ -291,30 +292,33 @@ partition_df_to_size <- function(df, chunk_size) {
 #' process_raw_sample_plan(filepath = "data-raw/2024_raw_sample_plan.xlsx")
 #' @export
 #' @md
-process_raw_sample_plan <- function(filepath) {
+process_raw_sample_plan <- function(filepath, season) {
 
   # read in file and skip first row
   raw_sample_plan <- suppressMessages(readxl::read_xlsx(filepath, skip = 1))
+  fork_length_upper_limit <- 200
+  location_code_lookup <- c("BTC", "BUT", "CLR", "DER", "MIL", "DEL", "KNL",
+                            "TIS", "F61", "F17", "YUR")
 
   # manipulate into long data frame format
   clean_sample_plan <- raw_sample_plan |>
+    dplyr::filter(`Bin FL ranges (mm)` != "Per-Event Total") |>
     tidyr::fill(Site) |>
     tidyr::pivot_longer(cols = E1:E14,
                         names_to = "sample_event_number",
                         values_to = "expected_number_of_samples") |>
     dplyr::filter(!is.na(expected_number_of_samples)) |>
     dplyr::mutate(fork_lengths = ifelse(stringr::str_detect(`Bin FL ranges (mm)`, "\\+"),
-                                        stringr::str_replace(`Bin FL ranges (mm)`, "\\+", "- \\+"),
+                                        stringr::str_replace(`Bin FL ranges (mm)`, "\\+",
+                                                             paste0("-", fork_length_upper_limit)),
                                         `Bin FL ranges (mm)`),
                   sample_event_number = stringr::str_remove_all(sample_event_number, "E")) |>
     tidyr::separate_wider_delim(Site, delim = "(",
                                 names = c("Name", "location_code")) |>
     tidyr::separate_wider_delim(fork_lengths, delim = "-",
                                 names = c("min_fork_length", "max_fork_length")) |>
-    dplyr::mutate(location_code = stringr::str_remove_all(location_code, "\\)"),
-                  location_code = substr(location_code, 1, 3),
-                  max_fork_length = ifelse(stringr::str_detect(max_fork_length, "\\+"), min_fork_length, max_fork_length),
-                  first_sample_date = NA) |>
+    dplyr::mutate(location_code = stringr::str_extract(location_code, paste(location_code_lookup, collapse = "|")),
+                  first_sample_date = paste0(season, "-01-01")) |> # TODO replace this
     dplyr::select(location_code, sample_event_number, first_sample_date,
                   sample_bin_code = Bin, min_fork_length, max_fork_length,
                   expected_number_of_samples)
