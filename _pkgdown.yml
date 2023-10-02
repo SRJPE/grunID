@@ -64,6 +64,7 @@ reference:
   contents:
   - process_plate_layout
   - process_raw_assay_results
+  - process_raw_sample_plan
   - process_sherlock
   - process_well_sample_details
 

@@ -6,7 +6,8 @@ library(readxl)
 library(DBI)
 library(grunID)
 
-# establish connection
+
+# step 1: establish connection --------------------------------------------
 cfg <- config::get()
 # at this point config has the creds
 con <- DBI::dbConnect(RPostgres::Postgres(),
@@ -16,13 +17,18 @@ con <- DBI::dbConnect(RPostgres::Postgres(),
                user = cfg$username,
                password = cfg$password)
 
-con <- gr_db_connect()
+#con <- gr_db_connect()
 
-# read in sample plan created for the season. this contains
-# contains location codes, sample events, sample bins,
-# min/max fork lengths, sample dates, and sample IDs.
-# needs to be in tidy format
-# TODO this needs to be made by users at the beginning of the season
+
+# step 2: add sample plan and generate field sheets -------------------------------
+
+# if starting with a raw sample plan similar to "data-raw/2024_raw_sample_plan.xlsx"
+# use process raw sample plan function:
+sample_plan_2024 <- process_raw_sample_plan("data-raw/2024_raw_sample_plan.xlsx", 2024)
+sample_ids_2024 <- add_sample_plan(con, sample_plan_2024, verbose = TRUE)
+
+# if already in tidy format, read in and then add sample plan
+# this example code is for only one location
 sample_plan_2022_final <- read_csv("data-raw/2022_sample_plan.csv") |> distinct_all()
 
 # filter sample plan to locations (this isn't necessary but helpful for
@@ -42,7 +48,7 @@ feather_61_sample_plan <- sample_plan_2022_final |>
 feather_61_IDs <- add_sample_plan(con, feather_61_sample_plan, verbose = TRUE)
 
 # create workbook containing multiple field sheets
-create_multiple_field_sheets(added_sample_plan = feather_61_IDs, "data-raw/F61_test.xlsx")
+create_multiple_field_sheets(con, 2024, "data-raw/2024_field_sheets_test.xlsx")
 
 # step 3: send field sheets out to monitoring crews to gather samples
 
