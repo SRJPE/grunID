@@ -48,9 +48,7 @@ feather_61_sample_plan <- sample_plan_2022_final |>
 feather_61_IDs <- add_sample_plan(con, feather_61_sample_plan, verbose = TRUE)
 
 # create workbook containing multiple field sheets
-create_multiple_field_sheets(con,
-                             sample_event_ids = sample_ids_2024$sample_ids_created$sample_event_id,
-                             "data-raw/2024_field_sheets_test.xlsx")
+create_multiple_field_sheets(con, 2024, "data-raw/2024_field_sheets_test.xlsx")
 
 # step 3: send field sheets out to monitoring crews to gather samples
 

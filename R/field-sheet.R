@@ -169,9 +169,7 @@ get_field_sheet_event_plan <- function(con, sample_event_id_arg) {
 #' one function. Field sheets are created for all unique sample event IDs in a given sample plan.
 #' `get_field_sheet_sample_plan()` and `create_field_sheet()` can still be run independently to create one field
 #' sheet at a time.
-#' @param added_sample_plan The object created by running `add_sample_plan()`. This is a named list containing elements
-#' "number_of_samples_added" and "sample_ids_created". "sample_ids_created" is a table and must contain a column
-#' "sample_event_id".
+#' @param season format YYYY
 #' @param field_sheet_filepath The filepath and name desired for the workbook containing field sheets.
 #' @param con A valid connection to the database
 #' @returns A Workbook object from \code{\link[openxlsx]{createWorkbook}} with a worksheet for each sampling event in the
@@ -187,9 +185,15 @@ get_field_sheet_event_plan <- function(con, sample_event_id_arg) {
 #' @export
 #' @family field sheet helpers
 #' @md
-create_multiple_field_sheets <- function(con, sample_event_ids, field_sheet_filepath) {
+create_multiple_field_sheets <- function(con, season, field_sheet_filepath) {
   # create workbook to append each sampling event tab
   wb <- openxlsx::createWorkbook()
+
+  # get season sample_events
+  sample_event_ids <- dplyr::tbl(con, "sample_event") |>
+    dplyr::filter(lubridate::year(first_sample_date) == season) |>
+    dplyr::collect() |>
+    dplyr::pull(id)
 
   # loop through unique sample event IDs (input to get_field_sheet_event_plan) to append
   # workbooks
