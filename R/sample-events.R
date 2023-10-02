@@ -4,8 +4,8 @@
 #' @param sample_plan A table containing the following columns from a sample plan:
 #' `location_code`, `sample_event_number`, `first_sample_date`, `sample_bin_code`, `min_fork_length`,
 #' `max_fork_length`, and `expected_number_of_samples`.
-#' @return a named list containing the number of samples added and all unique
-#' sampling event IDs created.
+#' @return a named value `number_of_samples_added` reflecting the number of
+#' samples added to the database.
 #' @examples
 #' # example database connection
 #' con <- gr_db_connect()
@@ -21,8 +21,7 @@ add_sample_plan <- function(con, sample_plan, verbose = FALSE) {
   sample_ids <- add_samples(con, sample_plan, sample_id_insert, verbose = verbose)
   number_of_samples_added <- set_sample_status(con, sample_ids, 1)
 
-  return(list("number_of_samples_added" = number_of_samples_added,
-              "sample_ids_created" = sample_event_ids))
+  return(c("number_of_samples_added" = number_of_samples_added))
 }
 
 #' Create sample events
@@ -288,9 +287,9 @@ partition_df_to_size <- function(df, chunk_size) {
 
 #' Process Raw Sample Plan
 #' @description `process_raw_sample_plan`
-#' @param filepath
-#' @param season format YYYY
-#' @return a list object containing a data frame `clean_sample_plan` with the columns
+#' @param filepath the filepath of the raw sample plan to be processed
+#' @param season the season for which the sample plan was developed. format YYYY
+#' @return a tidy dataframe that can be passed directly to `add_sample_plan()`. Has the following columns:
 #' * location_code
 #' * sample_event_number
 #' * first_sample_date
@@ -298,16 +297,13 @@ partition_df_to_size <- function(df, chunk_size) {
 #' * min_fork_length
 #' * max_fork_length
 #' * expected_number_of_samples
-#'
-#' and a data frame `location_code_sample_summaries` with the columns
-#' * location_code
-#' * max_allowed
-#' * catch_22
-#' * catch_23
-#' * total_samples
+#' @details this function assigns an maximum fork length of 200mm to all fork length bins that
+#' are a "plus" (i.e. a fork length bin that is `130+` will be assigned a minimum fork length of 130 and
+#' a maximum fork length of `200`). The function will also assign a `first_sample_date` of January 1st
+#' of the season (if you pass `season = 2024`, the `first_sample_date` will be `2024-01-01`).
 #' @examples
 #' # example database connection
-#' process_raw_sample_plan(filepath = "data-raw/2024_raw_sample_plan.xlsx")
+#' process_raw_sample_plan(filepath = "data-raw/2024_raw_sample_plan.xlsx", season = 2024)
 #' @export
 #' @md
 process_raw_sample_plan <- function(filepath, season) {
@@ -336,7 +332,7 @@ process_raw_sample_plan <- function(filepath, season) {
     tidyr::separate_wider_delim(fork_lengths, delim = "-",
                                 names = c("min_fork_length", "max_fork_length")) |>
     dplyr::mutate(location_code = stringr::str_extract(location_code, paste(location_code_lookup, collapse = "|")),
-                  first_sample_date = paste0(season, "-01-01")) |> # TODO replace this
+                  first_sample_date = paste0(season, "-01-01")) |>
     dplyr::select(location_code, sample_event_number, first_sample_date,
                   sample_bin_code = Bin, min_fork_length, max_fork_length,
                   expected_number_of_samples)
@@ -353,20 +349,6 @@ process_raw_sample_plan <- function(filepath, season) {
   cli::cli_alert_success("sample plan processed", "green")
 
   return(final_sample_plan)
-  # extract summary rows
-  # summaries <- raw_sample_plan |>
-  #   dplyr::select(Site,
-  #                 total_samples = ...18,
-  #                 max_allowed = ...19,
-  #                 catch_22 = ...20,
-  #                 catch_23 = ...21) |>
-  #   tidyr::drop_na(Site) |>
-  #   tidyr::separate_wider_delim(Site, delim = "(", names = c("Name", "location_code")) |>
-  #   dplyr::mutate(location_code = stringr::str_remove_all(location_code, "\\)")) |>
-  #   dplyr::select(-Name)
-  #
-  # return(list("clean_sample_plan" = final_sample_plan,
-  #             "location_code_sample_summaries" = summaries))
 
 }
 

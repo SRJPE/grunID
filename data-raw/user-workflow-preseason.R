@@ -6,7 +6,8 @@ library(readxl)
 library(DBI)
 library(grunID)
 
-# establish connection
+
+# step 1: establish connection --------------------------------------------
 cfg <- config::get()
 # at this point config has the creds
 con <- DBI::dbConnect(RPostgres::Postgres(),
@@ -18,17 +19,16 @@ con <- DBI::dbConnect(RPostgres::Postgres(),
 
 #con <- gr_db_connect()
 
-# read in raw sample plan created for the season.
-# if in raw format, can process it:
+
+# step 2: add sample plan and generate field sheets -------------------------------
+
+# if starting with a raw sample plan similar to "data-raw/2024_raw_sample_plan.xlsx"
+# use process raw sample plan function:
 sample_plan_2024 <- process_raw_sample_plan("data-raw/2024_raw_sample_plan.xlsx", 2024)
-# sample_plan_2024 <- sample_plan_2024 |>
-#   filter(!is.na(sample_bin_code)) |>
-#   mutate(first_sample_date = as.Date("2024-01-01") + sample_event_number)
-# remaining <- sample_plan_2024 |>
-#   filter(!location_code %in% c("F61", "F71"))
 sample_ids_2024 <- add_sample_plan(con, sample_plan_2024, verbose = TRUE)
 
-# if already in tidy format, can just read in:
+# if already in tidy format, read in and then add sample plan
+# this example code is for only one location
 sample_plan_2022_final <- read_csv("data-raw/2022_sample_plan.csv") |> distinct_all()
 
 # filter sample plan to locations (this isn't necessary but helpful for
