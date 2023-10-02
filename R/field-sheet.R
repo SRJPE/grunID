@@ -199,11 +199,10 @@ create_multiple_field_sheets <- function(con, season, field_sheet_filepath) {
   # workbooks
   unique_sample_event_ids <- unique(sample_event_ids)
 
-  for(i in unique_sample_event_ids){
+  purrr::walk(unique_sample_event_ids, function(i) {
+
     # use get_field_sheet_event_plan() to create a data frame containing content for the
     # field sheets for sampling events
-    # get_field_sheet_event_plan() retrieves sampling event information from the database
-    # that is needed to prepare field sheets. Looks up based on sampling event ID
     plan <- get_field_sheet_event_plan(con, sample_event_id = i)
 
     # append a field sheet to the workbook for that sample event
@@ -217,7 +216,13 @@ create_multiple_field_sheets <- function(con, season, field_sheet_filepath) {
                              first_sample_date = plan$first_sample_date,
                              sample_location = plan$location_name,
                              sample_location_code = plan$location_code)
-  }
+  },
+  .progress = list(
+    type = "iterator",
+    clear = TRUE,
+    name = "writing field sheets to excel file"
+  ))
+
   # then save
   openxlsx::saveWorkbook(wb, paste0(field_sheet_filepath), overwrite = TRUE)
 
