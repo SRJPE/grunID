@@ -29,14 +29,28 @@ get_samples <- function(con, ...) {
 #' @md
 get_samples_by_season <- function(con, season) {
 
-  if(nchar(season) != 2) {
-    stop("You must provide a season in the format YY (i.e. for the 2022 season,
-         please pass the argument as season = 22")
+  if(any(sapply(season, function(i) {nchar(i) == 4})) == FALSE) {
+    stop("You must provide seasons in the format YYYY (i.e. for the 2022 season,
+         please pass the argument as season = 2022; for seasons 2022 and 2023,
+         provide in format c(2022, 2023)")
   }
 
-  season <- as.character(season)
-
   is_valid_connection(con)
+
+  season <- as.integer(season)
+
+  min_date <- as.Date(paste0(min(season) - 1, "-10-01"))
+  max_date <- as.Date(paste0(max(season), "-09-30"))
+
+  sample_event_ids <- dplyr::tbl(con, "sample_event") |>
+    dplyr::filter(between(first_sample_date, min_date, max_date)) |>
+    dplyr::collect() |>
+    dplyr::pull(id)
+
+  sample_bin_ids <- dplyr::tbl(con, "sample_bin") |>
+    dplyr::filter(sample_event_id %in% sample_event_ids) |>
+    dplyr::collect() |>
+    dplyr::pull(id)
 
   status_codes <- dplyr::tbl(con, "status_code") |>
     dplyr::select(status_code_id = id, status = status_code_name) |>
@@ -47,10 +61,8 @@ get_samples_by_season <- function(con, season) {
     dplyr::collect()
 
   samples <- dplyr::tbl(con, "sample") |>
-    dplyr::mutate(season_id = substr(id, 4, 5)) |>
-    dplyr::filter(season_id %in% season) |>
+    dplyr::filter(sample_bin_id %in% sample_bin_ids) |>
     dplyr::rename(sample_id = id) |>
-    dplyr::select(-season_id) |>
     dplyr::collect()
 
   sample_status <- dplyr::tbl(con, "sample_status") |>
