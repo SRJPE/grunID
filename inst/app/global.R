@@ -81,3 +81,9 @@ all_locations <- dplyr::tbl(con, "sample_location") |>
   dplyr::distinct(code) |>
   dplyr::filter(!code %in% c("CONTROL", "TEST2", "TEST")) |>
   dplyr::pull(code)
+
+available_years <- dplyr::tbl(con, "sample_event") |>
+  dplyr::mutate(year = lubridate::year(first_sample_date)) |>
+  dplyr::distinct(year) |>
+  dplyr::collect() |>
+  dplyr::pull(year)

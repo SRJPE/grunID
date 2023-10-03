@@ -81,7 +81,7 @@ navbarPage(
              sidebarPanel(
                width = 3,
                selectInput("season_filter", "Season Filter",
-                           c("2022", "2023", "2024")) # TODO pull available years from db (sample event table first sample date)
+                           available_years)
              ),
              mainPanel(
                DT::dataTableOutput("season_table")

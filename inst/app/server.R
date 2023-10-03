@@ -128,8 +128,7 @@ function(input, output, session) {
 
   output$season_table <- DT::renderDataTable(DT::datatable({
 
-    season_filter <- input$season_filter |>
-      substr(3, 4)
+    season_filter <- input$season_filter
     data <- grunID::get_samples_by_season(con, season_filter)
     data
   },
