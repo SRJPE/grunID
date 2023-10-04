@@ -157,11 +157,14 @@ function(input, output, session) {
 
   observeEvent(input$dataset_type_description, {
     showModal(modalDialog(
-      "There are two dataset 'types' currently available. The raw dataset has all the same
-      variables as the clean dataset, but with additional information about assay name,
-      raw fluoresence values, postive detections and the threshold values used to calculate them,
-      and the plate run ID. The clean dataset has no raw data and provides a 'cleaner'
-      dataset geared toward use in a probabilistic length-at-date (PLAD) model. ",
+      HTML("<h3> There are three dataset 'types' currently available. </h3>
+           The <strong>clean</strong> dataset has no raw data and generates a dataset formatted
+           for input to a probabilistic length-at-date (PLAD) model. </br> </br>
+           The <strong>raw</strong> dataset has all the same variables as the clean dataset, but with additional information about assay name,
+           raw fluoresence values, postive detections and the threshold values used to calculate them,
+           and the plate run ID. </br> </br>
+           The <strong>unprocessed</strong> dataset has all the same variables as the clean dataset but with additional
+           information like raw fluoresence, time, sample type, assay, background value, and well location"),
       size = "l"
     ))
   })

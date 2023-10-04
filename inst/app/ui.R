@@ -88,7 +88,7 @@ navbarPage(
                br(),
                br(),
                selectInput("dataset_type_filter", "Dataset Type",
-                           c("raw", "clean")),
+                           c("raw", "clean", "unprocessed")),
                actionButton("dataset_type_description",
                             "What are the dataset types?",
                             icon = icon("circle-info")),
