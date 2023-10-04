@@ -192,7 +192,7 @@ create_multiple_field_sheets <- function(con, season, field_sheet_filepath) {
   # create workbook to append each sampling event tab
   wb <- openxlsx::createWorkbook()
 
-  # season includes 2 months from previous year
+  # season includes 3 months from previous year
   min_date <- as.Date(paste0(season - 1, "-10-01"))
   max_date <- as.Date(paste0(season, "-09-30"))
 
