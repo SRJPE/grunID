@@ -10,12 +10,39 @@ get_samples_by_season(con, season, dataset = c("raw", "clean"))
 \item{con}{connection to the database}
 
 \item{season}{year in format YYYY. You can pass in a min and max season as c(YYYY, YYYY)}
+
+\item{dataset}{either "raw" or "clean".}
 }
 \description{
 View sample by season with status and run (if assigned)
 }
+\details{
+the parameter \code{dataset} can be used to determine what information is
+included in the tibble. Both the \code{raw} and \code{clean} datasets contain the following
+variables:
+\itemize{
+\item stream_name
+\item datetime_collected
+\item sample_id
+\item assigned run
+\item field_run_type_id
+\item fork_length_mm
+\item fin_clip
+\item status
+\item updated_at
+}
+
+If you select \code{dataset = "raw"}, the tibble will additionally contain:
+\itemize{
+\item assay_name
+\item raw_fluorescence
+\item threshold
+\item positive_detection
+\item plate_run_id
+}
+}
 \examples{
 # example database connection
 con <- gr_db_connect()
-2022_2023_samples <- get_samples_by_season(con, season == c(2022, 2023))
+2022_2023_samples <- get_samples_by_season(con, season = c(2022, 2023), dataset = "clean")
 }

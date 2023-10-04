@@ -14,10 +14,33 @@ get_samples <- function(con, ...) {
 #' @description View sample by season with status and run (if assigned)
 #' @param con connection to the database
 #' @param season year in format YYYY. You can pass in a min and max season as c(YYYY, YYYY)
+#' @param dataset either "raw" or "clean".
+#' @details the parameter `dataset` can be used to determine what information is
+#' included in the tibble. Both the `raw` and `clean` datasets contain the following
+#' variables:
+#'
+#' * stream_name
+#' * datetime_collected
+#' * sample_id
+#' * assigned run
+#' * field_run_type_id
+#' * fork_length_mm
+#' * fin_clip
+#' * status
+#' * updated_at
+#'
+#' If you select `dataset = "raw"`, the tibble will additionally contain:
+#'
+#' * assay_name
+#' * raw_fluorescence
+#' * threshold
+#' * positive_detection
+#' * plate_run_id
+#'
 #' @examples
 #' # example database connection
 #' con <- gr_db_connect()
-#' 2022_2023_samples <- get_samples_by_season(con, season == c(2022, 2023))
+#' 2022_2023_samples <- get_samples_by_season(con, season = c(2022, 2023), dataset = "clean")
 #' @export
 #' @md
 get_samples_by_season <- function(con, season, dataset = c("raw", "clean")) {
