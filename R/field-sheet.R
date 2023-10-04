@@ -199,7 +199,6 @@ create_multiple_field_sheets <- function(con, season, field_sheet_filepath) {
   # get season sample_events
   sample_event_ids <- dplyr::tbl(con, "sample_event") |>
     dplyr::filter(dplyr::between(first_sample_date, min_date, max_date)) |>
-    #dplyr::filter(lubridate::year(first_sample_date) == season) |>
     dplyr::collect() |>
     dplyr::pull(id)
 
