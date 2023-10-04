@@ -148,8 +148,9 @@ function(input, output, session) {
   observeEvent(input$season_filter_description, {
     showModal(modalDialog(
       "Currently the season filter will pull all samples from sampling events in the
-      year provided up to September 30th, and samples from the previous year after
-      October 1st.",
+      year provided up to September 30th and samples from the previous year after
+      October 1st. So for season = 2022 the query will return all samples from
+      10-01-2021 - 09-30-2022",
       size = "l"
     ))
   })
@@ -164,5 +165,36 @@ function(input, output, session) {
       size = "l"
     ))
   })
+
+output$season_plot <- renderPlot(
+  grunID::get_samples_by_season(con, season = input$season_filter, dataset = input$dataset_type_filter) |>
+    dplyr::mutate(week = lubridate::week(datetime_collected)) |>
+    dplyr::filter(!is.na(week)) |>
+    dplyr::group_by(week) |>
+    dplyr::summarise(prop_spring_gen = sum(genetic_run_assignment == "Spring") / n(),
+                     prop_spring_field = sum(field_run_assignment == "Spring") / n()) |>
+    dplyr::ungroup() |>
+    tidyr::pivot_longer(c(prop_spring_gen, prop_spring_field),
+                        names_to = "method",
+                        values_to = "prop_spring") |>
+    dplyr::mutate(method = ifelse(method == "prop_spring_field", "Field assignment", "Genetic assignment")) |>
+    ggplot2::ggplot(aes(x = week, y = prop_spring, color = method)) +
+    geom_line() +
+    xlab("Week") + xlim(c(0, 52)) +
+    ylab("Proportion Spring Run") + ylim(c(0, 1)) +
+    scale_color_manual(values = c("#F1BB7B", "#FD6467")) +
+    theme_minimal() +
+    theme(legend.position = "bottom")
+  )
+
+
+  observeEvent(input$show_season_plot, {
+    showModal(
+      modalDialog(
+        title = "Proportion spring run by weeks within season",
+        plotOutput("season_plot"),
+        size = "l")
+      )
+    })
 
 }

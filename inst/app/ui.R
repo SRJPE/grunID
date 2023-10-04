@@ -92,6 +92,10 @@ navbarPage(
                actionButton("dataset_type_description",
                             "What are the dataset types?",
                             icon = icon("circle-info")),
+               br(),
+               br(),
+               actionButton("show_season_plot", "Show Season Plot",
+                            icon = icon("chart-line"))
              ),
              mainPanel(
                DT::dataTableOutput("season_table")
