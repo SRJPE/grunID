@@ -4,28 +4,28 @@
 \alias{get_samples_by_season}
 \title{Get Samples by Season}
 \usage{
-get_samples_by_season(con, season, dataset = c("raw", "clean"))
+get_samples_by_season(con, season, dataset = c("raw", "clean", "unprocessed"))
 }
 \arguments{
 \item{con}{connection to the database}
 
 \item{season}{year in format YYYY. You can pass in a min and max season as c(YYYY, YYYY)}
 
-\item{dataset}{either "raw" or "clean".}
+\item{dataset}{either "raw", "clean", or "unprocessed".}
 }
 \description{
 View sample by season with status and run (if assigned)
 }
 \details{
 the parameter \code{dataset} can be used to determine what information is
-included in the tibble. Both the \code{raw} and \code{clean} datasets contain the following
+included in the tibble. The \code{raw}, \code{clean}, and \code{unprocessed} datasets contain the following
 variables:
 \itemize{
 \item stream_name
 \item datetime_collected
 \item sample_id
-\item assigned run
-\item field_run_type_id
+\item genetic_run_assignment
+\item field_run_assignment
 \item fork_length_mm
 \item fin_clip
 \item status
@@ -38,6 +38,17 @@ If you select \code{dataset = "raw"}, the tibble will additionally contain:
 \item raw_fluorescence
 \item threshold
 \item positive_detection
+\item plate_run_id
+}
+
+If you select \code{dataset = "unprocessed"}, the tibble will additionally contain:
+\itemize{
+\item assay_name
+\item sample_type_name
+\item raw_fluorescence
+\item background_value
+\item time
+\item well_location
 \item plate_run_id
 }
 }

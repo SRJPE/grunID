@@ -14,16 +14,16 @@ get_samples <- function(con, ...) {
 #' @description View sample by season with status and run (if assigned)
 #' @param con connection to the database
 #' @param season year in format YYYY. You can pass in a min and max season as c(YYYY, YYYY)
-#' @param dataset either "raw" or "clean".
+#' @param dataset either "raw", "clean", or "unprocessed".
 #' @details the parameter `dataset` can be used to determine what information is
-#' included in the tibble. Both the `raw` and `clean` datasets contain the following
+#' included in the tibble. The `raw`, `clean`, and `unprocessed` datasets contain the following
 #' variables:
 #'
 #' * stream_name
 #' * datetime_collected
 #' * sample_id
-#' * assigned run
-#' * field_run_type_id
+#' * genetic_run_assignment
+#' * field_run_assignment
 #' * fork_length_mm
 #' * fin_clip
 #' * status
@@ -37,18 +37,31 @@ get_samples <- function(con, ...) {
 #' * positive_detection
 #' * plate_run_id
 #'
+#' If you select `dataset = "unprocessed"`, the tibble will additionally contain:
+#'
+#' * assay_name
+#' * sample_type_name
+#' * raw_fluorescence
+#' * background_value
+#' * time
+#' * well_location
+#' * plate_run_id
+#'
 #' @examples
 #' # example database connection
 #' con <- gr_db_connect()
 #' 2022_2023_samples <- get_samples_by_season(con, season = c(2022, 2023), dataset = "clean")
 #' @export
 #' @md
-get_samples_by_season <- function(con, season, dataset = c("raw", "clean")) {
+get_samples_by_season <- function(con, season, dataset = c("raw", "clean", "unprocessed")) {
 
   if(any(sapply(season, function(i) {nchar(i) == 4})) == FALSE) {
     stop("You must provide seasons in the format YYYY (i.e. for the 2022 season,
          please pass the argument as season = 2022; for seasons 2022 and 2023,
          provide in format c(2022, 2023)")
+  }
+  if(!dataset %in% c("raw", "clean", "unprocessed")) {
+    stop("Please provide a dataset value of either 'raw', 'clean', or 'unprocessed'")
   }
 
   is_valid_connection(con)
@@ -104,10 +117,13 @@ get_samples_by_season <- function(con, season, dataset = c("raw", "clean")) {
   clean_results <- samples |>
     dplyr::left_join(sample_bin_ids, by = c("sample_bin_id" = "id")) |>
     dplyr::left_join(sample_status, by = "sample_id") |>
-    dplyr::left_join(run_status, by = "sample_id") |> # TODO do we need to join for field_run_type_id here as well?
+    dplyr::left_join(run_codes |>
+                       dplyr::rename(field_run_assignment = assigned_run),
+                     by = c("field_run_type_id" = "run_type_id")) |>
+    dplyr::left_join(run_status, by = "sample_id") |>
     dplyr::select(stream_name, datetime_collected, sample_id,
-                  assigned_run, field_run_type_id, fork_length_mm,
-                  fin_clip, status, updated_at)
+                  genetic_run_assignment = assigned_run, field_run_assignment,
+                  fork_length_mm, fin_clip, status, updated_at)
 
   if(dataset == "raw") {
 
@@ -129,10 +145,30 @@ get_samples_by_season <- function(con, season, dataset = c("raw", "clean")) {
 
     return(raw_results)
 
-    # TODO query from raw assay results ?
-    # sample_types <- dplyr::tbl(con, "sample_type") |>
-    #   dplyr::collect() |>
-    #   dplyr::select(sample_type_id = id, sample_type_name)
+  } else if (dataset == "unprocessed") {
+
+    # tables to join
+    assays <- dplyr::tbl(con, "assay") |>
+      dplyr::collect() |>
+      dplyr::select(assay_id = id, assay_name)
+
+    sample_types <- dplyr::tbl(con, "sample_type") |>
+      dplyr::collect() |>
+      dplyr::select(sample_type_id = id, sample_type_name)
+
+    unprocessed_assay_results <- dplyr::tbl(con, "raw_assay_result") |>
+      dplyr::collect() |>
+      dplyr::filter(sample_id %in% clean_results$sample_id) |>
+      dplyr::left_join(assays, by = "assay_id") |>
+      dplyr::left_join(sample_types, by = "sample_type_id") |>
+      dplyr::select(sample_id, assay_name, sample_type_name, raw_fluorescence,
+                    background_value, time, well_location, plate_run_id)
+
+    unprocessed_results <- clean_results |>
+      dplyr::left_join(unprocessed_assay_results, by = "sample_id") |>
+      dplyr::relocate(c(status, updated_at), .after = plate_run_id)
+
+    return(unprocessed_results)
 
   } else if(dataset == "clean") {
     return(clean_results)
