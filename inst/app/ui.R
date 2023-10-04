@@ -81,7 +81,17 @@ navbarPage(
              sidebarPanel(
                width = 3,
                selectInput("season_filter", "Season Filter",
-                           available_years)
+                           available_years),
+               actionButton("season_filter_description",
+                            "What is a season?",
+                            icon = icon("circle-info")),
+               br(),
+               br(),
+               selectInput("dataset_type_filter", "Dataset Type",
+                           c("raw", "clean")),
+               actionButton("dataset_type_description",
+                            "What are the dataset types?",
+                            icon = icon("circle-info")),
              ),
              mainPanel(
                DT::dataTableOutput("season_table")

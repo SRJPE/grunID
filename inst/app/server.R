@@ -129,7 +129,10 @@ function(input, output, session) {
   output$season_table <- DT::renderDataTable(DT::datatable({
 
     season_filter <- input$season_filter
-    data <- grunID::get_samples_by_season(con, season_filter)
+    dataset_filter <- input$dataset_type_filter
+    data <- grunID::get_samples_by_season(con,
+                                          season = season_filter,
+                                          dataset = dataset_filter)
     data
   },
   extensions = "Buttons",
@@ -141,5 +144,25 @@ function(input, output, session) {
                  pageLength = 20)),
   server = FALSE
   )
+
+  observeEvent(input$season_filter_description, {
+    showModal(modalDialog(
+      "Currently the season filter will pull all samples from sampling events in the
+      year provided up to September 30th, and samples from the previous year after
+      October 1st.",
+      size = "l"
+    ))
+  })
+
+  observeEvent(input$dataset_type_description, {
+    showModal(modalDialog(
+      "There are two dataset 'types' currently available. The raw dataset has all the same
+      variables as the clean dataset, but with additional information about assay name,
+      raw fluoresence values, postive detections and the threshold values used to calculate them,
+      and the plate run ID. The clean dataset has no raw data and provides a 'cleaner'
+      dataset geared toward use in a probabilistic length-at-date (PLAD) model. ",
+      size = "l"
+    ))
+  })
 
 }
