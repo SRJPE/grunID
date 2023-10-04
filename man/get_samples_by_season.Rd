@@ -4,25 +4,18 @@
 \alias{get_samples_by_season}
 \title{Get Samples by Season}
 \usage{
-get_samples_by_season(con, season)
+get_samples_by_season(con, season, dataset = c("raw", "clean"))
 }
 \arguments{
 \item{con}{connection to the database}
 
-\item{season}{year in format YY}
+\item{season}{year in format YYYY. You can pass in a min and max season as c(YYYY, YYYY)}
 }
 \description{
 View sample by season with status and run (if assigned)
 }
 \examples{
 # example database connection
-cfg <- config::get()
-con <- DBI::dbConnect(RPostgres::Postgres(),
-                      dbname = cfg$dbname,
-                      host = cfg$host,
-                      port = cfg$port,
-                      user = cfg$username,
-                      password = cfg$password)
-
+con <- gr_db_connect()
 2022_2023_samples <- get_samples_by_season(con, season == c(2022, 2023))
 }
