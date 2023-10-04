@@ -88,9 +88,3 @@ available_years <- dplyr::tbl(con, "sample_event") |>
   dplyr::collect() |>
   dplyr::pull(year)
 
-
-# fake <- get_samples_by_season(con, 2024, "clean") |>
-#   slice_sample(n = 100) |>
-#   mutate(datetime_collected = seq(as.Date("2022-01-10"), as.Date("2022-04-19"), by = 1),
-#          genetic_run_assignment = rep(c("Spring", "Winter", "Fall", "Late-fall"), 25),
-#          field_run_assignment = rep(c("Spring", "Fall"), 50))
