@@ -26,6 +26,8 @@ multiple formatted field worksheets for sample event IDs in a given sample plan.
 one function. Field sheets are created for all unique sample event IDs in a given sample plan.
 \code{get_field_sheet_sample_plan()} and \code{create_field_sheet()} can still be run independently to create one field
 sheet at a time.
+For a given season, the function will gather all sampling events for that year up to September 30th and all sampling events
+from the previous year after October 1st.
 }
 \examples{
 con <- gr_db_connect()
@@ -34,7 +36,7 @@ sample_plan_2022_final <- read_csv("data-raw/2022_sample_plan.csv") |> distinct_
 2022_sample_plan <- add_sample_plan(con, sample_plan_2022_final, verbose = TRUE)
 
 # create workbook with field sheets for all sample event IDs in the 2022 sample plan
-create_multiple_field_sheets(con, added_sample_plan = 2022_sample_plan, "data-raw/2022_field_sheets.xlsx")
+create_multiple_field_sheets(con, season = 2022, "data-raw/2022_field_sheets.xlsx")
 }
 \seealso{
 Other field sheet helpers: 
