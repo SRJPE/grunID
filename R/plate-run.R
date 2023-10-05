@@ -115,7 +115,7 @@ add_new_plate_results <- function(con, protocol_name, genetic_method,
 get_plate_run <- function(con, ...) {
 
   q_results <- dplyr::tbl(con, "plate_run") |>
-    dplyr::filter(active = TRUE, ...) |>
+    dplyr::filter(active == TRUE, ...) |>
     collect()
 
   if (nrow(q_results) > 1 ) {
