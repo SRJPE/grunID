@@ -130,10 +130,13 @@ function(input, output, session) {
 
     season_filter <- input$season_filter
     dataset_filter <- input$dataset_type_filter
-    data <- grunID::get_samples_by_season(con,
-                                          season = season_filter,
-                                          dataset = dataset_filter)
-    data
+
+    memoised_function <- memoise::memoise(grunID::get_samples_by_season,
+                                          # cache = shiny::getShinyOption("cache"))
+                                          cache = session$cache)
+
+    memoised_function(con, season = season_filter, dataset = dataset_filter)
+
   },
   extensions = "Buttons",
   rownames = FALSE,
