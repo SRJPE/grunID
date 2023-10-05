@@ -60,9 +60,8 @@ get_samples_by_season <- function(con, season, dataset = c("raw", "clean", "unpr
          please pass the argument as season = 2022; for seasons 2022 and 2023,
          provide in format c(2022, 2023)")
   }
-  if(!dataset %in% c("raw", "clean", "unprocessed")) {
-    stop("Please provide a dataset value of either 'raw', 'clean', or 'unprocessed'")
-  }
+
+  dataset <- match.arg(dataset)
 
   is_valid_connection(con)
   season <- as.integer(season)
