@@ -62,27 +62,36 @@ get_samples_by_season <- function(con, season, dataset = c("raw", "clean", "unpr
   }
 
   dataset <- match.arg(dataset)
-
   is_valid_connection(con)
   season <- as.integer(season)
 
-  # get additional data for samples
+  samples <- filter_dataset(con, season)
+
+  clean_dataset <- get_clean_dataset(con, filtered_samples = samples)
+
+  if(dataset == "clean") {
+    results <- clean_dataset
+  }
+  if(dataset == "raw") {
+    results <- get_raw_dataset(con, clean_dataset)
+  }
+  if(dataset == "unprocessed") {
+    results <- get_unprocessed_dataset(con, clean_dataset)
+  }
+
+  return(results)
+}
+
+#' Filter dataset by season
+#' @export
+filter_dataset <- function(con, season) {
+  # filter by date
+  min_date <- as.Date(paste0(min(season) - 1, "-10-01"))
+  max_date <- as.Date(paste0(max(season), "-09-30"))
+
   location_codes <- dplyr::tbl(con, "sample_location") |>
     dplyr::select(sample_location_id = id, stream_name) |>
     dplyr::collect()
-
-  status_codes <- dplyr::tbl(con, "status_code") |>
-    dplyr::select(status_code_id = id, status = status_code_name) |>
-    dplyr::collect()
-
-  run_codes <- dplyr::tbl(con, "run_type") |>
-    dplyr::select(run_type_id = id, assigned_run = run_name) |>
-    dplyr::collect()
-
-  # filter by date
-
-  min_date <- as.Date(paste0(min(season) - 1, "-10-01"))
-  max_date <- as.Date(paste0(max(season), "-09-30"))
 
   sample_event_ids <- dplyr::tbl(con, "sample_event") |>
     dplyr::filter(between(first_sample_date, min_date, max_date)) |>
@@ -98,79 +107,97 @@ get_samples_by_season <- function(con, season, dataset = c("raw", "clean", "unpr
 
   samples <- dplyr::tbl(con, "sample") |>
     dplyr::collect() |>
+    dplyr::left_join(sample_bin_ids, by = c("sample_bin_id" = "id")) |>
     dplyr::filter(sample_bin_id %in% sample_bin_ids$id) |>
     dplyr::rename(sample_id = id)
 
+  return(samples)
+}
+
+#' Query database for clean dataset
+#' @export
+get_clean_dataset <- function(con, filtered_samples, sample_bin_ids) {
+
+  # get additional data for samples
+  status_codes <- dplyr::tbl(con, "status_code") |>
+    dplyr::select(status_code_id = id, status = status_code_name) |>
+    dplyr::collect()
+
+  run_codes <- dplyr::tbl(con, "run_type") |>
+    dplyr::select(run_type_id = id, assigned_run = run_name) |>
+    dplyr::collect()
+
   sample_status <- dplyr::tbl(con, "sample_status") |>
     dplyr::collect() |>
-    dplyr::filter(sample_id %in% samples$sample_id) |>
+    dplyr::filter(sample_id %in% filtered_samples$sample_id) |>
     dplyr::left_join(status_codes, by = "status_code_id") |>
     dplyr::select(sample_id, status)
 
-  run_status <- dplyr::tbl(con, "genetic_run_identification") |>
+  assigned_runs <- dplyr::tbl(con, "genetic_run_identification") |>
     dplyr::collect() |>
-    dplyr::filter(sample_id %in% samples$sample_id) |>
+    dplyr::filter(sample_id %in% filtered_samples$sample_id) |>
     dplyr::left_join(run_codes, by = "run_type_id") |>
     dplyr::select(sample_id, assigned_run)
 
-  clean_results <- samples |>
-    dplyr::left_join(sample_bin_ids, by = c("sample_bin_id" = "id")) |>
+  clean_results <- filtered_samples |>
     dplyr::left_join(sample_status, by = "sample_id") |>
     dplyr::left_join(run_codes |>
                        dplyr::rename(field_run_assignment = assigned_run),
                      by = c("field_run_type_id" = "run_type_id")) |>
-    dplyr::left_join(run_status, by = "sample_id") |>
+    dplyr::left_join(assigned_runs, by = "sample_id") |>
     dplyr::select(stream_name, datetime_collected, sample_id,
                   genetic_run_assignment = assigned_run, field_run_assignment,
                   fork_length_mm, fin_clip, status, updated_at)
 
-  if(dataset == "raw") {
+  return(clean_results)
+}
 
-    # assay result table
-    assays <- dplyr::tbl(con, "assay") |>
-      dplyr::collect() |>
-      dplyr::select(assay_id = id, assay_name)
+#' Query database for raw dataset
+#' @export
+get_raw_dataset <- function(con, clean_results) {
 
-    assay_results <- dplyr::tbl(con, "assay_result") |>
-      dplyr::collect() |>
-      dplyr::filter(sample_id %in% clean_results$sample_id) |>
-      dplyr::left_join(assays, by = "assay_id") |>
-      dplyr::select(sample_id, assay_name, raw_fluorescence,
-                    threshold, positive_detection, plate_run_id)
+  # assay result table
+  assays <- dplyr::tbl(con, "assay") |>
+    dplyr::collect() |>
+    dplyr::select(assay_id = id, assay_name)
 
-    raw_results <- clean_results |>
-      dplyr::left_join(assay_results, by = "sample_id") |>
-      dplyr::relocate(c(status, updated_at), .after = plate_run_id)
+  assay_results <- dplyr::tbl(con, "assay_result") |>
+    dplyr::collect() |>
+    dplyr::filter(sample_id %in% clean_results$sample_id) |>
+    dplyr::left_join(assays, by = "assay_id") |>
+    dplyr::select(sample_id, assay_name, raw_fluorescence,
+                  threshold, positive_detection, plate_run_id)
 
-    return(raw_results)
+  raw_results <- clean_results |>
+    dplyr::left_join(assay_results, by = "sample_id") |>
+    dplyr::relocate(c(status, updated_at), .after = plate_run_id)
 
-  } else if (dataset == "unprocessed") {
+  return(raw_results)
+}
 
-    # tables to join
-    assays <- dplyr::tbl(con, "assay") |>
-      dplyr::collect() |>
-      dplyr::select(assay_id = id, assay_name)
+#' Query database for unprocessed dataset
+#' @export
+get_unprocessed_dataset <- function(con, clean_results) {
+  # tables to join
+  assays <- dplyr::tbl(con, "assay") |>
+    dplyr::collect() |>
+    dplyr::select(assay_id = id, assay_name)
 
-    sample_types <- dplyr::tbl(con, "sample_type") |>
-      dplyr::collect() |>
-      dplyr::select(sample_type_id = id, sample_type_name)
+  sample_types <- dplyr::tbl(con, "sample_type") |>
+    dplyr::collect() |>
+    dplyr::select(sample_type_id = id, sample_type_name)
 
-    unprocessed_assay_results <- dplyr::tbl(con, "raw_assay_result") |>
-      dplyr::collect() |>
-      dplyr::filter(sample_id %in% clean_results$sample_id) |>
-      dplyr::left_join(assays, by = "assay_id") |>
-      dplyr::left_join(sample_types, by = "sample_type_id") |>
-      dplyr::select(sample_id, assay_name, sample_type_name, raw_fluorescence,
-                    background_value, time, well_location, plate_run_id)
+  unprocessed_assay_results <- dplyr::tbl(con, "raw_assay_result") |>
+    dplyr::collect() |>
+    dplyr::filter(sample_id %in% clean_results$sample_id) |>
+    dplyr::left_join(assays, by = "assay_id") |>
+    dplyr::left_join(sample_types, by = "sample_type_id") |>
+    dplyr::select(sample_id, assay_name, sample_type_name, raw_fluorescence,
+                  background_value, time, well_location, plate_run_id)
 
-    unprocessed_results <- clean_results |>
-      dplyr::left_join(unprocessed_assay_results, by = "sample_id") |>
-      dplyr::relocate(c(status, updated_at), .after = plate_run_id)
+  unprocessed_results <- clean_results |>
+    dplyr::left_join(unprocessed_assay_results, by = "sample_id") |>
+    dplyr::relocate(c(status, updated_at), .after = plate_run_id)
 
-    return(unprocessed_results)
-
-  } else if(dataset == "clean") {
-    return(clean_results)
-  }
-
+  return(unprocessed_results)
 }
