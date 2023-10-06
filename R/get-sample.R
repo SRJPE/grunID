@@ -75,7 +75,7 @@ get_samples_by_season <- function(con, season, dataset = c("raw", "clean", "unpr
   if(dataset == "raw") {
     results <- get_raw_dataset(con, clean_dataset)
   }
-  if(dataset == "unprocessed") {
+  else if(dataset == "unprocessed") {
     results <- get_unprocessed_dataset(con, clean_dataset)
   }
 
@@ -118,6 +118,8 @@ filter_dataset <- function(con, season) {
 #' @export
 get_clean_dataset <- function(con, filtered_samples, sample_bin_ids) {
 
+  filtered_sample_ids <- unique(filtered_samples$sample_id)
+
   # get additional data for samples
   status_codes <- dplyr::tbl(con, "status_code") |>
     dplyr::select(status_code_id = id, status = status_code_name) |>
@@ -128,14 +130,16 @@ get_clean_dataset <- function(con, filtered_samples, sample_bin_ids) {
     dplyr::collect()
 
   sample_status <- dplyr::tbl(con, "sample_status") |>
+    dplyr::filter(sample_id %in% filtered_sample_ids) |>
     dplyr::collect() |>
-    dplyr::filter(sample_id %in% filtered_samples$sample_id) |>
+    # dplyr::filter(sample_id %in% filtered_samples$sample_id) |>
     dplyr::left_join(status_codes, by = "status_code_id") |>
     dplyr::select(sample_id, status)
 
   assigned_runs <- dplyr::tbl(con, "genetic_run_identification") |>
+    dplyr::filter(sample_id %in% filtered_sample_ids) |>
     dplyr::collect() |>
-    dplyr::filter(sample_id %in% filtered_samples$sample_id) |>
+    # dplyr::filter(sample_id %in% filtered_samples$sample_id) |>
     dplyr::left_join(run_codes, by = "run_type_id") |>
     dplyr::select(sample_id, assigned_run)
 
@@ -156,14 +160,17 @@ get_clean_dataset <- function(con, filtered_samples, sample_bin_ids) {
 #' @export
 get_raw_dataset <- function(con, clean_results) {
 
+  sample_ids_filter <- unique(clean_results$sample_id)
+
   # assay result table
   assays <- dplyr::tbl(con, "assay") |>
     dplyr::collect() |>
     dplyr::select(assay_id = id, assay_name)
 
   assay_results <- dplyr::tbl(con, "assay_result") |>
+    dplyr::filter(sample_id %in% sample_ids_filter) |>
     dplyr::collect() |>
-    dplyr::filter(sample_id %in% clean_results$sample_id) |>
+    # dplyr::filter(sample_id %in% clean_results$sample_id) |>
     dplyr::left_join(assays, by = "assay_id") |>
     dplyr::select(sample_id, assay_name, raw_fluorescence,
                   threshold, positive_detection, plate_run_id)
@@ -178,6 +185,8 @@ get_raw_dataset <- function(con, clean_results) {
 #' Query database for unprocessed dataset
 #' @export
 get_unprocessed_dataset <- function(con, clean_results) {
+
+  sample_ids_filter <- unique(clean_results$sample_id)
   # tables to join
   assays <- dplyr::tbl(con, "assay") |>
     dplyr::collect() |>
@@ -188,8 +197,9 @@ get_unprocessed_dataset <- function(con, clean_results) {
     dplyr::select(sample_type_id = id, sample_type_name)
 
   unprocessed_assay_results <- dplyr::tbl(con, "raw_assay_result") |>
+    dplyr::filter(sample_id %in% sample_ids_filter) |>
     dplyr::collect() |>
-    dplyr::filter(sample_id %in% clean_results$sample_id) |>
+    # dplyr::filter(sample_id %in% clean_results$sample_id) |>
     dplyr::left_join(assays, by = "assay_id") |>
     dplyr::left_join(sample_types, by = "sample_type_id") |>
     dplyr::select(sample_id, assay_name, sample_type_name, raw_fluorescence,

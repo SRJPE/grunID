@@ -128,14 +128,13 @@ function(input, output, session) {
 
   output$season_table <- DT::renderDataTable(DT::datatable({
 
-    season_filter <- input$season_filter
-    dataset_filter <- input$dataset_type_filter
+    grunID::get_samples_by_season(con, input$season_filter, input$dataset_type_filter)
 
-    memoised_function <- memoise::memoise(grunID::get_samples_by_season,
-                                          # cache = shiny::getShinyOption("cache"))
-                                          cache = session$cache)
-
-    memoised_function(con, season = season_filter, dataset = dataset_filter)
+    # memoised_function <- memoise::memoise(grunID::get_samples_by_season,
+    #                                       # cache = shiny::getShinyOption("cache"))
+    #                                       cache = session$cache)
+    #
+    # memoised_function(con, season = input$season_filter, dataset = input$dataset_type_filter)
 
   },
   extensions = "Buttons",
@@ -146,7 +145,8 @@ function(input, output, session) {
                  lengthChange = TRUE,
                  pageLength = 20)),
   server = FALSE
-  )
+  ) |>
+    shiny::bindCache(input$season_filter, input$dataset_type_filter)
 
   observeEvent(input$season_filter_description, {
     showModal(modalDialog(
