@@ -23,6 +23,7 @@ variables:
 \itemize{
 \item stream_name
 \item datetime_collected
+\item sample_event_number
 \item sample_id
 \item genetic_run_assignment
 \item field_run_assignment

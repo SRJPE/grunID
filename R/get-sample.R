@@ -21,6 +21,7 @@ get_samples <- function(con, ...) {
 #'
 #' * stream_name
 #' * datetime_collected
+#' * sample_event_number
 #' * sample_id
 #' * genetic_run_assignment
 #' * field_run_assignment
@@ -97,13 +98,13 @@ filter_dataset <- function(con, season) {
     dplyr::filter(between(first_sample_date, min_date, max_date)) |>
     dplyr::collect() |>
     dplyr::left_join(location_codes, by = "sample_location_id") |>
-    dplyr::select(stream_name, id)
+    dplyr::select(stream_name, id, sample_event_number)
 
   sample_bin_ids <- dplyr::tbl(con, "sample_bin") |>
     dplyr::collect() |>
     dplyr::filter(sample_event_id %in% sample_event_ids$id) |>
     dplyr::left_join(sample_event_ids, by = c("sample_event_id" = "id")) |>
-    dplyr::select(id, stream_name)
+    dplyr::select(id, stream_name, sample_event_number)
 
   samples <- dplyr::tbl(con, "sample") |>
     dplyr::collect() |>
@@ -132,14 +133,12 @@ get_clean_dataset <- function(con, filtered_samples, sample_bin_ids) {
   sample_status <- dplyr::tbl(con, "sample_status") |>
     dplyr::filter(sample_id %in% filtered_sample_ids) |>
     dplyr::collect() |>
-    # dplyr::filter(sample_id %in% filtered_samples$sample_id) |>
     dplyr::left_join(status_codes, by = "status_code_id") |>
     dplyr::select(sample_id, status)
 
   assigned_runs <- dplyr::tbl(con, "genetic_run_identification") |>
     dplyr::filter(sample_id %in% filtered_sample_ids) |>
     dplyr::collect() |>
-    # dplyr::filter(sample_id %in% filtered_samples$sample_id) |>
     dplyr::left_join(run_codes, by = "run_type_id") |>
     dplyr::select(sample_id, assigned_run)
 
@@ -149,7 +148,7 @@ get_clean_dataset <- function(con, filtered_samples, sample_bin_ids) {
                        dplyr::rename(field_run_assignment = assigned_run),
                      by = c("field_run_type_id" = "run_type_id")) |>
     dplyr::left_join(assigned_runs, by = "sample_id") |>
-    dplyr::select(stream_name, datetime_collected, sample_id,
+    dplyr::select(stream_name, datetime_collected, sample_event_number, sample_id,
                   genetic_run_assignment = assigned_run, field_run_assignment,
                   fork_length_mm, fin_clip, status, updated_at)
 
@@ -170,7 +169,6 @@ get_raw_dataset <- function(con, clean_results) {
   assay_results <- dplyr::tbl(con, "assay_result") |>
     dplyr::filter(sample_id %in% sample_ids_filter) |>
     dplyr::collect() |>
-    # dplyr::filter(sample_id %in% clean_results$sample_id) |>
     dplyr::left_join(assays, by = "assay_id") |>
     dplyr::select(sample_id, assay_name, raw_fluorescence,
                   threshold, positive_detection, plate_run_id)
@@ -199,7 +197,6 @@ get_unprocessed_dataset <- function(con, clean_results) {
   unprocessed_assay_results <- dplyr::tbl(con, "raw_assay_result") |>
     dplyr::filter(sample_id %in% sample_ids_filter) |>
     dplyr::collect() |>
-    # dplyr::filter(sample_id %in% clean_results$sample_id) |>
     dplyr::left_join(assays, by = "assay_id") |>
     dplyr::left_join(sample_types, by = "sample_type_id") |>
     dplyr::select(sample_id, assay_name, sample_type_name, raw_fluorescence,
