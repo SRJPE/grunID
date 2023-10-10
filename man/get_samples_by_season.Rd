@@ -25,7 +25,7 @@ variables:
 \item datetime_collected
 \item sample_event_number
 \item sample_id
-\item genetic_run_assignment
+\item sherlock_run_assignment
 \item field_run_assignment
 \item fork_length_mm
 \item fin_clip

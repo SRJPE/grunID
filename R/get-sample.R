@@ -23,7 +23,7 @@ get_samples <- function(con, ...) {
 #' * datetime_collected
 #' * sample_event_number
 #' * sample_id
-#' * genetic_run_assignment
+#' * sherlock_run_assignment
 #' * field_run_assignment
 #' * fork_length_mm
 #' * fin_clip
@@ -149,7 +149,7 @@ get_clean_dataset <- function(con, filtered_samples, sample_bin_ids) {
                      by = c("field_run_type_id" = "run_type_id")) |>
     dplyr::left_join(assigned_runs, by = "sample_id") |>
     dplyr::select(stream_name, datetime_collected, sample_event_number, sample_id,
-                  genetic_run_assignment = assigned_run, field_run_assignment,
+                  sherlock_run_assignment = assigned_run, field_run_assignment,
                   fork_length_mm, fin_clip, status, updated_at)
 
   return(clean_results)
