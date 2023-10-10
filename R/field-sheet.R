@@ -57,6 +57,10 @@ create_field_sheet <- function(wb, field_sheet_sample_plan, sample_event_number,
                                first_sample_date, sample_location,
                                sample_location_code) {
 
+  field_sheet_sample_plan_extra_rows <- field_sheet_sample_plan |>
+    dplyr::mutate(Bin = as.character(Bin)) |>
+    tibble::add_row(Bin = rep(NA_character_, 5)) # add 5 extra rows
+
   last_sample_date <- lubridate::ceiling_date(first_sample_date, "week") - 2 # get friday of that week
 
   sheet_name <- paste(sample_location_code, sample_event_number, sep = "-")
@@ -77,7 +81,7 @@ create_field_sheet <- function(wb, field_sheet_sample_plan, sample_event_number,
   openxlsx::setColWidths(wb, sheet_name, cols = 1:10,
                          widths = c(3, 10, 8, 20, 10, 10, 8, 8, 8, 35))
   openxlsx::addStyle(wb, sheet = sheet_name, style = col_style, rows = row_range, cols = row_range)
-  openxlsx::writeData(wb, sheet = sheet_name, field_sheet_sample_plan, borders = "all", borderColour = "#000000",
+  openxlsx::writeData(wb, sheet = sheet_name, field_sheet_sample_plan_extra_rows, borders = "all", borderColour = "#000000",
             headerStyle = col_header)
   openxlsx::setHeaderFooter(wb, sheet = sheet_name, header = c(NA, center_header_text, right_header_text))
 
