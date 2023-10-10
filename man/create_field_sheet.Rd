@@ -10,7 +10,8 @@ create_field_sheet(
   sample_event_number,
   first_sample_date,
   sample_location,
-  sample_location_code
+  sample_location_code,
+  fl_summary
 )
 }
 \arguments{
@@ -41,6 +42,8 @@ sampling of a 2 day sampling event}
 \item{sample_location}{The sampling location name (e.g., "Battle Creek")}
 
 \item{sample_location_code}{The sampling location short code (e.g., "BTC")}
+
+\item{fl_summary}{a summary of the fork length bins used for the sampling location with min and max fork lengths.}
 }
 \value{
 A Workbook object from \code{\link[openxlsx]{createWorkbook}} with the new worksheet

@@ -21,6 +21,7 @@
 #' sampling of a 2 day sampling event
 #' @param sample_location The sampling location name (e.g., "Battle Creek")
 #' @param sample_location_code The sampling location short code (e.g., "BTC")
+#' @param fl_summary a summary of the fork length bins used for the sampling location with min and max fork lengths.
 #' @returns A Workbook object from \code{\link[openxlsx]{createWorkbook}} with the new worksheet
 #' @examples
 #' cfg <- config::get()
@@ -55,7 +56,12 @@
 #' @md
 create_field_sheet <- function(wb, field_sheet_sample_plan, sample_event_number,
                                first_sample_date, sample_location,
-                               sample_location_code) {
+                               sample_location_code, fl_summary) {
+
+  fl_summary <- fl_summary |>
+    dplyr::arrange(sample_bin_code) |>
+    dplyr::transmute(Bin = sample_bin_code,
+                     `Range (mm)` = paste0(min_fork_length, " - ", max_fork_length))
 
   field_sheet_sample_plan_extra_rows <- field_sheet_sample_plan |>
     dplyr::mutate(Bin = as.character(Bin)) |>
@@ -83,6 +89,9 @@ create_field_sheet <- function(wb, field_sheet_sample_plan, sample_event_number,
   openxlsx::addStyle(wb, sheet = sheet_name, style = col_style, rows = row_range, cols = row_range)
   openxlsx::writeData(wb, sheet = sheet_name, field_sheet_sample_plan_extra_rows, borders = "all", borderColour = "#000000",
             headerStyle = col_header)
+  openxlsx::writeData(wb, sheet = sheet_name, fl_summary, borders = "all", borderColour = "#000000",
+                      headerStyle = col_header, startRow = nrow(field_sheet_sample_plan_extra_rows) + 5,
+                      startCol = 5)
   openxlsx::setHeaderFooter(wb, sheet = sheet_name, header = c(NA, center_header_text, right_header_text))
 
   return(wb)
@@ -203,10 +212,25 @@ create_multiple_field_sheets <- function(con, season, field_sheet_filepath) {
   max_date <- as.Date(paste0(season, "-09-30"))
 
   # get season sample_events
-  sample_event_ids <- dplyr::tbl(con, "sample_event") |>
+  sample_event_info <- dplyr::tbl(con, "sample_event") |>
     dplyr::filter(dplyr::between(first_sample_date, min_date, max_date)) |>
     dplyr::collect() |>
+    dplyr::left_join(dplyr::tbl(con, "sample_location") |>
+                       dplyr::select(sample_location_id = id, location_code = code) |>
+                       dplyr::collect(),
+                     by = "sample_location_id") |>
+    dplyr::select(id, location_code)
+
+  sample_event_ids <- sample_event_info |>
     dplyr::pull(id)
+
+  # get fork length bin summary
+  fork_length_bins <- dplyr::tbl(con, "sample_bin") |>
+    dplyr::filter(sample_event_id %in% sample_event_ids) |>
+    dplyr::collect() |>
+    dplyr::left_join(sample_event_info, by = c("sample_event_id" = "id")) |>
+    dplyr::mutate(max_fork_length = max_fork_length - 0.1) |>
+    dplyr::distinct(location_code, sample_bin_code, min_fork_length, max_fork_length)
 
   # loop through unique sample event IDs (input to get_field_sheet_event_plan) to append
   # workbooks
@@ -218,6 +242,10 @@ create_multiple_field_sheets <- function(con, season, field_sheet_filepath) {
     # field sheets for sampling events
     plan <- get_field_sheet_event_plan(con, sample_event_id = i)
 
+    fl_summary_table <- fork_length_bins |>
+      dplyr::filter(location_code == plan$location_code) |>
+      dplyr::mutate(sample_bin_code = as.character(sample_bin_code))
+
     # append a field sheet to the workbook for that sample event
     # create field sheet for sampling crews to use.
     # Takes in get_field_sheet_sample_plan$field_sheet_sample_plan
@@ -228,7 +256,8 @@ create_multiple_field_sheets <- function(con, season, field_sheet_filepath) {
                              sample_event_number = plan$sample_event_number,
                              first_sample_date = plan$first_sample_date,
                              sample_location = plan$location_name,
-                             sample_location_code = plan$location_code)
+                             sample_location_code = plan$location_code,
+                             fl_summary = fl_summary_table)
   },
   .progress = list(
     type = "iterator",
