@@ -15,6 +15,7 @@ get_samples <- function(con, ...) {
 #' @param con connection to the database
 #' @param season year in format YYYY. You can pass in a min and max season as c(YYYY, YYYY)
 #' @param dataset either "raw", "clean", or "unprocessed".
+#' @param heterozygote_filter defaults to FALSE. If TRUE, only heterozygotes are returned.
 #' @details the parameter `dataset` can be used to determine what information is
 #' included in the tibble. The `raw`, `clean`, and `unprocessed` datasets contain the following
 #' variables:
@@ -51,10 +52,11 @@ get_samples <- function(con, ...) {
 #' @examples
 #' # example database connection
 #' con <- gr_db_connect()
-#' 2022_2023_samples <- get_samples_by_season(con, season = c(2022, 2023), dataset = "clean")
+#' 2022_2023_samples <- get_samples_by_season(con, season = c(2022, 2023), dataset = "clean", heterozygote_filter = FALSE)
 #' @export
 #' @md
-get_samples_by_season <- function(con, season, dataset = c("raw", "clean", "unprocessed")) {
+get_samples_by_season <- function(con, season, dataset = c("raw", "clean", "unprocessed"),
+                                  heterozygote_filter = c(FALSE, TRUE)) {
 
   if(any(sapply(season, function(i) {nchar(i) == 4})) == FALSE) {
     stop("You must provide seasons in the format YYYY (i.e. for the 2022 season,
@@ -63,12 +65,16 @@ get_samples_by_season <- function(con, season, dataset = c("raw", "clean", "unpr
   }
 
   dataset <- match.arg(dataset)
+  if(missing(heterozygote_filter)) {heterozygote = FALSE} else {
+    heterozygote <- heterozygote_filter
+  }
+
   is_valid_connection(con)
   season <- as.integer(season)
 
   samples <- filter_dataset(con, season)
 
-  clean_dataset <- get_clean_dataset(con, filtered_samples = samples)
+  clean_dataset <- get_clean_dataset(con, filtered_samples = samples, heterozygote_filter = heterozygote)
 
   if(dataset == "clean") {
     results <- clean_dataset
@@ -117,7 +123,7 @@ filter_dataset <- function(con, season) {
 
 #' Query database for clean dataset
 #' @export
-get_clean_dataset <- function(con, filtered_samples, sample_bin_ids) {
+get_clean_dataset <- function(con, filtered_samples, heterozygote_filter = c(FALSE, TRUE)) {
 
   filtered_sample_ids <- unique(filtered_samples$sample_id)
 
@@ -152,7 +158,14 @@ get_clean_dataset <- function(con, filtered_samples, sample_bin_ids) {
                   sherlock_run_assignment = assigned_run, field_run_assignment,
                   fork_length_mm, fin_clip, status, updated_at)
 
-  return(clean_results)
+  if(heterozygote_filter) {
+    heterozygote_results <- clean_results |>
+      dplyr::filter(sherlock_run_assignment == "Heterozygous")
+
+    return(heterozygote_results)
+  } else {
+    return(clean_results)
+  }
 }
 
 #' Query database for raw dataset

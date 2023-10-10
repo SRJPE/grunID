@@ -4,7 +4,12 @@
 \alias{get_samples_by_season}
 \title{Get Samples by Season}
 \usage{
-get_samples_by_season(con, season, dataset = c("raw", "clean", "unprocessed"))
+get_samples_by_season(
+  con,
+  season,
+  dataset = c("raw", "clean", "unprocessed"),
+  heterozygote_filter = c(FALSE, TRUE)
+)
 }
 \arguments{
 \item{con}{connection to the database}
@@ -12,6 +17,8 @@ get_samples_by_season(con, season, dataset = c("raw", "clean", "unprocessed"))
 \item{season}{year in format YYYY. You can pass in a min and max season as c(YYYY, YYYY)}
 
 \item{dataset}{either "raw", "clean", or "unprocessed".}
+
+\item{heterozygote_filter}{defaults to FALSE. If TRUE, only heterozygotes are returned.}
 }
 \description{
 View sample by season with status and run (if assigned)
@@ -56,5 +63,5 @@ If you select \code{dataset = "unprocessed"}, the tibble will additionally conta
 \examples{
 # example database connection
 con <- gr_db_connect()
-2022_2023_samples <- get_samples_by_season(con, season = c(2022, 2023), dataset = "clean")
+2022_2023_samples <- get_samples_by_season(con, season = c(2022, 2023), dataset = "clean", heterozygote_filter = FALSE)
 }

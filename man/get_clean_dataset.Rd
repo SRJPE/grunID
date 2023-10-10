@@ -4,7 +4,7 @@
 \alias{get_clean_dataset}
 \title{Query database for clean dataset}
 \usage{
-get_clean_dataset(con, filtered_samples, sample_bin_ids)
+get_clean_dataset(con, filtered_samples, heterozygote_filter = c(FALSE, TRUE))
 }
 \description{
 Query database for clean dataset
