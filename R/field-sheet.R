@@ -141,7 +141,7 @@ get_field_sheet_event_plan <- function(con, sample_event_id_arg) {
   sample_plan_raw <- samples |>
     dplyr::left_join(sample_bins, by = c("sample_bin_id" = "sample_bin_id")) |>
     dplyr::left_join(sample_event, by = c("sample_event_id" = "sample_event_id")) |>
-    dplyr::mutate(max_fork_length = ifelse(max(max_fork_length) == max_fork_length, max_fork_length, max_fork_length - 0.1)) # make bins exclusive
+    dplyr::mutate(max_fork_length = max_fork_length - 0.1)
 
   sample_event_details <- sample_event |>
     dplyr::left_join(sample_locations, by = c("sample_location_id" = "sample_location_id"))
