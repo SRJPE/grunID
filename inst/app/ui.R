@@ -94,6 +94,9 @@ navbarPage(
                             icon = icon("circle-info")),
                br(),
                br(),
+               checkboxInput("filter_to_heterozygotes",
+                             label = "Filter results to heterozygotes",
+                             value = FALSE),
                tags$h4("Quick plot"),
                actionButton("show_season_plot", "Show Season Plot",
                             icon = icon("chart-line"))
