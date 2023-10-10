@@ -57,12 +57,14 @@ create_field_sheet <- function(wb, field_sheet_sample_plan, sample_event_number,
                                first_sample_date, sample_location,
                                sample_location_code) {
 
+  last_sample_date <- lubridate::ceiling_date(first_sample_date, "week") - 2 # get friday of that week
+
   sheet_name <- paste(sample_location_code, sample_event_number, sep = "-")
 
   center_header_text <- glue::glue("{format(first_sample_date, '%Y')} SR JPE Genetic Sampling
                                    {sample_location} ({sample_location_code})")
   right_header_text <- glue::glue("Sampling event {sample_event_number}
-             Date range: {format(first_sample_date, '%b %d')} - {format(first_sample_date + 1, '%b %d, %Y')}")
+             Date range: {format(first_sample_date, '%b %d')} - {format(last_sample_date, '%b %d, %Y')}")
   row_range <- 2:nrow(field_sheet_sample_plan)
 
   col_header <- openxlsx::createStyle(border = "TopBottomLeftRight", borderColour = "#000000",
