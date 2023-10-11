@@ -97,6 +97,53 @@ create_field_sheet <- function(wb, field_sheet_sample_plan, sample_event_number,
                       startCol = 5)
   openxlsx::setHeaderFooter(wb, sheet = sheet_name, header = c(NA, center_header_text, right_header_text))
 
+  # add thick borders
+  top_borders <- openxlsx::createStyle(border = "Top", borderColour = "#000000", borderStyle = "medium")
+  bottom_borders <- openxlsx::createStyle(border = "Bottom", borderColour = "#000000", borderStyle = "medium")
+  left_borders <- openxlsx::createStyle(border = "Left", borderColour = "#000000", borderStyle = "medium")
+  right_borders <- openxlsx::createStyle(border = "Right", borderColour = "#000000", borderStyle = "medium")
+
+  thick_border_reference <- field_sheet_sample_plan_extra_rows |>
+    dplyr::group_by(Bin) |>
+    dplyr::summarise(n = n()) |>
+    dplyr::ungroup() |>
+    dplyr::mutate(max_range = cumsum(n) + 1,
+                  min_range = max_range - n + 1) # add 2 so that we skip the first row
+
+  purrr::walk(thick_border_reference$Bin, function(i) {
+    border_cols_range <- ncol(field_sheet_sample_plan_extra_rows)
+
+    if(is.na(i)) {
+      border_ref <- thick_border_reference |>
+        dplyr::filter(is.na(Bin))
+    } else {
+      border_ref <- thick_border_reference |>
+        dplyr::filter(Bin == i)
+    }
+
+    # top border
+    openxlsx::addStyle(wb, sheet = sheet_name, style = top_borders,
+                       rows = border_ref$min_range,
+                       cols = 1:ncol(field_sheet_sample_plan_extra_rows),
+                       stack = TRUE)
+    # bottom border
+    openxlsx::addStyle(wb, sheet = sheet_name, style = bottom_borders,
+                       rows = border_ref$max_range,
+                       cols = 1:border_cols_range,
+                       stack = TRUE)
+
+    # left border
+    openxlsx::addStyle(wb, sheet = sheet_name, style = left_borders,
+                       rows = border_ref$min_range:border_ref$max_range,
+                       cols = 1,
+                       stack = TRUE)
+    # right border
+    openxlsx::addStyle(wb, sheet = sheet_name, style = right_borders,
+                       rows = border_ref$min_range:border_ref$max_range,
+                       cols = border_cols_range,
+                       stack = TRUE)
+  })
+
   return(wb)
 }
 
@@ -222,6 +269,7 @@ create_multiple_field_sheets <- function(con, season, field_sheet_filepath) {
                        dplyr::select(sample_location_id = id, location_code = code) |>
                        dplyr::collect(),
                      by = "sample_location_id") |>
+    dplyr::arrange(location_code) |>
     dplyr::select(id, location_code)
 
   sample_event_ids <- sample_event_info |>
