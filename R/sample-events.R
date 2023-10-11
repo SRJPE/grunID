@@ -173,15 +173,17 @@ add_samples <- function(con, sample_plan, sample_id_insert, verbose = FALSE) {
     dplyr::left_join(sample_events_for_incoming_samples, by = c("sample_event_number", "sample_location_id"="sample_location_id")) |>
     dplyr::left_join(sample_id_insert, by = c("sample_bin_code", "sample_event_id"))
 
-
-
-
+  # set season based on water year
   sample_id <- sample_id_inserts |>
     tidyr::uncount(expected_number_of_samples, .remove = FALSE) |>
     dplyr::group_by(sample_event_id, sample_bin_code) |>
-    dplyr::mutate(sample_number = dplyr::row_number()) |>
+    dplyr::mutate(sample_number = dplyr::row_number(),
+                  season = ifelse(as.numeric(format(as.Date(first_sample_date), "%m")) >= 10,
+                                  as.numeric(format(as.Date(first_sample_date), "%y")) + 1,
+                                  as.numeric(format(as.Date(first_sample_date), "%y"))),
+                  season = as.character(season)) |>
     dplyr::ungroup() |>
-    dplyr::mutate(id = paste0(location_code, format(as.Date(first_sample_date), "%y"),
+    dplyr::mutate(id = paste0(location_code, season,
                               "_", sample_event_number, "_", sample_bin_code, "_", sample_number)) |>
     dplyr::select(id, sample_bin_id)
 
