@@ -86,11 +86,12 @@ create_field_sheet <- function(wb, field_sheet_sample_plan, sample_event_number,
   openxlsx::addWorksheet(wb, sheetName = sheet_name)
   openxlsx::pageSetup(wb, sheet = sheet_name, orientation = "landscape", left = 0.5, right = 0.25,
             top = 0.75, bottom = 0.75, printTitleRows = 1, fitToWidth = TRUE)
-  openxlsx::setColWidths(wb, sheet_name, cols = 1:10,
-                         widths = c(3, 10, 8, 20, 10, 10, 8, 8, 8, 35))
+  openxlsx::setColWidths(wb, sheet_name, cols = 1:9,
+                         widths = c(3, 10, 8, 20, 10, 10, 15, 15, 35))
   openxlsx::addStyle(wb, sheet = sheet_name, style = col_style, rows = row_range, cols = row_range)
-  openxlsx::writeData(wb, sheet = sheet_name, field_sheet_sample_plan_extra_rows, borders = "all", borderColour = "#000000",
-            headerStyle = col_header)
+  openxlsx::writeData(wb, sheet = sheet_name, field_sheet_sample_plan_extra_rows,
+                      borders = "all", borderColour = "#000000", headerStyle = col_header,
+                      )
   openxlsx::writeData(wb, sheet = sheet_name, fl_summary, borders = "all", borderColour = "#000000",
                       headerStyle = col_header, startRow = nrow(field_sheet_sample_plan_extra_rows) + 5,
                       startCol = 5)
