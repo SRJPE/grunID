@@ -1,5 +1,6 @@
-#' Create Field Sheets
-#' @description `create_field_sheet()` appends a worksheet to an existing excel workbook
+#' Create Field Sheet
+#' @description `create_field_sheet()` is called within `create_season_field_sheets()`
+#' and appends a worksheet to an existing excel workbook
 #' containing a formatted field sheet to be used by crew collecting genetic samples.
 #' @param wb A Workbook object from \code{\link[openxlsx]{createWorkbook}}
 #' @param field_sheet_sample_plan A dataframe containing the content of the field sheet,
@@ -23,36 +24,8 @@
 #' @param sample_location_code The sampling location short code (e.g., "BTC")
 #' @param fl_summary a summary of the fork length bins used for the sampling location with min and max fork lengths.
 #' @returns A Workbook object from \code{\link[openxlsx]{createWorkbook}} with the new worksheet
-#' @examples
-#' cfg <- config::get()
-#'
-#' con <- DBI::dbConnect(RPostgres::Postgres(),
-#'                       dbname = cfg$dbname,
-#'                       host = cfg$host,
-#'                       port = cfg$port,
-#'                       user = cfg$username,
-#'                       password = cfg$password)
-#' wb <- openxlsx::createWorkbook()
-#' # Each sample_event will be a tab in a workbook
-#' plan <- get_field_sheet_event_plan(con, sample_event_id = 1)
-#' wb <- create_field_sheet(wb = wb,
-#'                          field_sheet_sample_plan = plan$field_sheet_sample_plan,
-#'                          sample_event_number = plan$sample_event_number,
-#'                          first_sample_date = plan$first_sample_date,
-#'                          sample_location = plan$location_name,
-#'                          sample_location_code = plan$location_code)
-#'
-#' plan <- get_field_sheet_event_plan(con, sample_event_id = 2)
-#' wb <- create_field_sheet(wb = wb,
-#'                          field_sheet_sample_plan = plan$field_sheet_sample_plan,
-#'                          sample_event_number = plan$sample_event_number,
-#'                          first_sample_date = plan$first_sample_date,
-#'                          sample_location = plan$location_name,
-#'                          sample_location_code = plan$location_code)
-#'
-#' openxlsx::saveWorkbook(wb, "test.xlsx", overwrite = TRUE)
-#' @export
 #' @family field sheet helpers
+#' @keywords internal
 #' @md
 create_field_sheet <- function(wb, field_sheet_sample_plan, sample_event_number,
                                first_sample_date, sample_location,
@@ -148,9 +121,10 @@ create_field_sheet <- function(wb, field_sheet_sample_plan, sample_event_number,
 }
 
 #' Get Sample Event Information for Creating a Field Sheet
-#' @description `get_field_sheet_event_plan()` retrieves the sampling event information
+#' @description `get_field_sheet_event_plan()` is called within `create_season_field_sheets()` and
+#' retrieves the sampling event information
 #' from the database that is needed to prepare field sheets.
-#' @param con A DBI connection object obtained from DBI::dbConnect()
+#' @param con A DBI connection object
 #' @param sample_event_id The numeric unique identifier of the targeted sampling event for a location
 #' Use \code{\link{get_sample_event}} to query and retrieve the IDs from the database.
 #' @returns
@@ -161,18 +135,8 @@ create_field_sheet <- function(wb, field_sheet_sample_plan, sample_event_number,
 #' sampling of a 2 day sampling event
 #' * **location_name** The sampling location name (e.g., "Battle Creek")
 #' * **location_code** The sampling location short code (e.g., "BTC")
-#' @examples
-#' cfg <- config::get()
-#'
-#' con <- DBI::dbConnect(RPostgres::Postgres(),
-#'                       dbname = cfg$dbname,
-#'                       host = cfg$host,
-#'                       port = cfg$port,
-#'                       user = cfg$username,
-#'                       password = cfg$password)
-#' plan <- get_field_sheet_event_plan(con, sample_event_id = 1)
-#' @export
 #' @family field sheet helpers
+#' @keywords internal
 #' @md
 get_field_sheet_event_plan <- function(con, sample_event_id_arg) {
 
@@ -228,13 +192,10 @@ get_field_sheet_event_plan <- function(con, sample_event_id_arg) {
 }
 
 
-#' Create Multiple Field Sheets
-#' @description `create_multiple_field_sheets()` creates an excel workbook and appends
+#' Create Season Field Sheets
+#' @description `create_season_field_sheets()` creates an excel workbook and appends
 #' multiple formatted field worksheets for sample event IDs in a given sample plan.
-#' @details `create_multiple_field_sheets()` combines `get_field_sheet_sample_plan()` and `create_field_sheet()` into
-#' one function. Field sheets are created for all unique sample event IDs in a given sample plan.
-#' `get_field_sheet_sample_plan()` and `create_field_sheet()` can still be run independently to create one field
-#' sheet at a time.
+#' @details `create_season_field_sheets()` creates field sheets for all unique sample event IDs in a given season.
 #' For a given season, the function will gather all sampling events for that year up to September 30th and all sampling events
 #' from the previous year after October 1st.
 #' @param season format YYYY
@@ -249,11 +210,11 @@ get_field_sheet_event_plan <- function(con, sample_event_id_arg) {
 #' 2022_sample_plan <- add_sample_plan(con, sample_plan_2022_final, verbose = TRUE)
 #'
 #' # create workbook with field sheets for all sample event IDs in the 2022 sample plan
-#' create_multiple_field_sheets(con, season = 2022, "data-raw/2022_field_sheets.xlsx")
+#' create_season_field_sheets(con, season = 2022, "data-raw/2022_field_sheets.xlsx")
 #' @export
 #' @family field sheet helpers
 #' @md
-create_multiple_field_sheets <- function(con, season, field_sheet_filepath) {
+create_season_field_sheets <- function(con, season, field_sheet_filepath) {
   # create workbook to append each sampling event tab
   wb <- openxlsx::createWorkbook()
 
@@ -407,8 +368,8 @@ process_field_sheet_samples <- function(filepath){
 #' filepath <- "data-raw/test.xlsx"
 #' field_data_clean <- process_field_sheet_samples(filepath)
 #' update_field_sheet_samples(con, field_data_clean)
-#' @export
 #' @family field sheet helpers
+#' @export
 #' @md
 update_field_sheet_samples <- function(con, field_data) {
 
@@ -442,7 +403,7 @@ update_field_sheet_samples <- function(con, field_data) {
 #' database. Called in \code{\link{update_field_sheet_samples}}.
 #' @details Checks whether the connection is valid using \code{\link{is_valid_con}} and
 #' checks class of input variables.
-#' @export
+#' @keywords internal
 #' @md
 is_valid_sample_field_data <- function(data) {
 

@@ -2,7 +2,7 @@
 % Please edit documentation in R/field-sheet.R
 \name{create_field_sheet}
 \alias{create_field_sheet}
-\title{Create Field Sheets}
+\title{Create Field Sheet}
 \usage{
 create_field_sheet(
   wb,
@@ -49,43 +49,16 @@ sampling of a 2 day sampling event}
 A Workbook object from \code{\link[openxlsx]{createWorkbook}} with the new worksheet
 }
 \description{
-\code{create_field_sheet()} appends a worksheet to an existing excel workbook
+\code{create_field_sheet()} is called within \code{create_season_field_sheets()}
+and appends a worksheet to an existing excel workbook
 containing a formatted field sheet to be used by crew collecting genetic samples.
-}
-\examples{
-cfg <- config::get()
-
-con <- DBI::dbConnect(RPostgres::Postgres(),
-                      dbname = cfg$dbname,
-                      host = cfg$host,
-                      port = cfg$port,
-                      user = cfg$username,
-                      password = cfg$password)
-wb <- openxlsx::createWorkbook()
-# Each sample_event will be a tab in a workbook
-plan <- get_field_sheet_event_plan(con, sample_event_id = 1)
-wb <- create_field_sheet(wb = wb,
-                         field_sheet_sample_plan = plan$field_sheet_sample_plan,
-                         sample_event_number = plan$sample_event_number,
-                         first_sample_date = plan$first_sample_date,
-                         sample_location = plan$location_name,
-                         sample_location_code = plan$location_code)
-
-plan <- get_field_sheet_event_plan(con, sample_event_id = 2)
-wb <- create_field_sheet(wb = wb,
-                         field_sheet_sample_plan = plan$field_sheet_sample_plan,
-                         sample_event_number = plan$sample_event_number,
-                         first_sample_date = plan$first_sample_date,
-                         sample_location = plan$location_name,
-                         sample_location_code = plan$location_code)
-
-openxlsx::saveWorkbook(wb, "test.xlsx", overwrite = TRUE)
 }
 \seealso{
 Other field sheet helpers: 
-\code{\link{create_multiple_field_sheets}()},
+\code{\link{create_season_field_sheets}()},
 \code{\link{get_field_sheet_event_plan}()},
 \code{\link{process_field_sheet_samples}()},
 \code{\link{update_field_sheet_samples}()}
 }
 \concept{field sheet helpers}
+\keyword{internal}

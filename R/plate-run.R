@@ -1,3 +1,4 @@
+#' @title Add New Plate Results
 #' @param con connection to the database
 #' @param protocol name pf the protocol used for this run
 #' @param genetic_method the genetic method used for this run

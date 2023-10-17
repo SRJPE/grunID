@@ -52,7 +52,7 @@ update_field_sheet_samples(con, field_data_clean)
 \seealso{
 Other field sheet helpers: 
 \code{\link{create_field_sheet}()},
-\code{\link{create_multiple_field_sheets}()},
+\code{\link{create_season_field_sheets}()},
 \code{\link{get_field_sheet_event_plan}()},
 \code{\link{process_field_sheet_samples}()}
 }
