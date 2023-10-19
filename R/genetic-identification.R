@@ -88,11 +88,14 @@ ots_early_late_detection <- function(con, sample_id,
 
   selection_strategy <- match.arg(selection_strategy)
 
+  # get results for this sample
   assay_results <- tbl(con, "assay_result") |>
     filter(sample_id == !!sample_id)
 
+  # get all the assays given for each of these samples
   assays_for_existing_for_sample <- assay_results |> dplyr::distinct(assay_id) |> dplyr::pull()
 
+  # check if assay 1 and 2 exists for each of these
   assay_needed_not_found <- which(!(1:2 %in% assays_for_existing_for_sample ))
 
   # check for what assays are needed
@@ -207,7 +210,7 @@ ots_early_late_detection <- function(con, sample_id,
   }
   # negative late and negative early --> repeat
   else if (!ots_early_priority_results$positive_detection && !ots_late_priority_results$positive_detection){
-    return(list(sample_id = sample_id, status_code = NA, run_type = NA, early_plate = ots_early_priority_results$plate_run_id, late_plate = ots_late_priority_results$plate_run_id))
+    return(list(sample_id = sample_id, status_code = "created", run_type = NA, early_plate = ots_early_priority_results$plate_run_id, late_plate = ots_late_priority_results$plate_run_id))
   }
   else {
     cli::cli_abort(c("x" = "uknown combination of test results for {sample_id}, unable to proceed"))
@@ -238,7 +241,7 @@ ots_winter_spring_detection <- function(con, sample_id,
 
   assays_for_existing_for_sample <- assay_results |> dplyr::distinct(assay_id) |> dplyr::pull()
 
-  assay_needed_not_found <- 3:4 %in% assays_for_existing_for_sample
+  assay_needed_not_found <- !(3:4 %in% assays_for_existing_for_sample)
 
   if (any(assay_needed_not_found)) {
 
@@ -363,6 +366,7 @@ ots_winter_spring_detection <- function(con, sample_id,
 #' @export
 run_genetic_identification <- function(con, sample_id = NULL, location = NULL, year = NULL, selection_strategy = "positive priority") {
 
+  # check for valid inputs and data -------------------------
   if (is.null(year)) {
     year <- as.integer(format(Sys.Date(), "%Y"))
   }
@@ -396,6 +400,7 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
 
   }
 
+  # run early/late detection on each sample -------------------
   early_late_resp <- purrr::map(
     sample_to_run_on$id, ~ots_early_late_detection(con, ., selection_strategy = selection_strategy),
     .progress = list(
@@ -557,19 +562,25 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
   ots16_inprogress_inserts <- spring_winter_resp_data |>
     dplyr::filter(status_code == "ots16 inprogress")
 
-  ots16_inprogress_inserts$comment <- "auto-generated comment added when running this sample through run_genetic_identification"
-  ots16_inprogress_inserts$status_code_id <- status_code_name_to_id["ots16 inprogress"]
-  ots16_inprogress_inserts <- dplyr::select(ots16_inprogress_inserts, sample_id, status_code_id, comment)
-  DBI::dbAppendTable(con, "sample_status", ots16_inprogress_inserts)
+  if (nrow(ots16_inprogress_inserts) > 0 ) {
+    ots16_inprogress_inserts$comment <- "auto-generated comment added when running this sample through run_genetic_identification"
+    ots16_inprogress_inserts$status_code_id <- status_code_name_to_id["ots16 inprogress"]
+    ots16_inprogress_inserts <- dplyr::select(ots16_inprogress_inserts, sample_id, status_code_id, comment)
+    DBI::dbAppendTable(con, "sample_status", ots16_inprogress_inserts)
+  }
 
   # need ots 16
   ots16_need_inserts <- spring_winter_resp_data |>
     dplyr::filter(status_code == "need ots16")
 
-  ots16_need_inserts$comment <- "auto-generated comment added when running this sample through run_genetic_identification"
-  ots16_need_inserts$status_code_id <- status_code_name_to_id["need ots16"]
-  ots16_need_inserts <- dplyr::select(ots16_need_inserts, sample_id, status_code_id, comment)
-  DBI::dbAppendTable(con, "sample_status", ots16_need_inserts)
+  if (nrow(ots16_need_inserts) > 0) {
+    ots16_need_inserts$comment <- "auto-generated comment added when running this sample through run_genetic_identification"
+    ots16_need_inserts$status_code_id <- status_code_name_to_id["need ots16"]
+    ots16_need_inserts <- dplyr::select(ots16_need_inserts, sample_id, status_code_id, comment)
+    DBI::dbAppendTable(con, "sample_status", ots16_need_inserts)
+  }
+
+
 
 }
 
