@@ -240,48 +240,50 @@ ots_winter_spring_detection <- function(con, sample_id,
     dplyr::filter(sample_id == !!sample_id)
 
   assays_for_existing_for_sample <- assay_results |> dplyr::distinct(assay_id) |> dplyr::pull()
+  assays_3_for_sample <- assay_results |> dplyr::filter(assay_id == 3) |> dplyr::collect()
+  assays_4_for_sample <- assay_results |> dplyr::filter(assay_id == 4) |> dplyr::collect()
 
-  assay_needed_not_found <- !(3:4 %in% assays_for_existing_for_sample)
+  if (nrow(assays_3_for_sample) == 0) {
+    cli::cli_warn(c(
+      "x" = "late and early assay needed to run early/late detection but assay = 3 was not found for sample {sample_id}"
+    ))
 
-  if (any(assay_needed_not_found)) {
+    return(list(
+      sample_id = sample_id,
+      status_code = "ots16 inprogress",
+      run_type = NA_character_,
+      spr_wint_plate_id = NA
+    ))
+  }
 
-    if (sum(assay_needed_not_found) == 2) {
-      cli::cli_warn(c(
-        "x" = "late and early assay needed to run early/late detection but assay = 3 and 4 were not found for sample {sample_id}"
-      ))
+  if (nrow(assays_4_for_sample) == 0) {
+    cli::cli_warn(c(
+      "x" = "late and early assay needed to run early/late detection but assay = 4 was not found for sample {sample_id}"
+    ))
 
-      return(list(
-        sample_id = sample_id,
-        status_code = "need ots16",
-        run_type = NA,
-        spr_wint_plate_id = NA
-      ))
-    } else if ((3:4)[which(!assay_needed_not_found)] == 3) { # TODO so ugly FIXME asap!!
-      cli::cli_warn(c(
-        "x" = "late and early assay needed to run early/late detection but assay = 3 was not found for sample {sample_id}"
-      ))
+    return(list(
+      sample_id = sample_id,
+      status_code = "ots16 inprogress",
+      run_type = NA_character_,
+      spr_wint_plate_id = NA
+    ))
+  }
 
-      return(list(
-        sample_id = sample_id,
-        status_code = "ots16 inprogress",
-        run_type = NA_character_,
-        spr_wint_plate_id = NA
-      ))
-    } else if ((3:4)[which(!assay_needed_not_found)] == 4) { # TODO so ugly FIXME asap!! {
-      cli::cli_warn(c(
-        "x" = "late and early assay needed to run early/late detection but assay = 4 was not found for sample {sample_id}"
-      ))
+  if (FALSE) {
+    # TODO: handle the case when they are both missing
+    cli::cli_warn(c(
+      "x" = "late and early assay needed to run early/late detection but assay = 3 and 4 were not found for sample {sample_id}"
+    ))
 
-      return(list(
-        sample_id = sample_id,
-        status_code = "ots16 inprogress",
-        run_type = NA_character_,
-        spr_wint_plate_id = NA
-      ))
-    }
-
+    return(list(
+      sample_id = sample_id,
+      status_code = "need ots16",
+      run_type = NA,
+      spr_wint_plate_id = NA
+    ))
 
   }
+
 
   # at this point the sample has both 3 an 4, we do selection strategy here
   ots_spring <- assay_results |> dplyr::filter(assay_id == 3)
@@ -472,10 +474,10 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
   if (nrow(created_status_to_insert) > 0) {
 
 
-  created_status_to_insert$comment <- "auto-generated comment added when running this sample through run_genetic_identification"
-  created_status_to_insert$status_code_id <- status_code_name_to_id["created"]
-  created_status_to_insert <- dplyr::select(created_status_to_insert, sample_id, status_code_id, comment)
-  DBI::dbAppendTable(con, "sample_status", created_status_to_insert)
+    created_status_to_insert$comment <- "auto-generated comment added when running this sample through run_genetic_identification"
+    created_status_to_insert$status_code_id <- status_code_name_to_id["created"]
+    created_status_to_insert <- dplyr::select(created_status_to_insert, sample_id, status_code_id, comment)
+    DBI::dbAppendTable(con, "sample_status", created_status_to_insert)
 
   }
   # created cannot do any gen id updates
@@ -488,10 +490,10 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
   if (nrow(ots28_inprogress_to_insert) > 0) {
 
 
-  ots28_inprogress_to_insert$comment <- "auto-generated comment added when running this sample through run_genetic_identification"
-  ots28_inprogress_to_insert$status_code_id <- status_code_name_to_id["ots28 in progress"]
-  ots28_inprogress_to_insert <- dplyr::select(ots28_inprogress_to_insert, sample_id, status_code_id, comment)
-  DBI::dbAppendTable(con, "sample_status", ots28_inprogress_to_insert)
+    ots28_inprogress_to_insert$comment <- "auto-generated comment added when running this sample through run_genetic_identification"
+    ots28_inprogress_to_insert$status_code_id <- status_code_name_to_id["ots28 in progress"]
+    ots28_inprogress_to_insert <- dplyr::select(ots28_inprogress_to_insert, sample_id, status_code_id, comment)
+    DBI::dbAppendTable(con, "sample_status", ots28_inprogress_to_insert)
 
   }
 
