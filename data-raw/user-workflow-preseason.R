@@ -78,3 +78,22 @@ update_field_sheet_samples(field_data_clean)
 
 # now the biological samples are stored in the database with the
 # appropriate sample IDs. Now onto assays :)
+
+
+
+
+additional_samples_2023 <- expand_grid(
+  location_code = "CLR",
+  sample_event_number = 1:14,
+  first_sample_date = lubridate::as_date("2023-01-01"),
+  sample_bin_code = LETTERS[1:5],
+  min_fork_length = 1,
+  max_fork_length = 200,
+  expected_number_of_samples = 50
+) |>
+  mutate(sample_event_number = as.integer(sample_event_number),
+         min_fork_length = as.integer(min_fork_length),
+         max_fork_length = as.integer(max_fork_length))
+
+
+add_sample_plan(con , additional_samples_2023, verbose = TRUE)
