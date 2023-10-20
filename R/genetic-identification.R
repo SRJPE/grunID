@@ -269,21 +269,6 @@ ots_winter_spring_detection <- function(con, sample_id,
     ))
   }
 
-  if (FALSE) {
-    # TODO: handle the case when they are both missing
-    cli::cli_warn(c(
-      "x" = "late and early assay needed to run early/late detection but assay = 3 and 4 were not found for sample {sample_id}"
-    ))
-
-    return(list(
-      sample_id = sample_id,
-      status_code = "need ots16",
-      run_type = NA,
-      spr_wint_plate_id = NA
-    ))
-
-  }
-
 
   # at this point the sample has both 3 an 4, we do selection strategy here
   ots_spring <- assay_results |> dplyr::filter(assay_id == 3)
