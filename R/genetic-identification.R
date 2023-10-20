@@ -245,7 +245,7 @@ ots_winter_spring_detection <- function(con, sample_id,
 
   if (nrow(assays_3_for_sample) == 0) {
     cli::cli_warn(c(
-      "x" = "late and early assay needed to run early/late detection but assay = 3 was not found for sample {sample_id}"
+      "x" = "spring and winter assay needed to run spring/winter detection but assay = 3 was not found for sample {sample_id}"
     ))
 
     return(list(
@@ -258,7 +258,7 @@ ots_winter_spring_detection <- function(con, sample_id,
 
   if (nrow(assays_4_for_sample) == 0) {
     cli::cli_warn(c(
-      "x" = "late and early assay needed to run early/late detection but assay = 4 was not found for sample {sample_id}"
+      "x" = "spring and winter assay needed to run spring/winter detection but assay = 4 was not found for sample {sample_id}"
     ))
 
     return(list(
