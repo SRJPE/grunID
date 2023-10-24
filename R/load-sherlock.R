@@ -11,39 +11,45 @@
 #' @export
 generate_threshold <- function(con, plate_run, .control_id="NTC") {
 
-  if (!DBI::dbIsValid(con)) {
-    stop("Connection argument does not have a valid connection the run-id database.
+  if (attr(plate_run, "offline")) {
+    return (generate_threshold_offline(plate_run, .control_id = .control_id))
+  } else {
+
+
+    if (!DBI::dbIsValid(con)) {
+      stop("Connection argument does not have a valid connection the run-id database.
        Please try reconnecting to the database using 'DBI::dbConnect'",
-       call. = FALSE)
+           call. = FALSE)
+    }
+    plate_run_identifier <- plate_run$plate_run_id
+
+    protocol_id <- dplyr::tbl(con, "plate_run") |>
+      dplyr::filter(id == !!plate_run_identifier) |>
+      dplyr::pull(protocol_id)
+
+    runtime <- dplyr::tbl(con, "protocol") |>
+      dplyr::filter(id == !!protocol_id) |>
+      dplyr::pull(runtime)
+
+    control_blanks <- dplyr::tbl(con, "raw_assay_result") |>
+      dplyr::filter(time == runtime,
+                    sample_id == !!.control_id,
+                    plate_run_id == !!plate_run_identifier) |>
+      dplyr::collect()
+
+    if (nrow(control_blanks) == 0) {
+      stop(paste0("no control variables found in plate run with id: '", plate_run_identifier, "'"), call. = FALSE)
+    }
+
+    thresholds <- control_blanks |>
+      dplyr::group_by(plate_run_id, assay_id) |>
+      dplyr::summarise(
+        threshold = mean(as.numeric(raw_fluorescence)) * 2
+      ) |> dplyr::ungroup() |>
+      dplyr::mutate(runtime = runtime)
+
+    return(thresholds)
   }
-  plate_run_identifier <- plate_run$plate_run_id
-
-  protocol_id <- dplyr::tbl(con, "plate_run") |>
-    dplyr::filter(id == !!plate_run_identifier) |>
-    dplyr::pull(protocol_id)
-
-  runtime <- dplyr::tbl(con, "protocol") |>
-    dplyr::filter(id == !!protocol_id) |>
-    dplyr::pull(runtime)
-
-  control_blanks <- dplyr::tbl(con, "raw_assay_result") |>
-    dplyr::filter(time == runtime,
-                  sample_id == !!.control_id,
-                  plate_run_id == !!plate_run_identifier) |>
-    dplyr::collect()
-
-  if (nrow(control_blanks) == 0) {
-    stop(paste0("no control variables found in plate run with id: '", plate_run_identifier, "'"), call. = FALSE)
-  }
-
-  thresholds <- control_blanks |>
-    dplyr::group_by(plate_run_id, assay_id) |>
-    dplyr::summarise(
-      threshold = mean(as.numeric(raw_fluorescence)) * 2
-    ) |> dplyr::ungroup() |>
-    dplyr::mutate(runtime = runtime)
-
-  return(thresholds)
 }
 
 
@@ -59,7 +65,7 @@ generate_threshold <- function(con, plate_run, .control_id="NTC") {
 #' @export
 generate_threshold_offline <- function(offline_sherlock_results, .control_id="NTC") {
 
-  control_blanks <- offline_sherlock_results |>
+  control_blanks <- offline_sherlock_results$data |>
     dplyr::filter(sample_id == !!.control_id)
 
   thresholds <- control_blanks |>
@@ -95,7 +101,7 @@ update_assay_detection <- function(con, thresholds, .control_id = "NTC") {
   if (!DBI::dbIsValid(con)) {
     stop("Connection argument does not have a valid connection the run-id database.
        Please try reconnecting to the database using 'DBI::dbConnect'",
-       call. = FALSE)
+         call. = FALSE)
   }
 
   plate_run <- unique(thresholds$plate_run_id)
@@ -338,11 +344,11 @@ generate_genetic_detection <- function(offline_detections_1, offline_detections_
     tidyr::pivot_wider(names_from = "assay_id_name", values_from = "positive_detection", names_expand = TRUE)
 
   assay_detections <- left_join(assay_detections_1, assay_detections_2,
-                                      by = "sample_id") |>
+                                by = "sample_id") |>
     dplyr::mutate(ots_28_e = ifelse(is.na(ots_28_e), ots_28_e_2, ots_28_e),
-           ots_28_l = ifelse(is.na(ots_28_l), ots_28_l_2, ots_28_l),
-           ots_16_s = ifelse(is.na(ots_16_s), ots_16_s_2, ots_16_s),
-           ots_16_w = ifelse(is.na(ots_16_w), ots_16_w_2, ots_16_w)) |>
+                  ots_28_l = ifelse(is.na(ots_28_l), ots_28_l_2, ots_28_l),
+                  ots_16_s = ifelse(is.na(ots_16_s), ots_16_s_2, ots_16_s),
+                  ots_16_w = ifelse(is.na(ots_16_w), ots_16_w_2, ots_16_w)) |>
     dplyr::select(sample_id, ots_28_e, ots_28_l, ots_16_s, ots_16_w)
 
   if (nrow(assay_detections) == 0) {

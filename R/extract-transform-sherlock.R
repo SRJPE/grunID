@@ -53,17 +53,18 @@ process_sherlock <- function(filepath,
                              layout_type = c("split_plate_early_late", "split_plate_spring_winter", "triplicate",
                                              "single_assay_ots28_early", "single_assay_ots28_late",
                                              "single_assay_ots16_spring", "single_assay_ots16_winter"),
-                             plate_run_id, plate_size = c(96, 384)) {
+                             plate_run_id = NULL, plate_size = c(96, 384)) {
 
-  if(missing(plate_run_id)) {
+
+  run_offline_mode <- is.null(plate_run_id)
+
+  sample_details <- if (run_offline_mode) {
     cli::cli_alert_info("Running in offline mode")
     run_offline_mode <- TRUE
     plate_run_id <- NA
-
-    sample_details <- process_well_sample_details_offline(filepath = filepath,
-                                                          sample_type = sample_type,
-                                                          layout_type = layout_type)
-
+    process_well_sample_details_offline(filepath = filepath,
+                                        sample_type = sample_type,
+                                        layout_type = layout_type)
   } else {
     cli::cli_alert_info("Running in online mode")
     run_offline_mode <- FALSE
@@ -71,11 +72,12 @@ process_sherlock <- function(filepath,
       stop(sprintf("the plate_run_id must be created by calling 'add_plate_run'"))
     }
 
-    sample_details <- process_well_sample_details(filepath = filepath,
-                                                  sample_type = sample_type,
-                                                  layout_type = layout_type,
-                                                  plate_run_id = plate_run_id$plate_run_id)
+    process_well_sample_details(filepath = filepath,
+                                sample_type = sample_type,
+                                layout_type = layout_type,
+                                plate_run_id = plate_run_id$plate_run_id)
   }
+
 
   plate_layout <- process_plate_layout(filepath, plate_size = plate_size)
   wells_used <- sum(!is.na(plate_layout$psuedo_sample_id))
@@ -97,7 +99,8 @@ process_sherlock <- function(filepath,
       plate_type = layout_type,
       sample_type = sample_type,
       plate_run_id = plate_run_id,
-      plate_size = plate_size
+      plate_size = plate_size,
+      offline = run_offline_mode
     )
   )
 }

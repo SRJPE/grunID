@@ -93,14 +93,12 @@ sherlock_results_event <- process_sherlock(
   filepath = "inst/sherlock_results_template.xlsx",
   sample_type = "mucus",
   layout_type = "split_plate_early_late",
-  plate_run_id = plate_run_event,
   plate_size = 384)
 
 sherlock_results_event_2 <- process_sherlock(
   filepath = "inst/sherlock_results_template.xlsx",
   sample_type = "mucus",
   layout_type = "split_plate_early_late",
-  plate_run_id = plate_run_event2,
   plate_size = 384)
 
 
@@ -111,7 +109,7 @@ dplyr::tbl(con, "raw_assay_result")
 
 # generate thresholds from raw assay results
 # thresholds is a variable you will need to pass to a later function
-thresholds_event <- generate_threshold(con, plate_run = plate_run_event2)
+thresholds_event <- generate_threshold(plate_run = sherlock_results_event)
 
 # update assay detection results (TRUE or FALSE for a sample and assay type)
 # in the database
