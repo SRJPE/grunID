@@ -68,6 +68,12 @@ create_field_sheet <- function(wb, field_sheet_sample_plan, sample_event_number,
   openxlsx::writeData(wb, sheet = sheet_name, fl_summary, borders = "all", borderColour = "#000000",
                       headerStyle = col_header, startRow = nrow(field_sheet_sample_plan_extra_rows) + 5,
                       startCol = 5)
+  # center specific columns
+  centered_rows_style <- openxlsx::createStyle(halign = "center")
+  openxlsx::addStyle(wb, sheet = sheet_name, style = centered_rows_style, cols = 1:4,
+                     rows = 2:nrow(field_sheet_sample_plan_extra_rows),
+                     stack = TRUE, gridExpand = TRUE)
+
   openxlsx::setHeaderFooter(wb, sheet = sheet_name, header = c(NA, center_header_text, right_header_text))
 
   # add thick borders
