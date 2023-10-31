@@ -97,6 +97,9 @@ navbarPage(
                checkboxInput("filter_to_heterozygotes",
                              label = "Filter results to heterozygotes",
                              value = FALSE),
+               checkboxInput("filter_to_failed",
+                             label = "Filter results to failed assays",
+                             value = FALSE),
                tags$h4("Quick plot"),
                actionButton("show_season_plot", "Show Season Plot",
                             icon = icon("chart-line"))

@@ -8,7 +8,8 @@ get_samples_by_season(
   con,
   season,
   dataset = c("raw", "clean", "unprocessed"),
-  heterozygote_filter = c(FALSE, TRUE)
+  heterozygote_filter = c(FALSE, TRUE),
+  failed_filter = c(FALSE, TRUE)
 )
 }
 \arguments{
@@ -19,6 +20,9 @@ get_samples_by_season(
 \item{dataset}{either "raw", "clean", or "unprocessed".}
 
 \item{heterozygote_filter}{defaults to FALSE. If TRUE, only heterozygotes are returned.}
+
+\item{failed_filter}{defaults to FALSE. If TRUE, only "failed" assays (negative for both OTS28 early and late,
+or negative for both OTS16 spring and winter)}
 }
 \description{
 View sample by season with status and run (if assigned)

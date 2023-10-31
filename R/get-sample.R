@@ -16,6 +16,8 @@ get_samples <- function(con, ...) {
 #' @param season year in format YYYY. You can pass in a min and max season as c(YYYY, YYYY)
 #' @param dataset either "raw", "clean", or "unprocessed".
 #' @param heterozygote_filter defaults to FALSE. If TRUE, only heterozygotes are returned.
+#' @param failed_filter defaults to FALSE. If TRUE, only "failed" assays (negative for both OTS28 early and late,
+#' or negative for both OTS16 spring and winter)
 #' @details the parameter `dataset` can be used to determine what information is
 #' included in the tibble. The `raw`, `clean`, and `unprocessed` datasets contain the following
 #' variables:
@@ -56,7 +58,8 @@ get_samples <- function(con, ...) {
 #' @export
 #' @md
 get_samples_by_season <- function(con, season, dataset = c("raw", "clean", "unprocessed"),
-                                  heterozygote_filter = c(FALSE, TRUE)) {
+                                  heterozygote_filter = c(FALSE, TRUE),
+                                  failed_filter = c(FALSE, TRUE)) {
 
   if(any(sapply(season, function(i) {nchar(i) == 4})) == FALSE) {
     stop("You must provide seasons in the format YYYY (i.e. for the 2022 season,
@@ -68,13 +71,18 @@ get_samples_by_season <- function(con, season, dataset = c("raw", "clean", "unpr
   if(missing(heterozygote_filter)) {heterozygote = FALSE} else {
     heterozygote <- heterozygote_filter
   }
+  if(missing(failed_filter)) {failed = FALSE} else {
+    failed <- failed_filter
+  }
 
   is_valid_connection(con)
   season <- as.integer(season)
 
   samples <- filter_dataset(con, season)
 
-  clean_dataset <- get_clean_dataset(con, filtered_samples = samples, heterozygote_filter = heterozygote)
+  clean_dataset <- get_clean_dataset(con, filtered_samples = samples,
+                                     heterozygote_filter = heterozygote,
+                                     failed_filter = failed)
 
   if(dataset == "clean") {
     results <- clean_dataset
@@ -123,8 +131,13 @@ filter_dataset <- function(con, season) {
 
 #' Query database for clean dataset
 #' @export
-get_clean_dataset <- function(con, filtered_samples, heterozygote_filter = c(FALSE, TRUE)) {
-
+get_clean_dataset <- function(con, filtered_samples,
+                              heterozygote_filter = c(FALSE, TRUE),
+                              failed_filter = c(FALSE, TRUE)) {
+  if(heterozygote_filter & failed_filter) {
+    cli::cli_abort("You can either have heterozygote filter or failed filter,
+                   but not both.")
+  }
   filtered_sample_ids <- unique(filtered_samples$sample_id)
 
   # get additional data for samples
@@ -161,9 +174,15 @@ get_clean_dataset <- function(con, filtered_samples, heterozygote_filter = c(FAL
   if(heterozygote_filter) {
     heterozygote_results <- clean_results |>
       dplyr::filter(sherlock_run_assignment == "Heterozygous")
-
     return(heterozygote_results)
-  } else {
+
+  } else if (failed_filter) {
+    failed_results <- clean_results |>
+      dplyr::filter(sherlock_run_assignment == "Unknown")
+    return(failed_results)
+
+  }
+  else {
     return(clean_results)
   }
 }
