@@ -301,7 +301,7 @@ create_season_field_sheets <- function(con, season, field_sheet_filepath) {
 #' * **datetime_collected** The date and time (YYYY-MM-DD H:M:S) the sample was processed.
 #' * **fork_length_mm** The recorded fork length corresponding to the sample.
 #' * **field_run_type_id** The unique identifier for the field run type.
-#' * **fin_clip** Logical variable indicating whether a fin clip sample was taken.
+#' * **fin_clip** Logical variable indicating whether a fin clip sample was taken (this is deactivated currently)
 #' * **field_comment** Any recorded comments from the field regarding the sample.
 #' @examples
 #' filepath <- "data-raw/test.xlsx"
@@ -312,24 +312,30 @@ create_season_field_sheets <- function(con, season, field_sheet_filepath) {
 process_field_sheet_samples <- function(filepath){
 
   field_data <- purrr::map_dfr(readxl::excel_sheets(filepath), function(sheet) {
-    readxl::read_excel(path = filepath, sheet = sheet,
+    suppressMessages(readxl::read_excel(path = filepath, sheet = sheet,
                        col_types = c("text", "text", "numeric",
                                      "text", "date", "date",
                                      "numeric", "numeric",
-                                     "text", "text"))
-  })
+                                     "text")) |>
+      dplyr::filter(!is.na(Bin))) # do not include the FL bin table
+  },
+  .progress = list(
+    type = "iterator",
+    clear = FALSE,
+    name = "reading in field sheets"
+  ))
 
   formatted_data <- field_data |>
-    dplyr::filter(!is.na(Date)) |> # don't read in any empty rows
+    # dplyr::filter(!is.na(Date)) |> # TODO do we want empty rows ?
     dplyr::mutate(Time = format(Time, "%H:%M:%S"),
-                  datetime_collected = lubridate::ymd_hms(paste0(Date, Time)),
-                  fin_clip = tolower(`Fin Clip (Y/N)`),
-                  fin_clip = ifelse(fin_clip == "n" | is.na(fin_clip), FALSE, TRUE)) |>
+                  datetime_collected = lubridate::ymd_hms(paste0(Date, Time))) |> # not using fin clip 2023 season
+                  # fin_clip = tolower(`Fin Clip (Y/N)`),
+                  # fin_clip = ifelse(fin_clip == "n" | is.na(fin_clip), FALSE, TRUE)) |>
     dplyr::select(sample_id = `Sample ID`,
                   datetime_collected,
                   fork_length_mm = `FL (mm)`,
                   field_run_type_id = `Field Run ID`,
-                  fin_clip,
+                  # fin_clip,
                   field_comment = `Comments`)
 
   return(formatted_data)

@@ -18,7 +18,7 @@ the following variables:
 \item \strong{datetime_collected} The date and time (YYYY-MM-DD H:M:S) the sample was processed.
 \item \strong{fork_length_mm} The recorded fork length corresponding to the sample.
 \item \strong{field_run_type_id} The unique identifier for the field run type.
-\item \strong{fin_clip} Logical variable indicating whether a fin clip sample was taken.
+\item \strong{fin_clip} Logical variable indicating whether a fin clip sample was taken (this is deactivated currently)
 \item \strong{field_comment} Any recorded comments from the field regarding the sample.
 }
 }
