@@ -408,6 +408,20 @@ update_field_sheet_samples <- function(con, field_data) {
     DBI::dbClearResult(res)
   }
 
+  # get sample summaries
+  sample_ids_returned_from_field <- dplyr::tbl(con, "sample_status") |>
+    dplyr::filter(status_code_id == 4) |>
+    dplyr::select(sample_id) |>
+    dplyr::collect() |>
+    dplyr::pull()
+
+  samples_returned_from_field <- dplyr::tbl(con, "sample") |>
+    dplyr::filter(id %in% sample_ids_returned_from_field) |>
+    dplyr::mutate(location_code = substr(id, 1, 3)) |>
+    dplyr::group_by(location_code) |>
+    dplyr::summarise(fin_clips = sum(fin_clip, na.rm = T)) # TODO how to get mucus samples?
+
+  return(list("field_sampling_summaries" = samples_returned_from_field))
 }
 
 
