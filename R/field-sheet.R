@@ -376,6 +376,7 @@ update_field_sheet_samples <- function(con, field_data) {
   is_valid_connection(con)
   is_valid_sample_field_data(field_data)
 
+  # update sample table with biological information
   query <- glue::glue_sql("UPDATE sample
                            SET datetime_collected = {field_data$datetime_collected},
                                fork_length_mm = {field_data$fork_length_mm},
@@ -390,11 +391,17 @@ update_field_sheet_samples <- function(con, field_data) {
     DBI::dbClearResult(res)
   }
 
-  # res <- DBI::dbSendQuery(con, query)
-  # results <- DBI::dbFetch(res)
-  # DBI::dbClearResult(res)
+  # update sample status to 4 ("returned from field")
+  query <- glue::glue_sql("UPDATE sample_status
+                           SET status_code_id = 4,
+                           WHERE sample_id = {field_data$sample_id};",
+                          .con = con)
 
-  #return(results)
+  for(i in 1:length(query)) {
+    res <- DBI::dbSendQuery(con, query[i])
+    DBI::dbClearResult(res)
+  }
+
 }
 
 
