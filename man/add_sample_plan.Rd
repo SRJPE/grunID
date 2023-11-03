@@ -14,8 +14,8 @@ add_sample_plan(con, sample_plan, verbose = FALSE)
 \code{max_fork_length}, and \code{expected_number_of_samples}.}
 }
 \value{
-a named list containing the number of samples added and all unique
-sampling event IDs created.
+a named value \code{number_of_samples_added} reflecting the number of
+samples added to the database.
 }
 \description{
 \code{add_sample_plan} registers new sampling events and generates new sample ids

@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">grunID</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -28,6 +28,7 @@
     <a class="dropdown-item" href="../articles/process_and_add_assay_results.html">Process and add assay results to database</a>
     <a class="dropdown-item" href="../articles/query_sample_status.html">Querying Sample Status</a>
     <a class="dropdown-item" href="../articles/in_season_seeds.html">Adding In-Season Seeds</a>
+    <a class="dropdown-item" href="../articles/grunid-app.html">grunID Shiny App</a>
   </div>
 </li>
 <li class="nav-item">
@@ -79,8 +80,8 @@
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     
 
-<p>a named list containing the number of samples added and all unique
-sampling event IDs created.</p>
+<p>a named value <code>number_of_samples_added</code> reflecting the number of
+samples added to the database.</p>
     </div>
 
     <div class="section level2">
@@ -90,7 +91,10 @@ sampling event IDs created.</p>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> refreshing Azure auth token</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> refreshing Azure auth token ... done</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> FATAL:  password authentication failed for user "emanuel"</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> connection to server at "localhost" (::1), port 5432 failed: Connection refused</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> 	Is the server running on that host and accepting TCP/IP connections?</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> 	Is the server running on that host and accepting TCP/IP connections?</span>
 <span class="r-in"><span><span class="fu">add_sample_plan</span><span class="op">(</span><span class="va">con</span>, <span class="va">sample_plan</span><span class="op">)</span></span></span>
 <span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in h(simpleError(msg, call)):</span> error in evaluating the argument 'dbObj' in selecting a method for function 'dbIsValid': object 'con' not found</span>
 </code></pre></div>

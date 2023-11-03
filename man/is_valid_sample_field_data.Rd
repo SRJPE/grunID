@@ -14,3 +14,4 @@ database. Called in \code{\link{update_field_sheet_samples}}.
 Checks whether the connection is valid using \code{\link{is_valid_con}} and
 checks class of input variables.
 }
+\keyword{internal}

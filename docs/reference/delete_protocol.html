@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">grunID</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -28,6 +28,7 @@
     <a class="dropdown-item" href="../articles/process_and_add_assay_results.html">Process and add assay results to database</a>
     <a class="dropdown-item" href="../articles/query_sample_status.html">Querying Sample Status</a>
     <a class="dropdown-item" href="../articles/in_season_seeds.html">Adding In-Season Seeds</a>
+    <a class="dropdown-item" href="../articles/grunid-app.html">grunID Shiny App</a>
   </div>
 </li>
 <li class="nav-item">
@@ -81,6 +82,7 @@ retire an protocol while retaining its value for historic records.</p></dd>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p>Other protocol functions: 
+<code><a href="add_protocol_based_on.html">add_protocol_based_on</a>()</code>,
 <code><a href="add_protocol.html">add_protocol</a>()</code>,
 <code><a href="get_protocols.html">get_protocols</a>()</code>,
 <code><a href="update_protocol_status.html">update_protocol_status</a>()</code>,
@@ -97,13 +99,18 @@ retire an protocol while retaining its value for historic records.</p></dd>
 <span class="r-in"><span>                      port <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">port</span>,</span></span>
 <span class="r-in"><span>                      user <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">username</span>,</span></span>
 <span class="r-in"><span>                      password <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">password</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> connection to server at "localhost" (::1), port 5432 failed: Connection refused</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> 	Is the server running on that host and accepting TCP/IP connections?</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> 	Is the server running on that host and accepting TCP/IP connections?</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">all_protocols</span> <span class="op">&lt;-</span> <span class="fu"><a href="get_protocols.html">get_protocols</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in h(simpleError(msg, call)):</span> error in evaluating the argument 'dbObj' in selecting a method for function 'dbIsValid': object 'con' not found</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/View.html" class="external-link">View</a></span><span class="op">(</span><span class="va">all_protocols</span><span class="op">)</span> <span class="co"># to view the ID of the protocol needing deletion</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error in View : object 'all_protocols' not found</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu">delete_protocol</span><span class="op">(</span><span class="va">con</span>, <span class="fl">1</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> Failed to fetch row: ERROR:  update or delete on table "protocol" violates foreign key constraint "plate_run_protocol_id_fkey" on table "plate_run"</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> DETAIL:  Key (id)=(1) is still referenced from table "plate_run".</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in h(simpleError(msg, call)):</span> error in evaluating the argument 'dbObj' in selecting a method for function 'dbIsValid': object 'con' not found</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>

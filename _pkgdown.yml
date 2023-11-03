@@ -9,15 +9,17 @@ reference:
 - title: Adding data
   desc: These functions allow users to add information about samples being run to the database
   contents:
-  - add_new_plate_results
   - add_agency
   - add_assay
   - add_enum_value
   - add_genetic_identification
   - add_genetic_method
   - add_laboratory
+  - add_new_plate_results
   - add_plate_run
+  - add_plate_thresholds
   - add_protocol
+  - add_protocol_based_on
   - add_raw_assay_results
   - add_run_type
   - add_sample_bins
@@ -50,6 +52,7 @@ reference:
   - get_enum_values
   - get_genetic_methods
   - get_laboratories
+  - get_plate_run
   - get_protocols
   - get_run_types
   - get_sample_locations
@@ -64,6 +67,7 @@ reference:
   contents:
   - process_plate_layout
   - process_raw_assay_results
+  - process_raw_sample_plan
   - process_sherlock
   - process_well_sample_details
 
@@ -97,9 +101,7 @@ reference:
 - title: Field sheet management
   desc: These functions relate to creating and processing field sheets
   contents:
-  - create_field_sheet
-  - create_multiple_field_sheets
-  - get_field_sheet_event_plan
+  - create_season_field_sheets
   - process_field_sheet_samples
   - update_field_sheet_samples
 
@@ -118,6 +120,16 @@ reference:
 - title: Connection functions
   contents:
   - gr_db_connect
+
+- title: Genetic identification functions
+  contents:
+  - ots_early_late_detection
+  - ots_winter_spring_detection
+  - run_genetic_identification
+
+- title: App functions
+  contents:
+  - run_app
 
 navbar:
   structure:

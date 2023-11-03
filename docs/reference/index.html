@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">grunID</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -28,6 +28,7 @@
     <a class="dropdown-item" href="../articles/process_and_add_assay_results.html">Process and add assay results to database</a>
     <a class="dropdown-item" href="../articles/query_sample_status.html">Querying Sample Status</a>
     <a class="dropdown-item" href="../articles/in_season_seeds.html">Adding In-Season Seeds</a>
+    <a class="dropdown-item" href="../articles/grunid-app.html">grunID Shiny App</a>
   </div>
 </li>
 <li class="nav-item">
@@ -95,14 +96,29 @@
         <dd>Add Laboratory</dd>
       </dl><dl><dt>
           
+          <code><a href="add_new_plate_results.html">add_new_plate_results()</a></code> 
+        </dt>
+        <dd>Add New Plate Results</dd>
+      </dl><dl><dt>
+          
           <code><a href="add_plate_run.html">add_plate_run()</a></code> 
         </dt>
         <dd>Create Plate Run</dd>
       </dl><dl><dt>
           
+          <code><a href="add_plate_thresholds.html">add_plate_thresholds()</a></code> 
+        </dt>
+        <dd>Add Thresholds to Database</dd>
+      </dl><dl><dt>
+          
           <code><a href="add_protocol.html">add_protocol()</a></code> 
         </dt>
         <dd>Add Protocol</dd>
+      </dl><dl><dt>
+          
+          <code><a href="add_protocol_based_on.html">add_protocol_based_on()</a></code> 
+        </dt>
+        <dd>Add Protocol Based on Existing Protocol</dd>
       </dl><dl><dt>
           
           <code><a href="add_raw_assay_results.html">add_raw_assay_results()</a></code> 
@@ -247,6 +263,11 @@
         <dd>Retrieve Laboratories</dd>
       </dl><dl><dt>
           
+          <code><a href="get_plate_run.html">get_plate_run()</a></code> 
+        </dt>
+        <dd>Query for plate run</dd>
+      </dl><dl><dt>
+          
           <code><a href="get_protocols.html">get_protocols()</a></code> 
         </dt>
         <dd>Retrieve Protocols</dd>
@@ -308,6 +329,11 @@
         <dd>Process Raw Assay Results</dd>
       </dl><dl><dt>
           
+          <code><a href="process_raw_sample_plan.html">process_raw_sample_plan()</a></code> 
+        </dt>
+        <dd>Process Raw Sample Plan</dd>
+      </dl><dl><dt>
+          
           <code><a href="process_sherlock.html">process_sherlock()</a></code> 
         </dt>
         <dd>Process Sherlock Results</dd>
@@ -328,6 +354,16 @@
       
 
       <dl><dt>
+          
+          <code><a href="activate_plate_run.html">activate_plate_run()</a></code> 
+        </dt>
+        <dd>Activate Plate Run</dd>
+      </dl><dl><dt>
+          
+          <code><a href="deactivate_plate_run.html">deactivate_plate_run()</a></code> 
+        </dt>
+        <dd>Deactivate Plate Run</dd>
+      </dl><dl><dt>
           
           <code><a href="set_sample_status.html">set_sample_status()</a></code> 
         </dt>
@@ -445,19 +481,9 @@
 
       <dl><dt>
           
-          <code><a href="create_field_sheet.html">create_field_sheet()</a></code> 
+          <code><a href="create_season_field_sheets.html">create_season_field_sheets()</a></code> 
         </dt>
-        <dd>Create Field Sheets</dd>
-      </dl><dl><dt>
-          
-          <code><a href="create_multiple_field_sheets.html">create_multiple_field_sheets()</a></code> 
-        </dt>
-        <dd>Create Multiple Field Sheets</dd>
-      </dl><dl><dt>
-          
-          <code><a href="get_field_sheet_event_plan.html">get_field_sheet_event_plan()</a></code> 
-        </dt>
-        <dd>Get Sample Event Information for Creating a Field Sheet</dd>
+        <dd>Create Season Field Sheets</dd>
       </dl><dl><dt>
           
           <code><a href="process_field_sheet_samples.html">process_field_sheet_samples()</a></code> 
@@ -535,6 +561,48 @@
           <code><a href="gr_db_connect.html">gr_db_connect()</a></code> 
         </dt>
         <dd>Connect to Run ID Database</dd>
+      </dl></div><div class="section level2">
+      <h2 id="genetic-identification-functions">Genetic identification functions<a class="anchor" aria-label="anchor" href="#genetic-identification-functions"></a></h2>
+      
+      
+
+      
+    </div><div id="" class="section level2">
+      
+      
+      
+
+      <dl><dt>
+          
+          <code><a href="ots_early_late_detection.html">ots_early_late_detection()</a></code> 
+        </dt>
+        <dd>Determine Run identifcation after Early and Late Assays</dd>
+      </dl><dl><dt>
+          
+          <code><a href="ots_winter_spring_detection.html">ots_winter_spring_detection()</a></code> 
+        </dt>
+        <dd>Determine Run identifcation after Spring and Winter Assays</dd>
+      </dl><dl><dt>
+          
+          <code><a href="run_genetic_identification.html">run_genetic_identification()</a></code> 
+        </dt>
+        <dd>Run genetic identification</dd>
+      </dl></div><div class="section level2">
+      <h2 id="app-functions">App functions<a class="anchor" aria-label="anchor" href="#app-functions"></a></h2>
+      
+      
+
+      
+    </div><div id="" class="section level2">
+      
+      
+      
+
+      <dl><dt>
+          
+          <code><a href="run_app.html">run_app()</a></code> 
+        </dt>
+        <dd>Launch App</dd>
       </dl></div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside></div>

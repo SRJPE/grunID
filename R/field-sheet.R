@@ -1,5 +1,6 @@
-#' Create Field Sheets
-#' @description `create_field_sheet()` appends a worksheet to an existing excel workbook
+#' Create Field Sheet
+#' @description `create_field_sheet()` is called within `create_season_field_sheets()`
+#' and appends a worksheet to an existing excel workbook
 #' containing a formatted field sheet to be used by crew collecting genetic samples.
 #' @param wb A Workbook object from \code{\link[openxlsx]{createWorkbook}}
 #' @param field_sheet_sample_plan A dataframe containing the content of the field sheet,
@@ -21,48 +22,34 @@
 #' sampling of a 2 day sampling event
 #' @param sample_location The sampling location name (e.g., "Battle Creek")
 #' @param sample_location_code The sampling location short code (e.g., "BTC")
+#' @param fl_summary a summary of the fork length bins used for the sampling location with min and max fork lengths.
 #' @returns A Workbook object from \code{\link[openxlsx]{createWorkbook}} with the new worksheet
-#' @examples
-#' cfg <- config::get()
-#'
-#' con <- DBI::dbConnect(RPostgres::Postgres(),
-#'                       dbname = cfg$dbname,
-#'                       host = cfg$host,
-#'                       port = cfg$port,
-#'                       user = cfg$username,
-#'                       password = cfg$password)
-#' wb <- openxlsx::createWorkbook()
-#' # Each sample_event will be a tab in a workbook
-#' plan <- get_field_sheet_event_plan(con, sample_event_id = 1)
-#' wb <- create_field_sheet(wb = wb,
-#'                          field_sheet_sample_plan = plan$field_sheet_sample_plan,
-#'                          sample_event_number = plan$sample_event_number,
-#'                          first_sample_date = plan$first_sample_date,
-#'                          sample_location = plan$location_name,
-#'                          sample_location_code = plan$location_code)
-#'
-#' plan <- get_field_sheet_event_plan(con, sample_event_id = 2)
-#' wb <- create_field_sheet(wb = wb,
-#'                          field_sheet_sample_plan = plan$field_sheet_sample_plan,
-#'                          sample_event_number = plan$sample_event_number,
-#'                          first_sample_date = plan$first_sample_date,
-#'                          sample_location = plan$location_name,
-#'                          sample_location_code = plan$location_code)
-#'
-#' openxlsx::saveWorkbook(wb, "test.xlsx", overwrite = TRUE)
-#' @export
 #' @family field sheet helpers
+#' @keywords internal
 #' @md
 create_field_sheet <- function(wb, field_sheet_sample_plan, sample_event_number,
                                first_sample_date, sample_location,
-                               sample_location_code) {
+                               sample_location_code, fl_summary) {
+  # format fork length bin summary
+  fl_summary <- fl_summary |>
+    dplyr::arrange(sample_bin_code) |>
+    dplyr::transmute(Bin = sample_bin_code,
+                     `Range (mm)` = paste0(min_fork_length, " - ", max_fork_length))
+
+  # add 5 extra rows to the bottom of the table
+  field_sheet_sample_plan_extra_rows <- field_sheet_sample_plan |>
+    dplyr::mutate(Bin = as.character(Bin)) |>
+    tibble::add_row(Bin = rep(NA_character_, 5))
+
+  # set last sample date to the friday of that week
+  last_sample_date <- lubridate::ceiling_date(first_sample_date, "week") - 2
 
   sheet_name <- paste(sample_location_code, sample_event_number, sep = "-")
 
   center_header_text <- glue::glue("{format(first_sample_date, '%Y')} SR JPE Genetic Sampling
                                    {sample_location} ({sample_location_code})")
   right_header_text <- glue::glue("Sampling event {sample_event_number}
-             Date range: {format(first_sample_date, '%b %d')} - {format(first_sample_date + 1, '%b %d, %Y')}")
+             Date range: {format(first_sample_date, '%b %d')} - {format(last_sample_date, '%b %d, %Y')}")
   row_range <- 2:nrow(field_sheet_sample_plan)
 
   col_header <- openxlsx::createStyle(border = "TopBottomLeftRight", borderColour = "#000000",
@@ -72,20 +59,78 @@ create_field_sheet <- function(wb, field_sheet_sample_plan, sample_event_number,
   openxlsx::addWorksheet(wb, sheetName = sheet_name)
   openxlsx::pageSetup(wb, sheet = sheet_name, orientation = "landscape", left = 0.5, right = 0.25,
             top = 0.75, bottom = 0.75, printTitleRows = 1, fitToWidth = TRUE)
-  openxlsx::setColWidths(wb, sheet_name, cols = 1:10,
-                         widths = c(3, 10, 8, 20, 10, 10, 8, 8, 8, 35))
+  openxlsx::setColWidths(wb, sheet_name, cols = 1:9,
+                         widths = c(3, 10, 8, 20, 10, 10, 15, 15, 35))
   openxlsx::addStyle(wb, sheet = sheet_name, style = col_style, rows = row_range, cols = row_range)
-  openxlsx::writeData(wb, sheet = sheet_name, field_sheet_sample_plan, borders = "all", borderColour = "#000000",
-            headerStyle = col_header)
+  openxlsx::writeData(wb, sheet = sheet_name, field_sheet_sample_plan_extra_rows,
+                      borders = "all", borderColour = "#000000", headerStyle = col_header,
+                      )
+  openxlsx::writeData(wb, sheet = sheet_name, fl_summary, borders = "all", borderColour = "#000000",
+                      headerStyle = col_header, startRow = nrow(field_sheet_sample_plan_extra_rows) + 5,
+                      startCol = 5)
+  # center specific columns
+  centered_rows_style <- openxlsx::createStyle(halign = "center")
+  openxlsx::addStyle(wb, sheet = sheet_name, style = centered_rows_style, cols = 1:4,
+                     rows = 2:nrow(field_sheet_sample_plan_extra_rows),
+                     stack = TRUE, gridExpand = TRUE)
+
   openxlsx::setHeaderFooter(wb, sheet = sheet_name, header = c(NA, center_header_text, right_header_text))
+
+  # add thick borders
+  top_borders <- openxlsx::createStyle(border = "Top", borderColour = "#000000", borderStyle = "medium")
+  bottom_borders <- openxlsx::createStyle(border = "Bottom", borderColour = "#000000", borderStyle = "medium")
+  left_borders <- openxlsx::createStyle(border = "Left", borderColour = "#000000", borderStyle = "medium")
+  right_borders <- openxlsx::createStyle(border = "Right", borderColour = "#000000", borderStyle = "medium")
+
+  thick_border_reference <- field_sheet_sample_plan_extra_rows |>
+    dplyr::group_by(Bin) |>
+    dplyr::summarise(n = n()) |>
+    dplyr::ungroup() |>
+    dplyr::mutate(max_range = cumsum(n) + 1,
+                  min_range = max_range - n + 1) # add 2 so that we skip the first row
+
+  purrr::walk(thick_border_reference$Bin, function(i) {
+    border_cols_range <- ncol(field_sheet_sample_plan_extra_rows)
+
+    if(is.na(i)) {
+      border_ref <- thick_border_reference |>
+        dplyr::filter(is.na(Bin))
+    } else {
+      border_ref <- thick_border_reference |>
+        dplyr::filter(Bin == i)
+    }
+
+    # top border
+    openxlsx::addStyle(wb, sheet = sheet_name, style = top_borders,
+                       rows = border_ref$min_range,
+                       cols = 1:ncol(field_sheet_sample_plan_extra_rows),
+                       stack = TRUE)
+    # bottom border
+    openxlsx::addStyle(wb, sheet = sheet_name, style = bottom_borders,
+                       rows = border_ref$max_range,
+                       cols = 1:border_cols_range,
+                       stack = TRUE)
+
+    # left border
+    openxlsx::addStyle(wb, sheet = sheet_name, style = left_borders,
+                       rows = border_ref$min_range:border_ref$max_range,
+                       cols = 1,
+                       stack = TRUE)
+    # right border
+    openxlsx::addStyle(wb, sheet = sheet_name, style = right_borders,
+                       rows = border_ref$min_range:border_ref$max_range,
+                       cols = border_cols_range,
+                       stack = TRUE)
+  })
 
   return(wb)
 }
 
 #' Get Sample Event Information for Creating a Field Sheet
-#' @description `get_field_sheet_event_plan()` retrieves the sampling event information
+#' @description `get_field_sheet_event_plan()` is called within `create_season_field_sheets()` and
+#' retrieves the sampling event information
 #' from the database that is needed to prepare field sheets.
-#' @param con A DBI connection object obtained from DBI::dbConnect()
+#' @param con A DBI connection object
 #' @param sample_event_id The numeric unique identifier of the targeted sampling event for a location
 #' Use \code{\link{get_sample_event}} to query and retrieve the IDs from the database.
 #' @returns
@@ -96,18 +141,8 @@ create_field_sheet <- function(wb, field_sheet_sample_plan, sample_event_number,
 #' sampling of a 2 day sampling event
 #' * **location_name** The sampling location name (e.g., "Battle Creek")
 #' * **location_code** The sampling location short code (e.g., "BTC")
-#' @examples
-#' cfg <- config::get()
-#'
-#' con <- DBI::dbConnect(RPostgres::Postgres(),
-#'                       dbname = cfg$dbname,
-#'                       host = cfg$host,
-#'                       port = cfg$port,
-#'                       user = cfg$username,
-#'                       password = cfg$password)
-#' plan <- get_field_sheet_event_plan(con, sample_event_id = 1)
-#' @export
 #' @family field sheet helpers
+#' @keywords internal
 #' @md
 get_field_sheet_event_plan <- function(con, sample_event_id_arg) {
 
@@ -134,7 +169,8 @@ get_field_sheet_event_plan <- function(con, sample_event_id_arg) {
 
   sample_plan_raw <- samples |>
     dplyr::left_join(sample_bins, by = c("sample_bin_id" = "sample_bin_id")) |>
-    dplyr::left_join(sample_event, by = c("sample_event_id" = "sample_event_id"))
+    dplyr::left_join(sample_event, by = c("sample_event_id" = "sample_event_id")) |>
+    dplyr::mutate(max_fork_length = max_fork_length - 0.1)
 
   sample_event_details <- sample_event |>
     dplyr::left_join(sample_locations, by = c("sample_location_id" = "sample_location_id"))
@@ -149,7 +185,7 @@ get_field_sheet_event_plan <- function(con, sample_event_id_arg) {
       Time = "",
       `FL (mm)` = "",
       `Field Run ID` = "",
-      `Fin Clip (Y/N)` = "",
+      # `Fin Clip (Y/N)` = "", # not necessary for 2024 season per e-mail from Sean/Melinda
       Comments = "",
     )
 
@@ -162,17 +198,15 @@ get_field_sheet_event_plan <- function(con, sample_event_id_arg) {
 }
 
 
-#' Create Multiple Field Sheets
-#' @description `create_multiple_field_sheets()` creates an excel workbook and appends
+#' Create Season Field Sheets
+#' @description `create_season_field_sheets()` creates an excel workbook and appends
 #' multiple formatted field worksheets for sample event IDs in a given sample plan.
-#' @details `create_multiple_field_sheets()` combines `get_field_sheet_sample_plan()` and `create_field_sheet()` into
-#' one function. Field sheets are created for all unique sample event IDs in a given sample plan.
-#' `get_field_sheet_sample_plan()` and `create_field_sheet()` can still be run independently to create one field
-#' sheet at a time.
-#' @param added_sample_plan The object created by running `add_sample_plan()`. This is a named list containing elements
-#' "number_of_samples_added" and "sample_ids_created". "sample_ids_created" is a table and must contain a column
-#' "sample_event_id".
+#' @details `create_season_field_sheets()` creates field sheets for all unique sample event IDs in a given season.
+#' For a given season, the function will gather all sampling events for that year up to September 30th and all sampling events
+#' from the previous year after October 1st.
+#' @param season format YYYY
 #' @param field_sheet_filepath The filepath and name desired for the workbook containing field sheets.
+#' @param con A valid connection to the database
 #' @returns A Workbook object from \code{\link[openxlsx]{createWorkbook}} with a worksheet for each sampling event in the
 #' sample plan.
 #' @examples
@@ -182,24 +216,54 @@ get_field_sheet_event_plan <- function(con, sample_event_id_arg) {
 #' 2022_sample_plan <- add_sample_plan(con, sample_plan_2022_final, verbose = TRUE)
 #'
 #' # create workbook with field sheets for all sample event IDs in the 2022 sample plan
-#' create_multiple_field_sheets(added_sample_plan = 2022_sample_plan, "data-raw/2022_field_sheets.xlsx")
+#' create_season_field_sheets(con, season = 2022, "data-raw/2022_field_sheets.xlsx")
 #' @export
 #' @family field sheet helpers
 #' @md
-create_multiple_field_sheets <- function(added_sample_plan, field_sheet_filepath) {
+create_season_field_sheets <- function(con, season, field_sheet_filepath) {
   # create workbook to append each sampling event tab
   wb <- openxlsx::createWorkbook()
 
+  # season is based on water year and includes months from previous year
+  min_date <- as.Date(paste0(season - 1, "-10-01"))
+  max_date <- as.Date(paste0(season, "-09-30"))
+
+  # get season sample_events
+  sample_event_info <- dplyr::tbl(con, "sample_event") |>
+    dplyr::filter(dplyr::between(first_sample_date, min_date, max_date)) |>
+    dplyr::collect() |>
+    dplyr::left_join(dplyr::tbl(con, "sample_location") |>
+                       dplyr::select(sample_location_id = id, location_code = code) |>
+                       dplyr::collect(),
+                     by = "sample_location_id") |>
+    dplyr::arrange(location_code) |>
+    dplyr::select(id, location_code)
+
+  sample_event_ids <- sample_event_info |>
+    dplyr::pull(id)
+
+  # get fork length bin summary
+  fork_length_bins <- dplyr::tbl(con, "sample_bin") |>
+    dplyr::filter(sample_event_id %in% sample_event_ids) |>
+    dplyr::collect() |>
+    dplyr::left_join(sample_event_info, by = c("sample_event_id" = "id")) |>
+    dplyr::mutate(max_fork_length = max_fork_length - 0.1) |>
+    dplyr::distinct(location_code, sample_bin_code, min_fork_length, max_fork_length)
+
   # loop through unique sample event IDs (input to get_field_sheet_event_plan) to append
   # workbooks
-  unique_sample_ids <- unique(added_sample_plan$sample_ids_created$sample_event_id)
+  unique_sample_event_ids <- unique(sample_event_ids)
 
-  for(i in unique_sample_ids){
+  purrr::walk(unique_sample_event_ids, function(i) {
+
     # use get_field_sheet_event_plan() to create a data frame containing content for the
     # field sheets for sampling events
-    # get_field_sheet_event_plan() retrieves sampling event information from the database
-    # that is needed to prepare field sheets. Looks up based on sampling event ID
     plan <- get_field_sheet_event_plan(con, sample_event_id = i)
+
+    # get fork length summary table for that location
+    fl_summary_table <- fork_length_bins |>
+      dplyr::filter(location_code == plan$location_code) |>
+      dplyr::mutate(sample_bin_code = as.character(sample_bin_code))
 
     # append a field sheet to the workbook for that sample event
     # create field sheet for sampling crews to use.
@@ -211,10 +275,20 @@ create_multiple_field_sheets <- function(added_sample_plan, field_sheet_filepath
                              sample_event_number = plan$sample_event_number,
                              first_sample_date = plan$first_sample_date,
                              sample_location = plan$location_name,
-                             sample_location_code = plan$location_code)
-  }
+                             sample_location_code = plan$location_code,
+                             fl_summary = fl_summary_table)
+  },
+  .progress = list(
+    type = "iterator",
+    clear = TRUE,
+    name = "writing field sheets to excel file"
+  ))
+
   # then save
   openxlsx::saveWorkbook(wb, paste0(field_sheet_filepath), overwrite = TRUE)
+
+  cli::cli_alert_success(paste0("field sheets created at ", field_sheet_filepath),
+                         "green")
 }
 
 
@@ -300,8 +374,8 @@ process_field_sheet_samples <- function(filepath){
 #' filepath <- "data-raw/test.xlsx"
 #' field_data_clean <- process_field_sheet_samples(filepath)
 #' update_field_sheet_samples(con, field_data_clean)
-#' @export
 #' @family field sheet helpers
+#' @export
 #' @md
 update_field_sheet_samples <- function(con, field_data) {
 
@@ -335,7 +409,7 @@ update_field_sheet_samples <- function(con, field_data) {
 #' database. Called in \code{\link{update_field_sheet_samples}}.
 #' @details Checks whether the connection is valid using \code{\link{is_valid_con}} and
 #' checks class of input variables.
-#' @export
+#' @keywords internal
 #' @md
 is_valid_sample_field_data <- function(data) {
 

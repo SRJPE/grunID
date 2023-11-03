@@ -12,7 +12,7 @@ can be mapped to the output of the Synergy H1 reader."><!-- mathjax --><script s
     
     <a class="navbar-brand me-2" href="../index.html">grunID</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -30,6 +30,7 @@ can be mapped to the output of the Synergy H1 reader."><!-- mathjax --><script s
     <a class="dropdown-item" href="../articles/process_and_add_assay_results.html">Process and add assay results to database</a>
     <a class="dropdown-item" href="../articles/query_sample_status.html">Querying Sample Status</a>
     <a class="dropdown-item" href="../articles/in_season_seeds.html">Adding In-Season Seeds</a>
+    <a class="dropdown-item" href="../articles/grunid-app.html">grunID Shiny App</a>
   </div>
 </li>
 <li class="nav-item">
@@ -66,8 +67,10 @@ can be mapped to the output of the Synergy H1 reader.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">process_well_sample_details</span><span class="op">(</span></span>
 <span>  <span class="va">filepath</span>,</span>
 <span>  sample_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"mucus"</span>, <span class="st">"fin clip"</span><span class="op">)</span>,</span>
-<span>  <span class="va">layout_type</span>,</span>
-<span>  <span class="va">single_assay_type</span>,</span>
+<span>  layout_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"split_plate_early_late"</span>, <span class="st">"split_plate_spring_winter"</span>, <span class="st">"triplicate"</span>,</span>
+<span>    <span class="st">"single_assay"</span><span class="op">)</span>,</span>
+<span>  single_assay_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ots28 early"</span>, <span class="st">"ots28 late"</span>, <span class="st">"ots16 spring"</span>, <span class="st">"ots16 winter"</span>,</span>
+<span>    <span class="cn">NULL</span><span class="op">)</span>,</span>
 <span>  <span class="va">plate_run_id</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -93,8 +96,8 @@ in a sheet titled "Plate Map"</p></dd>
 
 
 <dt>`single_assay_type`</dt>
-<dd><p>assay type if running a plate with only one assay. Either <code>OTS28 Early</code>,
-<code>OTS28 Late</code>, <code>OTS16 Spring</code>, or <code>OTS16 Winter</code>. If not running a single assay for the plate, leave
+<dd><p>assay type if running a plate with only one assay. Either <code>ots28 early</code>,
+<code>ots28 late</code>, <code>ots16 spring</code>, or <code>ots16 winter</code>. If not running a single assay for the plate, leave
 this argument empty.</p></dd>
 
 </dl></div>
