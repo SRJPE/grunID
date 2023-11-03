@@ -92,6 +92,7 @@ res <- get_plate_run(con, id == 35)
 sherlock_results_event <- process_sherlock(
   filepath = "inst/sherlock_results_template.xlsx",
   sample_type = "mucus",
+  plate_run_id = plate_run_event,
   layout_type = "split_plate_early_late",
   plate_size = 384)
 

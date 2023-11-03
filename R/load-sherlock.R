@@ -11,46 +11,41 @@
 #' @export
 generate_threshold <- function(con, plate_run, .control_id="NTC") {
 
-  if (attr(plate_run, "offline")) {
-    return (generate_threshold_offline(plate_run, .control_id = .control_id))
-  } else {
-
-
-    if (!DBI::dbIsValid(con)) {
-      stop("Connection argument does not have a valid connection the run-id database.
+  if (!DBI::dbIsValid(con)) {
+    stop("Connection argument does not have a valid connection the run-id database.
        Please try reconnecting to the database using 'DBI::dbConnect'",
-           call. = FALSE)
-    }
-    plate_run_identifier <- plate_run$plate_run_id
-
-    protocol_id <- dplyr::tbl(con, "plate_run") |>
-      dplyr::filter(id == !!plate_run_identifier) |>
-      dplyr::pull(protocol_id)
-
-    runtime <- dplyr::tbl(con, "protocol") |>
-      dplyr::filter(id == !!protocol_id) |>
-      dplyr::pull(runtime)
-
-    control_blanks <- dplyr::tbl(con, "raw_assay_result") |>
-      dplyr::filter(time == runtime,
-                    sample_id == !!.control_id,
-                    plate_run_id == !!plate_run_identifier) |>
-      dplyr::collect()
-
-    if (nrow(control_blanks) == 0) {
-      stop(paste0("no control variables found in plate run with id: '", plate_run_identifier, "'"), call. = FALSE)
-    }
-
-    thresholds <- control_blanks |>
-      dplyr::group_by(plate_run_id, assay_id) |>
-      dplyr::summarise(
-        threshold = mean(as.numeric(raw_fluorescence)) * 2
-      ) |> dplyr::ungroup() |>
-      dplyr::mutate(runtime = runtime)
-
-    return(thresholds)
+         call. = FALSE)
   }
+  plate_run_identifier <- plate_run$plate_run_id
+
+  protocol_id <- dplyr::tbl(con, "plate_run") |>
+    dplyr::filter(id == !!plate_run_identifier) |>
+    dplyr::pull(protocol_id)
+
+  runtime <- dplyr::tbl(con, "protocol") |>
+    dplyr::filter(id == !!protocol_id) |>
+    dplyr::pull(runtime)
+
+  control_blanks <- dplyr::tbl(con, "raw_assay_result") |>
+    dplyr::filter(time == runtime,
+                  sample_id == !!.control_id,
+                  plate_run_id == !!plate_run_identifier) |>
+    dplyr::collect()
+
+  if (nrow(control_blanks) == 0) {
+    stop(paste0("no control variables found in plate run with id: '", plate_run_identifier, "'"), call. = FALSE)
+  }
+
+  thresholds <- control_blanks |>
+    dplyr::group_by(plate_run_id, assay_id) |>
+    dplyr::summarise(
+      threshold = mean(as.numeric(raw_fluorescence)) * 2
+    ) |> dplyr::ungroup() |>
+    dplyr::mutate(runtime = runtime)
+
+  return(thresholds)
 }
+
 
 
 #' Generate Thresholds Offline

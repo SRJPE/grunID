@@ -61,7 +61,7 @@ process_sherlock <- function(filepath,
   sample_details <- if (run_offline_mode) {
     cli::cli_alert_info("Running in offline mode")
     plate_run_id <- NA
-    process_well_sample_details_offline(filepath = filepath,
+  process_well_sample_details_offline(filepath = filepath,
                                         sample_type = sample_type,
                                         layout_type = layout_type)
   } else {
