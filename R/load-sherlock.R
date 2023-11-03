@@ -181,7 +181,7 @@ update_assay_detection <- function(con, thresholds, .control_id = "NTC") {
 #' @export
 generate_assay_detection <- function(thresholds, offline_sherlock_results, .control_id = "NTC") {
 
-  detection_results <- offline_sherlock_results |>
+  detection_results <- offline_sherlock_results$data |>
     dplyr::group_by(sample_id) |>
     dplyr::top_n(1, time) |>
     dplyr::ungroup() |>
