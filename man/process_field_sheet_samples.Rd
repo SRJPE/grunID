@@ -37,7 +37,7 @@ field_data_clean <- process_field_sheet_samples(filepath)
 \seealso{
 Other field sheet helpers: 
 \code{\link{create_field_sheet}()},
-\code{\link{create_multiple_field_sheets}()},
+\code{\link{create_season_field_sheets}()},
 \code{\link{get_field_sheet_event_plan}()},
 \code{\link{update_field_sheet_samples}()}
 }

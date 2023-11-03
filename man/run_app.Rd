@@ -4,7 +4,7 @@
 \alias{run_app}
 \title{Launch App}
 \usage{
-run_app(x, ...)
+run_app(config_path = NULL, ...)
 }
 \description{
 \code{run_app()} launches a shiny application that allows the user to

@@ -79,16 +79,19 @@ process_sherlock <- function(filepath,
 
 
   plate_layout <- process_plate_layout(filepath, plate_size = plate_size)
+  has_blk_entries <- nrow(dplyr::filter(plate_layout, psuedo_sample_id == "BLK")) > 0
   wells_used <- sum(!is.na(plate_layout$psuedo_sample_id))
-  read_count <- extract_read_count(filepath)
+  metadata_keys <- readxl::read_excel(filepath, range = "A1:A100") |> pull()
+
+  read_count_range <- ifelse("Eject plate on completion" %in% metadata_keys, "B18", "B17")
+  read_count <- extract_read_count(filepath, at_range = read_count_range)
 
   cell_ranges <- generate_ranges(plate_size = plate_size, wells_used = wells_used,
                                  time_intervals = read_count)
 
   layout <- dplyr::left_join(sample_details$data, plate_layout, by="location")
 
-  raw_assay_results <- suppressMessages(process_raw_assay_results(filepath, ranges = cell_ranges, plate_size,
-                                                                  layout, offline_mode = run_offline_mode))
+  raw_assay_results <- process_raw_assay_results(filepath, ranges = cell_ranges, plate_size, layout, has_background_fluorescence = has_blk_entries, offline_mode = run_offline_mode)
 
   return(
     structure(
@@ -120,8 +123,7 @@ print.sherlock_output <- function(x, ...) {
 #' Process Raw Assay Results
 #' @description A helper function called in `process_sherlock` that reads in
 #' an excel containing SHERLOCK output.
-process_raw_assay_results <- function(filepath, ranges, plate_size, layout,
-                                      offline_mode) {
+process_raw_assay_results <- function(filepath, ranges, plate_size, layout, has_background_fluorescence, offline_mode) {
   # raw fluorescence ----
 
   if (plate_size == 96) {
@@ -136,13 +138,16 @@ process_raw_assay_results <- function(filepath, ranges, plate_size, layout,
       dplyr::mutate(fluorescence = as.numeric(fluorescence))
 
     # background values ---
-    background_fluorescence <- purrr::map_dfc(ranges$background_fluorescence,
-                                              ~readxl::read_excel(filepath,
-                                                                  range = .)) |>
-      dplyr::mutate(Time = hms::as_hms(Time),
-                    dplyr::across(dplyr::everything(), as.character)) |>
-      dplyr::select(-tidyselect::contains("...")) |>
-      tidyr::pivot_longer(names_to = "location", values_to = "background_fluorescence", !Time)
+    if (has_background_fluorescence) {
+
+      background_fluorescence <- purrr::map_dfc(ranges$background_fluorescence,
+                                                ~readxl::read_excel(filepath,
+                                                                    range = .)) |>
+        dplyr::mutate(Time = hms::as_hms(Time),
+                      dplyr::across(dplyr::everything(), as.character)) |>
+        dplyr::select(-tidyselect::contains("...")) |>
+        tidyr::pivot_longer(names_to = "location", values_to = "background_fluorescence", !Time)
+    }
   } else {
     raw_fluorescence <- purrr::map_dfc(ranges$raw_fluorescence,
                                        ~readxl::read_excel(filepath,
@@ -155,23 +160,40 @@ process_raw_assay_results <- function(filepath, ranges, plate_size, layout,
       dplyr::mutate(fluorescence = as.numeric(fluorescence))
 
     # background values ---
-    background_fluorescence <- purrr::map_dfc(ranges$background_fluorescence,
-                                              ~readxl::read_excel(filepath,
-                                                                  range = .)) |>
-      dplyr::mutate(Time = hms::as_hms(Time...1),
-                    dplyr::across(dplyr::everything(), as.character)) |>
-      dplyr::select(-tidyselect::contains("...")) |>
-      tidyr::pivot_longer(names_to = "location", values_to = "background_fluorescence", !Time)
+    if (has_background_fluorescence) {
+
+      background_fluorescence <- purrr::map_dfc(ranges$background_fluorescence,
+                                                ~readxl::read_excel(filepath,
+                                                                    range = .)) |>
+        dplyr::mutate(Time = hms::as_hms(Time...1),
+                      dplyr::across(dplyr::everything(), as.character)) |>
+        dplyr::select(-tidyselect::contains("...")) |>
+        tidyr::pivot_longer(names_to = "location", values_to = "background_fluorescence", !Time)
+    }
   }
 
   if(!offline_mode) {
     # raw results encoded as strings because of OVERFLOW and ????? values
-    raw_assay_results <- raw_fluorescence |>
-      dplyr::left_join(background_fluorescence) |>
-      dplyr::select(sample_id, sample_type_id, assay_id, raw_fluorescence = fluorescence,
-                    background_value = background_fluorescence,
-                    time = Time, plate_run_id, well_location = location) |>
-      dplyr::filter(!is.na(sample_id))
+    # raw results encoded as strings because of OVERFLOW and ????? values
+    if (has_background_fluorescence) {
+
+      raw_assay_results <- raw_fluorescence |>
+        dplyr::left_join(background_fluorescence) |>
+        dplyr::select(sample_id, sample_type_id, assay_id, plate_run_id, raw_fluorescence = fluorescence,
+                      background_value = background_fluorescence,
+                      time = Time, plate_run_id, well_location = location) |>
+        dplyr::filter(!is.na(sample_id))
+
+      return(raw_assay_results)
+    } else {
+      raw_assay_results <- raw_fluorescence |>
+        dplyr::mutate(background_fluorescence = NA_real_) |>
+        dplyr::select(sample_id, sample_type_id, assay_id, plate_run_id, raw_fluorescence = fluorescence,
+                      background_value = background_fluorescence,
+                      time = Time, plate_run_id, well_location = location) |>
+        dplyr::filter(!is.na(sample_id))
+
+    }
   } else if (offline_mode) {
     # raw results encoded as strings because of OVERFLOW and ????? values
     raw_assay_results <- raw_fluorescence |>
@@ -181,8 +203,6 @@ process_raw_assay_results <- function(filepath, ranges, plate_size, layout,
                     time = Time, well_location = location) |>
       dplyr::filter(!is.na(sample_id))
   }
-
-  return(raw_assay_results)
 }
 
 
@@ -203,6 +223,7 @@ process_plate_layout <- function(filepath, plate_size) {
     dplyr::mutate(letter = letters[1:end_letter]) |>
     tidyr::pivot_longer(names_to = "number", values_to = "psuedo_sample_id", !letter) |>
     dplyr::transmute(location = toupper(paste0(letter, number)), psuedo_sample_id)
+
   return(plate_layout)
 }
 
@@ -562,8 +583,8 @@ generate_range <- function(table_type = c("raw fluorescence", "background fluore
   return(cell_ranges)
 }
 
-extract_read_count <- function(filepath) {
-  raw_read_count <- readxl::read_excel(filepath, range = "B18", col_names = FALSE) |>
+extract_read_count <- function(filepath, at_range) {
+  raw_read_count <- readxl::read_excel(filepath, range = at_range, col_names = FALSE) |>
     dplyr::pull(...1)
   read_count <- as.integer(stringr::str_extract(raw_read_count, "\\d+(?=\\sReads)"))
   return(read_count)

@@ -14,15 +14,17 @@
 #' @family run type functions
 #' @export
 #' @md
-get_run_types <- function(con, is_active=TRUE, all_results=FALSE) {
+get_run_types <- function(con, is_active=TRUE, all_results=FALSE, ...) {
   is_valid_connection(con)
 
   if(all_results) {
     run_types <- dplyr::tbl(con, "run_type") |>
+      dplyr::filter(...) |>
       dplyr::collect()
   } else {
     run_types <- dplyr::tbl(con, "run_type") |>
       dplyr::filter(active == is_active) |>
+      dplyr::filter(...) |>
       dplyr::collect()
   }
 

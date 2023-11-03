@@ -6,23 +6,41 @@ library(readxl)
 library(DBI)
 library(grunID)
 
-# establish connection
+# step 1: establish connection --------------------------------------------
 cfg <- config::get()
 # at this point config has the creds
 con <- DBI::dbConnect(RPostgres::Postgres(),
-               dbname = cfg$dbname,
-               host = cfg$host,
-               port = 5432,
-               user = cfg$username,
-               password = cfg$password)
+                      dbname = cfg$dbname,
+                      host = cfg$host,
+                      port = 5432,
+                      user = cfg$username,
+                      password = cfg$password)
 
-con <- gr_db_connect()
+#con <- gr_db_connect()
 
-# read in sample plan created for the season. this contains
-# contains location codes, sample events, sample bins,
-# min/max fork lengths, sample dates, and sample IDs.
-# needs to be in tidy format
-# TODO this needs to be made by users at the beginning of the season
+
+# step 2: add sample plan and generate field sheets -------------------------------
+
+# read in sampling dates
+sampling_dates_2024 <- readxl::read_xlsx("data-raw/2024-use-case/2024_sampling_dates.xlsx") |>
+  mutate(sample_event_number = as.numeric(substr(`...1`, 7, 8))) |>
+  mutate(first_sample_date = ymd(`Date Start`)) |>
+  select(first_sample_date, sample_event_number) |>
+  glimpse()
+
+# if starting with a raw sample plan similar to "data-raw/2024_raw_sample_plan.xlsx"
+# use process raw sample plan function:
+sample_plan_2024 <- process_raw_sample_plan("data-raw/2024-use-case/2024_raw_sample_plan.xlsx", 2024)
+sample_plan_2024_with_dates <- sample_plan_2024 |>
+  select(-first_sample_date) |>
+  left_join(sampling_dates_2024, by = "sample_event_number") |>
+  mutate(sample_event_number = as.integer(sample_event_number)) |>
+  relocate(first_sample_date, .before = sample_bin_code)
+sample_ids_2024 <- add_sample_plan(con, sample_plan_2024_with_dates, verbose = TRUE)
+
+
+# if already in tidy format, read in and then add sample plan
+# this example code is for only one location
 sample_plan_2022_final <- read_csv("data-raw/2022_sample_plan.csv") |> distinct_all()
 
 # filter sample plan to locations (this isn't necessary but helpful for
@@ -42,7 +60,7 @@ feather_61_sample_plan <- sample_plan_2022_final |>
 feather_61_IDs <- add_sample_plan(con, feather_61_sample_plan, verbose = TRUE)
 
 # create workbook containing multiple field sheets
-create_multiple_field_sheets(added_sample_plan = feather_61_IDs, "data-raw/F61_test.xlsx")
+create_season_field_sheets(con, 2024, "data-raw/2024-use-case/2024_field_sheets_test.xlsx")
 
 # step 3: send field sheets out to monitoring crews to gather samples
 
@@ -60,3 +78,22 @@ update_field_sheet_samples(field_data_clean)
 
 # now the biological samples are stored in the database with the
 # appropriate sample IDs. Now onto assays :)
+
+
+
+
+additional_samples_2023 <- expand_grid(
+  location_code = "CLR",
+  sample_event_number = 1:14,
+  first_sample_date = lubridate::as_date("2023-01-01"),
+  sample_bin_code = LETTERS[1:5],
+  min_fork_length = 1,
+  max_fork_length = 200,
+  expected_number_of_samples = 50
+) |>
+  mutate(sample_event_number = as.integer(sample_event_number),
+         min_fork_length = as.integer(min_fork_length),
+         max_fork_length = as.integer(max_fork_length))
+
+
+add_sample_plan(con , additional_samples_2023, verbose = TRUE)
