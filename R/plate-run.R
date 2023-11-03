@@ -51,24 +51,24 @@ add_new_plate_results <- function(con, protocol_name, genetic_method,
   cli::cli_alert_info("Adding plate run to database")
   # create a new plate run in db for these results
   plate_run <- add_plate_run(con,
-                            date_run = date_run,
-                            protocol_id = protocol_id,
-                            genetic_method_id = genetic_method_id,
-                            laboratory_id = lab_id,
-                            lab_work_performed_by = lab_work_performed_by,
-                            description = description)
+                             date_run = date_run,
+                             protocol_id = protocol_id,
+                             genetic_method_id = genetic_method_id,
+                             laboratory_id = lab_id,
+                             lab_work_performed_by = lab_work_performed_by,
+                             description = description)
   cli::cli_alert_success("Plate run added to database with id = {plate_run$plate_run_id}")
 
-
   cli::cli_alert_info("Processing sherlock data")
-  sherlock_results_event <- suppressMessages(
-    process_sherlock(
-      filepath = filepath,
-      sample_type = sample_type,
-      layout_type = layout_type,
-      plate_run_id = plate_run,
-      plate_size = plate_size)
-  )
+    sherlock_results_event <- suppressMessages(
+      process_sherlock(
+        filepath = filepath,
+        sample_type = sample_type,
+        layout_type = layout_type,
+        plate_run_id = plate_run,
+        plate_size = plate_size)
+    )
+
   cli::cli_alert_success("Sherlock results processing complete")
 
   cli::cli_alert_info("adding results to database")
@@ -82,12 +82,13 @@ add_new_plate_results <- function(con, protocol_name, genetic_method,
       stop(e)
     }
   )
-
   cli::cli_alert_success("Added {as.numeric(add_raw_res)} results to the database")
+
 
   cli::cli_alert_info("Generating thresholds for plate run")
 
   thresholds_event <- generate_threshold(con, plate_run = plate_run, .control_id = .control_id)
+
   cli::cli_alert_success("Threshold done")
 
 

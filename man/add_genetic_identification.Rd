@@ -10,6 +10,10 @@ add_genetic_identification(con, sample_identifiers)
 \item{con}{valid connection to database}
 
 \item{sample_identifiers}{identifiers for samples to be added}
+
+\item{online_mode}{whether the function is to be run in online (interacting with database) or offline mode}
+
+\item{offline_assay_results}{results produced in offline mode, table with assay IDs and positive/negative detection}
 }
 \description{
 `add_genetic_identification` assigns genetic identifier to a

@@ -1,4 +1,4 @@
-#' Generate Thresholds
+#' Generate Thresholds Online
 #' @description `generate_threshold()` calculates the raw fluorescence threshold
 #' values for an assay.
 #' @param con valid connection to the database
@@ -14,7 +14,7 @@ generate_threshold <- function(con, plate_run, strategy = "twice average",.contr
 
   if (!DBI::dbIsValid(con)) {
     stop("Connection argument does not have a valid connection the run-id database.
-         Please try reconnecting to the database using 'DBI::dbConnect'",
+       Please try reconnecting to the database using 'DBI::dbConnect'",
          call. = FALSE)
   }
   plate_run_identifier <- plate_run$plate_run_id
@@ -29,8 +29,8 @@ generate_threshold <- function(con, plate_run, strategy = "twice average",.contr
 
   control_blanks <- dplyr::tbl(con, "raw_assay_result") |>
     dplyr::filter(time == runtime,
-           sample_id == !!.control_id,
-           plate_run_id == !!plate_run_identifier) |>
+                  sample_id == !!.control_id,
+                  plate_run_id == !!plate_run_identifier) |>
     dplyr::collect()
 
   if (nrow(control_blanks) == 0) {
@@ -54,7 +54,34 @@ generate_threshold <- function(con, plate_run, strategy = "twice average",.contr
   return(thresholds)
 }
 
-#' @title Set detection for assay results
+
+
+#' Generate Thresholds Offline
+#' @description `generate_threshold_offline()` calculates the raw fluorescence threshold
+#' values for an assay offline
+#' @param .control_id the identifier within the plate run to use as control for calculating thresholds, defaults to "NTC"
+#' @param offline_sherlock_results if running offline, this function requires a table of sherlock results
+#' @details For each assay on a plate run, the threshold value is calculated as two times
+#' the mean value of the last time step from the control blank wells. Each
+#' assay on a plate will have its own control blanks and threshold value.
+#' @returns a table containing thresholds for an event, to be passed to `update_assay_detections()`
+#' @export
+generate_threshold_offline <- function(offline_sherlock_results, .control_id="NTC") {
+
+  control_blanks <- offline_sherlock_results$data |>
+    dplyr::filter(sample_id == !!.control_id)
+
+  thresholds <- control_blanks |>
+    dplyr::group_by(assay_id) |>
+    dplyr::summarise(
+      threshold = mean(as.numeric(raw_fluorescence)) * 2
+    ) |> dplyr::ungroup()
+
+  return(thresholds)
+}
+
+
+#' @title Set detection for assay results online
 #' @description `update_assay_detection()` updates the assay result table with
 #' positive detections and, depending on the assay, the genetic run type
 #' identification.
@@ -76,7 +103,7 @@ update_assay_detection <- function(con, thresholds, .control_id = "NTC") {
 
   if (!DBI::dbIsValid(con)) {
     stop("Connection argument does not have a valid connection the run-id database.
-         Please try reconnecting to the database using 'DBI::dbConnect'",
+       Please try reconnecting to the database using 'DBI::dbConnect'",
          call. = FALSE)
   }
 
@@ -102,8 +129,8 @@ update_assay_detection <- function(con, thresholds, .control_id = "NTC") {
 
   detection_results <- dplyr::tbl(con, "raw_assay_result") |>
     dplyr::filter(plate_run_id == plate_run,
-           sample_id != .control_id,
-           time == runtime) |>
+                  sample_id != .control_id,
+                  time == runtime) |>
     dplyr::collect() |>
     dplyr::left_join(thresholds, by = c("assay_id" = "assay_id", "plate_run_id" = "plate_run_id")) |>
     dplyr::mutate(positive_detection = raw_fluorescence > threshold) |>
@@ -132,10 +159,47 @@ update_assay_detection <- function(con, thresholds, .control_id = "NTC") {
   ))
 
 
-  genetic_ids_added <- add_genetic_identification(con, unique(detection_results$sample_id))
+  genetic_ids_added <- add_genetic_identification(con, unique(detection_results$sample_id),
+                                                  online_mode = !!online_mode)
 
   return(c("Assay records added" = sum(assay_results_added),
            "Samples assigned run type" = genetic_ids_added))
+}
+
+
+#' @title Generate detection for assay results offline
+#' @description `generate_assay_detection()` generates an assay result table with
+#' positive detections and, depending on the assay, the genetic run type
+#' identification, without interacting with the database
+#' @param thresholds threshold values calculated in `generate_threshold_offline`
+#' @param offline_sherlock_results sherlock results table provided by `process_sherlock`
+#' @details The sherlock results are updated to reflect whether the assays
+#' in a plate run produced raw fluorescence values that exceed the threshold
+#' calculated by `generate_threshold_offline`, resulting in a positive or negative
+#' detection (TRUE or FALSE, where TRUE means the assay is a positive
+#' detection). The function currently uses the positive detection value for the
+#' sample ID at the end of the run time (i.e. the max run time).
+#' @returns A table of samples processed with `sample_id`, `assay_id`, `raw_fluorescence`,
+#' `threshold`, and `positive_detection`.
+#' @export
+generate_assay_detection <- function(thresholds, offline_sherlock_results, .control_id = "NTC") {
+
+  detection_results <- offline_sherlock_results$data |>
+    dplyr::group_by(sample_id) |>
+    dplyr::top_n(1, time) |>
+    dplyr::ungroup() |>
+    dplyr::filter(sample_id != .control_id) |>
+    dplyr::left_join(thresholds, by = "assay_id") |>
+    dplyr::mutate(positive_detection = raw_fluorescence > threshold) |>
+    dplyr::select(sample_id, assay_id, raw_fluorescence,
+                  threshold, positive_detection)
+
+  # TODO update add_genetic_identification update
+  # genetic_ids_added <- add_genetic_identification(unique(detection_results$sample_id),
+  #                                                 online_mode = !!online_mode)
+
+  return(detection_results)
+
 }
 
 
@@ -187,6 +251,8 @@ add_raw_assay_results <- function(con, assay_results) {
 #' sample based on assay results.
 #' @param con valid connection to database
 #' @param sample_identifiers identifiers for samples to be added
+#' @param online_mode whether the function is to be run in online (interacting with database) or offline mode
+#' @param offline_assay_results results produced in offline mode, table with assay IDs and positive/negative detection
 #' @details `add_genetic_identification` checks the database for all existing
 #' assay results for a sample identifier, then uses those to assign a
 #' genetic identification value. The genetic_run_identification table in the
@@ -227,12 +293,12 @@ add_genetic_identification <- function(con, sample_identifiers) {
 
   if (nrow(run_type_id_data) > 0) {
     query <- glue::glue_sql("
-  INSERT INTO genetic_run_identification (sample_id, run_type_id)
-  VALUES (
-    {run_type_id_data$sample_id},
-    {run_type_id_data$run_type_id}
-  );
-  ", .con = con)
+INSERT INTO genetic_run_identification (sample_id, run_type_id)
+VALUES (
+  {run_type_id_data$sample_id},
+  {run_type_id_data$run_type_id}
+);
+", .con = con)
 
     total_inserts <- purrr::map_dbl(query, function(q) {
       DBI::dbExecute(con, q)
@@ -249,6 +315,78 @@ add_genetic_identification <- function(con, sample_identifiers) {
   set_sample_status(con, run_types$sample_id, run_types$status_code_id)
 
   return(sum(total_inserts))
+}
+
+#' @title Offline Genetic Identification
+#' @description `generate_genetic_detection` assigns genetic identifier to a
+#' sample based on assay results.
+#' @param offline_detections_1 table of sample IDs, assay IDs, and positive/negative detections to be compared
+#' @param offline_detections_1 table of sample IDs, assay IDs, and positive/negative detections to be compared
+#' @details `generate_genetic_detection` compares two tables of offline
+#' positive detection results, then uses those to assign a genetic identification value.
+#' @export
+generate_genetic_detection <- function(offline_detections_1, offline_detections_2) {
+
+  assay_detections_1 <- offline_detections_1 |>
+    dplyr::mutate(assay_id_name = dplyr::case_when(assay_id == 1 ~ "ots_28_e",
+                                                   assay_id == 2 ~ "ots_28_l",
+                                                   assay_id == 3 ~ "ots_16_s",
+                                                   assay_id == 4 ~ "ots_16_w"),
+                  assay_id_name = factor(assay_id_name, levels = c("ots_28_e","ots_28_l","ots_16_s","ots_16_w"))) |>
+    dplyr::distinct(sample_id, positive_detection, assay_id_name) |>
+    tidyr::pivot_wider(names_from = "assay_id_name", values_from = "positive_detection", names_expand = TRUE)
+
+  assay_detections_2 <- offline_detections_2 |>
+    dplyr::distinct(sample_id, assay_id, positive_detection) |>
+    dplyr::mutate(assay_id_name = dplyr::case_when(assay_id == 1 ~ "ots_28_e_2",
+                                                   assay_id == 2 ~ "ots_28_l_2",
+                                                   assay_id == 3 ~ "ots_16_s_2",
+                                                   assay_id == 4 ~ "ots_16_w_2"),
+                  assay_id_name = factor(assay_id_name, levels = c("ots_28_e_2","ots_28_l_2","ots_16_s_2","ots_16_w_2"))) |>
+    dplyr::select(-assay_id) |>
+    tidyr::pivot_wider(names_from = "assay_id_name", values_from = "positive_detection", names_expand = TRUE)
+
+  assay_detections <- left_join(assay_detections_1, assay_detections_2,
+                                by = "sample_id") |>
+    dplyr::mutate(ots_28_e = ifelse(is.na(ots_28_e), ots_28_e_2, ots_28_e),
+                  ots_28_l = ifelse(is.na(ots_28_l), ots_28_l_2, ots_28_l),
+                  ots_16_s = ifelse(is.na(ots_16_s), ots_16_s_2, ots_16_s),
+                  ots_16_w = ifelse(is.na(ots_16_w), ots_16_w_2, ots_16_w)) |>
+    dplyr::select(sample_id, ots_28_e, ots_28_l, ots_16_s, ots_16_w)
+
+  if (nrow(assay_detections) == 0) {
+    return(0)
+  }
+
+  # hard code tables
+  status_code_lookup <- tibble(status_code_id = 1:13,
+                               status= c("created", "prepped", "out to field", "returned from field",
+                                         "need ots28", "ots28 in progress", "ots28 complete", "need ots16",
+                                         "ots16 inprogress", "ots16 complete", "analysis complete", "archived",
+                                         "other lab"))
+  run_code_lookup <- tibble(run_type_id = 1:8,
+                            run_assignment = c("Spring", "Fall", "LateFall", "Winter", "Fall/LateFall", "Spring/Winter",
+                                               "Unknown", "Heterozygous"))
+
+  run_types <- assay_detections |>
+    assign_status_codes() |>
+    assign_run_types() |>
+    dplyr::left_join(status_code_lookup, by = "status_code_id") |>
+    dplyr::left_join(run_code_lookup, by = "run_type_id") |>
+    dplyr::select(sample_id, status, run_assignment)
+
+  non_unknowns <- run_types |>
+    dplyr::filter(run_assignment != "Unknown") |>
+    dplyr::pull() |>
+    length()
+
+  unknowns <- length(run_types$run_assignment) - non_unknowns
+
+
+  cli::cat_bullet(paste0(non_unknowns, " samples assigned run type"), bullet_col = "green")
+  cli::cat_bullet(paste0(unknowns, " samples with unknown run type"), bullet_col = "green")
+
+  return(run_types)
 
 }
 
