@@ -134,6 +134,8 @@ get_samples_needing_action(con)
 # see status of a selected sample ID
 get_sample_status(con, "JPE_Sample_ID", full_history = FALSE)
 
+get_samples_by_season(con, 2022, "clean")
+
 # disconnect!
 DBI::dbDisconnect(con)
 

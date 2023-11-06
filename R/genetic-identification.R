@@ -204,13 +204,13 @@ ots_early_late_detection <- function(con, sample_id,
   else if (ots_early_priority_results$positive_detection && ots_late_priority_results$positive_detection) {
     return(list(sample_id = sample_id, status_code = "analysis complete", run_type="HET", early_plate = ots_early_priority_results$plate_run_id, late_plate = ots_late_priority_results$plate_run_id))
   }
-  # negative late and positive early --> UNK need ots 16
+  # negative late and positive early --> SPW need ots 16
   else if (ots_early_priority_results$positive_detection && !ots_late_priority_results$positive_detection) {
-    return(list(sample_id = sample_id, status_code = "need ots16", run_type = NA, early_plate = ots_early_priority_results$plate_run_id, late_plate = ots_late_priority_results$plate_run_id))
+    return(list(sample_id = sample_id, status_code = "need ots16", run_type = "SPW", early_plate = ots_early_priority_results$plate_run_id, late_plate = ots_late_priority_results$plate_run_id))
   }
-  # negative late and negative early --> repeat
+  # negative late and negative early --> UNK
   else if (!ots_early_priority_results$positive_detection && !ots_late_priority_results$positive_detection){
-    return(list(sample_id = sample_id, status_code = "created", run_type = NA, early_plate = ots_early_priority_results$plate_run_id, late_plate = ots_late_priority_results$plate_run_id))
+    return(list(sample_id = sample_id, status_code = "ots28 complete", run_type = "UNK", early_plate = ots_early_priority_results$plate_run_id, late_plate = ots_late_priority_results$plate_run_id))
   }
   else {
     cli::cli_abort(c("x" = "uknown combination of test results for {sample_id}, unable to proceed"))
@@ -336,9 +336,9 @@ ots_winter_spring_detection <- function(con, sample_id,
   else if (ots_spring_priority_results$positive_detection && !ots_winter_priority_results$positive_detection) {
     return(list(sample_Id = sample_id, status_code = "analysis complete", run_type = "SPR"))
   }
-  # both negative
+  # both negative --> UNK
   else if (!ots_spring_priority_results$positive_detection && !ots_winter_priority_results$positive_detection){
-    return(list(sample_Id = sample_id, status_code = "need ots16", run_type = NA))
+    return(list(sample_Id = sample_id, status_code = "ots16 complete", run_type = "UNK"))
   }
 
 

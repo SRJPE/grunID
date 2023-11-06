@@ -76,7 +76,38 @@ navbarPage(
                DT::dataTableOutput("sample_status_table"))
            )
   ),
-  tabPanel(title = "Query")
+  tabPanel(title = "Query",
+           sidebarLayout(
+             sidebarPanel(
+               width = 3,
+               selectInput("season_filter", "Season Filter",
+                           available_years),
+               actionButton("season_filter_description",
+                            "What is a season?",
+                            icon = icon("circle-info")),
+               br(),
+               br(),
+               selectInput("dataset_type_filter", "Dataset Type",
+                           c("clean", "raw", "unprocessed")),
+               actionButton("dataset_type_description",
+                            "What are the dataset types?",
+                            icon = icon("circle-info")),
+               br(),
+               br(),
+               checkboxInput("filter_to_heterozygotes",
+                             label = "Filter results to heterozygotes",
+                             value = FALSE),
+               checkboxInput("filter_to_failed",
+                             label = "Filter results to failed assays",
+                             value = FALSE),
+               tags$h4("Quick plot"),
+               actionButton("show_season_plot", "Show Season Plot",
+                            icon = icon("chart-line"))
+             ),
+             mainPanel(
+               DT::dataTableOutput("season_table")
+             )
+           ))
 )
 
 # grunID::add_new_plate_results()
