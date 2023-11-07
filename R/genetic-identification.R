@@ -251,7 +251,7 @@ ots_winter_spring_detection <- function(con, sample_id,
     return(list(
       sample_id = sample_id,
       status_code = "ots16 inprogress",
-      run_type = NA_character_,
+      run_type = "SPW",
       spr_wint_plate_id = NA
     ))
   }
@@ -421,32 +421,8 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
     analysis_complete_gen_insert <- early_late_resp_data |>
       dplyr::filter(status_code == "analysis complete")
 
-    analysis_complete_gen_insert$run_type_id = as.numeric(run_type_name_to_id[analysis_complete_gen_insert$run_type])
-    analysis_complete_gen_insert <- dplyr::select(analysis_complete_gen_insert, sample_id, run_type_id, early_plate, late_plate)
-    analysis_complete_gen_insert$updated_at <- lubridate::now(tzone = "UTC")
+    insert_gen_id_to_database(con, analysis_complete_gen_insert, run_type_name_to_id)
 
-    purrr::walk(1:nrow(analysis_complete_gen_insert), function(row) {
-      this_sample_id <- analysis_complete_gen_insert$sample_id[row]
-      this_run_type_id <- analysis_complete_gen_insert$run_type_id[row]
-      this_early_plate <- analysis_complete_gen_insert$early_plate[row]
-      this_late_plate <- analysis_complete_gen_insert$late_plate[row]
-
-      insert_safely_Q <- glue::glue_sql(
-        "INSERT INTO genetic_run_identification (sample_id, run_type_id, early_plate_id, late_plate_id, updated_at)
-    VALUES
-      ({this_sample_id}, {this_run_type_id}, {this_early_plate}, {this_late_plate}, CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
-    ON CONFLICT (sample_id) DO UPDATE
-    SET
-      run_type_id = EXCLUDED.run_type_id,
-      early_plate_id = EXCLUDED.early_plate_id,
-      late_plate_id = EXCLUDED.late_plate_id,
-      updated_at = EXCLUDED.updated_at;
-    ",
-        .con = con
-      )
-
-      DBI::dbExecute(con, insert_safely_Q)
-    })
   }
 
   # at this point we have inserted all of the samples that were complete
@@ -467,34 +443,9 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
 
     if (nrow(unknown_gen_to_insert) > 0) {
 
-      unknown_gen_to_insert$run_type_id = as.numeric(run_type_name_to_id[unknown_gen_to_insert$run_type])
-      unknown_gen_to_insert <- dplyr::select(unknown_gen_to_insert, sample_id, run_type_id, early_plate, late_plate)
-      unknown_gen_to_insert$updated_at <- lubridate::now(tzone = "UTC")
+      insert_gen_id_to_database(con, unknown_gen_to_insert, run_type_name_to_id)
 
-      purrr::walk(1:nrow(unknown_gen_to_insert), function(row) {
-        this_sample_id <- unknown_gen_to_insert$sample_id[row]
-        this_run_type_id <- unknown_gen_to_insert$run_type_id[row]
-        this_early_plate <- unknown_gen_to_insert$early_plate[row]
-        this_late_plate <- unknown_gen_to_insert$late_plate[row]
-
-        insert_safely_Q <- glue::glue_sql(
-          "INSERT INTO genetic_run_identification (sample_id, run_type_id, early_plate_id, late_plate_id, updated_at)
-    VALUES
-      ({this_sample_id}, {this_run_type_id}, {this_early_plate}, {this_late_plate}, CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
-    ON CONFLICT (sample_id) DO UPDATE
-    SET
-      run_type_id = EXCLUDED.run_type_id,
-      early_plate_id = EXCLUDED.early_plate_id,
-      late_plate_id = EXCLUDED.late_plate_id,
-      updated_at = EXCLUDED.updated_at;
-    ",
-          .con = con
-        )
-
-        DBI::dbExecute(con, insert_safely_Q)
-      })
     }
-
   }
 
   # OTS28 in progress / eihter assay 1 or 2 is not done
@@ -545,33 +496,7 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
     sw_analysis_complete_gen_insert <- spring_winter_resp_data |>
       dplyr::filter(status_code == "analysis complete")
 
-
-    sw_analysis_complete_gen_insert$run_type_id = as.numeric(run_type_name_to_id[sw_analysis_complete_gen_insert$run_type])
-    sw_analysis_complete_gen_insert <- dplyr::select(sw_analysis_complete_gen_insert, sample_id, run_type_id, early_plate, late_plate)
-    sw_analysis_complete_gen_insert$updated_at <- lubridate::now(tzone = "UTC")
-
-    purrr::walk(1:nrow(sw_analysis_complete_gen_insert), function(row) {
-      this_sample_id <- sw_analysis_complete_gen_insert$sample_id[row]
-      this_run_type_id <- sw_analysis_complete_gen_insert$run_type_id[row]
-      this_early_plate <- sw_analysis_complete_gen_insert$early_plate[row]
-      this_late_plate <- sw_analysis_complete_gen_insert$late_plate[row]
-
-      insert_safely_Q <- glue::glue_sql(
-        "INSERT INTO genetic_run_identification (sample_id, run_type_id, early_plate_id, late_plate_id, updated_at)
-    VALUES
-      ({this_sample_id}, {this_run_type_id}, {this_early_plate}, {this_late_plate}, CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
-    ON CONFLICT (sample_id) DO UPDATE
-    SET
-      run_type_id = EXCLUDED.run_type_id,
-      early_plate_id = EXCLUDED.early_plate_id,
-      late_plate_id = EXCLUDED.late_plate_id,
-      updated_at = EXCLUDED.updated_at;
-    ",
-        .con = con
-      )
-
-      DBI::dbExecute(con, insert_safely_Q)
-    })
+    insert_gen_id_to_database(con, sw_analysis_complete_gen_insert, run_type_name_to_id)
 
   }
 
@@ -584,6 +509,15 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
     ots16_inprogress_inserts$status_code_id <- status_code_name_to_id["ots16 inprogress"]
     ots16_inprogress_inserts <- dplyr::select(ots16_inprogress_inserts, sample_id, status_code_id, comment)
     DBI::dbAppendTable(con, "sample_status", ots16_inprogress_inserts)
+
+    spw_gen_to_insert <- spring_winter_resp_data |>
+      filter(run_type == "SPW")
+
+    if (nrow(spw_gen_to_insert) > 0) {
+      insert_gen_id_to_database(con, spw_gen_to_insert, run_type_name_to_id)
+    }
+
+
   }
 
   # need ots 16
@@ -597,9 +531,41 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
     DBI::dbAppendTable(con, "sample_status", ots16_need_inserts)
   }
 
-
-
 }
+
+
+
+#' @keywords internal
+insert_gen_id_to_database <- function(con, insert_data, run_lookups) {
+  # append cols required
+  insert_data$run_type_id = as.numeric(run_lookups[insert_data$run_type])
+  insert_data <- dplyr::select(insert_data, sample_id, run_type_id, early_plate, late_plate)
+  insert_data$updated_at <- lubridate::now(tzone = "UTC")
+
+  purrr::walk(1:nrow(insert_data), function(row) {
+    this_sample_id <- insert_data$sample_id[row]
+    this_run_type_id <- insert_data$run_type_id[row]
+    this_early_plate <- insert_data$early_plate[row]
+    this_late_plate <- insert_data$late_plate[row]
+
+    insert_safely_Q <- glue::glue_sql(
+      "INSERT INTO genetic_run_identification (sample_id, run_type_id, early_plate_id, late_plate_id, updated_at)
+    VALUES
+      ({this_sample_id}, {this_run_type_id}, {this_early_plate}, {this_late_plate}, CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
+    ON CONFLICT (sample_id) DO UPDATE
+    SET
+      run_type_id = EXCLUDED.run_type_id,
+      early_plate_id = EXCLUDED.early_plate_id,
+      late_plate_id = EXCLUDED.late_plate_id,
+      updated_at = EXCLUDED.updated_at;
+    ",
+      .con = con
+    )
+
+    DBI::dbExecute(con, insert_safely_Q)
+  })
+}
+
 
 parse_detection_results <- function(detection_results) {
   purrr::map_df(detection_results, function(x) {
