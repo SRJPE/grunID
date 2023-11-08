@@ -4,7 +4,7 @@
 #' @param .control_id the id to use as the control for thresholds
 #' @export
 #' @md
-add_plate_thresholds <- function(con, thresholds, .control_id = "NTC") {
+add_plate_thresholds <- function(con, thresholds) {
 
   if (!DBI::dbIsValid(con)) {
     stop("Connection argument does not have a valid connection the run-id database.
@@ -15,6 +15,7 @@ add_plate_thresholds <- function(con, thresholds, .control_id = "NTC") {
   plate_run <- unique(thresholds$plate_run_id)
   runtime <- unique(thresholds$runtime)
   strategy <- unique(thresholds$strategy)
+  control <- unique(thresholds$threshold_control)
   if (length(plate_run) > 1) {
     stop("TODO")
   }
@@ -38,12 +39,12 @@ add_plate_thresholds <- function(con, thresholds, .control_id = "NTC") {
                   time == runtime) |>
     dplyr::collect() |>
     dplyr::left_join(thresholds, by = c("assay_id" = "assay_id", "plate_run_id" = "plate_run_id")) |>
-    dplyr::mutate(positive_detection = raw_fluorescence > threshold, threshold_strategy = strategy) |>
+    dplyr::mutate(positive_detection = raw_fluorescence > threshold, threshold_strategy = strategy, threshold_control = threshold_control) |>
     dplyr::select(sample_id, assay_id, raw_fluorescence,
-                  threshold, threshold_strategy, positive_detection, plate_run_id)
+                  threshold, threshold_strategy, threshold_control, positive_detection, plate_run_id)
 
   query <- glue::glue_sql("
-  INSERT INTO assay_result (sample_id, assay_id, raw_fluorescence, threshold, threshold_strategy,
+  INSERT INTO assay_result (sample_id, assay_id, raw_fluorescence, threshold, threshold_strategy, threshold_control,
                             positive_detection, plate_run_id)
   VALUES (
           {detection_results$sample_id},
@@ -51,6 +52,7 @@ add_plate_thresholds <- function(con, thresholds, .control_id = "NTC") {
           {detection_results$raw_fluorescence},
           {detection_results$threshold},
           {detection_results$threshold_strategy},
+          {detection_results$threshold_control},
           {detection_results$positive_detection},
           {detection_results$plate_run_id}::int
   );", .con = con)

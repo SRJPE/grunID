@@ -59,7 +59,7 @@ generate_threshold <- function(con, plate_run, strategy = "twice average", .cont
                               dplyr::summarise(
                                 threshold = mean(as.numeric(raw_fluorescence)) * 2
                               ) |> ungroup() |>
-                              dplyr::mutate(runtime = runtime, strategy = strategy)
+                              dplyr::mutate(runtime = runtime, strategy = strategy, threshold_control = .control_id)
                           }
     )
   } else if (is.function(strategy)) {
@@ -69,7 +69,7 @@ generate_threshold <- function(con, plate_run, strategy = "twice average", .cont
       dplyr::summarise(
         threshold = strategy(raw_fluorescence)
       ) |> ungroup() |>
-      dplyr::mutate(runtime = runtime, strategy = paste("USER DEFINED:", strategy_body))
+      dplyr::mutate(runtime = runtime, strategy = paste("USER DEFINED:", strategy_body), threshold_control = .control_id)
   }
 
   return(thresholds)
