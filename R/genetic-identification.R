@@ -252,7 +252,8 @@ ots_winter_spring_detection <- function(con, sample_id,
       sample_id = sample_id,
       status_code = "ots16 inprogress",
       run_type = "SPW",
-      spr_wint_plate_id = NA
+      spring_plate_id = NA,
+      winter_plate_id = NA
     ))
   }
 
@@ -265,7 +266,8 @@ ots_winter_spring_detection <- function(con, sample_id,
       sample_id = sample_id,
       status_code = "ots16 inprogress",
       run_type = NA_character_,
-      spr_wint_plate_id = NA
+      spring_plate_id = NA,
+      winter_plate_id = NA
     ))
   }
 
@@ -326,19 +328,23 @@ ots_winter_spring_detection <- function(con, sample_id,
 
   # positive winter and negative spring ---> WIN
   if (!ots_spring_priority_results$positive_detection && ots_winter_priority_results$positive_detection) {
-    return(list(sample_Id = sample_id, status_code = "analysis complete", run_type="WIN"))
+    return(list(sample_id = sample_id, status_code = "analysis complete", run_type="WIN",
+                winter_plate_id = ots_winter_priority_results$plate_run_id, spring_plate_id = ots_spring_priority_results$plate_run_id))
   }
   # positive winter and positive spring ---> HET
   else if (ots_spring_priority_results$positive_detection && ots_winter_priority_results$positive_detection) {
-    return(list(sample_Id = sample_id, status_code = "analysis complete", run_type="HET"))
+    return(list(sample_id = sample_id, status_code = "analysis complete", run_type="HET",
+                winter_plate_id = ots_winter_priority_results$plate_run_id, spring_plate_id = ots_spring_priority_results$plate_run_id))
   }
   # negative winter and positive spring --> SPR
   else if (ots_spring_priority_results$positive_detection && !ots_winter_priority_results$positive_detection) {
-    return(list(sample_Id = sample_id, status_code = "analysis complete", run_type = "SPR"))
+    return(list(sample_id = sample_id, status_code = "analysis complete", run_type = "SPR",
+                winter_plate_id = ots_winter_priority_results$plate_run_id, spring_plate_id = ots_spring_priority_results$plate_run_id))
   }
   # both negative --> UNK
   else if (!ots_spring_priority_results$positive_detection && !ots_winter_priority_results$positive_detection){
-    return(list(sample_Id = sample_id, status_code = "ots16 complete", run_type = "UNK"))
+    return(list(sample_id = sample_id, status_code = "ots16 complete", run_type = "UNK",
+                winter_plate_id = ots_winter_priority_results$plate_run_id, spring_plate_id = ots_spring_priority_results$plate_run_id))
   }
 
 
@@ -540,8 +546,9 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
 #' @keywords internal
 insert_gen_id_to_database <- function(con, insert_data, run_lookups) {
   # append cols required
+  run_type_code <- insert_data$run_type
   insert_data$run_type_id = as.numeric(run_lookups[insert_data$run_type])
-  insert_data <- dplyr::select(insert_data, tidyselect::any_of(c("sample_id", "run_type_id", "early_plate", "late_plate", "spr_wint_plate_id")))
+  insert_data <- dplyr::select(insert_data, tidyselect::any_of(c("sample_id", "run_type_id", "early_plate", "late_plate", "spring_plate_id", "winter_plate_id")))
   insert_data$updated_at <- lubridate::now(tzone = "UTC")
 
   purrr::walk(1:nrow(insert_data), function(row) {
@@ -549,17 +556,19 @@ insert_gen_id_to_database <- function(con, insert_data, run_lookups) {
     this_run_type_id <- insert_data$run_type_id[row]
     this_early_plate <- insert_data$early_plate[row]
     this_late_plate <- insert_data$late_plate[row]
+    this_spring_plate_id <- insert_data$spring_plate_id[row]
+    this_winter_plate_id <- insert_data$winter_plate_id[row]
 
-    insert_statement <- if (insert_data$run_type == "SPW") {
+    insert_statement <- if (run_type_code %in% c("SPW", "SPR", "WIN")) {
       glue::glue_sql(
-        "INSERT INTO genetic_run_identification (sample_id, run_type_id, spr_wint_plate_id, updated_at)
+        "INSERT INTO genetic_run_identification (sample_id, run_type_id, spring_plate_id, winter_plate_Id, updated_at)
     VALUES
-      ({this_sample_id}, {this_run_type_id}, {spr_wint_plate_id}, CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
+      ({this_sample_id}, {this_run_type_id}, {this_spring_plate_id}, {this_winter_plate_id}, CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
     ON CONFLICT (sample_id) DO UPDATE
     SET
       run_type_id = EXCLUDED.run_type_id,
-      early_plate_id = EXCLUDED.early_plate_id,
-      spr_wint_plate_id = EXCLUDED.spr_wint_plate_id,
+      spring_plate_id = EXCLUDED.spring_plate_id,
+      winter_plate_id = EXCLUDED.winter_plate_id,
       updated_at = EXCLUDED.updated_at;
     ",
         .con = con
@@ -601,7 +610,8 @@ parse_spring_winter_detection_results <- function(detection_results) {
     data.frame(sample_id = x$sample_id,
                status_code = x$status_code,
                run_type = x$run_type,
-               spr_wint_plate_id = x$spr_wint_plate_id
+               winter_plate_id = x$winter_plate_id,
+               spring_plate_id = x$spring_plate_id
     )
   })
 
