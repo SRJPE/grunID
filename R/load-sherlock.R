@@ -37,7 +37,7 @@
 #' @returns a table containing thresholds for an event, to be passed to `update_assay_detections()`
 #' @md
 #' @export
-generate_threshold <- function(con, plate_run, strategy = "twice average", .control_id="NTC") {
+generate_threshold <- function(con, plate_run, strategy = "twice average", .control_id = "NTC") {
 
   if (!DBI::dbIsValid(con)) {
     stop("Connection argument does not have a valid connection the run-id database.
