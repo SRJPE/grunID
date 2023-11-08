@@ -14,21 +14,33 @@ generate_threshold(
 \arguments{
 \item{con}{valid connection to the database}
 
-\item{plate_run}{plate run object obtained from either `add_plate_run` or `get_plate_run`}
+\item{plate_run}{plate run object obtained from either \code{add_plate_run} or \code{get_plate_run}}
 
-\item{strategy}{the strategy to use for computing thresholds}
+\item{strategy}{the strategy to use for computing thresholds, see \strong{details} for more info.}
 
 \item{.control_id}{the identifier within the plate run to use as control for calculating thresholds, defaults to "NTC"}
 }
 \value{
-a table containing thresholds for an event, to be passed to `update_assay_detections()`
+a table containing thresholds for an event, to be passed to \code{update_assay_detections()}
 }
 \description{
-`generate_threshold()` calculates the raw fluorescence threshold
+\code{generate_threshold()} calculates the raw fluorescence threshold
 values for an assay.
 }
 \details{
-For each assay on a plate run, the threshold value is calculated as two times
-the mean value of the last time step from the control blank wells. Each
-assay on a plate will have its own control blanks and threshold value.
+thresholds can be customized by either selecting from one of the following:
+\itemize{
+\item "twice average" use twice the average of the control variable as threshold
+}
+
+or creating your own threshold function. The function must take a single argument \code{raw_fluorescence} and output a numeric vector.
+Example
+
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{custom_threshold <- function(raw_fluorescence) \{
+    min(raw_fluorescence)
+\}
+}\if{html}{\out{</div>}}
+
+This example will use the minimum raw fluorescence value in the plate run as the threshold. When adding to the database the body
+of the function will be used to populate the \code{threshold_strategy} column.
 }

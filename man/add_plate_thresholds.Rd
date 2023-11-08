@@ -16,6 +16,3 @@ add_plate_thresholds(con, thresholds, .control_id = "NTC")
 \description{
 Add Thresholds to Database
 }
-\details{
-Additional details...
-}
