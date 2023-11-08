@@ -25,7 +25,8 @@ assign_status_codes <- function(assay_detections) {
         ots_16_w & !ots_16_s ~ 11,
         ots_16_s & ots_16_w ~ 11,
         !ots_16_s & !ots_16_w ~ 10
-      ))
+      )
+    )
 }
 
 #' @title assign run types
@@ -55,4 +56,3 @@ assign_run_types <- function(assay_detections_with_status_codes) {
       TRUE ~ 0
     ))
 }
-
