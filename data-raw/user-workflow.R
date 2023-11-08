@@ -106,12 +106,13 @@ sherlock_results_event_2 <- process_sherlock(
 
 # add raw assay results to database
 dplyr::tbl(con, "raw_assay_result")
-add_raw_assay_results(con, sherlock_results_event_2)
+add_raw_assay_results(con, sherlock_results_event)
 dplyr::tbl(con, "raw_assay_result")
 
 # generate thresholds from raw assay results
 # thresholds is a variable you will need to pass to a later function
-thresholds_event <- generate_threshold(con, plate_run = plate_run_event2)
+thresholds_event <- generate_threshold(con, plate_run = plate_run_event, strategy = \(x) min(x))
+add_plate_thresholds(con, thresholds_event)
 
 # update assay detection results (TRUE or FALSE for a sample and assay type)
 # in the database
