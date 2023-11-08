@@ -505,7 +505,7 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
     dplyr::filter(status_code == "ots16 inprogress")
 
   if (nrow(ots16_inprogress_inserts) > 0 ) {
-    ots16_inprogress_inserts$comment <- "auto-generated comment added when running this sample through run_genetic_identification"
+    ots16_inprogress_inserts$comment <- "auto-generated status when running genetic run identification"
     ots16_inprogress_inserts$status_code_id <- status_code_name_to_id["ots16 inprogress"]
     ots16_inprogress_inserts <- dplyr::select(ots16_inprogress_inserts, sample_id, status_code_id, comment)
     DBI::dbAppendTable(con, "sample_status", ots16_inprogress_inserts)
@@ -535,11 +535,13 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
 
 
 
+
+
 #' @keywords internal
 insert_gen_id_to_database <- function(con, insert_data, run_lookups) {
   # append cols required
   insert_data$run_type_id = as.numeric(run_lookups[insert_data$run_type])
-  insert_data <- dplyr::select(insert_data, sample_id, run_type_id, early_plate, late_plate)
+  insert_data <- dplyr::select(insert_data, tidyselect::any_of(c("sample_id", "run_type_id", "early_plate", "late_plate", "spr_wint_plate_id")))
   insert_data$updated_at <- lubridate::now(tzone = "UTC")
 
   purrr::walk(1:nrow(insert_data), function(row) {
@@ -548,8 +550,23 @@ insert_gen_id_to_database <- function(con, insert_data, run_lookups) {
     this_early_plate <- insert_data$early_plate[row]
     this_late_plate <- insert_data$late_plate[row]
 
-    insert_safely_Q <- glue::glue_sql(
-      "INSERT INTO genetic_run_identification (sample_id, run_type_id, early_plate_id, late_plate_id, updated_at)
+    insert_statement <- if (insert_data$run_type == "SPW") {
+      glue::glue_sql(
+        "INSERT INTO genetic_run_identification (sample_id, run_type_id, spr_wint_plate_id, updated_at)
+    VALUES
+      ({this_sample_id}, {this_run_type_id}, {spr_wint_plate_id}, CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
+    ON CONFLICT (sample_id) DO UPDATE
+    SET
+      run_type_id = EXCLUDED.run_type_id,
+      early_plate_id = EXCLUDED.early_plate_id,
+      spr_wint_plate_id = EXCLUDED.spr_wint_plate_id,
+      updated_at = EXCLUDED.updated_at;
+    ",
+        .con = con
+      )
+    } else {
+      glue::glue_sql(
+        "INSERT INTO genetic_run_identification (sample_id, run_type_id, early_plate_id, late_plate_id, updated_at)
     VALUES
       ({this_sample_id}, {this_run_type_id}, {this_early_plate}, {this_late_plate}, CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
     ON CONFLICT (sample_id) DO UPDATE
@@ -559,10 +576,11 @@ insert_gen_id_to_database <- function(con, insert_data, run_lookups) {
       late_plate_id = EXCLUDED.late_plate_id,
       updated_at = EXCLUDED.updated_at;
     ",
-      .con = con
-    )
+        .con = con
+      )
+    }
 
-    DBI::dbExecute(con, insert_safely_Q)
+    DBI::dbExecute(con, insert_statement)
   })
 }
 
