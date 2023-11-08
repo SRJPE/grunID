@@ -5,6 +5,20 @@
 #' @param plate_run plate run object obtained from either `add_plate_run` or `get_plate_run`
 #' @param strategy the strategy to use for computing thresholds, see **details** for more info.
 #' @param .control_id the identifier within the plate run to use as control for calculating thresholds, defaults to "NTC"
+#' @examples
+#' \dontrun{
+#' # using default strategy
+#' thresholds_event <- generate_threshold(con, plate_run = plate_run_event)
+#'
+#' # using named function
+#' min_fluo <- function(x) {
+#'   return(min(x))
+#' }
+#' thresholds_event <- generate_threshold(con, plate_run = plate_run_event, strategy = min_fluo)
+#'
+#' # use short-hand functions, this is equivalent to example above
+#' thresholds_event <- generate_threshold(con, plate_run = plate_run_event, strategy = \(x) min(x))
+#' }
 #' @details
 #' thresholds can be customized by either selecting from one of the following:
 #'

@@ -44,3 +44,18 @@ Example
 This example will use the minimum raw fluorescence value in the plate run as the threshold. When adding to the database the body
 of the function will be used to populate the \code{threshold_strategy} column.
 }
+\examples{
+\dontrun{
+# using default strategy
+thresholds_event <- generate_threshold(con, plate_run = plate_run_event)
+
+# using named function
+min_fluo <- function(x) {
+  return(min(x))
+}
+thresholds_event <- generate_threshold(con, plate_run = plate_run_event, strategy = min_fluo)
+
+# use short-hand functions, this is equivalent to example above
+thresholds_event <- generate_threshold(con, plate_run = plate_run_event, strategy = \(x) min(x))
+}
+}
