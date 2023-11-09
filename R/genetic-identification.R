@@ -88,15 +88,15 @@ ots_early_late_detection <- function(con, sample_id,
 
   selection_strategy <- match.arg(selection_strategy)
 
-  # get results for this sample
+  # get all results that match this sample id
   assay_results <- tbl(con, "assay_result") |>
     filter(sample_id == !!sample_id)
 
-  # get all the assays given for each of these samples
-  assays_for_existing_for_sample <- assay_results |> dplyr::distinct(assay_id) |> dplyr::pull()
+  # get all the assays run for each
+  assays_existing_for_sample <- assay_results |> dplyr::distinct(assay_id) |> dplyr::pull()
 
   # check if assay 1 and 2 exists for each of these
-  assay_needed_not_found <- which(!(1:2 %in% assays_for_existing_for_sample ))
+  assay_needed_not_found <- which(!(1:2 %in% assays_existing_for_sample ))
 
   # check for what assays are needed
   if (length(assay_needed_not_found) > 0) {
@@ -210,7 +210,7 @@ ots_early_late_detection <- function(con, sample_id,
   }
   # negative late and negative early --> UNK
   else if (!ots_early_priority_results$positive_detection && !ots_late_priority_results$positive_detection){
-    return(list(sample_id = sample_id, status_code = "ots28 complete", run_type = "UNK", early_plate = ots_early_priority_results$plate_run_id, late_plate = ots_late_priority_results$plate_run_id))
+    return(list(sample_id = sample_id, status_code = "created", run_type = "UNK", early_plate = ots_early_priority_results$plate_run_id, late_plate = ots_late_priority_results$plate_run_id))
   }
   else {
     cli::cli_abort(c("x" = "uknown combination of test results for {sample_id}, unable to proceed"))
@@ -251,8 +251,9 @@ ots_winter_spring_detection <- function(con, sample_id,
     return(list(
       sample_id = sample_id,
       status_code = "ots16 inprogress",
-      run_type = NA_character_,
-      spr_wint_plate_id = NA
+      run_type = "SPW",
+      spring_plate_id = NA,
+      winter_plate_id = NA
     ))
   }
 
@@ -265,7 +266,8 @@ ots_winter_spring_detection <- function(con, sample_id,
       sample_id = sample_id,
       status_code = "ots16 inprogress",
       run_type = NA_character_,
-      spr_wint_plate_id = NA
+      spring_plate_id = NA,
+      winter_plate_id = NA
     ))
   }
 
@@ -326,19 +328,23 @@ ots_winter_spring_detection <- function(con, sample_id,
 
   # positive winter and negative spring ---> WIN
   if (!ots_spring_priority_results$positive_detection && ots_winter_priority_results$positive_detection) {
-    return(list(sample_Id = sample_id, status_code = "analysis complete", run_type="WIN"))
+    return(list(sample_id = sample_id, status_code = "analysis complete", run_type="WIN",
+                winter_plate_id = ots_winter_priority_results$plate_run_id, spring_plate_id = ots_spring_priority_results$plate_run_id))
   }
   # positive winter and positive spring ---> HET
   else if (ots_spring_priority_results$positive_detection && ots_winter_priority_results$positive_detection) {
-    return(list(sample_Id = sample_id, status_code = "analysis complete", run_type="HET"))
+    return(list(sample_id = sample_id, status_code = "analysis complete", run_type="HET",
+                winter_plate_id = ots_winter_priority_results$plate_run_id, spring_plate_id = ots_spring_priority_results$plate_run_id))
   }
   # negative winter and positive spring --> SPR
   else if (ots_spring_priority_results$positive_detection && !ots_winter_priority_results$positive_detection) {
-    return(list(sample_Id = sample_id, status_code = "analysis complete", run_type = "SPR"))
+    return(list(sample_id = sample_id, status_code = "analysis complete", run_type = "SPR",
+                winter_plate_id = ots_winter_priority_results$plate_run_id, spring_plate_id = ots_spring_priority_results$plate_run_id))
   }
   # both negative --> UNK
   else if (!ots_spring_priority_results$positive_detection && !ots_winter_priority_results$positive_detection){
-    return(list(sample_Id = sample_id, status_code = "ots16 complete", run_type = "UNK"))
+    return(list(sample_id = sample_id, status_code = "ots16 complete", run_type = "UNK",
+                winter_plate_id = ots_winter_priority_results$plate_run_id, spring_plate_id = ots_spring_priority_results$plate_run_id))
   }
 
 
@@ -406,6 +412,10 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
   status_code_name_to_id <- all_status_codes$id
   names(status_code_name_to_id) <- all_status_codes$status_code_name
 
+  # updates run type
+  all_run_type_id <- grunID::get_run_types(con)
+  run_type_name_to_id <- all_run_type_id$id
+  names(run_type_name_to_id) <- all_run_type_id$code
 
   if (nrow(analysis_complete_status_insert) > 0) {
 
@@ -414,58 +424,35 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
     analysis_complete_status_insert <- dplyr::select(analysis_complete_status_insert, sample_id, status_code_id, comment)
     DBI::dbAppendTable(con, "sample_status", analysis_complete_status_insert)
 
-
-    # updates run type
-    all_run_type_id <- grunID::get_run_types(con)
-    run_type_name_to_id <- all_run_type_id$id
-    names(run_type_name_to_id) <- all_run_type_id$code
-
     analysis_complete_gen_insert <- early_late_resp_data |>
       dplyr::filter(status_code == "analysis complete")
 
+    insert_gen_id_to_database(con, analysis_complete_gen_insert, run_type_name_to_id)
 
-    analysis_complete_gen_insert$run_type_id = as.numeric(run_type_name_to_id[analysis_complete_gen_insert$run_type])
-    analysis_complete_gen_insert <- dplyr::select(analysis_complete_gen_insert, sample_id, run_type_id, early_plate, late_plate)
-    analysis_complete_gen_insert$updated_at <- lubridate::now(tzone = "UTC")
-
-    purrr::walk(1:nrow(analysis_complete_gen_insert), function(row) {
-      this_sample_id <- analysis_complete_gen_insert$sample_id[row]
-      this_run_type_id <- analysis_complete_gen_insert$run_type_id[row]
-      this_early_plate <- analysis_complete_gen_insert$early_plate[row]
-      this_late_plate <- analysis_complete_gen_insert$late_plate[row]
-
-      insert_safely_Q <- glue::glue_sql(
-        "INSERT INTO genetic_run_identification (sample_id, run_type_id, early_plate_id, late_plate_id, updated_at)
-    VALUES
-      ({this_sample_id}, {this_run_type_id}, {this_early_plate}, {this_late_plate}, CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
-    ON CONFLICT (sample_id) DO UPDATE
-    SET
-      run_type_id = EXCLUDED.run_type_id,
-      early_plate_id = EXCLUDED.early_plate_id,
-      late_plate_id = EXCLUDED.late_plate_id,
-      updated_at = EXCLUDED.updated_at;
-    ",
-        .con = con
-      )
-
-      DBI::dbExecute(con, insert_safely_Q)
-    })
   }
 
-  # at this point we have inserted all of the samples that were complete, we update created status
+  # at this point we have inserted all of the samples that were complete
+  # now check for status = "Created", some of these will need to have genetic id updated, specifically the UNK ones
   created_status_to_insert <-
     early_late_resp_data |> dplyr::filter(status_code == "created")
 
   if (nrow(created_status_to_insert) > 0) {
-
 
     created_status_to_insert$comment <- "auto-generated comment added when running this sample through run_genetic_identification"
     created_status_to_insert$status_code_id <- status_code_name_to_id["created"]
     created_status_to_insert <- dplyr::select(created_status_to_insert, sample_id, status_code_id, comment)
     DBI::dbAppendTable(con, "sample_status", created_status_to_insert)
 
+    # for sample status with "created" the run type needs to be set to UNK so they can be discovered
+    unknown_gen_to_insert <- early_late_resp_data |>
+      filter(run_type == "UNK")
+
+    if (nrow(unknown_gen_to_insert) > 0) {
+
+      insert_gen_id_to_database(con, unknown_gen_to_insert, run_type_name_to_id)
+
+    }
   }
-  # created cannot do any gen id updates
 
   # OTS28 in progress / eihter assay 1 or 2 is not done
 
@@ -486,9 +473,9 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
   ots16_in_progress_to_insert <- early_late_resp_data |>
     dplyr::filter(status_code == "need ots16")
 
-  # FIXME - a hack to make things work for now
+  # TODO - what should we return in this case? For now just returning the dataframe with most info
   if (nrow(ots16_in_progress_to_insert) == 0) {
-    return()
+    return(early_late_resp_data)
   }
 
   spring_winter_resp <- purrr::map(
@@ -515,33 +502,7 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
     sw_analysis_complete_gen_insert <- spring_winter_resp_data |>
       dplyr::filter(status_code == "analysis complete")
 
-
-    sw_analysis_complete_gen_insert$run_type_id = as.numeric(run_type_name_to_id[sw_analysis_complete_gen_insert$run_type])
-    sw_analysis_complete_gen_insert <- dplyr::select(sw_analysis_complete_gen_insert, sample_id, run_type_id, early_plate, late_plate)
-    sw_analysis_complete_gen_insert$updated_at <- lubridate::now(tzone = "UTC")
-
-    purrr::walk(1:nrow(sw_analysis_complete_gen_insert), function(row) {
-      this_sample_id <- sw_analysis_complete_gen_insert$sample_id[row]
-      this_run_type_id <- sw_analysis_complete_gen_insert$run_type_id[row]
-      this_early_plate <- sw_analysis_complete_gen_insert$early_plate[row]
-      this_late_plate <- sw_analysis_complete_gen_insert$late_plate[row]
-
-      insert_safely_Q <- glue::glue_sql(
-        "INSERT INTO genetic_run_identification (sample_id, run_type_id, early_plate_id, late_plate_id, updated_at)
-    VALUES
-      ({this_sample_id}, {this_run_type_id}, {this_early_plate}, {this_late_plate}, CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
-    ON CONFLICT (sample_id) DO UPDATE
-    SET
-      run_type_id = EXCLUDED.run_type_id,
-      early_plate_id = EXCLUDED.early_plate_id,
-      late_plate_id = EXCLUDED.late_plate_id,
-      updated_at = EXCLUDED.updated_at;
-    ",
-        .con = con
-      )
-
-      DBI::dbExecute(con, insert_safely_Q)
-    })
+    insert_gen_id_to_database(con, sw_analysis_complete_gen_insert, run_type_name_to_id)
 
   }
 
@@ -550,10 +511,19 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
     dplyr::filter(status_code == "ots16 inprogress")
 
   if (nrow(ots16_inprogress_inserts) > 0 ) {
-    ots16_inprogress_inserts$comment <- "auto-generated comment added when running this sample through run_genetic_identification"
+    ots16_inprogress_inserts$comment <- "auto-generated status when running genetic run identification"
     ots16_inprogress_inserts$status_code_id <- status_code_name_to_id["ots16 inprogress"]
     ots16_inprogress_inserts <- dplyr::select(ots16_inprogress_inserts, sample_id, status_code_id, comment)
     DBI::dbAppendTable(con, "sample_status", ots16_inprogress_inserts)
+
+    spw_gen_to_insert <- spring_winter_resp_data |>
+      filter(run_type == "SPW")
+
+    if (nrow(spw_gen_to_insert) > 0) {
+      insert_gen_id_to_database(con, spw_gen_to_insert, run_type_name_to_id)
+    }
+
+
   }
 
   # need ots 16
@@ -567,9 +537,62 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
     DBI::dbAppendTable(con, "sample_status", ots16_need_inserts)
   }
 
-
-
 }
+
+
+
+
+
+#' @keywords internal
+insert_gen_id_to_database <- function(con, insert_data, run_lookups) {
+  # append cols required
+  run_type_code <- insert_data$run_type
+  insert_data$run_type_id = as.numeric(run_lookups[insert_data$run_type])
+  insert_data <- dplyr::select(insert_data, tidyselect::any_of(c("sample_id", "run_type_id", "early_plate", "late_plate", "spring_plate_id", "winter_plate_id")))
+  insert_data$updated_at <- lubridate::now(tzone = "UTC")
+
+  purrr::walk(1:nrow(insert_data), function(row) {
+    this_sample_id <- insert_data$sample_id[row]
+    this_run_type_id <- insert_data$run_type_id[row]
+    this_early_plate <- insert_data$early_plate[row]
+    this_late_plate <- insert_data$late_plate[row]
+    this_spring_plate_id <- insert_data$spring_plate_id[row]
+    this_winter_plate_id <- insert_data$winter_plate_id[row]
+
+    insert_statement <- if (run_type_code %in% c("SPW", "SPR", "WIN")) {
+      glue::glue_sql(
+        "INSERT INTO genetic_run_identification (sample_id, run_type_id, spring_plate_id, winter_plate_Id, updated_at)
+    VALUES
+      ({this_sample_id}, {this_run_type_id}, {this_spring_plate_id}, {this_winter_plate_id}, CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
+    ON CONFLICT (sample_id) DO UPDATE
+    SET
+      run_type_id = EXCLUDED.run_type_id,
+      spring_plate_id = EXCLUDED.spring_plate_id,
+      winter_plate_id = EXCLUDED.winter_plate_id,
+      updated_at = EXCLUDED.updated_at;
+    ",
+        .con = con
+      )
+    } else {
+      glue::glue_sql(
+        "INSERT INTO genetic_run_identification (sample_id, run_type_id, early_plate_id, late_plate_id, updated_at)
+    VALUES
+      ({this_sample_id}, {this_run_type_id}, {this_early_plate}, {this_late_plate}, CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
+    ON CONFLICT (sample_id) DO UPDATE
+    SET
+      run_type_id = EXCLUDED.run_type_id,
+      early_plate_id = EXCLUDED.early_plate_id,
+      late_plate_id = EXCLUDED.late_plate_id,
+      updated_at = EXCLUDED.updated_at;
+    ",
+        .con = con
+      )
+    }
+
+    DBI::dbExecute(con, insert_statement)
+  })
+}
+
 
 parse_detection_results <- function(detection_results) {
   purrr::map_df(detection_results, function(x) {
@@ -587,7 +610,8 @@ parse_spring_winter_detection_results <- function(detection_results) {
     data.frame(sample_id = x$sample_id,
                status_code = x$status_code,
                run_type = x$run_type,
-               spr_wint_plate_id = x$spr_wint_plate_id
+               winter_plate_id = x$winter_plate_id,
+               spring_plate_id = x$spring_plate_id
     )
   })
 
