@@ -6,6 +6,11 @@
 \usage{
 update_genetic_run_id(con, sample_id, run_type)
 }
+\arguments{
+\item{sample_id}{the sample id to update run identification for}
+
+\item{run_type}{the run code to update sample to, one of "FAL", "SPR", "WIN", "HET", "UNK"}
+}
 \description{
 Updates genetic id for a sample in the database
 }

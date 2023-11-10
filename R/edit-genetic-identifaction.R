@@ -1,6 +1,10 @@
 #' @title Query Genetic Results
 #' @description
 #' Get table of results populated in the genetic_run_identification table.
+#' @param con connection to database
+#' @param run (optional) the run to filter results to
+#' @param sample_id (optional) the sample to filter results to
+#' @param year (optional) to digit season to filter results to
 #' @export
 get_genetic_run_results <- function(con, run = NULL, sample_id = NULL, year = NULL) {
   base_query <- tbl(con, "genetic_run_identification")
@@ -24,6 +28,8 @@ get_genetic_run_results <- function(con, run = NULL, sample_id = NULL, year = NU
 #' @title Update Genetic Run ID
 #' @description
 #' Updates genetic id for a sample in the database
+#' @param sample_id the sample id to update run identification for
+#' @param run_type the run code to update sample to, one of "FAL", "SPR", "WIN", "HET", "UNK"
 #'
 #' @export
 update_genetic_run_id <- function(con, sample_id, run_type) {

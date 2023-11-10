@@ -6,6 +6,15 @@
 \usage{
 get_genetic_run_results(con, run = NULL, sample_id = NULL, year = NULL)
 }
+\arguments{
+\item{con}{connection to database}
+
+\item{run}{(optional) the run to filter results to}
+
+\item{sample_id}{(optional) the sample to filter results to}
+
+\item{year}{(optional) to digit season to filter results to}
+}
 \description{
 Get table of results populated in the genetic_run_identification table.
 }
