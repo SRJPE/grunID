@@ -10,7 +10,7 @@ get_genetic_run_results <- function(con, run = NULL, sample_id = NULL, year = NU
   base_query <- tbl(con, "genetic_run_identification")
 
   if (!is.null(run)) {
-    run_id <- tbl(con, "run_type") |> dplyr::filter(code == run) |> pull(id)
+    run_id <- dplyr::tbl(con, "run_type") |> dplyr::filter(code == run) |> dplyr::pull(id)
     base_query <- base_query |> dplyr::filter(run_type_id == run_id)
   }
   if (!is.null(sample_id)) {
@@ -19,7 +19,7 @@ get_genetic_run_results <- function(con, run = NULL, sample_id = NULL, year = NU
   if (!is.null(year)) {
     all_locations <- grunID::get_sample_locations(con) |> dplyr::pull(code)
     regex <- paste0(paste0("^", all_locations), year, collapse = "|")
-    base_query <- base_query |> filter(grepl(regex, sample_id))
+    base_query <- base_query |> dplyr::filter(grepl(regex, sample_id))
   }
 
   base_query |> dplyr::collect()
@@ -33,14 +33,20 @@ get_genetic_run_results <- function(con, run = NULL, sample_id = NULL, year = NU
 #'
 #' @export
 update_genetic_run_id <- function(con, sample_id, run_type) {
-  run_id <- tbl(con, "run_type") |> dplyr::filter(code == run_type) |> pull(id)
+  run_id <- dplyr::tbl(con, "run_type") |> dplyr::filter(code == run_type) |> dplyr::pull(id)
   update_statement <- glue::glue_sql("UPDATE genetic_run_identification SET
                                      run_type_id = {run_id},
                                      updated_at = {lubridate::now()},
                                      updated_by = CURRENT_USER
                                      WHERE sample_id = {sample_id}", .con = con)
 
-  DBI::dbExecute(con, update_statement)
+  res <- DBI::dbExecute(con, update_statement)
+
+  if (res == 1) {
+    cli::cli_alert_success(paste0("Run identification for sample ID ", sample_id, " updated to ", run_type))
+  } else {
+    cli::cli_alert_warning("there was an issue modifying the sample")
+  }
 
 }
 
@@ -52,7 +58,7 @@ update_genetic_run_id <- function(con, sample_id, run_type) {
 #' @md
 #' @export
 view_genetic_id_audits <- function(con, ...) {
-  tbl(con, "genetic_run_id_table_audit") |>
+  dplyr::tbl(con, "genetic_run_id_table_audit") |>
     dplyr::filter(...) |>
-    collect()
+    dplyr::collect()
 }
