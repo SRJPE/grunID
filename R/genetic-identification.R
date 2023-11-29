@@ -15,7 +15,7 @@ add_plate_thresholds <- function(con, thresholds) {
   plate_run <- unique(thresholds$plate_run_id)
   runtime <- unique(thresholds$runtime)
   strategy <- unique(thresholds$strategy)
-  control <- unique(thresholds$threshold_control)
+  threshold_control <- unique(thresholds$threshold_control)
   if (length(plate_run) > 1) {
     stop("TODO")
   }
@@ -33,9 +33,15 @@ add_plate_thresholds <- function(con, thresholds) {
     stop("the plate run you are trying to upload already exists in the database", call. = FALSE)
   }
 
+  if (grepl("USER DEFINED", strategy)) {
+    thresholds_strat_id <- tbl(con, "threshold_strategy") |> dplyr::filter(name == "user defined") |> dplyr::pull(id)
+  } else {
+    thresholds_strat_id <- tbl(con, "threshold_strategy") |> dplyr::filter(name == strategy) |> dplyr::pull(id)
+  }
+
   detection_results <- dplyr::tbl(con, "raw_assay_result") |>
     dplyr::filter(plate_run_id == plate_run,
-                  sample_id != .control_id,
+                  sample_id != threshold_control,
                   time == runtime) |>
     dplyr::collect() |>
     dplyr::left_join(thresholds, by = c("assay_id" = "assay_id", "plate_run_id" = "plate_run_id")) |>
