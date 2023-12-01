@@ -78,15 +78,25 @@ generate_threshold <- function(con, plate_run, strategy = "twice average", .cont
     )
   } else if (is.function(strategy)) {
     strategy_body <- deparse1(strategy, collapse = " ")
+    normalized_strategy_fn <- normalize_strategy_func(strategy_body)
     thresholds <- control_blanks |>
       dplyr::group_by(plate_run_id, assay_id) |>
       dplyr::summarise(
         threshold = strategy(raw_fluorescence)
       ) |> ungroup() |>
-      dplyr::mutate(runtime = runtime, strategy = paste("USER DEFINED:", strategy_body), threshold_control = .control_id)
+      dplyr::mutate(runtime = runtime, strategy = paste0("USER DEFINED:", strategy_body), threshold_control = .control_id)
   }
 
   return(thresholds)
+}
+
+
+normalize_strategy_func <- function(fn_body) {
+  normalized_text <- stringr::str_trim(fn_body) |>
+    stringr::str_replace_all("\\s+", " ") |>
+    tolower()
+
+  return(normalized_text)
 }
 
 #' @title Set detection for assay results

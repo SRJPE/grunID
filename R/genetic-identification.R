@@ -35,6 +35,8 @@ add_plate_thresholds <- function(con, thresholds) {
 
   if (grepl("USER DEFINED", strategy)) {
     thresholds_strat_id <- tbl(con, "threshold_strategy") |> dplyr::filter(name == "user defined") |> dplyr::pull(id)
+    strategy_fn_body <- stringr::str_replace(strategy, "USER DEFINED:", "")
+    thresholds_strat_id <- strategy_fn_get_or_create(con, strategy_fn_body)
   } else {
     thresholds_strat_id <- tbl(con, "threshold_strategy") |> dplyr::filter(name == strategy) |> dplyr::pull(id)
   }
@@ -74,6 +76,27 @@ add_plate_thresholds <- function(con, thresholds) {
 
   return(assay_results_added)
 
+}
+
+generate_hash <- function(normalized_text) {
+  hash <- digest::digest(normalized_text, algo = "sha256")
+  return(hash)
+}
+
+strategy_fn_get_or_create <- function(con, fn_body) {
+  body_hash <- generate_hash(fn_body)
+  statement <- glue::glue_sql("SELECT * FROM threshold_strategy where func_hash = {body_hash}", .con = con)
+  res <- DBI::dbGetQuery(con, statement)
+
+  if (nrow(res) == 1) {
+    return(res$id[1])
+  } else if (nrow(res) == 0) {
+    statement <- glue::glue_sql("INSERT INTO threshold_strategy (name, description, func_hash) values ({'user defined'}, {'a user defined function (please update)'}, {body_hash}) RETURNING id", .con = con)
+    res <- DBI::dbGetQuery(con, statement)
+    return(res)
+  } else {
+    stop("error in trying to insert new function hash")
+  }
 }
 
 #' @title Determine Run identifcation after Early and Late Assays

@@ -55,6 +55,7 @@ db_get_config <- function() {
 #' @return a "PqConnection" object to be used in queries to database
 #' @md
 #' @export
+
 gr_db_connect <- function(username = NULL, host = NULL, dbname = NULL) {
   # no username, host or dbname passed, try to read config file
   if (all(is.null(username), is.null(host), is.null(dbname))) {

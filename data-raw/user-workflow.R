@@ -73,7 +73,7 @@ plate_run_event2 <- add_plate_run(con,
 dplyr::tbl(con, "plate_run")
 
 
-res <- get_plate_run(con, id == 179)
+plate_run_event <- get_plate_run(con, id == 179)
 
 # read in the plate run map that is created before the plate is run.
 # this plate map layout should contain generic sherlock-created sample IDs
@@ -111,7 +111,7 @@ dplyr::tbl(con, "raw_assay_result")
 
 # generate thresholds from raw assay results
 # thresholds is a variable you will need to pass to a later function
-thresholds_event <- generate_threshold(con, plate_run = plate_run_event, strategy = \(x) min(x))
+thresholds_event <- generate_threshold(con, plate_run = plate_run_event, strategy = \(x) 2*x)
 add_plate_thresholds(con, thresholds_event)
 
 # update assay detection results (TRUE or FALSE for a sample and assay type)

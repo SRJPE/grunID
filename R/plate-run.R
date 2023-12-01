@@ -87,7 +87,7 @@ add_new_plate_results <- function(con, protocol_name, genetic_method,
 
   cli::cli_alert_info("Generating thresholds for plate run")
 
-  thresholds_event <- generate_threshold(con, plate_run = plate_run, .control_id = .control_id)
+  thresholds_event <- generate_threshold(con, plate_run = plate_run, strategy = "twice average", .control_id = .control_id)
   cli::cli_alert_success("Threshold done")
 
 
