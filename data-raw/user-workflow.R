@@ -73,7 +73,7 @@ plate_run_event2 <- add_plate_run(con,
 dplyr::tbl(con, "plate_run")
 
 
-res <- get_plate_run(con, id == 35)
+res <- get_plate_run(con, id == 10)
 
 # read in the plate run map that is created before the plate is run.
 # this plate map layout should contain generic sherlock-created sample IDs
@@ -90,17 +90,17 @@ res <- get_plate_run(con, id == 35)
 # the generic IDs with the JPE sample IDs.
 # sherlock_results is a variable you will need to pass to a later function
 sherlock_results_event <- process_sherlock(
-  filepath = "../misc/sherlock_results_part_1.xlsx",
+  filepath = "inst/sherlock_results_template.xlsx",
   sample_type = "mucus",
-  layout_type = "split_plate_early_late",
-  plate_run_id = plate_run_event,
+  layout_type = "single_assay_ots28_early",
+  plate_run_id = res,
   plate_size = 384)
 
 sherlock_results_event_2 <- process_sherlock(
-  filepath = "../misc/sherlock_results_part_2.xlsx",
+  filepath = "inst/sherlock_results_template.xlsx",
   sample_type = "mucus",
-  layout_type = "split_plate_early_late",
-  plate_run_id = plate_run_event2,
+  layout_type = "single_assay_ots28_late",
+  plate_run_id = res,
   plate_size = 384)
 
 
