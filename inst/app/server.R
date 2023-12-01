@@ -52,19 +52,11 @@ function(input, output, session) {
   observeEvent(input$info_layout_type, {
     showModal(modalDialog(
       "What plate map layout are you using? This refers to which assays are being run and in what organization on the plate.
-      Current options are split_plate_early_late, split_plate_spring_winter, triplicate, or single_assay. If you
-      select single_assay, you must fill out the single assay type box",
+      Current options are split_plate_early_late, split_plate_spring_winter, triplicate, single_assay_ots28_early,
+      single_assay_ots28_late, single_assay_ots16_spring, single_assay_ots16_winter",
       size = "l"
     ))
   })
-
-  observeEvent(input$info_single_assay_type, {
-    showModal(modalDialog(
-      "This only needs to be filled out if your layout type is `single assay`. Otherwise it can be left blank",
-      size = "l"
-    ))
-  })
-
 
   observeEvent(input$do_upload, {
     tryCatch({
