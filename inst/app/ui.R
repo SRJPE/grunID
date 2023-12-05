@@ -53,6 +53,23 @@ navbarPage(
              textOutput("console_logs")
            ),
   ),
+  tabPanel(title = "Upload Field Sheets",
+           mainPanel(
+             tags$h3("Process and upload completed field sheets"),
+             tags$h5("Field sheets returned from the field need to be processed before being uploaded
+                     to the database. Upload the file (this will refine the results into a clean table,
+                     which you can view below)."),
+             tags$hr(),
+             fileInput("filled_field_sheets", "Process field sheets"),
+             tags$h5("Press the upload button to upload the cleaned table
+                     to the database."),
+             actionButton("do_upload_field_sheets", "Upload field sheets to database", class = "btn-success", icon = icon("rocket")),
+             tags$hr(),
+             tags$h4("Preview clean field sheet data"),
+             tags$br(),
+             DT::dataTableOutput("field_sheet_summary")
+           ),
+  ),
   tabPanel(title = "Sample Status",
            sidebarLayout(
              sidebarPanel(

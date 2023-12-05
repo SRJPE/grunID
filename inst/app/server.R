@@ -192,4 +192,41 @@ output$season_plot <- renderPlot(
       )
     })
 
+  # read in field data, if available
+  clean_field_data <- reactive({
+    if(is.null(input$filled_field_sheets$datapath)) return(NULL)
+    tryCatch({
+      data <- grunID::process_field_sheet_samples(input$filled_field_sheets$datapath)
+      spsComps::shinyCatch({message("File uploaded")}, position = "top-center")
+    }, error = function(e) {
+      spsComps::shinyCatch({stop(paste(e))}, prefix = '', position = "top-center")
+    })
+    data
+  })
+
+  # if button pressed, upload field sheet data to database
+  observeEvent(input$do_upload_field_sheets, {
+    tryCatch({
+      grunID::update_field_sheet_samples(con, clean_field_data())
+      spsComps::shinyCatch({message("Field sheets updated in database")}, position = "top-center")
+    },
+    error = function(e) {
+      spsComps::shinyCatch({stop(paste(e))}, prefix = '', position = "top-center")
+    })
+  })
+
+  # display field sheets
+  output$field_sheet_summary <- DT::renderDataTable(DT::datatable({
+    clean_field_data()
+  },
+  extensions = "Buttons",
+  rownames = FALSE,
+  options = list(autoWidth = FALSE,
+                 dom = "Bfrtip",
+                 buttons = c("copy", "csv", "excel"),
+                 lengthChange = TRUE,
+                 pageLength = 10)),
+  server = FALSE
+  )
+
 }
