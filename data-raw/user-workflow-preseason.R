@@ -67,14 +67,14 @@ create_season_field_sheets(con, 2024, "data-raw/2024-use-case/2024_field_sheets_
 # step 4:
 # read in filled-out field sheets and turn them into a tidy format with
 # sample_id, datetime_collected, fork_length_mm, field_run_type_id, fin_clip, field_comment
-filepath <- "data-raw/F61_test.xlsx"
+filepath <- "data-raw/2024-use-case/2024_field_sheets_test_filled.xlsx"
 field_data_clean <- process_field_sheet_samples(filepath)
 
 # step 5:
 # update database with biologial information from field sheets:
 # this adds datetime collected, fork_length_mm, field_run_type_id, fin_clip, and field_comment
 # by matching on sample_id.
-update_field_sheet_samples(field_data_clean)
+update_field_sheet_samples(con, field_data_clean)
 
 # now the biological samples are stored in the database with the
 # appropriate sample IDs. Now onto assays :)
