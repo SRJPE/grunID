@@ -53,7 +53,7 @@ add_plate_thresholds <- function(con, thresholds) {
 
   query <- glue::glue_sql("
   INSERT INTO assay_result (sample_id, assay_id, raw_fluorescence, threshold, threshold_strategy, threshold_control,
-                            positive_detection, plate_run_id)
+                            positive_detection, plate_run_id, threshold_strategy_id)
   VALUES (
           {detection_results$sample_id},
           {detection_results$assay_id},
@@ -62,7 +62,8 @@ add_plate_thresholds <- function(con, thresholds) {
           {detection_results$threshold_strategy},
           {detection_results$threshold_control},
           {detection_results$positive_detection},
-          {detection_results$plate_run_id}::int
+          {detection_results$plate_run_id}::int,
+          {thresholds_strat_id}
   );", .con = con)
 
   assay_results_added <- purrr::map_dbl(query, function(q) {
@@ -91,7 +92,7 @@ strategy_fn_get_or_create <- function(con, fn_body) {
   if (nrow(res) == 1) {
     return(res$id[1])
   } else if (nrow(res) == 0) {
-    statement <- glue::glue_sql("INSERT INTO threshold_strategy (name, description, func_hash) values ({'user defined'}, {'a user defined function (please update)'}, {body_hash}) RETURNING id", .con = con)
+    statement <- glue::glue_sql("INSERT INTO threshold_strategy (name, description, func_hash, func_text) values ({'user defined'}, {'a user defined function (please update)'}, {body_hash}, {fn_body}) RETURNING id", .con = con)
     res <- DBI::dbGetQuery(con, statement)
     return(res)
   } else {
