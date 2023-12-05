@@ -6,7 +6,7 @@
 \alias{protocol_template}
 \title{Templates}
 \format{
-An object of class \code{data.frame} with 1 rows and 17 columns.
+An object of class \code{data.frame} with 1 rows and 18 columns.
 }
 \usage{
 protocol_template

@@ -14,7 +14,8 @@ protocol_template <- data.frame(software_version = "3.11.19",
                                 gain = 100,
                                 light_source = "Xenon Flash",
                                 lamp_energy = "High",
-                                read_height = 9)
+                                read_height = 9,
+                                name = "Protocol Name")
 
 usethis::use_data(protocol_template, overwrite = TRUE)
 
