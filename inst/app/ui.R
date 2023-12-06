@@ -116,7 +116,8 @@ navbarPage(
                             icon = icon("chart-line"))
              ),
              mainPanel(
-               DT::dataTableOutput("season_table")
+               DT::dataTableOutput("season_table") |>
+                 shinycssloaders::withSpinner()
              )
            ))
 )
