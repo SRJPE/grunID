@@ -105,20 +105,20 @@ filter_dataset <- function(con, season) {
   max_date <- as.Date(paste0(max(season), "-09-30"))
 
   location_codes <- dplyr::tbl(con, "sample_location") |>
-    dplyr::select(sample_location_id = id, stream_name) |>
+    dplyr::select(sample_location_id = id, code, stream_name) |>
     dplyr::collect()
 
   sample_event_ids <- dplyr::tbl(con, "sample_event") |>
     dplyr::filter(between(first_sample_date, min_date, max_date)) |>
     dplyr::collect() |>
     dplyr::left_join(location_codes, by = "sample_location_id") |>
-    dplyr::select(stream_name, id, sample_event_number)
+    dplyr::select(stream_name, location_code = code, id, sample_event_number)
 
   sample_bin_ids <- dplyr::tbl(con, "sample_bin") |>
     dplyr::collect() |>
     dplyr::filter(sample_event_id %in% sample_event_ids$id) |>
     dplyr::left_join(sample_event_ids, by = c("sample_event_id" = "id")) |>
-    dplyr::select(id, stream_name, sample_event_number)
+    dplyr::select(id, stream_name, location_code, sample_event_number)
 
   samples <- dplyr::tbl(con, "sample") |>
     dplyr::collect() |>
