@@ -1,5 +1,5 @@
 # Functions for connecting to the database
-
+library(jsonlite)
 
 az_refresh_token <- function() {
   res <- tryCatch({

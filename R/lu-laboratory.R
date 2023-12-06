@@ -14,15 +14,17 @@
 #' @family laboratory functions
 #' @export
 #' @md
-get_laboratories <- function(con, is_active=TRUE, all_results=FALSE) {
+get_laboratories <- function(con, is_active=TRUE, all_results=FALSE, ...) {
   is_valid_connection(con)
 
   if(all_results) {
     laboratories <- dplyr::tbl(con, "laboratory") |>
+      dplyr::filter(...) |>
       dplyr::collect()
   } else {
     laboratories <- dplyr::tbl(con, "laboratory") |>
       dplyr::filter(active == is_active) |>
+      dplyr::filter(...) |>
       dplyr::collect()
   }
 

@@ -1,4 +1,6 @@
 #' @importFrom magrittr %>%
+#' @import dplyr
+#' @import tidyr
 NULL
 
 .onAttach <- function(libname, pkgname) {

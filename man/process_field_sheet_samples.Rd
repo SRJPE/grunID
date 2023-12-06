@@ -7,7 +7,19 @@
 process_field_sheet_samples(filepath)
 }
 \arguments{
-\item{filepath}{the filepath of the field sheet you want to prepare for upload.}
+\item{filepath}{the filepath of the field sheet you want to prepare for upload. Column
+names and data types should match the following:
+\itemize{
+\item \strong{Bin} text value
+\item \strong{Bin FL Range (mm)} Numeric value
+\item \strong{Sample #} Numeric value
+\item \strong{Sample ID} Text value
+\item \strong{Date} Date (ideally in format YYYY-MM-DD)
+\item \strong{Time} Time
+\item \strong{FL (mm)} Numeric value
+\item \strong{Field Run ID} Numeric value
+\item \strong{Comments} Text value
+}}
 }
 \value{
 A tibble object containing the data from all sheets in the @param filepath workbook
@@ -18,7 +30,6 @@ the following variables:
 \item \strong{datetime_collected} The date and time (YYYY-MM-DD H:M:S) the sample was processed.
 \item \strong{fork_length_mm} The recorded fork length corresponding to the sample.
 \item \strong{field_run_type_id} The unique identifier for the field run type.
-\item \strong{fin_clip} Logical variable indicating whether a fin clip sample was taken.
 \item \strong{field_comment} Any recorded comments from the field regarding the sample.
 }
 }
@@ -27,7 +38,8 @@ the following variables:
 them to database-ready formatting.
 }
 \details{
-
+See \code{\link{create_field_sheet}} and \code{\link{get_field_sheet_event_plan}} for
+more information on creating field sheet workbooks.
 }
 \examples{
 filepath <- "data-raw/test.xlsx"
@@ -36,6 +48,7 @@ field_data_clean <- process_field_sheet_samples(filepath)
 \seealso{
 Other field sheet helpers: 
 \code{\link{create_field_sheet}()},
+\code{\link{create_season_field_sheets}()},
 \code{\link{get_field_sheet_event_plan}()},
 \code{\link{update_field_sheet_samples}()}
 }

@@ -1,0 +1,72 @@
+---
+title: "Adding In-season seeds"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Adding In-season seeds}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(grunID)
+```
+
+# Overview
+
+In an ideal setting, sample seeds should all be added to the database before inserting Sherlock output, but things don't always go as planned. In this article, we discuss the process of creating additional samples for any location.
+
+# Sample Plan
+
+The first step is to create a "Sample Plan". A Sample Plan is simply a dataframe with the necessary data to create samples. The required information includes:
+
+* __Required__: Location Code (`location_code`) - The location for these samples. Use `grunID::get_sample_locations(con)` to retrieve a list of values that exist in the database.
+* __Required__: Sample Event Number (`sample_event_number`) - The sample event number associated with these samples.
+* __Required__: First Sample Date (`first_sample_date`) - The first sample date for the event.
+* __Required__: Sample Bin Code (`sample_bin_code`) - Sample bin codes for the samples. Note that each bin code must have its own row.
+* Fork Length Range (`min_fork_length` and `max_fork_length`) - The fork length for the given bin code.
+* Expected Number of Samples (`expected_number_of_samples`) - The expected number of samples. This is good information to have but if you are unsure feel free to pick a large number like 50 or 75.
+
+A spreadsheet template is available [here](#) or on the [Templates Page](#). You can read this in using R with the following code:
+
+```r
+in_season_seeds <- readxl::read_excel("/path/to/in-season-seeds.xlsx")
+```
+
+The dataframe should look like this, with your own data in place of these examples:
+
+
+|location_code | sample_event_number|first_sample_date |sample_bin_code | min_fork_length| max_fork_length| expected_number_of_samples|
+|:-------------|-------------------:|:-----------------|:---------------|---------------:|---------------:|--------------------------:|
+|FTH_RM17      |                   1|2022-01-10        |A               |              25|              65|                          0|
+|FTH_RM17      |                   1|2022-01-10        |B               |              65|             105|                          0|
+|FTH_RM17      |                   1|2022-01-10        |C               |             105|             145|                          0|
+|FTH_RM17      |                   1|2022-01-10        |D               |             145|             185|                          0|
+|FTH_RM17      |                   1|2022-01-10        |E               |             185|             225|                          0|
+|FTH_RM17      |                   2|2022-01-24        |A               |              25|              65|                          0|
+
+# Insert into Database
+
+Before inserting data into the database, we must first ensure the data types are correct for each column.
+
+```r
+in_season_seeds |> 
+  dplyr::mutate(
+    sample_event_number = as.integer(sample_event_number),
+    min_fork_length = as.integer(min_fork_length),
+    max_fork_length = as.integer(max_fork_length)
+  )
+```
+
+Next, we simply call the grunID::add_sample_plan function to insert additional plan values into the database. This function, under the hood, will add sample events, sample bins, and the samples extracted from this file.
+
+```r
+con <- grunID::gr_db_connect()
+grunID::add_sample_plan(con, in_season_seeds, verbose = TRUE) # verbose = TRUE will give some progress bars
+```

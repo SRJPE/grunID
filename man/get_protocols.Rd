@@ -4,7 +4,7 @@
 \alias{get_protocols}
 \title{Retrieve Protocols}
 \usage{
-get_protocols(con)
+get_protocols(con, ...)
 }
 \arguments{
 \item{con}{A DBI connection object obtained from DBI::dbConnect()}
@@ -25,6 +25,7 @@ protocols <- get_protocols(con)
 }
 \seealso{
 Other protocol functions: 
+\code{\link{add_protocol_based_on}()},
 \code{\link{add_protocol}()},
 \code{\link{delete_protocol}()},
 \code{\link{update_protocol_status}()},

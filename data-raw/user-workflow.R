@@ -8,146 +8,134 @@ library(readxl)
 # connect to runID database
 con <- gr_db_connect() # this searches for a config file, starting at the working directory.
 
+cfg <- config::get()
+con <- DBI::dbConnect(RPostgres::Postgres(),
+               dbname = cfg$dbname,
+               host = cfg$host,
+               port = 5432,
+               user = cfg$username,
+               password = cfg$password)
+
 # check connection is working - should see head of these tables
-tbl(con, "agency")
-tbl(con, "status_code")
+dbListTables(con)
+dplyr::tbl(con, "agency")
+dplyr::tbl(con, "status_code")
 
-# read in sample plan created for the season. this contains all samples initialized
-# in the database and contains location codes, sample events, sample bins,
-# min/max fork lengths, sample dates, and sample IDs
-# running this does the following:
-sample_plan_2022_final <- read_csv("data-raw/2022_sample_plan.csv") |> distinct_all()
+# assume you have added your sample plan that initialized all sample IDs you will
+# be processing - see "data-raw/user-workflow-preseason.R"
 
-# filter sample plan to locations (this isn't necessary but helpful for
-# partitioning workflow)
-feather_61_sample_plan <- sample_plan_2022_final |>
-  filter(location_code == "F61") |>
-  mutate(sample_event_number = as.integer(sample_event_number),
-         min_fork_length = as.integer(min_fork_length),
-         max_fork_length = as.integer(max_fork_length))
-
-feather_17_sample_plan <- sample_plan_2022_final |>
-  filter(location_code == "F17") |>
-  mutate(sample_event_number = as.integer(sample_event_number),
-         min_fork_length = as.integer(min_fork_length),
-         max_fork_length = as.integer(max_fork_length))
-
-# add sample plans to database. this code:
-# adds sample events to table SAMPLE_EVENT
-# adds sample bins for each event SAMPLE_BIN
-# adds samples with ids
-# updates sample status for each to "created"
-# stores the number of IDs created
-feather_61_total <- add_sample_plan(con, feather_61_sample_plan, verbose = TRUE)
-feather_17_total <- add_sample_plan(con, feather_17_sample_plan, verbose = TRUE)
-
-# now, prepare to run plates
+# prepare to run plates
 
 # get metadata for plate run.
 # first, check all protocols to select the correct one:
 all_protocols <- get_protocols(con)
-all_protocols |> View()
 
 # review available protocols and select appropriate protocol id
+# protocol_id is a variable you will need to pass to a later function
 protocol_id <- all_protocols |>
   filter(id == 1) |>
   pull(id)
 
 # select laboratory ID that corresponds to "DWR"
+# laboratory_id is a variable you will need to pass to a later function
 laboratory_id <- get_laboratories(con) |>
-  filter(stringr::str_detect(code, "DWR")) |> pull(id)
+  dplyr::filter(stringr::str_detect(code, "DWR")) |> dplyr::pull(id)
 
 # get genetic method id that corresponds to "SHERLOCK"
+# genetic_method_id is a variable you will need to pass to a later function
 genetic_method_id <- get_genetic_methods(con) |>
-  filter(method_name == "SHERLOCK") |>
-  pull(id)
+  dplyr::filter(method_name == "SHERLOCK") |>
+  dplyr::pull(id)
 
 # add plate run to the database for each assay you plan to run.
 # be clear with names here. this returns an ID for the plate run
 # that will determine where your results are stored.
 
-# ots 28 early run
-plate_run_4_7_early_id <- add_plate_run(con,
-                                        date_run = "2022-01-01",
-                                        protocol_id = protocol_id,
-                                        genetic_method_id = genetic_method_id,
-                                        laboratory_id = laboratory_id,
-                                        lab_work_performed_by = "user",
-                                        description = "early run for plates 4-7")
-tbl(con, "plate_run")
+# this is if your plate has two assays
+# plate_run_id is a variable you will need to pass to a later function
+plate_run_event <- add_plate_run(con,
+                                 date_run = "2023-07-10",
+                                 protocol_id = protocol_id,
+                                 genetic_method_id = genetic_method_id,
+                                 laboratory_id = laboratory_id,
+                                 lab_work_performed_by = "user",
+                                 description = "error testing on 7/10")
 
-# ots 28 late run
-plate_run_4_7_late_id <- add_plate_run(con,
-                                       date_run = "2022-01-01",
-                                       protocol_id = protocol_id,
-                                       genetic_method_id = genetic_method_id,
-                                       laboratory_id = laboratory_id,
-                                       lab_work_performed_by = "user",
-                                       description = "late run for plates 4-7")
+plate_run_event2 <- add_plate_run(con,
+                                  date_run = "2022-01-01",
+                                  protocol_id = protocol_id,
+                                  genetic_method_id = genetic_method_id,
+                                  laboratory_id = laboratory_id,
+                                  lab_work_performed_by = "user",
+                                  description = "error testing on 7/10")
 
+# query table in database to see what you've added
+dplyr::tbl(con, "plate_run")
+
+
+res <- get_plate_run(con, id == 10)
 
 # read in the plate run map that is created before the plate is run.
 # this plate map layout should contain generic sherlock-created sample IDs
 # which will then be aligned with the corresponding JPE sample IDs.
 
-# get_sample_details process the layout. User must specify assay type
-# either "mucus" or "fin clip" as well as assay type - see ?process_well_sample_details()
-# for acceptable arguments.
+# get_sample_details process the layout. User must specify layout type and
+# sample_type. See `?process_well_sample_details()` for acceptable arguments.
 
-plate_4_to_7_layout_early <- process_well_sample_details(filepath = "data-raw/sherlock-example-outputs/JPE_Chnk_Early+Late_Plates4-7_results.xlsx",
-                                                         sample_type = "mucus",
-                                                         assay_type = "Ots28_Early1",
-                                                         plate_run_id = plate_run_4_7_early_id)
+# this is for the split plate version
+# plate_map_details is a variable you will need to pass to a later function
 
-plate_4_to_7_layout_late <- process_well_sample_details(filepath = "data-raw/sherlock-example-outputs/JPE_Chnk_Early+Late_Plates4-7_results.xlsx",
-                                                        sample_type = "mucus",
-                                                        assay_type = "Ots28_Late1",
-                                                        plate_run_id = plate_run_4_7_late_id)
-
-
-# pass sample details (well layout) to process_sherlock, which reads in
+# pass plate map details (well layout) to process_sherlock, which reads in
 # a file with the output of a sherlock machine. This function also maps
 # the generic IDs with the JPE sample IDs.
-# process
-results_plates_4_7_early <- process_sherlock(
-  filepath = "data-raw/sherlock-example-outputs/JPE_Chnk_early_plates_4_7.xlsx",
-  sample_details = plate_4_to_7_layout_early,
+# sherlock_results is a variable you will need to pass to a later function
+sherlock_results_event <- process_sherlock(
+  filepath = "inst/sherlock_results_template.xlsx",
+  sample_type = "mucus",
+  layout_type = "single_assay_ots28_early",
+  plate_run_id = res,
   plate_size = 384)
 
-
-results_plates_4_7_late <- process_sherlock(
-  filepath = "data-raw/sherlock-example-outputs/JPE_Chnk_late_plates_4_7.xlsx",
-  sample_details = plate_4_to_7_layout_late,
+sherlock_results_event_2 <- process_sherlock(
+  filepath = "inst/sherlock_results_template.xlsx",
+  sample_type = "mucus",
+  layout_type = "single_assay_ots28_late",
+  plate_run_id = res,
   plate_size = 384)
+
 
 # add raw assay results to database
-tbl(con, "raw_assay_result")
-plate_4_7_early <- add_raw_assay_results(con, results_plates_4_7_early)
-plate_4_7_late <- add_raw_assay_results(con, results_plates_4_7_late)
-tbl(con, "raw_assay_result")
+dplyr::tbl(con, "raw_assay_result")
+add_raw_assay_results(con, sherlock_results_event_2)
+dplyr::tbl(con, "raw_assay_result")
 
 # generate thresholds from raw assay results
-thresholds_4_7_early <- generate_threshold(con, plate_run_identifier = plate_run_4_7_early_id)
-thresholds_4_7_late <- generate_threshold(con, plate_run_identifier = plate_run_4_7_late_id)
+# thresholds is a variable you will need to pass to a later function
+thresholds_event <- generate_threshold(con, plate_run = plate_run_event2)
 
 # update assay detection results (TRUE or FALSE for a sample and assay type)
 # in the database
-update_assay_detection(con, thresholds_4_7_early)
-update_assay_detection(con, thresholds_4_7_late)
+update_assay_detection(con, thresholds_event)
+
+
 
 # view assay results.
 # this table contains the sample IDs run, the assay type, and positive detection
-tbl(con, "assay_result")
+dplyr::tbl(con, "assay_result")
 
 # see genetic run identification results
-tbl(con, "genetic_run_identification")
+dplyr::tbl(con, "genetic_run_identification")
 # this is run type IDs and their associated run
-tbl(con, "run_type")
+dplyr::tbl(con, "run_type") |> dplyr::collect() |> print(n=Inf)
+
+# see samples that need further analysis
+get_samples_needing_action(con)
+
+# see status of a selected sample ID
+get_sample_status(con, "JPE_Sample_ID", full_history = FALSE)
+
+get_samples_by_season(con, 2022, "clean")
 
 # disconnect!
 DBI::dbDisconnect(con)
-
-
-
-
 

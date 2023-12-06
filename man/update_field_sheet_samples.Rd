@@ -8,6 +8,11 @@ update_field_sheet_samples(con, field_data)
 }
 \arguments{
 \item{con}{A DBI connection object obtained from DBI::dbConnect()}
+
+\item{field_data}{the field data processed using \code{\link{process_field_sheet_samples}}
+See \code{\link{create_field_sheet}} and \code{\link{get_field_sheet_event_plan}} for
+more information on creating field sheet workbooks, and \code{\link{process_field_sheet_samples}}
+for more information on processing raw data before updating in the database.}
 }
 \value{
 Does not return any objects.
@@ -27,18 +32,11 @@ information. Variables should be as follows:
 of class "datetime" or ("POSIXct" "POSIXt")
 \item \strong{fork_length_mm} The recorded fork length corresponding to the sample, of class "numeric".
 \item \strong{field_run_type_id} The unique identifier for the field run type, of class "numeric".
-\item \strong{fin_clip} Logical variable indicating whether a fin clip sample was taken, of class "logical".
 \item \strong{field_comment} Any recorded comments from the field regarding the sample, of class "character".
 }
 }
 \examples{
-cfg <- config::get()
-con <- DBI::dbConnect(RPostgres::Postgres(),
-                      dbname = cfg$dbname,
-                      host = cfg$host,
-                      port = cfg$port,
-                      user = cfg$username,
-                      password = cfg$password)
+con <- grunID::gr_db_connect()
 
 filepath <- "data-raw/test.xlsx"
 field_data_clean <- process_field_sheet_samples(filepath)
@@ -47,6 +45,7 @@ update_field_sheet_samples(con, field_data_clean)
 \seealso{
 Other field sheet helpers: 
 \code{\link{create_field_sheet}()},
+\code{\link{create_season_field_sheets}()},
 \code{\link{get_field_sheet_event_plan}()},
 \code{\link{process_field_sheet_samples}()}
 }

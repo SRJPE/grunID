@@ -15,8 +15,11 @@ reference:
   - add_genetic_identification
   - add_genetic_method
   - add_laboratory
+  - add_new_plate_results
   - add_plate_run
+  - add_plate_thresholds
   - add_protocol
+  - add_protocol_based_on
   - add_raw_assay_results
   - add_run_type
   - add_sample_bins
@@ -49,12 +52,14 @@ reference:
   - get_enum_values
   - get_genetic_methods
   - get_laboratories
+  - get_plate_run
   - get_protocols
   - get_run_types
   - get_sample_locations
   - get_sample_status
   - get_sample_types
   - get_samples
+  - get_samples_needing_action
   - get_status_codes
 
 - title: Processing data
@@ -62,12 +67,15 @@ reference:
   contents:
   - process_plate_layout
   - process_raw_assay_results
+  - process_raw_sample_plan
   - process_sherlock
   - process_well_sample_details
 
 - title: Updating data
   desc: These functions update data in the database
   contents:
+  - activate_plate_run
+  - deactivate_plate_run
   - set_sample_status
   - update_agency
   - update_agency_status
@@ -93,8 +101,7 @@ reference:
 - title: Field sheet management
   desc: These functions relate to creating and processing field sheets
   contents:
-  - create_field_sheet
-  - get_field_sheet_event_plan
+  - create_season_field_sheets
   - process_field_sheet_samples
   - update_field_sheet_samples
 
@@ -114,9 +121,19 @@ reference:
   contents:
   - gr_db_connect
 
+- title: Genetic identification functions
+  contents:
+  - ots_early_late_detection
+  - ots_winter_spring_detection
+  - run_genetic_identification
+
+- title: App functions
+  contents:
+  - run_app
+
 navbar:
   structure:
-    left:  [home, reference, articles]
+    left:  [home, reference, articles, templates]
     right: [github]
   type: default
   left:
@@ -128,6 +145,14 @@ navbar:
         href: 'articles/azure-authentication.html'
       - text: 'Process and add assay results to database'
         href: 'articles/process_and_add_assay_results.html'
+      - text: 'Querying Sample Status'
+        href: 'articles/query_sample_status.html'
+      - text: 'Adding In-Season Seeds'
+        href: 'articles/in_season_seeds.html'
+      - text: 'grunID Shiny App'
+        href: 'articles/grunid-app.html'
+  - text: 'Templates'
+    href: "articles/grunID-data-templates.html"
 
 repo:
  url:

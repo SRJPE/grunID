@@ -8,10 +8,10 @@
 <meta name="description" content="grunID">
 <title>Process and Add Assay Results to Database • grunID</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.1.3/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.1.3/bootstrap.bundle.min.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
+<link href="../deps/bootstrap-5.2.2/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.2.2/bootstrap.bundle.min.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
-<!-- bootstrap-toc --><script src="https://cdn.rawgit.com/afeld/bootstrap-toc/v1.0.1/dist/bootstrap-toc.min.js"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- search --><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Process and Add Assay Results to Database">
+<!-- bootstrap-toc --><script src="https://cdn.jsdelivr.net/gh/afeld/bootstrap-toc@v1.0.1/dist/bootstrap-toc.min.js" integrity="sha256-4veVQbu7//Lk5TSmc7YV48MxtMy98e26cf5MrgZYnwo=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- search --><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Process and Add Assay Results to Database">
 <meta property="og:description" content="grunID">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
@@ -26,7 +26,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">grunID</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -43,7 +43,13 @@
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
     <a class="dropdown-item" href="../articles/azure-authentication.html">Authentication with Azure AD</a>
     <a class="dropdown-item" href="../articles/process_and_add_assay_results.html">Process and add assay results to database</a>
+    <a class="dropdown-item" href="../articles/query_sample_status.html">Querying Sample Status</a>
+    <a class="dropdown-item" href="../articles/in_season_seeds.html">Adding In-Season Seeds</a>
+    <a class="dropdown-item" href="../articles/grunid-app.html">grunID Shiny App</a>
   </div>
+</li>
+<li class="nav-item">
+  <a class="nav-link" href="../articles/grunID-data-templates.html">Templates</a>
 </li>
       </ul>
 <form class="form-inline my-2 my-lg-0" role="search">
@@ -88,6 +94,8 @@ credentials</li>
 <li>write plate run metadata to the database</li>
 <li>prepare Synergy H1 result data for upload to the database</li>
 <li>upload assay result data to the database</li>
+<li>generate threshold values from the plate run</li>
+<li>update assay detections for a plate run in the database</li>
 </ol>
 </div>
 <div class="section level2">
@@ -111,15 +119,14 @@ article <code><a href="../articles/azure-authentication.html">vignette("azure-au
 <strong>Authentication with a Config file</strong>.</p>
 </div>
 <div class="section level2">
-<h2 id="create-database-connection">Create database Connection<a class="anchor" aria-label="anchor" href="#create-database-connection"></a>
+<h2 id="create-database-connection">Create Database Connection<a class="anchor" aria-label="anchor" href="#create-database-connection"></a>
 </h2>
-<p>To create a connection object, we run
-<code><a href="../reference/gr_db_connect.html">gr_db_connect()</a></code>:</p>
+<p>To create a connection object, we run <code>gr_db_connect</code>:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">con</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/gr_db_connect.html">gr_db_connect</a></span><span class="op">(</span><span class="op">)</span> <span class="co"># a config file will be searched for starting at the working directory.</span></span>
 <span></span>
 <span><span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/tbl.html" class="external-link">tbl</a></span><span class="op">(</span><span class="va">con</span>, <span class="st">"agency"</span><span class="op">)</span></span></code></pre></div>
-<p>You can also call <code><a href="../reference/gr_db_connect.html">gr_db_connect()</a></code> with arguments
+<p>You can also call <code>gr_db_connect</code> with arguments
 specifying your username, database name and host for the server for the
 database. Note that this is a quick way to create a connection to the
 database but if using source control its also an easy way to
@@ -131,11 +138,115 @@ to see code, please see the article
 will pass this connection object to the function.</p>
 </div>
 <div class="section level2">
-<h2 id="add-plate-run-metadata">Add Plate Run Metadata<a class="anchor" aria-label="anchor" href="#add-plate-run-metadata"></a>
+<h2 id="add-results-to-database">Add Results to Database<a class="anchor" aria-label="anchor" href="#add-results-to-database"></a>
 </h2>
+<p>As of version 0.5, <code>grunID</code> includes a function called
+<code>add_new_plate_results</code>, which allows you to pass all
+arguments at once for uploading data to the database. This method offers
+a more convenient and faster way of adding data, but it abstracts away
+some of the details that may be useful to inspect visually. We recommend
+starting with this function, as it is likely to work well. However, in
+case of any errors, you may need to switch to the longer, more verbose
+method of uploading. In this guide, we will walk through a few scenarios
+to help you understand each of the methods for uploading data.</p>
+<div class="section level3">
+<h3 id="single-function-call-with-add_new_plate_results">Single Function Call with <code>add_new_plate_results</code><a class="anchor" aria-label="anchor" href="#single-function-call-with-add_new_plate_results"></a>
+</h3>
+<p><code>add_new_plate_results</code> offers a convenient way to quickly
+add data to the database. However, it requires you to have all the
+necessary information ready to pass as arguments to the function.
+Additionally, it does not return data for further manipulation since it
+essentially performs multiple steps at once. The following data is
+required:</p>
+<ul>
+<li>
+<code>protocol_name</code>: The name of the plate run you are
+uploading data for.</li>
+<li>
+<code>laboratory</code>: The code for the lab associated with this
+plate run data.</li>
+<li>
+<code>genetic_method</code>: The genetic method code for the plate
+run you are uploading data for.</li>
+<li>
+<code>lab_work_performed_by</code>: The person who performed the lab
+work.</li>
+<li>
+<code>description</code>: A description to associate with the plate
+run.</li>
+<li>
+<code>date_run</code>: The date when the plate was run through the
+Sherlock machine.</li>
+<li>
+<code>filepath</code>: The filepath to the spreadsheet containing
+the results and plate map layout.</li>
+<li>
+<code>sample_type</code>: The sample type.</li>
+<li>
+<code>layout_type</code>: The layout type for the plate map.</li>
+<li>
+<code>plate_size</code>: The size of the plate layout.</li>
+</ul>
+<p>You can call <code>add_new_plate_results</code> as follows:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">add_new_plate_results</span><span class="op">(</span><span class="va">con</span>, protocol_name <span class="op">=</span> <span class="st">"new protocol"</span>, genetic_method <span class="op">=</span> <span class="st">"SHLK"</span>,</span>
+<span>                      laboratory <span class="op">=</span> <span class="st">"DWR_GeM"</span>, lab_work_performed_by <span class="op">=</span> <span class="st">"user"</span>, </span>
+<span>                      description <span class="op">=</span> <span class="st">"a test run"</span>, date_run <span class="op">=</span> <span class="st">"2023-07-12"</span>,</span>
+<span>                      filepath <span class="op">=</span> <span class="st">"../misc/sherlock_results_part_1.xlsx"</span>,</span>
+<span>                      sample_type <span class="op">=</span> <span class="st">"mucus"</span>,</span>
+<span>                      layout_type <span class="op">=</span> <span class="st">"split_plate_early_late"</span>,</span>
+<span>                      plate_size <span class="op">=</span> <span class="fl">384</span><span class="op">)</span></span></code></pre></div>
+<p>A successful run of the function should return messages like
+this:</p>
+<pre><code>ℹ Adding plate run to database
+✔ Plate run added to database with id = 65
+ℹ Processing sherlock data
+✔ Sherlock results processing complete
+ℹ adding results to database
+✔ Added 14883 results to the database
+ℹ Generating thresholds for plate run
+✔ Threshold done
+inserting threshold result into database ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  100% |  ETA:  0s
+identified 0 samples needing OTS16 spring/winter
+updating status codes for uploaded samples ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  100% |  ETA:  0s
+      Assay records added Samples assigned run type 
+                      359                         0 </code></pre>
+<p><code>add_new_plate_results</code> also provides helpful messages
+when something goes wrong. For example, when a plate run with the same
+parameters already exists, it prompts you to verify if you want to
+insert it anyway:</p>
+<pre><code>ℹ Adding plate run to database
+Plate run with these values exists in database, do you wish to insert anyway?
+
+1: Yes
+2: No
+
+Selection:</code></pre>
+<p>Or when there is a duplicate error from the database:</p>
+<pre><code>✔ Plate run added to database with id = 66
+ℹ Processing sherlock data
+✔ Sherlock results processing complete
+ℹ adding results to database
+✖ there was an error attempting to add new raw data, removing plate run associated with this from database, see the error below for more details:
+Error in add_raw_assay_results(con, sherlock_results_event) :
+the combination of: sample_id: 'F1722_3_A_1', assay_id: '1' already exists, to overwrite please delete previous assay run</code></pre>
+<p><strong>Coming Soon</strong> An R Shiny UI for the
+<code>add_new_plate_results</code> function is currently in the making,
+and should be avaialable soon. Check back on these docs for more
+information on how to use once the new version is released.</p>
+</div>
+<div class="section level3">
+<h3 id="muli-step-approach">Muli-step Approach<a class="anchor" aria-label="anchor" href="#muli-step-approach"></a>
+</h3>
+<p>The multi-step approach can be used in cases where you want to each
+step and do some visual inspection of the data. The result is the same
+but broken up into steps.</p>
+<div class="section level4">
+<h4 id="step-1-add-plate-run-metadata">Step 1: Add Plate Run Metadata<a class="anchor" aria-label="anchor" href="#step-1-add-plate-run-metadata"></a>
+</h4>
 <p>When a plate is run on the Synergy H1 reader, we want to relate
 critical plate run metadata with the assay results from that particular
-run in our database. We call <code><a href="../reference/add_plate_run.html">add_plate_run()</a></code> providing the
+run in our database. We call <code>add_plate_run</code> providing the
 protocol ID, method ID, laboratory ID, and the person who ran the plate.
 The function returns a unique plate run ID that will be associated with
 the assay result records. Because our assay results reference the plate
@@ -143,156 +254,146 @@ run ID, we must add a plate run in our database before adding assay
 result data.</p>
 <p>If you do not know the ID for the protocol used, you can review all
 existing protocols stored in the database with the following code:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">all_protocols</span> <span class="op">&lt;-</span> <span class="fu">grunID</span><span class="fu">::</span><span class="fu">get_protocol</span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">all_protocols</span> <span class="op">&lt;-</span> <span class="fu">grunID</span><span class="fu">::</span><span class="fu"><a href="../reference/get_protocols.html">get_protocols</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span></code></pre></div>
 <p>Select appropriate protocol ID with this code:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">protocol_id</span> <span class="op">&lt;-</span> <span class="va">all_protocols</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/stats/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">id</span> <span class="op">==</span> <span class="fl">1</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu">pull</span><span class="op">(</span><span class="va">id</span><span class="op">)</span></span></code></pre></div>
-<p>Similarly, you can call <code>get_genetic_method()</code> and
-<code>get_laboratory_id()</code> to review the IDs associated with
-methods and laboratories within the database.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">genetic_method_id</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_genetic_methods.html">get_genetic_methods</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/stats/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">method_name</span> <span class="op">==</span> <span class="st">"SHERLOCK"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu">pull</span><span class="op">(</span><span class="va">id</span><span class="op">)</span> <span class="co"># SHERLOCK</span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">id</span> <span class="op">==</span> <span class="fl">1</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/pull.html" class="external-link">pull</a></span><span class="op">(</span><span class="va">id</span><span class="op">)</span></span></code></pre></div>
+<p>Similarly, you can call <code>get_genetic_method</code> and
+<code>get_laboratory_id</code> to review the IDs associated with methods
+and laboratories within the database.</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">genetic_method_id</span> <span class="op">&lt;-</span> <span class="fu">grunID</span><span class="fu">::</span><span class="fu"><a href="../reference/get_genetic_methods.html">get_genetic_methods</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">method_name</span> <span class="op">==</span> <span class="st">"SHERLOCK"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/pull.html" class="external-link">pull</a></span><span class="op">(</span><span class="va">id</span><span class="op">)</span> <span class="co"># SHERLOCK</span></span>
 <span></span>
-<span><span class="va">laboratory_id</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_laboratories.html">get_laboratories</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/stats/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="fu">stringr</span><span class="fu">::</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_detect.html" class="external-link">str_detect</a></span><span class="op">(</span><span class="va">code</span>, <span class="st">"DWR"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">pull</span><span class="op">(</span><span class="va">id</span><span class="op">)</span> <span class="co"># DWR GeM</span></span>
+<span><span class="va">laboratory_id</span> <span class="op">&lt;-</span> <span class="fu">grunID</span><span class="fu">::</span><span class="fu"><a href="../reference/get_laboratories.html">get_laboratories</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="fu">stringr</span><span class="fu">::</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_detect.html" class="external-link">str_detect</a></span><span class="op">(</span><span class="va">code</span>, <span class="st">"DWR"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/pull.html" class="external-link">pull</a></span><span class="op">(</span><span class="va">id</span><span class="op">)</span> <span class="co"># DWR GeM</span></span>
 <span></span>
-<span><span class="va">plate_run_id</span> <span class="op">&lt;-</span> <span class="fu">grunID</span><span class="fu">::</span><span class="fu"><a href="../reference/add_plate_run.html">add_plate_run</a></span><span class="op">(</span><span class="va">con</span>, <span class="va">protocol_id</span>, <span class="va">genetic_method_id</span>,</span>
-<span>                                       <span class="va">laboratory_id</span>, lab_work_performed_by <span class="op">=</span> <span class="st">"Yogi Bear"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="co"># store output of add_plate_run - contains unique plate run ID needed for later functions</span></span>
+<span><span class="va">plate_run</span> <span class="op">&lt;-</span> <span class="fu">grunID</span><span class="fu">::</span><span class="fu"><a href="../reference/add_plate_run.html">add_plate_run</a></span><span class="op">(</span><span class="va">con</span>, <span class="va">protocol_id</span>, <span class="va">genetic_method_id</span>,</span>
+<span>                                      <span class="va">laboratory_id</span>, lab_work_performed_by <span class="op">=</span> <span class="st">"Yogi Bear"</span>,</span>
+<span>                                      description <span class="op">=</span> <span class="st">"Plate run for sampling event X"</span>,</span>
+<span>                                      date_run <span class="op">=</span> <span class="st">"07-04-1776"</span><span class="op">)</span></span></code></pre></div>
+<p><strong>Note: save the output of <code>add_plate_run</code>. This
+contains the unique plate run identifier and will be needed to pass to
+later functions</strong></p>
 </div>
-<div class="section level2">
-<h2 id="prepare-sample-details">Prepare Sample Details<a class="anchor" aria-label="anchor" href="#prepare-sample-details"></a>
-</h2>
-<p>The Synergy H1 result output from plate runs is organized using
-generic identifiers that need to be mapped to the real sample
-identifiers in order to properly associate the results with the correct
-sample id in the database. The output file’s <strong>Layout</strong>
-section contains the well locations for samples encoded as non-unique
-generic sample ids <em>(e.g., SPL1, BLK)</em>. The number of rows and
-columns in the <strong>Layout</strong> vary based on the plate size. A
-plate size 96 has rows A:H and columns 1:12 and a plate size 384 has
-rows A:P and columns 1:24. The results for each sample are found within
-columns that are the letter-number combination of the well location
-captured in the <strong>Layout</strong> section <em>(e.g., if SPL1 is in
-row A and column 3, then the measurements at each time step are recorded
-in a column labeled A3)</em>. To map the sample ids to the generic
-identifiers produced by the Synergy H1 software <em>(e.g., SPL1 and
-A3)</em>, we must provide the true sample ids and other metadata at each
-well location in the results as a dataframe containing these
-columns:</p>
-<ul>
-<li>
-<strong>location:</strong> <em>(character)</em> letter-number
-combination based on Synergy H1 Layout grid (e.g., A3)</li>
-<li>
-<strong>sample_id:</strong> <em>(character)</em> unique ID of mucus
-swab or fin clip made up of site code, year, sample event, sampling bin,
-and count within sampling bin (e.g., BTC22_3_A_1)</li>
-<li>
-<strong>sample_type:</strong> <em>(numeric)</em> provide 1 for mucus
-and 2 for fin clip</li>
-<li>
-<strong>assay_id:</strong> <em>(numeric)</em> the ID for assay types
-(e.g., 1 = OTS28 Early 1), use <code>get_assay()</code> to view all
-available options.</li>
-<li>
-<strong>plate_run_id:</strong> <em>(numeric)</em> the ID returned
-from running <code><a href="../reference/add_plate_run.html">add_plate_run()</a></code> to associate important
-metadata with the assay results</li>
-</ul>
-<p>We can map the generic sample identifiers <em>(e.g. SPL1)</em> to the
-JPE sample identifiers <em>(e.g. F1722_3_A_1)</em> using the
-<code>Plate Map</code> tab of the output file. This tab should contain
-the well layout locations with JPE sample identifiers, and the name of
-the tab has to be <code>Plate Map</code>. The function
-<code><a href="../reference/process_well_sample_details.html">process_well_sample_details()</a></code> then reads in that layout and
-maps the JPE sample identifiers to well locations, producing a dataframe
-in the correct format:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">sample_details</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/process_well_sample_details.html">process_well_sample_details</a></span><span class="op">(</span>filepath <span class="op">=</span> <span class="st">"path_to/SynergyH1_data.xlsx"</span>,</span>
-<span>                                                         sample_type <span class="op">=</span> <span class="st">"mucus"</span>,</span>
-<span>                                                         assay_type <span class="op">=</span> <span class="st">"Ots28_Early1"</span>,</span>
-<span>                                                         plate_run_id <span class="op">=</span> <span class="va">plate_run_4_7_early_id</span><span class="op">)</span></span></code></pre></div>
-<p>The object sample_details is now a data frame that looks like:</p>
-<pre eval="FALSE"><code>location,sample_id,sample_type_id,assay_id,plate_run_id
-A3,BTC22_3_A_1,1,1,1
-A4,BTC22_3_A_2,1,1,1
-A6,BTC22_3_A_3,1,1,1
-B3,BTC22_3_B_1,1,1,1
-B4,BTC22_3_B_2,1,1,1
-B6,BTC22_3_B_3,1,1,1</code></pre>
-<p>The sample details as a dataframe are an argument to
-<code><a href="../reference/process_sherlock.html">process_sherlock()</a></code>, the function that extracts assay result
-data from the Synergy H1 reader output and transforms the data into the
-correct format for the database. This maps the generic sample
-identifiers to the JPE sample identifiers by well location.</p>
-</div>
-<div class="section level2">
-<h2 id="process-sherlock-results">Process SHERLOCK Results<a class="anchor" aria-label="anchor" href="#process-sherlock-results"></a>
-</h2>
+<div class="section level4">
+<h4 id="step-2-prepare-sample-details-and-sherlock-output">Step 2: Prepare Sample Details and Sherlock Output<a class="anchor" aria-label="anchor" href="#step-2-prepare-sample-details-and-sherlock-output"></a>
+</h4>
+<p>The SHERLOCK results file must be formatted into the appropriate
+Excel sheet format. You can view an example of this <a href="https://srjpe.github.io/grunID/articles/grunID-data-templates.html" class="external-link">here</a>.
+To add results to the database, you must have a “plate_run” associated
+with this upload. In this example, we will use the plate run we created
+in the previous step. You can query for an existing plate run using the
+<code>get_plate_run</code> function.</p>
 <p>To extract and transpose the assay result data from the Synergy H1
-reader output, provide the <code><a href="../reference/process_sherlock.html">process_sherlock()</a></code> function the
+reader output, provide the <code>process_sherlock</code> function the
 filepath to the result data excel workbook, the sample details dataframe
 described above, and the plate size run <em>(either 96 or 384)</em>. The
 function will return a list containing both the raw and final assay
 results.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">results</span> <span class="op">&lt;-</span> <span class="fu">grunID</span><span class="fu">::</span><span class="fu"><a href="../reference/process_sherlock.html">process_sherlock</a></span><span class="op">(</span>sherlock_results_filepath <span class="op">=</span> <span class="st">"path_to/SynergyH1_data.xlsx"</span>,</span>
-<span>                                    sample_details <span class="op">=</span> <span class="va">sample_details</span>,</span>
-<span>                                    plate_size <span class="op">=</span> <span class="fl">96</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>results <span class="ot">&lt;-</span> grunID<span class="sc">::</span><span class="fu">process_sherlock</span>(<span class="at">filepath =</span> <span class="st">"templates/sherlock_results_template.xlsx"</span>,</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>                                    <span class="at">sample_type =</span> <span class="st">"mucus"</span>,</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>                                    <span class="at">layout_type =</span> <span class="st">"split_plate_early_late"</span>,</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>                                    <span class="at">plate_run_id =</span> plate_run</span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>                                    <span class="at">plate_size =</span> <span class="dv">384</span>)</span></code></pre></div>
+<p><strong>Note: save the output of <code>process_sherlock</code>. This
+contains data that will be needed to to pass to
+<code>add_raw_assay_results</code>.</strong></p>
 </div>
-<div class="section level2">
-<h2 id="upload-assay-results">Upload Assay Results<a class="anchor" aria-label="anchor" href="#upload-assay-results"></a>
-</h2>
-<p>Provide <code>add_assay_results</code> a valid connection to the
+<div class="section level4">
+<h4 id="step-4-upload-assay-results">Step 4: Upload Assay Results<a class="anchor" aria-label="anchor" href="#step-4-upload-assay-results"></a>
+</h4>
+<p>Provide <code>add_raw_assay_results</code> a valid connection to the
 database and the processed assay result data. The function returns the
 number or records added.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">grunID</span><span class="fu">::</span><span class="fu">add_assay_results</span><span class="op">(</span><span class="va">con</span>, <span class="va">results</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">grunID</span><span class="fu">::</span><span class="fu"><a href="../reference/add_raw_assay_results.html">add_raw_assay_results</a></span><span class="op">(</span><span class="va">con</span>, <span class="va">results</span><span class="op">)</span></span></code></pre></div>
+<p><strong>Note: you do not need to save the output of
+<code>add_raw_assay_results</code>.</strong></p>
+</div>
+<div class="section level4">
+<h4 id="step-5-generate-threshold-values">Step 5: Generate Threshold Values<a class="anchor" aria-label="anchor" href="#step-5-generate-threshold-values"></a>
+</h4>
+<p>Provide <code>generate_threshold</code> a valid connection to the
+database and the plate run id. The function calculates the raw
+fluorescence threshold values for each assay on a plate run. Currently,
+this is calculated as two times the mean value of the last time step
+from the control blank wells. The function returns a table containing
+thresholds for a sampling event and needs to be passed to
+<code>update_assay_detections</code> to assign detections for
+assays.</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">thresholds</span> <span class="op">&lt;-</span> <span class="fu">grunID</span><span class="fu">::</span><span class="fu"><a href="../reference/generate_threshold.html">generate_threshold</a></span><span class="op">(</span><span class="va">con</span>, <span class="va">plate_run_id</span><span class="op">)</span></span></code></pre></div>
+<p><strong>Note: save the output of <code>generate_threshold</code>.
+This contains the threshold values and needs to be passed to
+<code>update_assay_detection</code></strong></p>
+</div>
+<div class="section level4">
+<h4 id="step-6-update-assay-detections">Step 6: Update Assay Detections<a class="anchor" aria-label="anchor" href="#step-6-update-assay-detections"></a>
+</h4>
+<p>Provide <code>update_assay_detection</code> a valid connection to the
+database and the thresholds calculated for a plate run using
+<code>generate_threshold</code>. The function updates the assay result
+table with positive detections and, if appicable, the genetic run type
+identification.</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">grunID</span><span class="fu">::</span><span class="fu"><a href="../reference/update_assay_detection.html">update_assay_detection</a></span><span class="op">(</span><span class="va">con</span>, <span class="va">thresholds_event</span><span class="op">)</span></span></code></pre></div>
+<p><strong>Note: you do not need to save the output of
+<code>update_assay_detection</code>.</strong></p>
+</div>
+<div class="section level4">
+<h4 id="end-session">End Session<a class="anchor" aria-label="anchor" href="#end-session"></a>
+</h4>
 <p>And finally, close your open connection to the database:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">DBI</span><span class="fu">::</span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbDisconnect.html" class="external-link">dbDisconnect</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span></code></pre></div>
 </div>
-<div class="section level2">
-<h2 id="summary">Summary<a class="anchor" aria-label="anchor" href="#summary"></a>
-</h2>
+<div class="section level4">
+<h4 id="summary-of-multi-step-approach">Summary of Multi-step Approach<a class="anchor" aria-label="anchor" href="#summary-of-multi-step-approach"></a>
+</h4>
 <p>Here is the code again to:</p>
 <ol style="list-style-type: decimal">
-<li>securely manage database credentials</li>
-<li>connect to the genetics run identification database</li>
+<li>connect to the genetics run identification database with
+credentials</li>
 <li>write plate run metadata to the database</li>
 <li>prepare Synergy H1 result data for upload to the database</li>
 <li>upload assay result data to the database</li>
+<li>generate threshold values from the plate run</li>
+<li>update assay detections for a plate run in the database</li>
 </ol>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">cfg</span> <span class="op">&lt;-</span> <span class="fu">config</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/config/man/get.html" class="external-link">get</a></span><span class="op">(</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">con</span> <span class="op">&lt;-</span> <span class="fu">DBI</span><span class="fu">::</span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbConnect.html" class="external-link">dbConnect</a></span><span class="op">(</span><span class="fu">RPostgres</span><span class="fu">::</span><span class="fu"><a href="https://rpostgres.r-dbi.org/reference/Postgres.html" class="external-link">Postgres</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>                      dbname <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">dbname</span>,</span>
-<span>                      host <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">host</span>,</span>
-<span>                      port <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">port</span>,</span>
-<span>                      user <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">username</span>,</span>
-<span>                      password <span class="op">=</span> <span class="va">cfg</span><span class="op">$</span><span class="va">password</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">plate_run_uid</span> <span class="op">&lt;-</span> <span class="fu">grunID</span><span class="fu">::</span><span class="fu"><a href="../reference/add_plate_run.html">add_plate_run</a></span><span class="op">(</span><span class="va">con</span>, protocol_id <span class="op">=</span> <span class="fl">1</span>, genetic_method_id <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>                                       laboratory_id <span class="op">=</span> <span class="fl">1</span>, lab_work_performed_by <span class="op">=</span> <span class="st">"Yogi Bear"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">sample_details</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/process_well_sample_details.html">process_well_sample_details</a></span><span class="op">(</span>filepath <span class="op">=</span> <span class="st">"path_to/SynergyH1_data.xlsx"</span>,</span>
-<span>                                                         sample_type <span class="op">=</span> <span class="st">"mucus"</span>,</span>
-<span>                                                         assay_type <span class="op">=</span> <span class="st">"Ots28_Early1"</span>,</span>
-<span>                                                         plate_run_id <span class="op">=</span> <span class="va">plate_run_4_7_early_id</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">results</span> <span class="op">&lt;-</span> <span class="fu">grunID</span><span class="fu">::</span><span class="fu"><a href="../reference/process_sherlock.html">process_sherlock</a></span><span class="op">(</span>sherlock_results_filepath <span class="op">=</span> <span class="st">"path_to/SynergyH1_data.xlsx"</span>,</span>
-<span>                                    sample_details <span class="op">=</span> <span class="va">sample_details</span>,</span>
-<span>                                    plate_size <span class="op">=</span> <span class="fl">96</span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu">grunID</span><span class="fu">::</span><span class="fu">add_assay_results</span><span class="op">(</span><span class="va">con</span>, <span class="va">results</span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu">DBI</span><span class="fu">::</span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbDisconnect.html" class="external-link">dbDisconnect</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a>con <span class="ot">&lt;-</span> grunID<span class="sc">::</span><span class="fu">gr_db_connect</span>()</span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a></span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a><span class="co"># S</span></span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a></span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a></span>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a>plate_run_id <span class="ot">&lt;-</span> grunID<span class="sc">::</span><span class="fu">add_plate_run</span>(con, protocol_id, genetic_method_id,</span>
+<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a>                                      laboratory_id, <span class="at">lab_work_performed_by =</span> <span class="st">"Yogi Bear"</span>,</span>
+<span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a>                                      <span class="at">description =</span> <span class="st">"Plate run for sampling event X"</span>,</span>
+<span id="cb15-9"><a href="#cb15-9" tabindex="-1"></a>                                      <span class="at">date_run =</span> <span class="st">"07-04-1776"</span>)</span>
+<span id="cb15-10"><a href="#cb15-10" tabindex="-1"></a></span>
+<span id="cb15-11"><a href="#cb15-11" tabindex="-1"></a>results <span class="ot">&lt;-</span> grunID<span class="sc">::</span><span class="fu">process_sherlock</span>(<span class="at">filepath =</span> <span class="st">"templates/sherlock_results_template.xlsx"</span>,</span>
+<span id="cb15-12"><a href="#cb15-12" tabindex="-1"></a>                                    <span class="at">sample_type =</span> <span class="st">"mucus"</span>,</span>
+<span id="cb15-13"><a href="#cb15-13" tabindex="-1"></a>                                    <span class="at">layout_type =</span> <span class="st">"split_plate_early_late"</span>,</span>
+<span id="cb15-14"><a href="#cb15-14" tabindex="-1"></a>                                    <span class="at">plate_run_id =</span> plate_run_id</span>
+<span id="cb15-15"><a href="#cb15-15" tabindex="-1"></a>                                    <span class="at">plate_size =</span> <span class="dv">384</span>)</span>
+<span id="cb15-16"><a href="#cb15-16" tabindex="-1"></a></span>
+<span id="cb15-17"><a href="#cb15-17" tabindex="-1"></a><span class="co"># no need to store output</span></span>
+<span id="cb15-18"><a href="#cb15-18" tabindex="-1"></a>grunID<span class="sc">::</span><span class="fu">add_raw_assay_results</span>(con, results)</span>
+<span id="cb15-19"><a href="#cb15-19" tabindex="-1"></a></span>
+<span id="cb15-20"><a href="#cb15-20" tabindex="-1"></a>thresholds <span class="ot">&lt;-</span> grunID<span class="sc">::</span><span class="fu">generate_threshold</span>(con, plate_run_id)</span>
+<span id="cb15-21"><a href="#cb15-21" tabindex="-1"></a></span>
+<span id="cb15-22"><a href="#cb15-22" tabindex="-1"></a><span class="co"># no need to store output</span></span>
+<span id="cb15-23"><a href="#cb15-23" tabindex="-1"></a>grunID<span class="sc">::</span><span class="fu">update_assay_detection</span>(con, thresholds)</span>
+<span id="cb15-24"><a href="#cb15-24" tabindex="-1"></a></span>
+<span id="cb15-25"><a href="#cb15-25" tabindex="-1"></a><span class="co"># disconnect</span></span>
+<span id="cb15-26"><a href="#cb15-26" tabindex="-1"></a>DBI<span class="sc">::</span><span class="fu">dbDisconnect</span>(con)</span></code></pre></div>
+</div>
+</div>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside>
@@ -307,7 +408,7 @@ number or records added.</p>
 
 <div class="pkgdown-footer-right">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
     </footer>

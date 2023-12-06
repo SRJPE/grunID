@@ -7,7 +7,7 @@ This package is designed to support the recording and processing of data for gen
 
 The package can be installed by running the code block below:
 
-```{r} 
+```
 # install.packages("remotes")
 remotes::install_github("FlowWest/grunID")
 ```
@@ -20,7 +20,7 @@ The `grunID` package requires data be collected and recorded from Rotary Screw T
 The `grunID` package uses the native pipe operator (`|>`) instead of the tidyverse pipe operator (`%>%`). You will need to have R version 4.1 or later installed on your computer to run this package. You can update to the latest version of R [here](https://cran.r-project.org/bin/windows/base/). You will need to install the [latest version](https://purrr.tidyverse.org/) of the `purrr` package.
 
 We recommend updating dependencies, if installed, as prompted upon running
-```{r}
+```
 remotes::install_github("FlowWest/grunID")
 ```
 

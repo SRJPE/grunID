@@ -1,0 +1,24 @@
+---
+title: "grunID Templates"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{grunID Templates}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+library(grunID)
+```
+
+
+This page contains a list of data templates used by `grunID`.
+
+- Sherlock results template <a href= "https://github.com/SRJPE/grunID/raw/main/inst/sherlock_results_template.xlsx"><button class="btn btn-outline-primary">Download</button></a>
+
+
+
