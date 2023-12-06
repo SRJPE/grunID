@@ -13,7 +13,8 @@ get_samples <- function(con, ...) {
 #' Get Samples by Season
 #' @description View sample by season with status and run (if assigned)
 #' @param con connection to the database
-#' @param season year in format YYYY. You can pass in a min and max season as c(YYYY, YYYY)
+#' @param season year in format YYYY. You can pass in a min and max season as c(YYYY, YYYY). A
+#' season consists of all sampling events from the given year up to September 30th and from the previous year after October 1st.
 #' @param dataset either "raw", "clean", or "unprocessed".
 #' @param heterozygote_filter defaults to FALSE. If TRUE, only heterozygotes are returned.
 #' @param failed_filter defaults to FALSE. If TRUE, only "failed" assays (negative for both OTS28 early and late,
@@ -118,7 +119,8 @@ filter_dataset <- function(con, season) {
     dplyr::collect() |>
     dplyr::filter(sample_event_id %in% sample_event_ids$id) |>
     dplyr::left_join(sample_event_ids, by = c("sample_event_id" = "id")) |>
-    dplyr::select(id, stream_name, location_code, sample_event_number)
+    dplyr::select(id, stream_name, location_code, sample_bin_code, sample_event_number) |>
+    dplyr::mutate(sample_bin_code = as.character(sample_bin_code))
 
   samples <- dplyr::tbl(con, "sample") |>
     dplyr::collect() |>

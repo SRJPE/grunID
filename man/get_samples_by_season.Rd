@@ -15,7 +15,8 @@ get_samples_by_season(
 \arguments{
 \item{con}{connection to the database}
 
-\item{season}{year in format YYYY. You can pass in a min and max season as c(YYYY, YYYY)}
+\item{season}{year in format YYYY. You can pass in a min and max season as c(YYYY, YYYY). A
+season consists of all sampling events from the given year up to September 30th and from the previous year after October 1st.}
 
 \item{dataset}{either "raw", "clean", or "unprocessed".}
 
