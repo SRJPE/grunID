@@ -197,7 +197,6 @@ output$season_plot <- renderPlot(
     if(is.null(input$filled_field_sheets$datapath)) return(NULL)
     tryCatch({
       data <- grunID::process_field_sheet_samples(input$filled_field_sheets$datapath)
-      spsComps::shinyCatch({message("File uploaded to app")}, position = "top-center")
     }, error = function(e) {
       spsComps::shinyCatch({stop(paste(e))}, prefix = '', position = "top-center")
     })

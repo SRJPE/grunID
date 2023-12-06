@@ -67,7 +67,8 @@ navbarPage(
              tags$hr(),
              tags$h4("Preview clean field sheet data"),
              tags$br(),
-             DT::dataTableOutput("field_sheet_summary")
+             DT::dataTableOutput("field_sheet_summary") |>
+               shinycssloaders::withSpinner()
            ),
   ),
   tabPanel(title = "Sample Status",
