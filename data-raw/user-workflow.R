@@ -73,7 +73,7 @@ plate_run_event2 <- add_plate_run(con,
 dplyr::tbl(con, "plate_run")
 
 
-res <- get_plate_run(con, id == 10)
+res <- get_plate_run(con, id == 12)
 
 # read in the plate run map that is created before the plate is run.
 # this plate map layout should contain generic sherlock-created sample IDs

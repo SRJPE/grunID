@@ -11,11 +11,11 @@
 #' @param plate_size either 96 or 384
 #' @export
 add_new_plate_results <- function(con, protocol_name, genetic_method,
-                              laboratory, lab_work_performed_by, description, date_run,
-                              filepath, sample_type, layout_type,
-                              plate_size = c(96, 384), .control_id = "NTC",
-                              selection_strategy = "recent priority",
-                              run_gen_id = FALSE) {
+                                  laboratory, lab_work_performed_by, description, date_run,
+                                  filepath, sample_type, layout_type,
+                                  plate_size = c(96, 384), .control_id = "NTC",
+                                  selection_strategy = "recent priority",
+                                  run_gen_id = FALSE) {
 
   is_valid_connection(con)
 
@@ -51,12 +51,12 @@ add_new_plate_results <- function(con, protocol_name, genetic_method,
   cli::cli_alert_info("Adding plate run to database")
   # create a new plate run in db for these results
   plate_run <- add_plate_run(con,
-                            date_run = date_run,
-                            protocol_id = protocol_id,
-                            genetic_method_id = genetic_method_id,
-                            laboratory_id = lab_id,
-                            lab_work_performed_by = lab_work_performed_by,
-                            description = description)
+                             date_run = date_run,
+                             protocol_id = protocol_id,
+                             genetic_method_id = genetic_method_id,
+                             laboratory_id = lab_id,
+                             lab_work_performed_by = lab_work_performed_by,
+                             description = description)
   cli::cli_alert_success("Plate run added to database with id = {plate_run$plate_run_id}")
 
 
@@ -183,20 +183,11 @@ add_plate_run <- function(con, protocol_id, genetic_method_id,
 
   proceed_inserting <- TRUE
 
-  if (!shiny::isRunning()) {
-    if (nrow(plate_run_already_exists_in_db)) {
-      proceed_inserting <- usethis::ui_yeah("Plate run with these values exists in database, do you wish to insert anyway?",
-                                            yes = "Yes", no = "No")
-    }
-  }
-
-
-  if (proceed_inserting) {
 
   query <- glue::glue_sql("
   INSERT INTO plate_run (protocol_id, genetic_method_id,  laboratory_id, lab_work_performed_by, description, date_run)
   VALUES ({protocol_id}, {genetic_method_id}, {laboratory_id}, {lab_work_performed_by}, {description}, {date_run}) RETURNING id;",
-                 .con = con)
+                          .con = con)
 
   res <- DBI::dbSendQuery(con, query)
   plate_run_id <- DBI::dbFetch(res)
@@ -213,11 +204,7 @@ add_plate_run <- function(con, protocol_id, genetic_method_id,
       description=description,
       performed_by=lab_work_performed_by
     ))
-  } else {
-    cli::cli_alert_info("use the following to view what exists in database")
-    cli::cli_code(lines = glue::glue("grunID::get_plate_run(con, id == {plate_run_already_exists_in_db$id})"), language = "R")
-    stop("aborting operation", call. = FALSE)
-  }
+
 }
 
 
@@ -268,7 +255,7 @@ deactivate_plate_run <- function(con, plate_run_id) {
                            SET active = FALSE
                            WHERE id = {plate_run_id}
                            RETURNING id, updated_at;",
-                           .con = con)
+                            .con = con)
 
     res <- DBI::dbSendQuery(con, query)
     DBI::dbClearResult(res)
@@ -311,7 +298,7 @@ activate_plate_run <- function(con, plate_run_id) {
                            SET active = TRUE
                            WHERE id = {plate_run_id}
                            RETURNING id, updated_at;",
-                           .con = con)
+                            .con = con)
 
     res <- DBI::dbSendQuery(con, query)
     DBI::dbClearResult(res)
