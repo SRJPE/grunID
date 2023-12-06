@@ -298,7 +298,17 @@ create_season_field_sheets <- function(con, season, field_sheet_filepath) {
 #' them to database-ready formatting.
 #' @details See \code{\link{create_field_sheet}} and \code{\link{get_field_sheet_event_plan}} for
 #' more information on creating field sheet workbooks.
-#' @param filepath the filepath of the field sheet you want to prepare for upload.
+#' @param filepath the filepath of the field sheet you want to prepare for upload. Column
+#' names and data types should match the following:
+#' * **Bin** text value
+#' * **Bin FL Range (mm)** Numeric value
+#' * **Sample #** Numeric value
+#' * **Sample ID** Text value
+#' * **Date** Date (ideally in format YYYY-MM-DD)
+#' * **Time** Time
+#' * **FL (mm)** Numeric value
+#' * **Field Run ID** Numeric value
+#' * **Comments** Text value
 #' @returns
 #' A tibble object containing the data from all sheets in the @param filepath workbook
 #' in required format for \code{\link{update_field_sheet_samples}}. This contains
@@ -307,7 +317,6 @@ create_season_field_sheets <- function(con, season, field_sheet_filepath) {
 #' * **datetime_collected** The date and time (YYYY-MM-DD H:M:S) the sample was processed.
 #' * **fork_length_mm** The recorded fork length corresponding to the sample.
 #' * **field_run_type_id** The unique identifier for the field run type.
-#' * **fin_clip** Logical variable indicating whether a fin clip sample was taken.
 #' * **field_comment** Any recorded comments from the field regarding the sample.
 #' @examples
 #' filepath <- "data-raw/test.xlsx"
@@ -321,21 +330,32 @@ process_field_sheet_samples <- function(filepath){
     readxl::read_excel(path = filepath, sheet = sheet,
                        col_types = c("text", "text", "numeric",
                                      "text", "date", "date",
-                                     "numeric", "numeric",
-                                     "text", "text"))
-  })
+                                     "numeric", "numeric", "text")) |>
+      # remove any extra rows at the bottom (including fork length/bin table)
+      dplyr::filter(!is.na(Bin))
+  },
+  .progress = list(
+    type = "iterator",
+    clear = FALSE,
+    name = "reading in field sheets"
+  ))
+
+  # checks
+  if(!identical(names(field_data), c("Bin", "Bin FL Range (mm)", "Sample #",
+                                         "Sample ID", "Date", "Time", "FL (mm)",
+                                         "Field Run ID", "Comments"))) {
+    cli::cli_abort("Column names in file do not match template. Please see ?process_field_sheet_samples for
+                   correct column names.")
+  }
 
   formatted_data <- field_data |>
     dplyr::filter(!is.na(Date)) |> # don't read in any empty rows
     dplyr::mutate(Time = format(Time, "%H:%M:%S"),
-                  datetime_collected = lubridate::ymd_hms(paste0(Date, Time)),
-                  fin_clip = tolower(`Fin Clip (Y/N)`),
-                  fin_clip = ifelse(fin_clip == "n" | is.na(fin_clip), FALSE, TRUE)) |>
+                  datetime_collected = lubridate::ymd_hms(paste0(Date, Time))) |>
     dplyr::select(sample_id = `Sample ID`,
                   datetime_collected,
                   fork_length_mm = `FL (mm)`,
                   field_run_type_id = `Field Run ID`,
-                  fin_clip,
                   field_comment = `Comments`)
 
   return(formatted_data)
@@ -359,17 +379,10 @@ process_field_sheet_samples <- function(filepath){
 #' of class "datetime" or ("POSIXct" "POSIXt")
 #' * **fork_length_mm** The recorded fork length corresponding to the sample, of class "numeric".
 #' * **field_run_type_id** The unique identifier for the field run type, of class "numeric".
-#' * **fin_clip** Logical variable indicating whether a fin clip sample was taken, of class "logical".
 #' * **field_comment** Any recorded comments from the field regarding the sample, of class "character".
 #' @returns Does not return any objects.
 #' @examples
-#' cfg <- config::get()
-#' con <- DBI::dbConnect(RPostgres::Postgres(),
-#'                       dbname = cfg$dbname,
-#'                       host = cfg$host,
-#'                       port = cfg$port,
-#'                       user = cfg$username,
-#'                       password = cfg$password)
+#' con <- grunID::gr_db_connect()
 #'
 #' filepath <- "data-raw/test.xlsx"
 #' field_data_clean <- process_field_sheet_samples(filepath)
@@ -386,19 +399,23 @@ update_field_sheet_samples <- function(con, field_data) {
                            SET datetime_collected = {field_data$datetime_collected},
                                fork_length_mm = {field_data$fork_length_mm},
                                field_run_type_id = {field_data$field_run_type_id},
-                               fin_clip = {field_data$fin_clip},
                                field_comment = {field_data$field_comment}
                            WHERE id = {field_data$sample_id};",
                           .con = con)
 
-  for(i in 1:length(query)) {
-    res <- DBI::dbSendQuery(con, query[i])
-    DBI::dbClearResult(res)
-  }
+  field_results_added <- purrr::map_dbl(query, function(q) {
+    DBI::dbExecute(con, q)
+  },
+  .progress = list(
+    type = "iterator",
+    clear = FALSE,
+    name = "inserting field sheets into database"
+  ))
 
-  # res <- DBI::dbSendQuery(con, query)
-  # results <- DBI::dbFetch(res)
-  # DBI::dbClearResult(res)
+  # for(i in 1:length(query)) {
+  #   res <- DBI::dbSendQuery(con, query[i])
+  #   DBI::dbClearResult(res)
+  # }
 
   #return(results)
 }
@@ -414,18 +431,17 @@ update_field_sheet_samples <- function(con, field_data) {
 is_valid_sample_field_data <- function(data) {
 
   if (!is.data.frame(data)) {
-    stop("Please provide sample field data as a dataframe", call. = FALSE)
+    cli::cli_abort("Please provide sample field data as a dataframe", call. = FALSE)
   }
 
   column_reference <- list("sample_id" = "character",
                            "datetime_collected" = c("POSIXct", "POSIXt"),
                            "fork_length_mm" = "numeric",
                            "field_run_type_id" = "numeric",
-                           "fin_clip" = "logical",
                            "field_comment" = "character")
 
   if (!identical(lapply(data, class), column_reference)) {
-    stop('The sample field data supplied is not valid, see `help("process_field_sheet_samples")` for correct format', call. = FALSE)
+    cli::cli_abort('The sample field data supplied is not valid, see `help("process_field_sheet_samples")` for correct format', call. = FALSE)
   }
 }
 
