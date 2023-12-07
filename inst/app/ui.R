@@ -119,6 +119,25 @@ navbarPage(
                DT::dataTableOutput("season_table") |>
                  shinycssloaders::withSpinner()
              )
+           )),
+  tabPanel(title = "Subsample",
+           sidebarLayout(
+             sidebarPanel(
+               width = 3,
+               selectInput("subsample_season_filter", "Season Filter",
+                           2024),
+               actionButton("subsample_logic",
+                            "Subsampling logic",
+                            icon = icon("circle-info")),
+               tags$hr(),
+               tags$h6("This subsampling logic only applies to the 2024 season, which
+                       spans 10-01-2023 through 09-30-2024"),
+               tags$br(),
+             ),
+             mainPanel(
+               DT::dataTableOutput("subsample_table") |>
+                 shinycssloaders::withSpinner()
+             )
            ))
 )
 
