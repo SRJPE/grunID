@@ -124,20 +124,22 @@ navbarPage(
            sidebarLayout(
              sidebarPanel(
                width = 4,
-               selectInput("subsample_season_filter", "Season Filter",
-                           2024),
                actionButton("subsample_logic",
                             "Subsampling logic",
                             icon = icon("circle-info")),
-               tags$hr(),
                tags$h6("This subsampling logic only applies to the 2024 season, which
                        spans 10-01-2023 through 09-30-2024"),
                tags$hr(),
                tags$h4("Summary table"),
+               tags$h6("This table sums the number of samples in each subsampling scenario for each stream, event number, and bin."),
+               tags$hr(),
                DT::dataTableOutput("subsample_summary_table") |>
                  shinycssloaders::withSpinner()
              ),
              mainPanel(
+               selectInput("subsample_season_filter", "Season Filter",
+                           2024),
+               tags$h4("Full result table"),
                DT::dataTableOutput("subsample_table") |>
                  shinycssloaders::withSpinner()
              )
