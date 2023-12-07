@@ -38,8 +38,6 @@ generate_subsample <- function(con, season) {
   samples <- grunID::filter_dataset(con, season) |>
     dplyr::add_count(location_code, sample_event_number, name = "no_samples") |>
     dplyr::add_count(location_code, sample_event_number, sample_bin_code, name = "no_samples_per_bin")
-  dplyr::mutate(no_samples = count(location_code, sample_number),
-         no_samples_per_bin = count(location_code, sample_number, sample_bin_code))
 
   # apply rules
   samples_with_counts <- samples |>
