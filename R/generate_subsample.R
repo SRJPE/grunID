@@ -27,8 +27,14 @@
 #' * **sample_bin_code**
 #' * **sample_event_number**
 #'
-#' The `summary` table contains a short summary summarizing the number of samples (`n`) for a
-#' `stream` subsampled according to different scenarios (`scenario`).
+#' The `summary` table contains a short summary summarizing the number of samples for a given subsampling scenario by stream,
+#' event, and bin. It contains the following columns:
+#'
+#' * **stream**
+#' * **event**
+#' * **bin**
+#' * **scenario**
+#' * **subsamples**
 #' @export
 #' @md
 generate_subsample <- function(con, season) {

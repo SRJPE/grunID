@@ -23,8 +23,15 @@ The \code{results} table contains all samples selected by the process with the f
 \item \strong{sample_event_number}
 }
 
-The \code{summary} table contains a short summary summarizing the number of samples (\code{n})
-selected according to different rules (\code{rules}).
+The \code{summary} table contains a short summary summarizing the number of samples for a given subsampling scenario by stream,
+event, and bin. It contains the following columns:
+\itemize{
+\item \strong{stream}
+\item \strong{event}
+\item \strong{bin}
+\item \strong{scenario}
+\item \strong{subsamples}
+}
 }
 \description{
 Subsamples from sampling events in a season.
