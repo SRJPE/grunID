@@ -90,10 +90,10 @@ res <- get_plate_run(con, id == 12)
 # the generic IDs with the JPE sample IDs.
 # sherlock_results is a variable you will need to pass to a later function
 sherlock_results_event <- process_sherlock(
-  filepath = "inst/sherlock_results_template.xlsx",
+  filepath = "C:/Users/emanuel/Downloads/FAM-HEX_Blank_Multiplex_Test_11-21-23.xlsx",
   sample_type = "mucus",
   layout_type = "single_assay_ots28_early",
-  plate_run_id = res,
+  plate_run_id = plate_run_event,
   plate_size = 384)
 
 sherlock_results_event_2 <- process_sherlock(

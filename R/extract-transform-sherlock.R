@@ -240,10 +240,11 @@ process_plate_layout <- function(filepath, plate_size) {
 #' @md
 process_well_sample_details <- function(filepath,
                                         sample_type = c("mucus", "fin clip"),
-                                        layout_type = c("split_plate_early_late", "split_plate_spring_winter", "triplicate",
+                                        layout_type = c("multiplex", "split_plate_early_late", "split_plate_spring_winter", "triplicate",
                                                         "single_assay_ots28_early", "single_assay_ots28_late",
                                                         "single_assay_ots16_spring", "single_assay_ots16_winter"),
-                                        plate_run_id) {
+                                        plate_run_id,
+                                        assay_order = NULL) {
 
   layout_type <- tolower(layout_type)
   sample_type_id <- ifelse(sample_type == "mucus", 1, 2)
@@ -306,6 +307,13 @@ process_well_sample_details <- function(filepath,
         assay_id = assay_id,
         plate_run_id = plate_run_id
       )
+  } else if (layout_type == "multiplex") {
+    if (is.null(assay_order)) {
+      stop("'assay_order' needed when 'multiplex' layout is selected", call. = FALSE)
+    }
+
+
+
   }
 
   plate_layout <- plate_layout|> dplyr::filter(!is.na(sample_id))
