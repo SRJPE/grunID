@@ -13,7 +13,8 @@ generate_subsample(con, season)
 from the given year up to September 30th and from the previous year after October 1st.}
 }
 \value{
-A table containing the following columns:
+A named list containing a \code{results} table and a \code{summary} table.
+The \code{results} table contains all samples selected by the process with the following columns:
 \itemize{
 \item \strong{sample_id}
 \item \strong{datetime_collected}
@@ -21,6 +22,9 @@ A table containing the following columns:
 \item \strong{sample_bin_code}
 \item \strong{sample_event_number}
 }
+
+The \code{summary} table contains a short summary summarizing the number of samples (\code{n})
+selected according to different rules (\code{rules}).
 }
 \description{
 Subsamples from sampling events in a season.
