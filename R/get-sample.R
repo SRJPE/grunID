@@ -13,7 +13,8 @@ get_samples <- function(con, ...) {
 #' Get Samples by Season
 #' @description View sample by season with status and run (if assigned)
 #' @param con connection to the database
-#' @param season year in format YYYY. You can pass in a min and max season as c(YYYY, YYYY)
+#' @param season year in format YYYY. You can pass in a min and max season as c(YYYY, YYYY). A
+#' season consists of all sampling events from the given year up to September 30th and from the previous year after October 1st.
 #' @param dataset either "raw", "clean", or "unprocessed".
 #' @param heterozygote_filter defaults to FALSE. If TRUE, only heterozygotes are returned.
 #' @param failed_filter defaults to FALSE. If TRUE, only "failed" assays (negative for both OTS28 early and late,
@@ -78,7 +79,7 @@ get_samples_by_season <- function(con, season, dataset = c("raw", "clean", "unpr
   is_valid_connection(con)
   season <- as.integer(season)
 
-  samples <- filter_dataset(con, season)
+  samples <- grunID::sample_filter_to_season(con, season)
 
   clean_dataset <- get_clean_dataset(con, filtered_samples = samples,
                                      heterozygote_filter = heterozygote,
@@ -99,26 +100,27 @@ get_samples_by_season <- function(con, season, dataset = c("raw", "clean", "unpr
 
 #' Filter dataset by season
 #' @export
-filter_dataset <- function(con, season) {
+sample_filter_to_season <- function(con, season) {
   # filter by date
   min_date <- as.Date(paste0(min(season) - 1, "-10-01"))
   max_date <- as.Date(paste0(max(season), "-09-30"))
 
   location_codes <- dplyr::tbl(con, "sample_location") |>
-    dplyr::select(sample_location_id = id, stream_name) |>
+    dplyr::select(sample_location_id = id, code, stream_name) |>
     dplyr::collect()
 
   sample_event_ids <- dplyr::tbl(con, "sample_event") |>
     dplyr::filter(between(first_sample_date, min_date, max_date)) |>
     dplyr::collect() |>
     dplyr::left_join(location_codes, by = "sample_location_id") |>
-    dplyr::select(stream_name, id, sample_event_number)
+    dplyr::select(stream_name, location_code = code, id, sample_event_number)
 
   sample_bin_ids <- dplyr::tbl(con, "sample_bin") |>
     dplyr::collect() |>
     dplyr::filter(sample_event_id %in% sample_event_ids$id) |>
     dplyr::left_join(sample_event_ids, by = c("sample_event_id" = "id")) |>
-    dplyr::select(id, stream_name, sample_event_number)
+    dplyr::select(id, stream_name, location_code, sample_bin_code, sample_event_number) |>
+    dplyr::mutate(sample_bin_code = as.character(sample_bin_code))
 
   samples <- dplyr::tbl(con, "sample") |>
     dplyr::collect() |>
