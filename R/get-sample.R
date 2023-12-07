@@ -79,7 +79,7 @@ get_samples_by_season <- function(con, season, dataset = c("raw", "clean", "unpr
   is_valid_connection(con)
   season <- as.integer(season)
 
-  samples <- filter_dataset(con, season)
+  samples <- grunID::sample_filter_to_season(con, season)
 
   clean_dataset <- get_clean_dataset(con, filtered_samples = samples,
                                      heterozygote_filter = heterozygote,
@@ -100,7 +100,7 @@ get_samples_by_season <- function(con, season, dataset = c("raw", "clean", "unpr
 
 #' Filter dataset by season
 #' @export
-filter_dataset <- function(con, season) {
+sample_filter_to_season <- function(con, season) {
   # filter by date
   min_date <- as.Date(paste0(min(season) - 1, "-10-01"))
   max_date <- as.Date(paste0(max(season), "-09-30"))
