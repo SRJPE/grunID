@@ -35,15 +35,15 @@ generate_subsample <- function(con, season) {
     cli::cli_abort("Season must be in the format YYYY (i.e. 2024).")
   }
   # get all sample event IDs for a season
-  samples <- grunID::filter_dataset(con, season) |>
-    dplyr::add_count(location_code, sample_event_number, name = "no_samples") |>
+  samples <- grunID::sample_filter_to_season(con, season) |>
+    dplyr::add_count(location_code, sample_event_number, name = "total_samples_in_event") |>
     dplyr::add_count(location_code, sample_event_number, sample_bin_code, name = "no_samples_per_bin")
 
   # apply rules
   samples_with_counts <- samples |>
-    dplyr::mutate(one_bin_per_site_event = ifelse(no_samples == no_samples_per_bin, TRUE, FALSE),
+    dplyr::mutate(one_bin_per_site_event = ifelse(total_samples_in_event == no_samples_per_bin, TRUE, FALSE),
            # flag if total number of samples for that site/event combo is less than 20
-           subsample_all = ifelse(no_samples < 20, TRUE, FALSE),
+           subsample_all = ifelse(total_samples_in_event < 20, TRUE, FALSE),
            # flag if total number of samples for that site/event/bin combo is less than 5
            subsample_all_within_bin = ifelse(no_samples_per_bin <= 5, TRUE, FALSE),
            # apply rules:
@@ -51,13 +51,13 @@ generate_subsample <- function(con, season) {
            # if only 1 bin in that site/event combo and we DON'T want to subsample all, subsample n = total number of samples / 2 (rounded up)
            # if > 1 bin in that site/event combo and we want to subsample all within the bin, subsample n = number of samples in that bin
            # if > 1 bin in that site/event combo and we DON'T want to subsample all, subsample n = number of samples in that bin / 2 (rounded up)
-           subsample_number = case_when(one_bin_per_site_event & subsample_all ~ no_samples,
-                                        one_bin_per_site_event & !subsample_all ~ ceiling(no_samples / 2),
+           subsample_number = case_when(one_bin_per_site_event & subsample_all ~ total_samples_in_event,
+                                        one_bin_per_site_event & !subsample_all ~ ceiling(total_samples_in_event / 2),
                                         !one_bin_per_site_event & subsample_all_within_bin ~ no_samples_per_bin,
                                         !one_bin_per_site_event & !subsample_all_within_bin ~ ceiling(no_samples_per_bin / 2),
                                         TRUE ~ NA),
            # now get that percentage (if necessary to use in a subsampling function)
-           percentage_to_sample = ifelse(one_bin_per_site_event, subsample_number / no_samples,
+           percentage_to_sample = ifelse(one_bin_per_site_event, subsample_number / total_samples_in_event,
                                          subsample_number / no_samples_per_bin))
 
   # subsample
