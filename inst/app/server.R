@@ -231,7 +231,7 @@ output$season_plot <- renderPlot(
   # subsample table
   output$subsample_table <- DT::renderDataTable(DT::datatable({
 
-    grunID::generate_subsample(con, as.numeric(input$season_filter))
+    grunID::generate_subsample(con, as.numeric(input$season_filter))$results
 
   },
   extensions = "Buttons",
@@ -264,4 +264,10 @@ output$season_plot <- renderPlot(
     ))
   })
 
+  # subsample summary table
+  output$subsample_summary_table <- DT::renderDataTable(DT::datatable({
+
+    grunID::generate_subsample(con, as.numeric(input$season_filter))$summary
+  },
+  rownames = FALSE))
 }
