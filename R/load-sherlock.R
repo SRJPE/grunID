@@ -3,14 +3,41 @@
 #' values for an assay.
 #' @param con valid connection to the database
 #' @param plate_run plate run object obtained from either `add_plate_run` or `get_plate_run`
-#' @param strategy the strategy to use for computing thresholds
+#' @param strategy the strategy to use for computing thresholds, see **details** for more info.
 #' @param .control_id the identifier within the plate run to use as control for calculating thresholds, defaults to "NTC"
-#' @details For each assay on a plate run, the threshold value is calculated as two times
-#' the mean value of the last time step from the control blank wells. Each
-#' assay on a plate will have its own control blanks and threshold value.
+#' @examples
+#' \dontrun{
+#' # using default strategy
+#' thresholds_event <- generate_threshold(con, plate_run = plate_run_event)
+#'
+#' # using named function
+#' min_fluo <- function(x) {
+#'   return(min(x))
+#' }
+#' thresholds_event <- generate_threshold(con, plate_run = plate_run_event, strategy = min_fluo)
+#'
+#' # use short-hand functions, this is equivalent to example above
+#' thresholds_event <- generate_threshold(con, plate_run = plate_run_event, strategy = \(x) min(x))
+#' }
+#' @details
+#' thresholds can be customized by either selecting from one of the following:
+#'
+#' * "twice average" use twice the average of the control variable as threshold
+#'
+#' or creating your own threshold function. The function must take a single argument `raw_fluorescence` and output a numeric vector.
+#' Example
+#'
+#' ```r
+#' custom_threshold <- function(raw_fluorescence) {
+#'     min(raw_fluorescence)
+#' }
+#' ```
+#' This example will use the minimum raw fluorescence value in the plate run as the threshold. When adding to the database the body
+#' of the function will be used to populate the `threshold_strategy` column.
 #' @returns a table containing thresholds for an event, to be passed to `update_assay_detections()`
+#' @md
 #' @export
-generate_threshold <- function(con, plate_run, strategy = "twice average",.control_id="NTC") {
+generate_threshold <- function(con, plate_run, strategy = "twice average", .control_id = "NTC") {
 
   if (!DBI::dbIsValid(con)) {
     stop("Connection argument does not have a valid connection the run-id database.
@@ -34,7 +61,7 @@ generate_threshold <- function(con, plate_run, strategy = "twice average",.contr
     dplyr::collect()
 
   if (nrow(control_blanks) == 0) {
-    stop(paste0("no control variables found in plate run with id: '", plate_run_identifier, "'"), call. = FALSE)
+    stop(glue::glue("no control variables ({.control_id}) found in plate run with id: '{plate_run_identifier}', verify that plate_run was added to database"), call. = FALSE)
   }
 
   if (is.character(strategy)) {
@@ -46,12 +73,30 @@ generate_threshold <- function(con, plate_run, strategy = "twice average",.contr
                               dplyr::summarise(
                                 threshold = mean(as.numeric(raw_fluorescence)) * 2
                               ) |> ungroup() |>
-                              dplyr::mutate(runtime = runtime)
+                              dplyr::mutate(runtime = runtime, strategy = strategy, threshold_control = .control_id)
                           }
     )
+  } else if (is.function(strategy)) {
+    strategy_body <- deparse1(strategy, collapse = " ")
+    normalized_strategy_fn <- normalize_strategy_func(strategy_body)
+    thresholds <- control_blanks |>
+      dplyr::group_by(plate_run_id, assay_id) |>
+      dplyr::summarise(
+        threshold = strategy(raw_fluorescence)
+      ) |> ungroup() |>
+      dplyr::mutate(runtime = runtime, strategy = paste0("USER DEFINED:", strategy_body), threshold_control = .control_id)
   }
 
   return(thresholds)
+}
+
+
+normalize_strategy_func <- function(fn_body) {
+  normalized_text <- stringr::str_trim(fn_body) |>
+    stringr::str_replace_all("\\s+", " ") |>
+    tolower()
+
+  return(normalized_text)
 }
 
 #' @title Set detection for assay results

@@ -33,9 +33,9 @@ con <- gr_db_connect()
 
 # run with username, dbname, and host passed in as arguemnts
 con <- gr_db_connect(
-                     username = "myusername",
-                     dbname = "dbname",
-                     host = "host.com"
+  username = "myusername",
+  dbname = "dbname",
+  host = "host.com"
 )
 dplyr::tbl(con, "agency")
 }

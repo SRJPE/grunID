@@ -73,8 +73,6 @@ plate_run_event2 <- add_plate_run(con,
 dplyr::tbl(con, "plate_run")
 
 
-res <- get_plate_run(con, id == 10)
-
 # read in the plate run map that is created before the plate is run.
 # this plate map layout should contain generic sherlock-created sample IDs
 # which will then be aligned with the corresponding JPE sample IDs.
@@ -106,12 +104,13 @@ sherlock_results_event_2 <- process_sherlock(
 
 # add raw assay results to database
 dplyr::tbl(con, "raw_assay_result")
-add_raw_assay_results(con, sherlock_results_event_2)
+add_raw_assay_results(con, sherlock_results_event)
 dplyr::tbl(con, "raw_assay_result")
 
 # generate thresholds from raw assay results
 # thresholds is a variable you will need to pass to a later function
-thresholds_event <- generate_threshold(con, plate_run = plate_run_event2)
+thresholds_event <- generate_threshold(con, plate_run = plate_run_event, strategy = \(x) 2*x)
+add_plate_thresholds(con, thresholds_event)
 
 # update assay detection results (TRUE or FALSE for a sample and assay type)
 # in the database
