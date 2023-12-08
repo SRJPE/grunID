@@ -16,6 +16,9 @@ con <- DBI::dbConnect(RPostgres::Postgres(),
                user = cfg$username,
                password = cfg$password)
 
+
+
+
 # check connection is working - should see head of these tables
 dbListTables(con)
 dplyr::tbl(con, "agency")
