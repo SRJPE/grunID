@@ -13,13 +13,24 @@ generate_subsample(con, season)
 from the given year up to September 30th and from the previous year after October 1st.}
 }
 \value{
-A table containing the following columns:
+A named list containing a \code{results} table and a \code{summary} table.
+The \code{results} table contains all samples selected by the process with the following columns:
 \itemize{
 \item \strong{sample_id}
 \item \strong{datetime_collected}
 \item \strong{stream_name}
 \item \strong{sample_bin_code}
 \item \strong{sample_event_number}
+}
+
+The \code{summary} table contains a short summary summarizing the number of samples for a given subsampling scenario by stream,
+event, and bin. It contains the following columns:
+\itemize{
+\item \strong{stream}
+\item \strong{event}
+\item \strong{bin}
+\item \strong{scenario}
+\item \strong{subsamples}
 }
 }
 \description{

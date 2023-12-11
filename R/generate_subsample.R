@@ -18,13 +18,23 @@
 #'
 #' # subsample from all sampling events in season 2024
 #' subsamples <- generate_subsample(con, 2024)
-#' @returns A table containing the following columns:
+#' @returns A named list containing a `results` table and a `summary` table.
+#' The `results` table contains all samples selected by the process with the following columns:
 #'
 #' * **sample_id**
 #' * **datetime_collected**
 #' * **stream_name**
 #' * **sample_bin_code**
 #' * **sample_event_number**
+#'
+#' The `summary` table contains a short summary summarizing the number of samples for a given subsampling scenario by stream,
+#' event, and bin. It contains the following columns:
+#'
+#' * **stream**
+#' * **event**
+#' * **bin**
+#' * **scenario**
+#' * **subsamples**
 #' @export
 #' @md
 generate_subsample <- function(con, season) {
@@ -58,20 +68,31 @@ generate_subsample <- function(con, season) {
                                         TRUE ~ NA),
            # now get that percentage (if necessary to use in a subsampling function)
            percentage_to_sample = ifelse(one_bin_per_site_event, subsample_number / total_samples_in_event,
-                                         subsample_number / no_samples_per_bin))
+                                         subsample_number / no_samples_per_bin)) |>
+    dplyr::mutate(scenario = ifelse(percentage_to_sample == 1, "sampled at 100%", paste0("randomly sampled at ", round(percentage_to_sample * 100, 0), "%")))
 
   # subsample
-  subsample_table <- samples_with_counts |>
+  subsample_table_raw <- samples_with_counts |>
     dplyr::group_split(location_code, sample_event_number, sample_bin_code) |>
     purrr::map(function(x) {
       subsample_n <- unique(x$subsample_number)
       x |>
         dplyr::slice_sample(n = subsample_n)
     }) |>
-    purrr::list_rbind() |>
-    dplyr::select(sample_id, datetime_collected, stream_name, sample_bin_code, sample_event_number)
+    purrr::list_rbind()
 
-  return(subsample_table)
+
+  subsample_table <- subsample_table_raw |>
+    dplyr::select(sample_id, datetime_collected, stream_name, sample_bin_code, sample_event_number, scenario)
+
+  subsample_summary <- subsample_table_raw |>
+    dplyr::group_by(stream_name, sample_event_number, scenario, sample_bin_code) |>
+    dplyr::tally() |>
+    dplyr::rename(stream = stream_name, event = sample_event_number, bin = sample_bin_code, subsamples = n) |>
+    dplyr::arrange(stream, event, bin)
+
+  return(list("results" = subsample_table,
+              "summary" = subsample_summary))
 
 }
 
