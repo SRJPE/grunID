@@ -71,6 +71,7 @@ function(input, output, session) {
                                            sample_type = input$sample_type,
                                            layout_type = input$layout_type,
                                            plate_size = input$plate_size,
+                                      .control_id = "EBK",
                                       run_gen_id = input$perform_genetics_id)
       #)
       #shinyCatch({message(paste0(messages))}, prefix = '') # this prints out messages (only at the end of the function) to shiny
@@ -83,7 +84,7 @@ function(input, output, session) {
 
   seleted_all_sample_status <- reactive({
     re <- ifelse(input$sample_status_season == 2023, "[A-Z]{3}23", "[A-Z]{3}24")
-    data <- all_sample_status |> filter(str_detect(sample_id, re))
+    data <- all_sample_status() |> filter(str_detect(sample_id, re))
 
     if(input$sample_status_filter != "All") {
       data <- data |>
@@ -125,13 +126,12 @@ function(input, output, session) {
       )
   })
 
-  output$season_table <- DT::renderDataTable(DT::datatable({
-
+  selected_samples_by_season <- reactive({
     grunID::get_samples_by_season(con, input$season_filter, input$dataset_type_filter,
                                   input$filter_to_heterozygotes, input$filter_to_failed)
+  })
 
-
-  },
+  output$season_table <- DT::renderDataTable(DT::datatable(selected_samples_by_season(),
   extensions = "Buttons",
   rownames = FALSE,
   options = list(autoWidth = FALSE,

@@ -37,13 +37,16 @@ all_labs <- get_laboratories(con) |> select(id, code, laboratory_name, descripti
 all_gen_methods <- get_genetic_methods(con) |> select(id, code, method_name, description) |> collect()
 
 # the actual current status for a given sample is always the latest update
-all_sample_status <- DBI::dbGetQuery(
-  con,
-  "SELECT d.sample_id as sample_id, sc.status_code_name as status, d.most_recent_update as updated_at from sample_status as s
+all_sample_status <- function() {
+
+  DBI::dbGetQuery(
+    con,
+    "SELECT d.sample_id as sample_id, sc.status_code_name as status, d.most_recent_update as updated_at from sample_status as s
     RIGHT JOIN (SELECT sample_id,  MAX(updated_at) as most_recent_update FROM sample_status GROUP BY sample_id) as d
         on s.sample_id = d.sample_id and s.updated_at = d.most_recent_update
     JOIN status_code as sc on s.status_code_id = sc.id;"
-)
+  )
+}
 # sample_status_options <- dplyr::tbl(con, "status_code") |>
 #   dplyr::distinct(status_code_name) |>
 #   dplyr::collect() |>
@@ -87,4 +90,9 @@ available_years <- dplyr::tbl(con, "sample_event") |>
   dplyr::distinct(year) |>
   dplyr::collect() |>
   dplyr::pull(year)
+
+
+
+# handles to the database
+
 
