@@ -93,7 +93,45 @@ add_new_plate_results <- function(con, protocol_name, genetic_method,
 
   add_plate_thresholds(con, thresholds_event, .control_id = .control_id)
 
-  # TODO - run qa/qc checks, to determine whether we keep this plate or not
+  # Check all NTCs (n = 3), NEG-DNA controls (n = 3), and EBKs ("extraction blanks" - n = 4) for RFU values greater than 12,000 (flag if any one has RFU > 12,000).
+  assays_results_for_qaqc <- tbl(con, "assay_result") |>
+    filter(plate_run_id == !!plate_run$plate_run_id)
+
+  values_are_below_12k <- assays_results_for_qaqc |>
+    filter(raw_fluorescence > 12000,
+           sample_id %in% c("NEG-DNA-1", "NEG-DNA-2", "NEG-DNA-3",
+                            "NTC-1", "NTC-2", "NTC-3",
+                            "EBK-1", "EBK-2", "EBK-3", "EBK-4")) |> collect()
+
+  if (nrow(values_are_below_12k) > 0) {
+    stop("not all values are below the 12k threshold for raw fluorescence.")
+  }
+
+  # Check NTCs, NEG-DNA controls, and POS-DNA controls (n = 3) against 2xEBK threshold.
+  values_are_above_thresholds <- assays_results_for_qaqc |>
+    filter(raw_fluorescence > threshold,
+           sample_id %in% c("NEG-DNA-1", "NEG-DNA-2", "NEG-DNA-3",
+                            "NTC-1", "NTC-2", "NTC-3",
+                            "EBK-1", "EBK-2", "EBK-3", "EBK-4")) |>
+    collect()
+
+  if (nrow(values_are_above_thresholds) > 0) {
+    stop("there are values in the plate above the threshold")
+  }
+
+  # 2 out of the 3 POS-DNA controls must return a positive result (greater than 2xEBK threshold).
+  pos_dna_values_are_above_threshold <- assays_results_for_qaqc |>
+    filter(raw_fluorescence > threshold, sample_id %in% c("POS-DNA-1", "POS-DNA-2", "POS-DNA-3")) |>
+    collect() |>
+    group_by(assay_id) |>
+    tally() |>
+    filter(n < 2)
+
+  if (nrow(pos_dna_values_are_above_threshold) > 0) {
+    stop("less than 2 of 3 POS-DNA did not result in a value greater than the trehshold")
+  }
+
+
 
   if (run_gen_id) {
     # for now just get the samples based on the plate runs
