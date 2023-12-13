@@ -64,19 +64,9 @@ plate_run_event <- add_plate_run(con,
                                  lab_work_performed_by = "user",
                                  description = "error testing on 7/10")
 
-plate_run_event2 <- add_plate_run(con,
-                                  date_run = "2022-01-01",
-                                  protocol_id = protocol_id,
-                                  genetic_method_id = genetic_method_id,
-                                  laboratory_id = laboratory_id,
-                                  lab_work_performed_by = "user",
-                                  description = "error testing on 7/10")
-
 # query table in database to see what you've added
 dplyr::tbl(con, "plate_run")
 
-
-res <- get_plate_run(con, id == 12)
 
 # read in the plate run map that is created before the plate is run.
 # this plate map layout should contain generic sherlock-created sample IDs
@@ -93,28 +83,20 @@ res <- get_plate_run(con, id == 12)
 # the generic IDs with the JPE sample IDs.
 # sherlock_results is a variable you will need to pass to a later function
 sherlock_results_event <- process_sherlock(
-  filepath = "C:/Users/emanuel/Downloads/FAM-HEX_Blank_Multiplex_Test_11-21-23.xlsx",
+  filepath = "data-raw/sherlock-example-outputs/2024/061223_JPE24_E+L_E1-2_P1_SH_RH.xlsx",
   sample_type = "mucus",
-  layout_type = "single_assay_ots28_early",
+  layout_type = "split_plate_early_late",
   plate_run_id = plate_run_event,
   plate_size = 384)
 
-sherlock_results_event_2 <- process_sherlock(
-  filepath = "inst/sherlock_results_template.xlsx",
-  sample_type = "mucus",
-  layout_type = "single_assay_ots28_late",
-  plate_run_id = res,
-  plate_size = 384)
-
-
 # add raw assay results to database
 dplyr::tbl(con, "raw_assay_result")
-add_raw_assay_results(con, sherlock_results_event_2)
+add_raw_assay_results(con, sherlock_results_event)
 dplyr::tbl(con, "raw_assay_result")
 
 # generate thresholds from raw assay results
 # thresholds is a variable you will need to pass to a later function
-thresholds_event <- generate_threshold(con, plate_run = plate_run_event2)
+thresholds_event <- generate_threshold(con, plate_run = plate_run_event, .control_id = "EBK")
 
 # update assay detection results (TRUE or FALSE for a sample and assay type)
 # in the database
