@@ -60,19 +60,19 @@ colors <- c(
 )
 
 sample_status_options <- c(
-  "other lab" = as.character(colors["purple"]),
-  "need ots28" = as.character(colors["orange"]),
-  "out to field" = as.character(colors["purple"]),
-  "prepped" = as.character(colors["orange"]),
-  "returned from field" = as.character(colors["blue"]),
+  # "other lab" = as.character(colors["purple"]),
+  "created" = as.character(colors["yellow"]),
   "analysis complete" = as.character(colors["green"]),
-  "need ots16" = as.character(colors["orange"]),
-  "archived" = as.character(colors["purple"]),
+  "need ots28" = as.character(colors["orange"]),
   "ots28 in progress" = as.character(colors["orange"]),
-  "ots16 complete" = as.character(colors["green"]),
+  "need ots16" = as.character(colors["orange"]),
   "ots16 inprogress" = as.character(colors["orange"]),
-  "ots28 complete" = as.character(colors["green"]),
-  "created" = as.character(colors["yellow"])
+  "ots16 complete" = as.character(colors["green"]),
+  "ots28 complete" = as.character(colors["green"])
+  # "out to field" = as.character(colors["purple"]),
+  # "prepped" = as.character(colors["orange"]),
+  # "returned from field" = as.character(colors["blue"]),
+  # "archived" = as.character(colors["purple"]),
 )
 
 sample_status_colors = c(rep("#ead8d5", 2), rep("#e7f2f1", 3),

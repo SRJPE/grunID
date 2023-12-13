@@ -75,6 +75,7 @@ navbarPage(
            sidebarLayout(
              sidebarPanel(
                width = 3,
+               selectInput("sample_status_season", "Season", choices = 2023:2024, selected = 2024),
                selectInput("sample_status_filter", "Sample Status",
                            c("All", names(sample_status_options))),
                selectInput("location_filter", "Location",
