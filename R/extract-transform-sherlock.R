@@ -77,7 +77,10 @@ process_sherlock <- function(filepath,
 
   return(
     structure(
-      list(data = raw_assay_results),
+      list(
+        data = raw_assay_results,
+        sample_details = sample_details$data
+      ),
       class = "sherlock_output",
       filepath = filepath,
       plate_type = layout_type,

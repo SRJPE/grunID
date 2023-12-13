@@ -79,7 +79,13 @@ add_new_plate_results <- function(con, protocol_name, genetic_method,
       sql_query <- glue::glue_sql("DELETE FROM plate_run where id = {plate_run$plate_run_id}", .con = con)
       res <- DBI::dbSendQuery(con, sql_query)
       DBI::dbClearResult(res)
-      stop(e)
+      is_sample_fk_violation <- stringr::str_detect(e$message, "COPY returned error: ERROR:  insert or update on table \"raw_assay_result\" violates foreign key constraint \"raw_assay_result_sample_id_fkey")
+      if (is_sample_fk_violation) {
+        sample_needs_to_be_created <- str_match(e$message, "Key \\(sample_id\\)=\\(([^)]+)\\)")[1, 2]
+        stop(glue::glue("the sample {sample_needs_to_be_created} was not found, please add to database using the `add_sample_plan()` function"), call. = FALSE)
+      } else {
+        stop(e)
+      }
     }
   )
 
@@ -107,7 +113,7 @@ add_new_plate_results <- function(con, protocol_name, genetic_method,
     stop(
       cli::format_error(c(
         "x" = "Qa/Qc Test Not Passed: Value above 12k",
-        "i" = glue::glue("the id {values_are_below_12k$id} has a value ({values_are_below_12k$raw_fluorescence }) greater then 12,000 RFU")
+        "i" = glue::glue("the value for {values_are_below_12k$sample_id} (id = {values_are_below_12k$id}) has a value ({values_are_below_12k$raw_fluorescence }) greater then 12,000 RFU")
       )), call. = FALSE
     )
   }
@@ -124,7 +130,7 @@ add_new_plate_results <- function(con, protocol_name, genetic_method,
     stop(
       cli::format_error(c(
         "x" = "Qa/Qc Test Not Passed: NTC/NEG-DNA Value above Threshold",
-        "i" = glue::glue("the id {values_are_above_thresholds$id} has a value ({values_are_above_thresholds$raw_fluorescence }) greater then the plate threshold ({values_are_above_thresholds$threshold})")
+        "i" = glue::glue("the value for {values_are_above_thresholds$sample_id} (id = {values_are_above_thresholds$id}) has a value ({values_are_above_thresholds$raw_fluorescence }) greater then the plate threshold ({values_are_above_thresholds$threshold})")
       )), call. = FALSE
     )
   }
