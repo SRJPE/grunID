@@ -123,7 +123,7 @@ add_new_plate_results <- function(con, protocol_name, genetic_method,
   if (nrow(values_are_above_thresholds) > 0) {
     stop(
       cli::format_error(c(
-        "x" = "Qa/Qc Test Not Passed: Value above Threshold",
+        "x" = "Qa/Qc Test Not Passed: NTC/NEG-DNA Value above Threshold",
         "i" = glue::glue("the id {values_are_above_thresholds$id} has a value ({values_are_above_thresholds$raw_fluorescence }) greater then the plate threshold ({values_are_above_thresholds$threshold})")
       )), call. = FALSE
     )
