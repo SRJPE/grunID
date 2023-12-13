@@ -93,9 +93,22 @@ add_new_plate_results <- function(con, protocol_name, genetic_method,
 
   add_plate_thresholds(con, thresholds_event, .control_id = .control_id)
 
+  # TODO - run qa/qc checks, to determine whether we keep this plate or not
+
   if (run_gen_id) {
     # for now just get the samples based on the plate runs
-    samples_not_valid <- c("POS-DNA", "NEG-DNA", "CONTROL", .control_id)
+    samples_not_valid <- c(
+      "POS-DNA-1",
+      "POS-DNA-2",
+      "POS-DNA-3",
+      "NEG-DNA-1",
+      "NEG-DNA-2",
+      "NEG-DNA-3",
+      "NTC-1",
+      "NTC-2",
+      "NTC-3",
+      "CONTROL", paste0(.control_id, "-", 1:4))
+
     samples_to_use <- dplyr::tbl(con, "raw_assay_result") |>
       dplyr::filter(plate_run_id %in% !!thresholds_event$plate_run_id) |>
       dplyr::filter(!(sample_id %in% samples_not_valid)) |>
