@@ -104,7 +104,12 @@ add_new_plate_results <- function(con, protocol_name, genetic_method,
                             "EBK-1", "EBK-2", "EBK-3", "EBK-4")) |> collect()
 
   if (nrow(values_are_below_12k) > 0) {
-    stop("not all values are below the 12k threshold for raw fluorescence.")
+    stop(
+      cli::format_error(c(
+        "x" = "Qa/Qc Test Not Passed: Value above 12k",
+        "i" = glue::glue("the id {values_are_below_12k$id} has a value ({values_are_below_12k$raw_fluorescence }) greater then 12,000 RFU")
+      )), call. = FALSE
+    )
   }
 
   # Check NTCs, NEG-DNA controls, and POS-DNA controls (n = 3) against 2xEBK threshold.
@@ -116,7 +121,12 @@ add_new_plate_results <- function(con, protocol_name, genetic_method,
     collect()
 
   if (nrow(values_are_above_thresholds) > 0) {
-    stop("there are values in the plate above the threshold")
+    stop(
+      cli::format_error(c(
+        "x" = "Qa/Qc Test Not Passed: Value above Threshold",
+        "i" = glue::glue("the id {values_are_above_thresholds$id} has a value ({values_are_above_thresholds$raw_fluorescence }) greater then the plate threshold ({values_are_above_thresholds$threshold})")
+      )), call. = FALSE
+    )
   }
 
   # 2 out of the 3 POS-DNA controls must return a positive result (greater than 2xEBK threshold).
@@ -128,7 +138,12 @@ add_new_plate_results <- function(con, protocol_name, genetic_method,
     filter(n < 2)
 
   if (nrow(pos_dna_values_are_above_threshold) > 0) {
-    stop("less than 2 of 3 POS-DNA did not result in a value greater than the trehshold")
+    stop(
+      cli::format_error(c(
+        "x" = "Qa/Qc Test Not Passed: 2 of 3 Positive DNA were not above threshold",
+        "i" = glue::glue("the plate with id: '{plate_run$plate_run_id}' contained at least 2 positive DNA controls that did not exceed the plate threshold.")
+      )), call. = FALSE
+    )
   }
 
 
