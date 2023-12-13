@@ -8,7 +8,7 @@ generate_threshold(
   con,
   plate_run,
   strategy = "twice average",
-  .control_id = "NTC"
+  .control_id = "EBK"
 )
 }
 \arguments{
