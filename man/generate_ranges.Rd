@@ -4,7 +4,7 @@
 \alias{generate_ranges}
 \title{Generate all cell ranges for tables containing assay results}
 \usage{
-generate_ranges(plate_size, wells_used, time_intervals)
+generate_ranges(plate_size, wells_used, time_intervals, layout_start_row)
 }
 \arguments{
 \item{plate_size}{either 96 or 384}

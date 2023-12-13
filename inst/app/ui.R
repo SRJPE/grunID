@@ -43,7 +43,7 @@ navbarPage(
                                                                           "single_assay_ots28_late", "single_assay_ots16_spring",
                                                                           "single_assay_ots16_winter")),
              selectInput("plate_size", "Select Plate Size", choices = c(384, 96)),
-             checkboxInput("perform_genetics_id", label = "Run genetic calculations for samples after upload", value = FALSE),
+             checkboxInput("perform_genetics_id", label = "Run genetic calculations for samples after upload", value = TRUE),
              actionButton("do_upload", "Upload Results", class = "btn-success", icon = icon("rocket")),
              tags$br(),
              tags$br()
@@ -75,6 +75,7 @@ navbarPage(
            sidebarLayout(
              sidebarPanel(
                width = 3,
+               selectInput("sample_status_season", "Season", choices = 2023:2024, selected = 2024),
                selectInput("sample_status_filter", "Sample Status",
                            c("All", names(sample_status_options))),
                selectInput("location_filter", "Location",
@@ -117,6 +118,30 @@ navbarPage(
              ),
              mainPanel(
                DT::dataTableOutput("season_table") |>
+                 shinycssloaders::withSpinner()
+             )
+           )),
+  tabPanel(title = "Subsample",
+           sidebarLayout(
+             sidebarPanel(
+               width = 4,
+               actionButton("subsample_logic",
+                            "Subsampling logic",
+                            icon = icon("circle-info")),
+               tags$h6("This subsampling logic only applies to the 2024 season, which
+                       spans 10-01-2023 through 09-30-2024"),
+               tags$hr(),
+               tags$h4("Summary table"),
+               tags$h6("This table sums the number of samples in each subsampling scenario for each stream, event number, and bin."),
+               tags$hr(),
+               DT::dataTableOutput("subsample_summary_table") |>
+                 shinycssloaders::withSpinner()
+             ),
+             mainPanel(
+               selectInput("subsample_season_filter", "Season Filter",
+                           2024),
+               tags$h4("Full result table"),
+               DT::dataTableOutput("subsample_table") |>
                  shinycssloaders::withSpinner()
              )
            ))
