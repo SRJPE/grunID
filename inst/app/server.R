@@ -82,7 +82,7 @@ function(input, output, session) {
     }
   )
 
-  seleted_all_sample_status <- reactive({
+  selected_all_sample_status <- reactive({
     re <- ifelse(input$sample_status_season == 2023, "[A-Z]{3}23", "[A-Z]{3}24")
     data <- all_sample_status() |> filter(str_detect(sample_id, re))
 
@@ -101,7 +101,7 @@ function(input, output, session) {
 
   output$sample_status_table <- DT::renderDataTable({
 
-    DT::datatable(seleted_all_sample_status(),
+    DT::datatable(selected_all_sample_status(),
                   extensions = "Buttons",
                   rownames = FALSE,
                   options = list(autoWidth = FALSE,
