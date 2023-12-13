@@ -119,7 +119,9 @@ function(input, output, session) {
   }, server = FALSE)
 
   output$season_summary <- renderTable({
-    seleted_all_sample_status() |>
+    re <- ifelse(input$sample_status_season == 2023, "[A-Z]{3}23", "[A-Z]{3}24")
+
+    all_sample_status() |> filter(str_detect(sample_id, re)) |>
       group_by(status) |>
       summarise(
         total = n()
