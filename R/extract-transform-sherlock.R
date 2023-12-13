@@ -49,7 +49,7 @@
 #' @md
 process_sherlock <- function(filepath,
                              sample_type = c("mucus", "fin clip"),
-                             layout_type = c("multiplex", "split_plate_early_late", "split_plate_spring_winter", "triplicate",
+                             layout_type = c("split_plate_early_late", "split_plate_spring_winter", "triplicate",
                                              "single_assay_ots28_early", "single_assay_ots28_late",
                                              "single_assay_ots16_spring", "single_assay_ots16_winter"),
                              plate_run_id = NULL, plate_size = c(96, 384)) {
@@ -57,22 +57,19 @@ process_sherlock <- function(filepath,
   if (!class(plate_run_id) == "plate_run") {
     stop(sprintf("the plate_run_id must be created by calling 'add_plate_run'"))
   }
+  metadata <- parse_metadata(filepath)
 
   sample_details <- process_well_sample_details(filepath = filepath,
                                                 sample_type = sample_type,
                                                 layout_type = layout_type,
                                                 plate_run_id = plate_run_id$plate_run_id)
 
-  plate_layout <- process_plate_layout(filepath, plate_size = plate_size)
+  plate_layout <- process_plate_layout(filepath, plate_size = plate_size, layout_start_row = metadata$end_metadata_row + 3)
   has_blk_entries <- nrow(dplyr::filter(plate_layout, psuedo_sample_id == "BLK")) > 0
   wells_used <- sum(!is.na(plate_layout$psuedo_sample_id))
-  metadata_keys <- readxl::read_excel(filepath, range = "A1:A100") |> pull()
-
-  read_count_range <- ifelse("Eject plate on completion" %in% metadata_keys, "B18", "B17")
-  read_count <- extract_read_count(filepath, at_range = read_count_range)
 
   cell_ranges <- generate_ranges(plate_size = plate_size, wells_used = wells_used,
-                                 time_intervals = read_count)
+                                 time_intervals = metadata$read_count, layout_start_row = metadata$end_metadata_row)
 
   layout <- dplyr::left_join(sample_details$data, plate_layout, by="location")
 
@@ -134,18 +131,35 @@ process_raw_assay_results <- function(filepath, ranges, plate_size, layout, has_
         tidyr::pivot_longer(names_to = "location", values_to = "background_fluorescence", !Time)
     }
   } else {
-    raw_fluorescence <- purrr::map_dfc(ranges$raw_fluorescence,
-                                       ~readxl::read_excel(filepath,
-                                                           range = .)) |>
-      dplyr::mutate(Time = hms::as_hms(Time...1),
-                    dplyr::across(dplyr::everything(), as.character)) |>
-      dplyr::select(-tidyselect::contains("...")) |>
-      tidyr::pivot_longer(names_to = "location", values_to = "fluorescence", !(tidyselect::starts_with("T"))) |>
-      dplyr::left_join(layout) |>
-      dplyr::mutate(fluorescence = as.numeric(fluorescence))
+    if (length(ranges$raw_fluorescence) == 1) {
+      raw_fluorescence <- readxl::read_excel(filepath,
+                                             range = ranges$raw_fluorescence) |>
+        dplyr::mutate(Time = hms::as_hms(Time), dplyr::across(dplyr::everything(), as.character)) |>
+        dplyr::select(-tidyselect::contains("...")) |>
+        tidyr::pivot_longer(names_to = "location", values_to = "fluorescence", !(tidyselect::starts_with("T"))) |>
+        dplyr::left_join(layout) |>
+        dplyr::mutate(fluorescence = as.numeric(fluorescence))
+    } else {
 
+      raw_fluorescence <- purrr::map_dfc(ranges$raw_fluorescence,
+                                         ~readxl::read_excel(filepath,
+                                                             range = .)) |>
+        dplyr::mutate(Time = hms::as_hms(Time...1),
+                      dplyr::across(dplyr::everything(), as.character)) |>
+        dplyr::select(-tidyselect::contains("...")) |>
+        tidyr::pivot_longer(names_to = "location", values_to = "fluorescence", !(tidyselect::starts_with("T"))) |>
+        dplyr::left_join(layout) |>
+        dplyr::mutate(fluorescence = as.numeric(fluorescence))
+
+    }
     # background values ---
     if (has_background_fluorescence) {
+      if (length(ranges$background_fluorescence) == 1) {
+        background_fluorescence <- readxl::read_excel(filepath, range = ranges$background_fluorescence) |>
+          dplyr::mutate(Time = hms::as_hms(Time), dplyr::across(dplyr::everything(), as.character)) |>
+          dplyr::select(-tidyselect::contains("...")) |>
+          tidyr::pivot_longer(names_to = "location", values_to = "background_fluorescence", !Time)
+      } else {
 
       background_fluorescence <- purrr::map_dfc(ranges$background_fluorescence,
                                                 ~readxl::read_excel(filepath,
@@ -154,6 +168,7 @@ process_raw_assay_results <- function(filepath, ranges, plate_size, layout, has_
                       dplyr::across(dplyr::everything(), as.character)) |>
         dplyr::select(-tidyselect::contains("...")) |>
         tidyr::pivot_longer(names_to = "location", values_to = "background_fluorescence", !Time)
+      }
     }
   }
 
@@ -182,13 +197,13 @@ process_raw_assay_results <- function(filepath, ranges, plate_size, layout, has_
 
 #' Process Plate Layout
 #' @description helper function for mapping of plate layout location to sample identifier
-process_plate_layout <- function(filepath, plate_size) {
+process_plate_layout <- function(filepath, plate_size, layout_start_row) {
   if (plate_size == 96) {
-    cell_range <- "C32:N39"
+    cell_range <- glue::glue("C{layout_start_row}:N{layout_start_row+15}")
     end_column <- 12
     end_letter <- 8
   } else {
-    cell_range <- "C32:Z47"
+    cell_range <- glue::glue("C{layout_start_row}:Z{layout_start_row+15}")
     end_column <- 24
     end_letter <- 16
   }
@@ -240,7 +255,7 @@ process_plate_layout <- function(filepath, plate_size) {
 #' @md
 process_well_sample_details <- function(filepath,
                                         sample_type = c("mucus", "fin clip"),
-                                        layout_type = c("multiplex", "split_plate_early_late", "split_plate_spring_winter", "triplicate",
+                                        layout_type = c("split_plate_early_late", "split_plate_spring_winter", "triplicate",
                                                         "single_assay_ots28_early", "single_assay_ots28_late",
                                                         "single_assay_ots16_spring", "single_assay_ots16_winter"),
                                         plate_run_id,
@@ -307,13 +322,6 @@ process_well_sample_details <- function(filepath,
         assay_id = assay_id,
         plate_run_id = plate_run_id
       )
-  } else if (layout_type == "multiplex") {
-    if (is.null(assay_order)) {
-      stop("'assay_order' needed when 'multiplex' layout is selected", call. = FALSE)
-    }
-
-
-
   }
 
   plate_layout <- plate_layout|> dplyr::filter(!is.na(sample_id))
@@ -364,13 +372,13 @@ extract_previous_end_row <- function(cell_ranges) {
 #' @param plate_size either 96 or 384
 #' @param wells_used The number of wells containing samples or controls
 #' @param time_intervals The number of reads when the samples are being processed
-generate_ranges <- function(plate_size, wells_used, time_intervals) {
+generate_ranges <- function(plate_size, wells_used, time_intervals, layout_start_row) {
 
   if (plate_size == 96) {
-    column_header_row <- 43
+    column_header_row <- layout_start_row + 15
     result_row_count <- 8 * 4
   } else if (plate_size == 384) {
-    column_header_row <- 51
+    column_header_row <- layout_start_row + 22
     result_row_count <- 16 * 4
   } else {
     stop(paste("Unknown plate size -", plate_size))
@@ -456,6 +464,21 @@ extract_read_count <- function(filepath, at_range) {
 }
 
 
+parse_metadata <- function(filepath) {
 
+  metadata_keys <- readxl::read_excel(filepath, range = "A1:B100", col_names = c("prop", "val")) |> mutate(file_row = row_number())
+  end_prop_row <- metadata_keys |> filter(prop == "Layout") |> pull(file_row)
+  metadata_table <- metadata_keys |>
+    filter(!is.na(prop) | !is.na(val), file_row <= end_prop_row)
 
+  eject_plate_on_completion <- metadata_table |> filter(prop == "Eject plate on completion") |> nrow() |> as.logical()
+  read_count <- metadata_table |> filter(prop == "Start Kinetic") |> pull(val) |> stringr::str_extract("\\d+(?=\\sReads)") |> as.integer()
 
+  return(list(
+    data = metadata_table,
+    eject_plate_on_completion = eject_plate_on_completion,
+    read_count = read_count,
+    end_metadata_row = end_prop_row
+  ))
+
+}
