@@ -486,7 +486,8 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
       clear = FALSE
     ))
 
-  spring_winter_resp_data <- parse_spring_winter_detection_results(spring_winter_resp)
+  spring_winter_resp_data <- parse_spring_winter_detection_results(spring_winter_resp) |>
+    dplyr::left_join(select(early_late_resp_data, sample_id, early_plate, late_plate), by = "sample_id")
 
   sw_analysis_complete_status_insert <- spring_winter_resp_data |>
     dplyr::filter(status_code == "analysis complete")
@@ -559,11 +560,11 @@ insert_gen_id_to_database <- function(con, insert_data, run_lookups) {
     this_spring_plate_id <- insert_data$spring_plate_id[row]
     this_winter_plate_id <- insert_data$winter_plate_id[row]
 
-    insert_statement <- if (run_type_code %in% c("SPW", "SPR", "WIN")) {
+    insert_statement <- if (run_type_code[row] %in% c("SPW", "SPR", "WIN")) {
       glue::glue_sql(
-        "INSERT INTO genetic_run_identification (sample_id, run_type_id, spring_plate_id, winter_plate_Id, updated_at)
+        "INSERT INTO genetic_run_identification (sample_id, run_type_id, early_plate_id, late_plate_id, spring_plate_id, winter_plate_Id, updated_at)
     VALUES
-      ({this_sample_id}, {this_run_type_id}, {this_spring_plate_id}, {this_winter_plate_id}, CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
+      ({this_sample_id}, {this_run_type_id}, {this_early_plate}, {this_late_plate}, {this_spring_plate_id}, {this_winter_plate_id}, CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
     ON CONFLICT (sample_id) DO UPDATE
     SET
       run_type_id = EXCLUDED.run_type_id,

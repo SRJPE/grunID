@@ -10,7 +10,8 @@ process_well_sample_details(
   layout_type = c("split_plate_early_late", "split_plate_spring_winter", "triplicate",
     "single_assay_ots28_early", "single_assay_ots28_late", "single_assay_ots16_spring",
     "single_assay_ots16_winter"),
-  plate_run_id
+  plate_run_id,
+  assay_order = NULL
 )
 }
 \arguments{

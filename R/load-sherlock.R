@@ -10,13 +10,14 @@
 #' assay on a plate will have its own control blanks and threshold value.
 #' @returns a table containing thresholds for an event, to be passed to `update_assay_detections()`
 #' @export
-generate_threshold <- function(con, plate_run, strategy = "twice average",.control_id="NTC") {
+generate_threshold <- function(con, plate_run, strategy = "twice average",.control_id="EBK") {
 
   if (!DBI::dbIsValid(con)) {
     stop("Connection argument does not have a valid connection the run-id database.
          Please try reconnecting to the database using 'DBI::dbConnect'",
          call. = FALSE)
   }
+
   plate_run_identifier <- plate_run$plate_run_id
 
   protocol_id <- dplyr::tbl(con, "plate_run") |>
@@ -29,7 +30,7 @@ generate_threshold <- function(con, plate_run, strategy = "twice average",.contr
 
   control_blanks <- dplyr::tbl(con, "raw_assay_result") |>
     dplyr::filter(time == runtime,
-           sample_id == !!.control_id,
+                  stringr::str_detect(sample_id, .control_id),
            plate_run_id == !!plate_run_identifier) |>
     dplyr::collect()
 
@@ -43,8 +44,9 @@ generate_threshold <- function(con, plate_run, strategy = "twice average",.contr
                           "twice average" = {
                             control_blanks |>
                               dplyr::group_by(plate_run_id, assay_id) |>
+                              dplyr::slice_max(order_by = raw_fluorescence, n = 1) |>
                               dplyr::summarise(
-                                threshold = mean(as.numeric(raw_fluorescence)) * 2
+                                threshold = mean(as.numeric(raw_fluorescence)) * 2 #TODO redundant for now
                               ) |> ungroup() |>
                               dplyr::mutate(runtime = runtime)
                           }

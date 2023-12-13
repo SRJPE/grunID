@@ -43,7 +43,7 @@ navbarPage(
                                                                           "single_assay_ots28_late", "single_assay_ots16_spring",
                                                                           "single_assay_ots16_winter")),
              selectInput("plate_size", "Select Plate Size", choices = c(384, 96)),
-             checkboxInput("perform_genetics_id", label = "Run genetic calculations for samples after upload", value = FALSE),
+             checkboxInput("perform_genetics_id", label = "Run genetic calculations for samples after upload", value = TRUE),
              actionButton("do_upload", "Upload Results", class = "btn-success", icon = icon("rocket")),
              tags$br(),
              tags$br()
@@ -75,6 +75,7 @@ navbarPage(
            sidebarLayout(
              sidebarPanel(
                width = 3,
+               selectInput("sample_status_season", "Season", choices = 2023:2024, selected = 2024),
                selectInput("sample_status_filter", "Sample Status",
                            c("All", names(sample_status_options))),
                selectInput("location_filter", "Location",

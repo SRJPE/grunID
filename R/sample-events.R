@@ -355,3 +355,26 @@ process_raw_sample_plan <- function(filepath, season) {
 }
 
 
+add_sample <- function(location_code, sample_event_number, first_sample_date, sample_bin_code, min_fork_length,
+                       max_fork_length, expected_number_of_samples) {
+  additional_samples <- expand_grid(
+    location_code = location_code,
+    sample_event_number = sample_event_number,
+    first_sample_date = lubridate::as_date(first_sample_date),
+    sample_bin_code = sample_bin_code,
+    min_fork_length = min_fork_length,
+    max_fork_length = max_fork_length,
+    expected_number_of_samples = expected_number_of_samples
+  ) |>
+    mutate(sample_event_number = as.integer(sample_event_number),
+           min_fork_length = as.integer(min_fork_length),
+           max_fork_length = as.integer(max_fork_length))
+
+
+  add_sample_plan(con , additional_samples, verbose = TRUE)
+
+}
+
+
+
+
