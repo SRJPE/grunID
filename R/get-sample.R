@@ -126,7 +126,8 @@ sample_filter_to_season <- function(con, season) {
     dplyr::collect() |>
     dplyr::left_join(sample_bin_ids, by = c("sample_bin_id" = "id")) |>
     dplyr::filter(sample_bin_id %in% sample_bin_ids$id) |>
-    dplyr::rename(sample_id = id)
+    dplyr::rename(sample_id = id) |>
+    dplyr::select(-c(created_at, created_by, updated_at, updated_by)) # not necessary and confusing
 
   return(samples)
 }
@@ -155,7 +156,7 @@ get_clean_dataset <- function(con, filtered_samples,
     dplyr::filter(sample_id %in% filtered_sample_ids) |>
     dplyr::collect() |>
     dplyr::left_join(status_codes, by = "status_code_id") |>
-    dplyr::select(sample_id, status)
+    dplyr::select(sample_id, status, updated_at, updated_by)
 
   assigned_runs <- dplyr::tbl(con, "genetic_run_identification") |>
     dplyr::filter(sample_id %in% filtered_sample_ids) |>
@@ -170,8 +171,11 @@ get_clean_dataset <- function(con, filtered_samples,
                      by = c("field_run_type_id" = "run_type_id")) |>
     dplyr::left_join(assigned_runs, by = "sample_id") |>
     dplyr::select(stream_name, datetime_collected, sample_event_number, sample_id,
-                  sherlock_run_assignment = assigned_run, field_run_assignment,
-                  fork_length_mm, fin_clip, status, updated_at)
+                  status, sherlock_run_assignment = assigned_run,
+                  field_run_assignment, fork_length_mm, fin_clip, status, updated_at) |>
+    dplyr::group_by(sample_id) |>
+    dplyr::slice_max(updated_at, n = 1) |> # only take the most recent version of the sample
+    dplyr::ungroup()
 
   if(heterozygote_filter) {
     heterozygote_results <- clean_results |>
