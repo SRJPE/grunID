@@ -125,8 +125,7 @@ add_new_plate_results <- function(con, protocol_name, genetic_method,
   values_are_above_thresholds <- assays_results_for_qaqc |>
     filter(raw_fluorescence > threshold,
            sample_id %in% c("NEG-DNA-1", "NEG-DNA-2", "NEG-DNA-3",
-                            "NTC-1", "NTC-2", "NTC-3",
-                            "EBK-1", "EBK-2", "EBK-3", "EBK-4")) |>
+                            "NTC-1", "NTC-2", "NTC-3")) |>
     collect()
 
   # TODO ebk are their own thing only flag and continue the operation
@@ -179,7 +178,7 @@ add_new_plate_results <- function(con, protocol_name, genetic_method,
       dplyr::collect() |>
       dplyr::pull(sample_id)
 
-    run_genetic_identification(con, samples_to_use, selection_strategy = selection_strategy)
+    run_genetic_identification(con, samples_to_use, selection_strategy = selection_strategy, plate_comment = unique(thresholds_event$plate_comment))
   }
 
   return(thresholds_event)

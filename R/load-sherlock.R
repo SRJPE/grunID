@@ -34,7 +34,10 @@ generate_threshold <- function(con, plate_run, strategy = "twice average",.contr
            plate_run_id == !!plate_run_identifier) |>
     dplyr::collect()
 
-  if (nrow(control_blanks) == 0) {
+  controls_for_threshold <- control_blanks |> filter(raw_fluorescence < 12000)
+  controls_for_flagging <- control_blanks |> filter(raw_fluorescence > 12000)
+
+  if (nrow(controls_for_threshold) == 0) {
     stop(paste0("no control variables found in plate run with id: '", plate_run_identifier, "'"), call. = FALSE)
   }
 
@@ -42,7 +45,7 @@ generate_threshold <- function(con, plate_run, strategy = "twice average",.contr
 
     thresholds <- switch (strategy,
                           "twice average" = {
-                            control_blanks |>
+                            controls_for_threshold |>
                               dplyr::group_by(plate_run_id, assay_id) |>
                               dplyr::slice_max(order_by = raw_fluorescence, n = 1) |>
                               dplyr::summarise(
@@ -51,6 +54,17 @@ generate_threshold <- function(con, plate_run, strategy = "twice average",.contr
                               dplyr::mutate(runtime = runtime)
                           }
     )
+  }
+
+  if (nrow(controls_for_flagging) > 0) {
+    comment <- glue::glue("
+  MANUAL EBK VALUE CHECK: plate_run_id = {plate_run$plate_run_id} Values = {glue::glue_collapse(glue::glue('{controls_for_flagging$sample_id}({controls_for_flagging$raw_fluorescence})'), sep = ';')}"
+    )
+
+
+    thresholds$plate_comment <- comment
+  } else {
+    thresholds$plate_comment <- ""
   }
 
   return(thresholds)
