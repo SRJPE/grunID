@@ -9,7 +9,8 @@ run_genetic_identification(
   sample_id = NULL,
   location = NULL,
   year = NULL,
-  selection_strategy = "positive priority"
+  selection_strategy = "positive priority",
+  plate_comment
 )
 }
 \arguments{

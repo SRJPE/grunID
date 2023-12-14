@@ -106,8 +106,7 @@ add_new_plate_results <- function(con, protocol_name, genetic_method,
   values_are_below_12k <- assays_results_for_qaqc |>
     filter(raw_fluorescence > 12000,
            sample_id %in% c("NEG-DNA-1", "NEG-DNA-2", "NEG-DNA-3",
-                            "NTC-1", "NTC-2", "NTC-3",
-                            "EBK-1", "EBK-2", "EBK-3", "EBK-4")) |> collect()
+                            "NTC-1", "NTC-2", "NTC-3")) |> collect()
 
   if (nrow(values_are_below_12k) > 0) {
     stop(
@@ -118,13 +117,18 @@ add_new_plate_results <- function(con, protocol_name, genetic_method,
     )
   }
 
+
+  # EBK exceed 12k then only flag do not stop execution ,  "EBK-1", "EBK-2", "EBK-3", "EBK-4" - map these so they can find them in the raw data
+  # IF an EBK is over 12k then DO NOT USE it for thresholds calculation - continue
+
   # Check NTCs, NEG-DNA controls, and POS-DNA controls (n = 3) against 2xEBK threshold.
   values_are_above_thresholds <- assays_results_for_qaqc |>
     filter(raw_fluorescence > threshold,
            sample_id %in% c("NEG-DNA-1", "NEG-DNA-2", "NEG-DNA-3",
-                            "NTC-1", "NTC-2", "NTC-3",
-                            "EBK-1", "EBK-2", "EBK-3", "EBK-4")) |>
+                            "NTC-1", "NTC-2", "NTC-3")) |>
     collect()
+
+  # TODO ebk are their own thing only flag and continue the operation
 
   if (nrow(values_are_above_thresholds) > 0) {
     stop(
@@ -174,7 +178,7 @@ add_new_plate_results <- function(con, protocol_name, genetic_method,
       dplyr::collect() |>
       dplyr::pull(sample_id)
 
-    run_genetic_identification(con, samples_to_use, selection_strategy = selection_strategy)
+    run_genetic_identification(con, samples_to_use, selection_strategy = selection_strategy, plate_comment = unique(thresholds_event$plate_comment))
   }
 
   return(thresholds_event)

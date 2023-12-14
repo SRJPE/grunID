@@ -41,7 +41,7 @@ all_sample_status <- function() {
 
   DBI::dbGetQuery(
     con,
-    "SELECT d.sample_id as sample_id, sc.status_code_name as status, d.most_recent_update as updated_at from sample_status as s
+    "SELECT d.sample_id as sample_id, sc.status_code_name as status, d.most_recent_update as updated_at, s.comment as plate_comment from sample_status as s
     RIGHT JOIN (SELECT sample_id,  MAX(updated_at) as most_recent_update FROM sample_status GROUP BY sample_id) as d
         on s.sample_id = d.sample_id and s.updated_at = d.most_recent_update
     JOIN status_code as sc on s.status_code_id = sc.id;"
