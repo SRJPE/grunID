@@ -174,7 +174,8 @@ get_clean_dataset <- function(con, filtered_samples,
                   status, sherlock_run_assignment = assigned_run,
                   field_run_assignment, fork_length_mm, fin_clip, status, updated_at) |>
     dplyr::group_by(sample_id) |>
-    dplyr::slice_max(updated_at) |> # only take the most recent version of the sample
+    dplyr::slice_max(updated_at, n = 1) |> # only take the most recent version of the sample
+    dplyr::ungroup()
 
   if(heterozygote_filter) {
     heterozygote_results <- clean_results |>
