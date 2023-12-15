@@ -149,7 +149,9 @@ navbarPage(
            sidebarPanel(
              width = 3,
              textInput("plate_id_to_deactivate", "Plate Run ID:"),
-             actionButton("do_deactivate", "Deactivate Plate Run")
+             actionButton("do_deactivate", "Deactivate Plate Run"),
+             tags$br(), tags$br(),
+             actionButton("do_activate", "Activate Plate Run")
            ),
            mainPanel(
              tags$h4("Flagged result table"),

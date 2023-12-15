@@ -303,4 +303,15 @@ output$season_plot <- renderPlot(
       spsComps::shinyCatch({stop(paste(e))}, prefix = '', position = "top-center")
     })
   })
+
+  # activate
+  observeEvent(input$do_activate, {
+    tryCatch({
+      grunID::activate_plate_run(con, input$plate_id_to_deactivate)
+      spsComps::shinyCatch({message(paste0("Plate run ", input$plate_id_to_deactivate, " activated"))}, position = "top-center")
+    },
+    error = function(e) {
+      spsComps::shinyCatch({stop(paste(e))}, prefix = '', position = "top-center")
+    })
+  })
 }
