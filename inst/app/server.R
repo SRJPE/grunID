@@ -291,7 +291,14 @@ output$season_plot <- renderPlot(
     }
     data
   },
-  rownames = FALSE))
+  extensions = "Buttons",
+  rownames = FALSE,
+  options = list(autoWidth = FALSE,
+                 dom = "Bfrtip",
+                 buttons = c("copy", "csv", "excel"),
+                 lengthChange = TRUE,
+                 pageLength = 20)),
+  server = FALSE)
 
   # deactivate
   observeEvent(input$do_deactivate, {
