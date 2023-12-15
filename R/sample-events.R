@@ -355,7 +355,11 @@ process_raw_sample_plan <- function(filepath, season) {
 }
 
 
-add_sample <- function(location_code, sample_event_number, first_sample_date, sample_bin_code, min_fork_length,
+#' Add single or many samples
+#' @description
+#' The intended use for this function to add samples when additional samples are received from field activity.
+#' @export
+add_sample <- function(con, location_code, sample_event_number, first_sample_date, sample_bin_code, min_fork_length,
                        max_fork_length, expected_number_of_samples) {
   additional_samples <- expand_grid(
     location_code = location_code,
@@ -371,7 +375,7 @@ add_sample <- function(location_code, sample_event_number, first_sample_date, sa
            max_fork_length = as.integer(max_fork_length))
 
 
-  add_sample_plan(con , additional_samples, verbose = TRUE)
+  add_sample_plan(con, additional_samples, verbose = TRUE)
 
 }
 

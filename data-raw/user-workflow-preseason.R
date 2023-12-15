@@ -80,7 +80,7 @@ update_field_sheet_samples(con, field_data_clean)
 # appropriate sample IDs. Now onto assays :)
 
 
-
+# con <- gr_db_connect()
 
 additional_samples_2024 <- expand_grid(
   location_code = "BTC",
@@ -97,3 +97,6 @@ additional_samples_2024 <- expand_grid(
 
 
 add_sample_plan(con , additional_samples_2024, verbose = TRUE)
+
+add_sample(con, location_code = "BTC", sample_event_number = 2, first_sample_date = lubridate::as_date("2024-01-01"),
+           sample_bin_code = "A", min_fork_length = 1, max_fork_length = 200, expected_number_of_samples = 10)
