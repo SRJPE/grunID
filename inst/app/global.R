@@ -41,10 +41,13 @@ all_sample_status <- function() {
 
   DBI::dbGetQuery(
     con,
-    "SELECT d.sample_id as sample_id, sc.status_code_name as status, d.most_recent_update as updated_at, s.comment as plate_comment from sample_status as s
-    RIGHT JOIN (SELECT sample_id,  MAX(updated_at) as most_recent_update FROM sample_status GROUP BY sample_id) as d
-        on s.sample_id = d.sample_id and s.updated_at = d.most_recent_update
-    JOIN status_code as sc on s.status_code_id = sc.id;"
+    "SELECT t1.sample_id, sc.status_code_name as status, t1.updated_at, t1.comment as plate_comment
+FROM sample_status AS t1
+INNER JOIN (
+    SELECT sample_id, MAX(id) AS max_id
+    FROM sample_status
+    GROUP BY sample_Id
+) AS t2 ON t1.id = t2.max_id join public.status_code sc on sc.id = t1.status_code_id;"
   )
 }
 # sample_status_options <- dplyr::tbl(con, "status_code") |>
@@ -90,9 +93,5 @@ available_years <- dplyr::tbl(con, "sample_event") |>
   dplyr::distinct(year) |>
   dplyr::collect() |>
   dplyr::pull(year)
-
-
-
-# handles to the database
 
 

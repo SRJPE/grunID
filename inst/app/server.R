@@ -83,7 +83,7 @@ function(input, output, session) {
   )
 
   selected_all_sample_status <- reactive({
-    re <- ifelse(input$sample_status_season == 2023, "[A-Z]{3}23", "[A-Z]{3}24")
+    re <- ifelse(input$sample_status_season == 2023, "\\b\\w{3}23", "\\b\\w{3}24")
     data <- all_sample_status() |> filter(str_detect(sample_id, re))
 
     if(input$sample_status_filter != "All") {
@@ -119,7 +119,7 @@ function(input, output, session) {
   }, server = FALSE)
 
   output$season_summary <- renderTable({
-    re <- ifelse(input$sample_status_season == 2023, "[A-Z]{3}23", "[A-Z]{3}24")
+    re <- ifelse(input$sample_status_season == 2023, "\\b\\w{3}23", "\\b\\w{3}24")
 
     all_sample_status() |> filter(str_detect(sample_id, re)) |>
       group_by(status) |>
