@@ -144,7 +144,21 @@ navbarPage(
                DT::dataTableOutput("subsample_table") |>
                  shinycssloaders::withSpinner()
              )
-           ))
+           )),
+  tabPanel(title = "QA/QC",
+           sidebarPanel(
+             width = 3,
+             textInput("plate_id_to_deactivate", "Plate Run ID:"),
+             actionButton("do_deactivate", "Deactivate Plate Run")
+           ),
+           mainPanel(
+             tags$h4("Flagged result table"),
+             checkboxInput("filter_to_active_plate_runs",
+                           label = "Filter to active plate runs", value = TRUE),
+             DT::dataTableOutput("flagged_table") |>
+               shinycssloaders::withSpinner()
+           )
+  )
 )
 
 # grunID::add_new_plate_results()

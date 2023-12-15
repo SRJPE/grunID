@@ -50,6 +50,25 @@ INNER JOIN (
 ) AS t2 ON t1.id = t2.max_id join public.status_code sc on sc.id = t1.status_code_id;"
   )
 }
+
+flagged_sample_status <- function() {
+  DBI::dbGetQuery(
+    con,
+    "SELECT ar.plate_run_id, ar.sample_id, sc.status_code_name, status.comment, a.assay_name, ar.raw_fluorescence, ar.threshold, ar.positive_detection, pr.active AS active_plate_run
+FROM assay_result AS ar
+LEFT JOIN(
+	SELECT sample_id, comment, status_code_id
+	FROM sample_status
+	WHERE comment LIKE '%MANUAL%'
+) AS status ON ar.sample_id = status.sample_id
+LEFT JOIN (
+	SELECT id, active
+	FROM plate_run
+) AS pr ON ar.plate_run_id = pr.id
+JOIN public.status_code sc ON sc.id = status.status_code_id
+JOIN public.assay a ON a.id = ar.assay_id;"
+  )
+}
 # sample_status_options <- dplyr::tbl(con, "status_code") |>
 #   dplyr::distinct(status_code_name) |>
 #   dplyr::collect() |>
@@ -93,5 +112,6 @@ available_years <- dplyr::tbl(con, "sample_event") |>
   dplyr::distinct(year) |>
   dplyr::collect() |>
   dplyr::pull(year)
+
 
 

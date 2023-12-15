@@ -279,4 +279,28 @@ output$season_plot <- renderPlot(
     grunID::generate_subsample(con, as.numeric(input$season_filter))$summary
   },
   rownames = FALSE))
+
+  # QA/QC
+  # flagged table
+  output$flagged_table <- DT::renderDataTable(DT::datatable({
+    if(input$filter_to_active_plate_runs) {
+      data <- flagged_sample_status() |>
+        dplyr::filter(active_plate_run)
+    } else {
+      data <- flagged_sample_status()
+    }
+    data
+  },
+  rownames = FALSE))
+
+  # deactivate
+  observeEvent(input$do_deactivate, {
+    tryCatch({
+      grunID::deactivate_plate_run(con, input$plate_id_to_deactivate)
+      spsComps::shinyCatch({message(paste0("Plate run ", input$plate_id_to_deactivate, " deactivated"))}, position = "top-center")
+    },
+    error = function(e) {
+      spsComps::shinyCatch({stop(paste(e))}, prefix = '', position = "top-center")
+    })
+  })
 }
