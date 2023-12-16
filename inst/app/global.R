@@ -37,17 +37,15 @@ all_labs <- get_laboratories(con) |> select(id, code, laboratory_name, descripti
 all_gen_methods <- get_genetic_methods(con) |> select(id, code, method_name, description) |> collect()
 
 # the actual current status for a given sample is always the latest update
-all_sample_status <- function() {
-
+DB_get_sample_status <- function() {
   DBI::dbGetQuery(
     con,
-    "SELECT t1.sample_id, sc.status_code_name as status, t1.updated_at, t1.comment as plate_comment
-FROM sample_status AS t1
-INNER JOIN (
-    SELECT sample_id, MAX(id) AS max_id
-    FROM sample_status
-    GROUP BY sample_Id
-) AS t2 ON t1.id = t2.max_id join public.status_code sc on sc.id = t1.status_code_id;"
+    "SELECT t1.sample_id, sc.status_code_name as status, t1.updated_at, t1.comment as plate_comment FROM sample_status AS t1
+      INNER JOIN (
+        SELECT sample_id, MAX(id) AS max_id
+        FROM sample_status
+      GROUP BY sample_Id
+    ) AS t2 ON t1.id = t2.max_id join public.status_code sc on sc.id = t1.status_code_id;"
   )
 }
 # sample_status_options <- dplyr::tbl(con, "status_code") |>
@@ -83,6 +81,8 @@ sample_status_options <- c(
 
 sample_status_colors = c(rep("#ead8d5", 2), rep("#e7f2f1", 3),
                          "#d5ead5", "#ead8d5", rep("#e7f2f1", 6))
+
+
 all_locations <- dplyr::tbl(con, "sample_location") |>
   dplyr::distinct(code) |>
   dplyr::filter(!code %in% c("CONTROL", "TEST2", "TEST")) |>
