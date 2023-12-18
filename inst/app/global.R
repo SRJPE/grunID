@@ -11,15 +11,14 @@ renderTableWithScrollOnX <- function(...) {
   )
 }
 
-
 config_path <- Sys.getenv("CONFIG_PATH")
-print(config_path)
 in_dev_mode <- Sys.getenv("GRUNID_IS_DEV")
 
 if (!is.na(in_dev_mode) && in_dev_mode == 1) {
-
-  message("in development mode, using local database")
+  # logger::log_threshold(level = logger::INFO) # Just always capture all the input?
+  run_mode_log_message <- "app started in development mode"
   cfg <- config::get(file = config_path)
+  config_file_log_message <- glue::glue("using config file found at: {config_path}")
   con <- DBI::dbConnect(RPostgres::Postgres(),
                         dbname = cfg$dbname,
                         host = cfg$host,
@@ -28,9 +27,19 @@ if (!is.na(in_dev_mode) && in_dev_mode == 1) {
                         password = cfg$password)
 
 } else {
+  run_mode_log_message <- "app started in production mode"
+  config_file_log_message <- glue::glue("using config file found at: {config_path}")
   cfg <- config::get(file = config_path)
   con <- grunID::gr_db_connect(username = cfg$username, host = cfg$host, dbname = cfg$dbname)
 }
+
+logger::log_appender(logger::appender_console, index = 1)
+logger::log_appender(function(lines) {
+  DBI::dbAppendTable(con, name = "shiny_app_logs", value = data.frame(line = lines, created_at = Sys.time()))
+}, index = 2)
+
+logger::log_info(run_mode_log_message)
+logger::log_info(config_file_log_message)
 
 all_protocols <- get_protocols(con) |> collect()
 all_labs <- get_laboratories(con) |> select(id, code, laboratory_name, description) |> collect()
@@ -48,11 +57,8 @@ DB_get_sample_status <- function() {
     ) AS t2 ON t1.id = t2.max_id join public.status_code sc on sc.id = t1.status_code_id;"
   )
 }
-# sample_status_options <- dplyr::tbl(con, "status_code") |>
-#   dplyr::distinct(status_code_name) |>
-#   dplyr::collect() |>
-#   dplyr::pull() |>
-#   dput()
+
+# Constants ----------------------------------------------------------------
 
 colors <- c(
   "green" = "#77dd7740",
@@ -82,6 +88,8 @@ sample_status_options <- c(
 sample_status_colors = c(rep("#ead8d5", 2), rep("#e7f2f1", 3),
                          "#d5ead5", "#ead8d5", rep("#e7f2f1", 6))
 
+
+# Database Handles -------------------------------------------------
 
 all_locations <- dplyr::tbl(con, "sample_location") |>
   dplyr::distinct(code) |>
