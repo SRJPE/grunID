@@ -84,7 +84,7 @@ add_plate_thresholds <- function(con, thresholds, .control_id = "NTC") {
 #' @export
 #' @md
 ots_early_late_detection <- function(con, sample_id,
-                                     selection_strategy = "recent priority") {
+                                     selection_strategy = c("recent priority", "positive priority")) {
 
   selection_strategy <- match.arg(selection_strategy)
 
@@ -144,6 +144,8 @@ ots_early_late_detection <- function(con, sample_id,
     if (selection_strategy == "positive priority") {
       ots_early_priority_results <-
         ots_early |> filter(positive_detection) |>
+        arrange(desc(created_at)) |>
+        head(1) |>
         collect()
       if (nrow(ots_early_priority_results) > 1) {
         cli::cli_abort(c(
@@ -604,7 +606,6 @@ parse_detection_results <- function(detection_results) {
                early_plate = x$early_plate,
                late_plate = x$late_plate)
   })
-
 }
 
 parse_spring_winter_detection_results <- function(detection_results) {
@@ -616,5 +617,4 @@ parse_spring_winter_detection_results <- function(detection_results) {
                spring_plate_id = x$spring_plate_id
     )
   })
-
 }
