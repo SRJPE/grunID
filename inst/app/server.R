@@ -82,9 +82,23 @@ function(input, output, session) {
     }
   )
 
+
+  # Sample Status ---------------------------------------------------------------------
+
+  initial_load <- reactiveVal(TRUE)
+  observeEvent(input$sample_status_refresh, {
+    initial_load(FALSE)
+  })
+
+  latest_sample_status <- eventReactive(list(input$sample_status_refresh, initial_load()), {
+    logger::log_info("Fetching latest results using sample status query")
+    DB_get_sample_status()
+  })
+
   selected_all_sample_status <- reactive({
+
     re <- ifelse(input$sample_status_season == 2023, "\\b\\w{3}23", "\\b\\w{3}24")
-    data <- all_sample_status() |> filter(str_detect(sample_id, re))
+    data <- latest_sample_status() |> filter(str_detect(sample_id, re))
 
     if(input$sample_status_filter != "All") {
       data <- data |>
@@ -121,7 +135,7 @@ function(input, output, session) {
   output$season_summary <- renderTable({
     re <- ifelse(input$sample_status_season == 2023, "\\b\\w{3}23", "\\b\\w{3}24")
 
-    all_sample_status() |> filter(str_detect(sample_id, re)) |>
+    latest_sample_status() |> filter(str_detect(sample_id, re)) |>
       group_by(status) |>
       summarise(
         total = n()
