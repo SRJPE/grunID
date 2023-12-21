@@ -10,13 +10,14 @@
 #' assay on a plate will have its own control blanks and threshold value.
 #' @returns a table containing thresholds for an event, to be passed to `update_assay_detections()`
 #' @export
-generate_threshold <- function(con, plate_run, strategy = "twice average",.control_id="NTC") {
+generate_threshold <- function(con, plate_run, strategy = "twice average",.control_id="EBK") {
 
   if (!DBI::dbIsValid(con)) {
     stop("Connection argument does not have a valid connection the run-id database.
          Please try reconnecting to the database using 'DBI::dbConnect'",
          call. = FALSE)
   }
+
   plate_run_identifier <- plate_run$plate_run_id
 
   protocol_id <- dplyr::tbl(con, "plate_run") |>
@@ -29,11 +30,14 @@ generate_threshold <- function(con, plate_run, strategy = "twice average",.contr
 
   control_blanks <- dplyr::tbl(con, "raw_assay_result") |>
     dplyr::filter(time == runtime,
-           sample_id == !!.control_id,
+                  stringr::str_detect(sample_id, .control_id),
            plate_run_id == !!plate_run_identifier) |>
     dplyr::collect()
 
-  if (nrow(control_blanks) == 0) {
+  controls_for_threshold <- control_blanks |> filter(raw_fluorescence < 12000)
+  controls_for_flagging <- control_blanks |> filter(raw_fluorescence > 12000)
+
+  if (nrow(controls_for_threshold) == 0) {
     stop(paste0("no control variables found in plate run with id: '", plate_run_identifier, "'"), call. = FALSE)
   }
 
@@ -41,14 +45,26 @@ generate_threshold <- function(con, plate_run, strategy = "twice average",.contr
 
     thresholds <- switch (strategy,
                           "twice average" = {
-                            control_blanks |>
+                            controls_for_threshold |>
                               dplyr::group_by(plate_run_id, assay_id) |>
+                              dplyr::slice_max(order_by = raw_fluorescence, n = 1) |>
                               dplyr::summarise(
-                                threshold = mean(as.numeric(raw_fluorescence)) * 2
+                                threshold = mean(as.numeric(raw_fluorescence)) * 2 #TODO redundant for now
                               ) |> ungroup() |>
                               dplyr::mutate(runtime = runtime)
                           }
     )
+  }
+
+  if (nrow(controls_for_flagging) > 0) {
+    comment <- glue::glue("
+  MANUAL EBK VALUE CHECK: plate_run_id = {plate_run$plate_run_id} Values = {glue::glue_collapse(glue::glue('{controls_for_flagging$sample_id}({controls_for_flagging$raw_fluorescence})'), sep = ';')}"
+    )
+
+
+    thresholds$plate_comment <- comment
+  } else {
+    thresholds$plate_comment <- ""
   }
 
   return(thresholds)

@@ -11,11 +11,11 @@
 #' @param plate_size either 96 or 384
 #' @export
 add_new_plate_results <- function(con, protocol_name, genetic_method,
-                              laboratory, lab_work_performed_by, description, date_run,
-                              filepath, sample_type, layout_type,
-                              plate_size = c(96, 384), .control_id = "NTC",
-                              selection_strategy = "recent priority",
-                              run_gen_id = FALSE) {
+                                  laboratory, lab_work_performed_by, description, date_run,
+                                  filepath, sample_type, layout_type,
+                                  plate_size = c(96, 384), .control_id = "NTC",
+                                  selection_strategy = "recent priority",
+                                  run_gen_id = FALSE) {
 
   is_valid_connection(con)
 
@@ -51,12 +51,12 @@ add_new_plate_results <- function(con, protocol_name, genetic_method,
   cli::cli_alert_info("Adding plate run to database")
   # create a new plate run in db for these results
   plate_run <- add_plate_run(con,
-                            date_run = date_run,
-                            protocol_id = protocol_id,
-                            genetic_method_id = genetic_method_id,
-                            laboratory_id = lab_id,
-                            lab_work_performed_by = lab_work_performed_by,
-                            description = description)
+                             date_run = date_run,
+                             protocol_id = protocol_id,
+                             genetic_method_id = genetic_method_id,
+                             laboratory_id = lab_id,
+                             lab_work_performed_by = lab_work_performed_by,
+                             description = description)
   cli::cli_alert_success("Plate run added to database with id = {plate_run$plate_run_id}")
 
 
@@ -79,7 +79,13 @@ add_new_plate_results <- function(con, protocol_name, genetic_method,
       sql_query <- glue::glue_sql("DELETE FROM plate_run where id = {plate_run$plate_run_id}", .con = con)
       res <- DBI::dbSendQuery(con, sql_query)
       DBI::dbClearResult(res)
-      stop(e)
+      is_sample_fk_violation <- stringr::str_detect(e$message, "COPY returned error: ERROR:  insert or update on table \"raw_assay_result\" violates foreign key constraint \"raw_assay_result_sample_id_fkey")
+      if (is_sample_fk_violation) {
+        sample_needs_to_be_created <- str_match(e$message, "Key \\(sample_id\\)=\\(([^)]+)\\)")[1, 2]
+        stop(glue::glue("the sample {sample_needs_to_be_created} was not found, please add to database using the `add_sample_plan()` function"), call. = FALSE)
+      } else {
+        stop(e)
+      }
     }
   )
 
@@ -93,16 +99,86 @@ add_new_plate_results <- function(con, protocol_name, genetic_method,
 
   add_plate_thresholds(con, thresholds_event, .control_id = .control_id)
 
+  # Check all NTCs (n = 3), NEG-DNA controls (n = 3), and EBKs ("extraction blanks" - n = 4) for RFU values greater than 12,000 (flag if any one has RFU > 12,000).
+  assays_results_for_qaqc <- tbl(con, "assay_result") |>
+    filter(plate_run_id == !!plate_run$plate_run_id)
+
+  values_are_below_12k <- assays_results_for_qaqc |>
+    filter(raw_fluorescence > 12000,
+           sample_id %in% c("NEG-DNA-1", "NEG-DNA-2", "NEG-DNA-3",
+                            "NTC-1", "NTC-2", "NTC-3")) |> collect()
+
+  if (nrow(values_are_below_12k) > 0) {
+    stop(
+      cli::format_error(c(
+        "x" = "Qa/Qc Test Not Passed: Value above 12k",
+        "i" = glue::glue("the value for {values_are_below_12k$sample_id} (id = {values_are_below_12k$id}) has a value ({values_are_below_12k$raw_fluorescence }) greater then 12,000 RFU")
+      )), call. = FALSE
+    )
+  }
+
+
+  # EBK exceed 12k then only flag do not stop execution ,  "EBK-1", "EBK-2", "EBK-3", "EBK-4" - map these so they can find them in the raw data
+  # IF an EBK is over 12k then DO NOT USE it for thresholds calculation - continue
+
+  # Check NTCs, NEG-DNA controls, and POS-DNA controls (n = 3) against 2xEBK threshold.
+  values_are_above_thresholds <- assays_results_for_qaqc |>
+    filter(raw_fluorescence > threshold,
+           sample_id %in% c("NEG-DNA-1", "NEG-DNA-2", "NEG-DNA-3",
+                            "NTC-1", "NTC-2", "NTC-3")) |>
+    collect()
+
+  # TODO ebk are their own thing only flag and continue the operation
+
+  if (nrow(values_are_above_thresholds) > 0) {
+    stop(
+      cli::format_error(c(
+        "x" = "Qa/Qc Test Not Passed: NTC/NEG-DNA Value above Threshold",
+        "i" = glue::glue("the value for {values_are_above_thresholds$sample_id} (id = {values_are_above_thresholds$id}) has a value ({values_are_above_thresholds$raw_fluorescence }) greater then the plate threshold ({values_are_above_thresholds$threshold})")
+      )), call. = FALSE
+    )
+  }
+
+  # 2 out of the 3 POS-DNA controls must return a positive result (greater than 2xEBK threshold).
+  pos_dna_values_are_above_threshold <- assays_results_for_qaqc |>
+    filter(raw_fluorescence > threshold, sample_id %in% c("POS-DNA-1", "POS-DNA-2", "POS-DNA-3")) |>
+    collect() |>
+    group_by(assay_id) |>
+    tally() |>
+    filter(n < 2)
+
+  if (nrow(pos_dna_values_are_above_threshold) > 0) {
+    stop(
+      cli::format_error(c(
+        "x" = "Qa/Qc Test Not Passed: 2 of 3 Positive DNA were not above threshold",
+        "i" = glue::glue("the plate with id: '{plate_run$plate_run_id}' contained at least 2 positive DNA controls that did not exceed the plate threshold.")
+      )), call. = FALSE
+    )
+  }
+
+
+
   if (run_gen_id) {
     # for now just get the samples based on the plate runs
-    samples_not_valid <- c("POS-DNA", "NEG-DNA", "CONTROL", .control_id)
+    samples_not_valid <- c(
+      "POS-DNA-1",
+      "POS-DNA-2",
+      "POS-DNA-3",
+      "NEG-DNA-1",
+      "NEG-DNA-2",
+      "NEG-DNA-3",
+      "NTC-1",
+      "NTC-2",
+      "NTC-3",
+      "CONTROL", paste0(.control_id, "-", 1:4))
+
     samples_to_use <- dplyr::tbl(con, "raw_assay_result") |>
       dplyr::filter(plate_run_id %in% !!thresholds_event$plate_run_id) |>
       dplyr::filter(!(sample_id %in% samples_not_valid)) |>
       dplyr::collect() |>
       dplyr::pull(sample_id)
 
-    run_genetic_identification(con, samples_to_use, selection_strategy = selection_strategy)
+    run_genetic_identification(con, samples_to_use, selection_strategy = selection_strategy, plate_comment = unique(thresholds_event$plate_comment))
   }
 
   return(thresholds_event)
@@ -183,20 +259,11 @@ add_plate_run <- function(con, protocol_id, genetic_method_id,
 
   proceed_inserting <- TRUE
 
-  if (!shiny::isRunning()) {
-    if (nrow(plate_run_already_exists_in_db)) {
-      proceed_inserting <- usethis::ui_yeah("Plate run with these values exists in database, do you wish to insert anyway?",
-                                            yes = "Yes", no = "No")
-    }
-  }
-
-
-  if (proceed_inserting) {
 
   query <- glue::glue_sql("
   INSERT INTO plate_run (protocol_id, genetic_method_id,  laboratory_id, lab_work_performed_by, description, date_run)
   VALUES ({protocol_id}, {genetic_method_id}, {laboratory_id}, {lab_work_performed_by}, {description}, {date_run}) RETURNING id;",
-                 .con = con)
+                          .con = con)
 
   res <- DBI::dbSendQuery(con, query)
   plate_run_id <- DBI::dbFetch(res)
@@ -213,11 +280,7 @@ add_plate_run <- function(con, protocol_id, genetic_method_id,
       description=description,
       performed_by=lab_work_performed_by
     ))
-  } else {
-    cli::cli_alert_info("use the following to view what exists in database")
-    cli::cli_code(lines = glue::glue("grunID::get_plate_run(con, id == {plate_run_already_exists_in_db$id})"), language = "R")
-    stop("aborting operation", call. = FALSE)
-  }
+
 }
 
 
@@ -268,7 +331,7 @@ deactivate_plate_run <- function(con, plate_run_id) {
                            SET active = FALSE
                            WHERE id = {plate_run_id}
                            RETURNING id, updated_at;",
-                           .con = con)
+                            .con = con)
 
     res <- DBI::dbSendQuery(con, query)
     DBI::dbClearResult(res)
@@ -311,7 +374,7 @@ activate_plate_run <- function(con, plate_run_id) {
                            SET active = TRUE
                            WHERE id = {plate_run_id}
                            RETURNING id, updated_at;",
-                           .con = con)
+                            .con = con)
 
     res <- DBI::dbSendQuery(con, query)
     DBI::dbClearResult(res)

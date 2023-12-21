@@ -32,18 +32,11 @@ information. Variables should be as follows:
 of class "datetime" or ("POSIXct" "POSIXt")
 \item \strong{fork_length_mm} The recorded fork length corresponding to the sample, of class "numeric".
 \item \strong{field_run_type_id} The unique identifier for the field run type, of class "numeric".
-\item \strong{fin_clip} Logical variable indicating whether a fin clip sample was taken, of class "logical".
 \item \strong{field_comment} Any recorded comments from the field regarding the sample, of class "character".
 }
 }
 \examples{
-cfg <- config::get()
-con <- DBI::dbConnect(RPostgres::Postgres(),
-                      dbname = cfg$dbname,
-                      host = cfg$host,
-                      port = cfg$port,
-                      user = cfg$username,
-                      password = cfg$password)
+con <- grunID::gr_db_connect()
 
 filepath <- "data-raw/test.xlsx"
 field_data_clean <- process_field_sheet_samples(filepath)

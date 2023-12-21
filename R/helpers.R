@@ -55,9 +55,9 @@ extract_sherlock_protocol <- function(filepath) {
 #' Check Database Connection is Valid
 is_valid_connection <- function(con) {
   if (!DBI::dbIsValid(con)) {
-    stop("Connection argument does not have a valid connection the run-id database.
-         Please try reconnecting to the database using 'DBI::dbConnect'",
-         call. = FALSE)
+    cli::cli_abort("Connection argument does not have a valid connection the run-id database.
+                   Please try reconnecting to the database using 'DBI::dbConnect'",
+                   call. = FALSE)
   }
 }
 

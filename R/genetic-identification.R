@@ -357,7 +357,8 @@ ots_winter_spring_detection <- function(con, sample_id,
 #' @param year optional year to identification on
 #' @param selection_strategy a selection strategy to help resolve cases where many assays exists per sample
 #' @export
-run_genetic_identification <- function(con, sample_id = NULL, location = NULL, year = NULL, selection_strategy = "positive priority") {
+run_genetic_identification <- function(con, sample_id = NULL, location = NULL, year = NULL, selection_strategy = "positive priority",
+                                       plate_comment) {
 
   # check for valid inputs and data -------------------------
   if (is.null(year)) {
@@ -419,7 +420,7 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
 
   if (nrow(analysis_complete_status_insert) > 0) {
 
-    analysis_complete_status_insert$comment <- "auto-generated comment added when running this sample through run_genetic_identification"
+    analysis_complete_status_insert$comment <- plate_comment
     analysis_complete_status_insert$status_code_id <- status_code_name_to_id["analysis complete"]
     analysis_complete_status_insert <- dplyr::select(analysis_complete_status_insert, sample_id, status_code_id, comment)
     DBI::dbAppendTable(con, "sample_status", analysis_complete_status_insert)
@@ -438,7 +439,7 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
 
   if (nrow(created_status_to_insert) > 0) {
 
-    created_status_to_insert$comment <- "auto-generated comment added when running this sample through run_genetic_identification"
+    created_status_to_insert$comment <- plate_comment
     created_status_to_insert$status_code_id <- status_code_name_to_id["created"]
     created_status_to_insert <- dplyr::select(created_status_to_insert, sample_id, status_code_id, comment)
     DBI::dbAppendTable(con, "sample_status", created_status_to_insert)
@@ -462,7 +463,7 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
   if (nrow(ots28_inprogress_to_insert) > 0) {
 
 
-    ots28_inprogress_to_insert$comment <- "auto-generated comment added when running this sample through run_genetic_identification"
+    ots28_inprogress_to_insert$comment <- plate_comment
     ots28_inprogress_to_insert$status_code_id <- status_code_name_to_id["ots28 in progress"]
     ots28_inprogress_to_insert <- dplyr::select(ots28_inprogress_to_insert, sample_id, status_code_id, comment)
     DBI::dbAppendTable(con, "sample_status", ots28_inprogress_to_insert)
@@ -486,7 +487,8 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
       clear = FALSE
     ))
 
-  spring_winter_resp_data <- parse_spring_winter_detection_results(spring_winter_resp)
+  spring_winter_resp_data <- parse_spring_winter_detection_results(spring_winter_resp) |>
+    dplyr::left_join(select(early_late_resp_data, sample_id, early_plate, late_plate), by = "sample_id")
 
   sw_analysis_complete_status_insert <- spring_winter_resp_data |>
     dplyr::filter(status_code == "analysis complete")
@@ -494,7 +496,7 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
   # if any of the detection results in gen id for spring or winter then update here
   if (nrow(sw_analysis_complete_status_insert) > 0) {
 
-    sw_analysis_complete_status_insert$comment <- "auto-generated comment added when running this sample through run_genetic_identification"
+    sw_analysis_complete_status_insert$comment <- plate_comment
     sw_analysis_complete_status_insert$status_code_id <- status_code_name_to_id["analysis complete"]
     sw_analysis_complete_status_insert <- dplyr::select(sw_analysis_complete_status_insert, sample_id, status_code_id, comment)
     DBI::dbAppendTable(con, "sample_status", sw_analysis_complete_status_insert)
@@ -511,7 +513,7 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
     dplyr::filter(status_code == "ots16 inprogress")
 
   if (nrow(ots16_inprogress_inserts) > 0 ) {
-    ots16_inprogress_inserts$comment <- "auto-generated status when running genetic run identification"
+    ots16_inprogress_inserts$comment <- plate_comment
     ots16_inprogress_inserts$status_code_id <- status_code_name_to_id["ots16 inprogress"]
     ots16_inprogress_inserts <- dplyr::select(ots16_inprogress_inserts, sample_id, status_code_id, comment)
     DBI::dbAppendTable(con, "sample_status", ots16_inprogress_inserts)
@@ -531,7 +533,7 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
     dplyr::filter(status_code == "need ots16")
 
   if (nrow(ots16_need_inserts) > 0) {
-    ots16_need_inserts$comment <- "auto-generated comment added when running this sample through run_genetic_identification"
+    ots16_need_inserts$comment <- plate_comment
     ots16_need_inserts$status_code_id <- status_code_name_to_id["need ots16"]
     ots16_need_inserts <- dplyr::select(ots16_need_inserts, sample_id, status_code_id, comment)
     DBI::dbAppendTable(con, "sample_status", ots16_need_inserts)
@@ -559,11 +561,11 @@ insert_gen_id_to_database <- function(con, insert_data, run_lookups) {
     this_spring_plate_id <- insert_data$spring_plate_id[row]
     this_winter_plate_id <- insert_data$winter_plate_id[row]
 
-    insert_statement <- if (run_type_code %in% c("SPW", "SPR", "WIN")) {
+    insert_statement <- if (run_type_code[row] %in% c("SPW", "SPR", "WIN")) {
       glue::glue_sql(
-        "INSERT INTO genetic_run_identification (sample_id, run_type_id, spring_plate_id, winter_plate_Id, updated_at)
+        "INSERT INTO genetic_run_identification (sample_id, run_type_id, early_plate_id, late_plate_id, spring_plate_id, winter_plate_Id, updated_at)
     VALUES
-      ({this_sample_id}, {this_run_type_id}, {this_spring_plate_id}, {this_winter_plate_id}, CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
+      ({this_sample_id}, {this_run_type_id}, {this_early_plate}, {this_late_plate}, {this_spring_plate_id}, {this_winter_plate_id}, CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
     ON CONFLICT (sample_id) DO UPDATE
     SET
       run_type_id = EXCLUDED.run_type_id,

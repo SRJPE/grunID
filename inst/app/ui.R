@@ -26,9 +26,6 @@ navbarPage(
              tags$br(),
              tags$br(),
              actionButton("info_layout_type", "More Info: Layout Type", icon = icon("circle-info")),
-             tags$br(),
-             tags$br(),
-             actionButton("info_single_assay_type", "More Info: Single Assay Type", icon = icon("circle-info")),
            ),
            column(
              width = 6,
@@ -40,17 +37,13 @@ navbarPage(
              textInput("run_description", "Plate Run Description:"),
              dateInput("date_run", "Date of Run"),
              fileInput("sherlock_results", "Upload Sherlock Results"),
-             selectInput("sample_type", "Select a Sample Type", choices = c("mucus", "fin clip")),
-             selectInput("layout_type", "Select Layout Type", choices = c("split_plate_early_late",
-                                                                          "split_plate_spring_winter",
-                                                                          "triplicate", "single_assay_type")),
-             selectInput("single_assay_type", "Select Single Assay Type", choices = c("",
-                                                                                      "ots28_early",
-                                                                                      "ots28_late",
-                                                                                      "ots16_spring",
-                                                                                      "ots16_winter"), selected = NULL),
+             selectInput("sample_type", "Select a Sample Type", choices = c("fin clip", "mucus")),
+             selectInput("layout_type", "Select Layout Type", choices = c("split_plate_early_late", "split_plate_spring_winter",
+                                                                          "triplicate", "single_assay_ots28_early",
+                                                                          "single_assay_ots28_late", "single_assay_ots16_spring",
+                                                                          "single_assay_ots16_winter")),
              selectInput("plate_size", "Select Plate Size", choices = c(384, 96)),
-             checkboxInput("perform_genetics_id", label = "Run genetic calculations for samples after upload", value = FALSE),
+             checkboxInput("perform_genetics_id", label = "Run genetic calculations for samples after upload", value = TRUE),
              actionButton("do_upload", "Upload Results", class = "btn-success", icon = icon("rocket")),
              tags$br(),
              tags$br()
@@ -60,10 +53,33 @@ navbarPage(
              textOutput("console_logs")
            ),
   ),
+  tabPanel(title = "Upload Field Sheets",
+           mainPanel(
+             tags$h3("Process and upload completed field sheets"),
+             tags$h5("Field sheets returned from the field need to be processed before being uploaded
+                     to the database. Upload the file (this will refine the results into a clean table,
+                     which you can view below)."),
+             tags$hr(),
+             fileInput("filled_field_sheets", "Process field sheets"),
+             tags$h5("Press the upload button to upload the cleaned table
+                     to the database."),
+             actionButton("do_upload_field_sheets", "Upload field sheets to database", class = "btn-success", icon = icon("rocket")),
+             tags$hr(),
+             tags$h4("Preview clean field sheet data"),
+             tags$br(),
+             DT::dataTableOutput("field_sheet_summary") |>
+               shinycssloaders::withSpinner()
+           ),
+  ),
   tabPanel(title = "Sample Status",
            sidebarLayout(
              sidebarPanel(
                width = 3,
+               tags$div(
+                 actionButton("sample_status_refresh", "Refresh Data", class = "btn-success", icon = icon("refresh")),
+                 style = "padding-bottom: 15px;"
+               ),
+               selectInput("sample_status_season", "Season", choices = 2023:2024, selected = 2024),
                selectInput("sample_status_filter", "Sample Status",
                            c("All", names(sample_status_options))),
                selectInput("location_filter", "Location",
@@ -73,7 +89,7 @@ navbarPage(
                tableOutput("season_summary")
              ),
              mainPanel(
-               DT::dataTableOutput("sample_status_table"))
+               shinycssloaders::withSpinner(DT::dataTableOutput("sample_status_table")))
            )
   ),
   tabPanel(title = "Query",
@@ -105,7 +121,32 @@ navbarPage(
                             icon = icon("chart-line"))
              ),
              mainPanel(
-               DT::dataTableOutput("season_table")
+               DT::dataTableOutput("season_table") |>
+                 shinycssloaders::withSpinner()
+             )
+           )),
+  tabPanel(title = "Subsample",
+           sidebarLayout(
+             sidebarPanel(
+               width = 4,
+               actionButton("subsample_logic",
+                            "Subsampling logic",
+                            icon = icon("circle-info")),
+               tags$h6("This subsampling logic only applies to the 2024 season, which
+                       spans 10-01-2023 through 09-30-2024"),
+               tags$hr(),
+               tags$h4("Summary table"),
+               tags$h6("This table sums the number of samples in each subsampling scenario for each stream, event number, and bin."),
+               tags$hr(),
+               DT::dataTableOutput("subsample_summary_table") |>
+                 shinycssloaders::withSpinner()
+             ),
+             mainPanel(
+               selectInput("subsample_season_filter", "Season Filter",
+                           2024),
+               tags$h4("Full result table"),
+               DT::dataTableOutput("subsample_table") |>
+                 shinycssloaders::withSpinner()
              )
            ))
 )
