@@ -158,12 +158,12 @@ navbarPage(
              br(),
              DT::dataTableOutput("flagged_plate_run_table_display") |>
                shinycssloaders::withSpinner(),
-             br(), hr(),
-             tags$h4("Accept or reject plate run"),
-             actionButton("do_activate", "Accept Plate Run",
-                          style = "color: #fff; background-color: #81A88D"),
-             actionButton("do_deactivate", "Reject Plate Run",
-                          style = "color: #fff; background-color: #C93312"),
+             br(),
+             div(style = "display:inline-block; float:right",
+                 actionButton("do_activate", "Accept Plate Run",
+                              style = "color: #fff; background-color: #81A88D"),
+                 actionButton("do_deactivate", "Reject Plate Run",
+                              style = "color: #fff; background-color: #C93312")),
              br(), br(),
            )
   )
