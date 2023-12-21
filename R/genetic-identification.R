@@ -204,7 +204,7 @@ ots_early_late_detection <- function(con, sample_id,
   }
   # positive late and positive early --> HET more testing needed
   else if (ots_early_priority_results$positive_detection && ots_late_priority_results$positive_detection) {
-    return(list(sample_id = sample_id, status_code = "analysis complete", run_type="HET", early_plate = ots_early_priority_results$plate_run_id, late_plate = ots_late_priority_results$plate_run_id))
+    return(list(sample_id = sample_id, status_code = "analysis complete", run_type="EL-HET", early_plate = ots_early_priority_results$plate_run_id, late_plate = ots_late_priority_results$plate_run_id))
   }
   # negative late and positive early --> SPW need ots 16
   else if (ots_early_priority_results$positive_detection && !ots_late_priority_results$positive_detection) {
@@ -335,7 +335,7 @@ ots_winter_spring_detection <- function(con, sample_id,
   }
   # positive winter and positive spring ---> HET
   else if (ots_spring_priority_results$positive_detection && ots_winter_priority_results$positive_detection) {
-    return(list(sample_id = sample_id, status_code = "analysis complete", run_type="HET",
+    return(list(sample_id = sample_id, status_code = "analysis complete", run_type="SW-HET",
                 winter_plate_id = ots_winter_priority_results$plate_run_id, spring_plate_id = ots_spring_priority_results$plate_run_id))
   }
   # negative winter and positive spring --> SPR
