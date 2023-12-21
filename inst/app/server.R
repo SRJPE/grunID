@@ -280,31 +280,67 @@ output$season_plot <- renderPlot(
   },
   rownames = FALSE))
 
-  # QA/QC
-  # flagged table
-  output$flagged_table <- DT::renderDataTable(DT::datatable({
-    if(input$filter_to_active_plate_runs) {
-      data <- flagged_sample_status() |>
-        dplyr::filter(active_plate_run)
+
+# QA/QC -------------------------------------------------------------------
+
+  flagged_sample_table <- reactive({
+    if(input$filter_to_active_plate_runs == TRUE) {
+      flagged_sample_status() |>
+        filter(active_plate_run == TRUE) |>
+        mutate(updated_at = format(updated_at, "%Y-%m-%d %H:%M")) |>
+        distinct(plate_run_id, active_plate_run, .keep_all = TRUE) |>
+        select(plate_run_id, date_run, updated_at, lab_work_performed_by,
+               genetic_method = method_name, active = active_plate_run)
     } else {
-      data <- flagged_sample_status()
+      flagged_sample_status() |>
+        distinct(plate_run_id, active_plate_run, .keep_all = TRUE) |>
+        mutate(updated_at = format(updated_at, "%Y-%m-%d %H:%M")) |>
+        select(plate_run_id, date_run, updated_at, lab_work_performed_by,
+               genetic_method = method_name, active = active_plate_run)
     }
-    data
-  },
-  extensions = "Buttons",
+  })
+  # flagged table
+  output$flagged_table <- DT::renderDataTable(DT::datatable(
+    flagged_sample_table(),
   rownames = FALSE,
+  selection = "single",
   options = list(autoWidth = FALSE,
-                 dom = "Bfrtip",
-                 buttons = c("copy", "csv", "excel"),
                  lengthChange = TRUE,
-                 pageLength = 20)),
+                 pageLength = 5)),
   server = FALSE)
+
+  flagged_table_plate_run_id <- reactive({
+    flagged_sample_table() |>
+      slice(input$flagged_table_rows_selected) |>
+      pull(plate_run_id)
+  })
+
+  # output$flagged_plate_run_id_text = renderPrint(flagged_table_plate_run_id())
+
+  flagged_plate_run_table <- reactive({
+    # return message if no row is yet selected
+    validate(
+      need(!is.null(input$flagged_table_rows_selected), "No row selected")
+    )
+
+    flagged_sample_status() |>
+      filter(plate_run_id == flagged_table_plate_run_id()) |>
+      select(plate_run_id, sample_id, comment, assay_name, raw_fluorescence, threshold,
+             positive_detection)
+
+  })
+
+  output$flagged_plate_run_table_display <- DT::renderDataTable(DT::datatable(
+    flagged_plate_run_table(),
+    rownames = FALSE,
+    selection = "none"
+  ))
 
   # deactivate
   observeEvent(input$do_deactivate, {
     tryCatch({
-      grunID::deactivate_plate_run(con, input$plate_id_to_deactivate)
-      spsComps::shinyCatch({message(paste0("Plate run ", input$plate_id_to_deactivate, " deactivated"))}, position = "top-center")
+      grunID::deactivate_plate_run(con, flagged_table_plate_run_id())
+      spsComps::shinyCatch({message(paste0("Plate run ", flagged_table_plate_run_id(), " deactivated"))}, position = "top-center")
     },
     error = function(e) {
       spsComps::shinyCatch({stop(paste(e))}, prefix = '', position = "top-center")
@@ -314,8 +350,8 @@ output$season_plot <- renderPlot(
   # activate
   observeEvent(input$do_activate, {
     tryCatch({
-      grunID::activate_plate_run(con, input$plate_id_to_deactivate)
-      spsComps::shinyCatch({message(paste0("Plate run ", input$plate_id_to_deactivate, " activated"))}, position = "top-center")
+      grunID::activate_plate_run(con, flagged_table_plate_run_id())
+      spsComps::shinyCatch({message(paste0("Plate run ", flagged_table_plate_run_id(), " activated"))}, position = "top-center")
     },
     error = function(e) {
       spsComps::shinyCatch({stop(paste(e))}, prefix = '', position = "top-center")

@@ -54,7 +54,9 @@ INNER JOIN (
 flagged_sample_status <- function() {
   DBI::dbGetQuery(
     con,
-    "SELECT ar.plate_run_id, ar.sample_id, sc.status_code_name, status.comment, a.assay_name, ar.raw_fluorescence, ar.threshold, ar.positive_detection, pr.active AS active_plate_run
+    "SELECT ar.plate_run_id, ar.sample_id, sc.status_code_name, status.comment, a.assay_name,
+    ar.raw_fluorescence, ar.threshold, ar.positive_detection, pr.active AS active_plate_run,
+    pr.date_run, pr.updated_at, pr.lab_work_performed_by, gm.method_name
 FROM assay_result AS ar
 LEFT JOIN(
 	SELECT sample_id, comment, status_code_id
@@ -62,13 +64,15 @@ LEFT JOIN(
 	WHERE comment LIKE '%MANUAL%'
 ) AS status ON ar.sample_id = status.sample_id
 LEFT JOIN (
-	SELECT id, active
+	SELECT id, active, genetic_method_id, date_run, updated_at, lab_work_performed_by
 	FROM plate_run
 ) AS pr ON ar.plate_run_id = pr.id
+JOIN public.genetic_method gm ON gm.id = pr.genetic_method_id
 JOIN public.status_code sc ON sc.id = status.status_code_id
 JOIN public.assay a ON a.id = ar.assay_id;"
   )
 }
+
 # sample_status_options <- dplyr::tbl(con, "status_code") |>
 #   dplyr::distinct(status_code_name) |>
 #   dplyr::collect() |>
