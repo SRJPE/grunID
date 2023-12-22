@@ -30,9 +30,11 @@ navbarPage(
            column(
              width = 6,
              h3("Enter Plate Run"),
-             selectInput("protocol", "Select a Protocol", choices = all_protocols$name),
-             selectInput("laboratory", "Select a Laboratory", choices = all_labs$code),
-             selectInput("genetic_method", "Select a Genetic Method", choices = all_gen_methods$code),
+             radioButtons("sample_id_type", "Sample ID Types",
+                          choices = c("JPE Samples", "Salvage Samples"), inline = TRUE),
+             selectInput("protocol", "Select a Protocol", choices = all_protocols$name, selected = NULL),
+             selectInput("laboratory", "Select a Laboratory", choices = all_labs$code, selected = NULL),
+             selectInput("genetic_method", "Select a Genetic Method", choices = all_gen_methods$code, selected = NULL),
              textInput("performed_by", "Lab work performed by:"),
              textInput("run_description", "Plate Run Description:"),
              dateInput("date_run", "Date of Run"),
@@ -43,7 +45,7 @@ navbarPage(
                                                                           "single_assay_ots28_late", "single_assay_ots16_spring",
                                                                           "single_assay_ots16_winter")),
              selectInput("plate_size", "Select Plate Size", choices = c(384, 96)),
-             checkboxInput("perform_genetics_id", label = "Run genetic calculations for samples after upload", value = TRUE),
+             tags$br(),
              actionButton("do_upload", "Upload Results", class = "btn-success", icon = icon("rocket")),
              tags$br(),
              tags$br()

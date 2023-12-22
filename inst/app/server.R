@@ -1,5 +1,11 @@
 function(input, output, session) {
 
+  iv <- shinyvalidate::InputValidator$new()
+
+  iv$add_rule("performed_by", shinyvalidate::sv_required())
+  iv$add_rule("run_description", shinyvalidate::sv_required())
+
+
   observeEvent(input$show_protocol_details, {
     showModal(modalDialog(
       title = "Protocol Details",
@@ -59,6 +65,9 @@ function(input, output, session) {
   })
 
   observeEvent(input$do_upload, {
+    iv$enable()
+    req(iv$is_valid())
+
     tryCatch({
       #messages <- capture.output(
         grunID::add_new_plate_results(con, protocol_name = input$protocol,
