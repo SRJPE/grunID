@@ -9,6 +9,7 @@
 #' @param sample_type the sample type
 #' @param layout_type the layout that was used for this assay
 #' @param plate_size either 96 or 384
+#' @param is_salvage samples are obtained from salvage program
 #' @export
 add_new_plate_results <- function(con, protocol_name, genetic_method,
                                   laboratory, lab_work_performed_by, description, date_run,
@@ -59,7 +60,6 @@ add_new_plate_results <- function(con, protocol_name, genetic_method,
                              description = description)
   cli::cli_alert_success("Plate run added to database with id = {plate_run$plate_run_id}")
 
-
   cli::cli_alert_info("Processing sherlock data")
   sherlock_results_event <- suppressMessages(
     process_sherlock(
@@ -70,6 +70,9 @@ add_new_plate_results <- function(con, protocol_name, genetic_method,
       plate_size = plate_size)
   )
   cli::cli_alert_success("Sherlock results processing complete")
+
+
+  # TODO need to switch between the lab_id to determine what table to upload
 
   cli::cli_alert_info("adding results to database")
   add_raw_res <- tryCatch(
@@ -128,7 +131,6 @@ add_new_plate_results <- function(con, protocol_name, genetic_method,
                             "NTC-1", "NTC-2", "NTC-3")) |>
     collect()
 
-  # TODO ebk are their own thing only flag and continue the operation
 
   if (nrow(values_are_above_thresholds) > 0) {
     stop(
@@ -382,4 +384,5 @@ activate_plate_run <- function(con, plate_run_id) {
     cli::cat_bullet(sprintf("Plate run ID '%s' successfully avtivated", plate_run_id), bullet_col = "green")
   }
 }
+
 
