@@ -41,6 +41,8 @@ add_new_plate_results(
 \item{plate_size}{either 96 or 384}
 
 \item{protocol}{name pf the protocol used for this run}
+
+\item{is_salvage}{samples are obtained from salvage program}
 }
 \description{
 Add New Plate Results
