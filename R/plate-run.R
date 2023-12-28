@@ -11,12 +11,11 @@
 #' @param plate_size either 96 or 384
 #' @param is_salvage samples are obtained from salvage program
 #' @export
-add_new_plate_results <- function(con, protocol_name, genetic_method,
-                                  laboratory, lab_work_performed_by, description, date_run,
-                                  filepath, sample_type, layout_type,
-                                  plate_size = c(96, 384), .control_id = "NTC",
-                                  selection_strategy = "recent priority",
-                                  run_gen_id = FALSE) {
+add_new_plate_results <- function(con, protocol_name, genetic_method, laboratory,
+                                  lab_work_performed_by, description, date_run,
+                                  filepath, sample_type, layout_type, plate_size = c(96, 384),
+                                  .control_id = "NTC", selection_strategy = "recent priority",
+                                  run_gen_id = FALSE, is_salvage = FALSE) {
 
   is_valid_connection(con)
 
@@ -71,12 +70,15 @@ add_new_plate_results <- function(con, protocol_name, genetic_method,
   )
   cli::cli_alert_success("Sherlock results processing complete")
 
-
-  # TODO need to switch between the lab_id to determine what table to upload
-
   cli::cli_alert_info("adding results to database")
   add_raw_res <- tryCatch(
-    add_raw_assay_results(con, sherlock_results_event),
+    {
+      if (is_salvage) {
+        add_raw_assay_results(con, sherlock_results_event, destination_table = "external_raw_assay_result")
+      } else {
+        add_raw_assay_results(con, sherlock_results_event, destination_table = "raw_assay_result")
+      }
+    },
     error = function(e) {
       cli::cli_alert_danger("there was an error attempting to add new raw data, removing plate run associated with this from database, see the error below for more details:")
       sql_query <- glue::glue_sql("DELETE FROM plate_run where id = {plate_run$plate_run_id}", .con = con)
@@ -100,7 +102,11 @@ add_new_plate_results <- function(con, protocol_name, genetic_method,
   cli::cli_alert_success("Threshold done")
 
 
-  add_plate_thresholds(con, thresholds_event, .control_id = .control_id)
+  if (is_salvage) {
+    add_plate_thresholds(con, thresholds_event, destination_table = "external_assay_result")
+  } else {
+    add_plate_thresholds(con, thresholds_event, destination_table = "assay_result")
+  }
 
   # Check all NTCs (n = 3), NEG-DNA controls (n = 3), and EBKs ("extraction blanks" - n = 4) for RFU values greater than 12,000 (flag if any one has RFU > 12,000).
   assays_results_for_qaqc <- tbl(con, "assay_result") |>
