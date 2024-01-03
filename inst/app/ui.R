@@ -155,6 +155,7 @@ navbarPage(
                shinycssloaders::withSpinner(),
              hr(), br(),
              tags$h4("Validate plate run data:"),
+             textOutput("flagged_plate_run_comment"),
              br(),
              DT::dataTableOutput("flagged_plate_run_table_display") |>
                shinycssloaders::withSpinner(),

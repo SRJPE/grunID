@@ -330,8 +330,14 @@ output$season_plot <- renderPlot(
 
   })
 
-  output$flagged_plate_run_table_display <- DT::renderDataTable(DT::datatable(
-    flagged_plate_run_table(),
+  output$flagged_plate_run_comment <- reactive({
+    unique(flagged_plate_run_table()$comment)
+  })
+
+  output$flagged_plate_run_table_display <- DT::renderDataTable(DT::datatable({
+    flagged_plate_run_table() |>
+      select(-comment)
+  },
     rownames = FALSE,
     selection = "none",
     options = list(dom = 't')
