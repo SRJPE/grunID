@@ -89,8 +89,11 @@ ots_early_late_detection <- function(con, sample_id,
   selection_strategy <- match.arg(selection_strategy)
 
   # get all results that match this sample id
+  # we filter to just the sample that have an active plate run associated with them
   assay_results <- tbl(con, "assay_result") |>
-    filter(sample_id == !!sample_id)
+    filter(sample_id == !!sample_id) |>
+    left_join(tbl(con, "plate_run") |> select(id, active), by = c("plate_run_id" = "id")) |>
+    filter(active == TRUE)
 
   # get all the assays run for each
   assays_existing_for_sample <- assay_results |> dplyr::distinct(assay_id) |> dplyr::pull()
@@ -236,8 +239,10 @@ ots_winter_spring_detection <- function(con, sample_id,
                                         selection_strategy = c("positive priority", "recent priority")) {
   selection_strategy <- match.arg(selection_strategy)
 
-  assay_results <- dplyr::tbl(con, "assay_result") |>
-    dplyr::filter(sample_id == !!sample_id)
+  assay_results <- tbl(con, "assay_result") |>
+    filter(sample_id == !!sample_id) |>
+    left_join(tbl(con, "plate_run") |> select(id, active), by = c("plate_run_id" = "id")) |>
+    filter(active == TRUE)
 
   assays_for_existing_for_sample <- assay_results |> dplyr::distinct(assay_id) |> dplyr::pull()
   assays_3_for_sample <- assay_results |> dplyr::filter(assay_id == 3) |> dplyr::collect()
