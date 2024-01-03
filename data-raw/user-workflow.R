@@ -18,6 +18,7 @@ con <- DBI::dbConnect(RPostgres::Postgres(),
 
 
 
+add_salvage_samples(con = con, n_samples = 1000, year = 2025)
 
 # check connection is working - should see head of these tables
 dbListTables(con)

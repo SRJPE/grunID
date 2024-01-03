@@ -68,28 +68,43 @@ function(input, output, session) {
     iv$enable()
     req(iv$is_valid())
 
-    tryCatch({
-      #messages <- capture.output(
+
+    if (input$sample_id_type == "JPE Samples") {
+      tryCatch({
+        #messages <- capture.output(
         grunID::add_new_plate_results(con, protocol_name = input$protocol,
-                                           genetic_method = input$genetic_method,
-                                           laboratory = input$laboratory,
-                                           lab_work_performed_by = input$performed_by,
-                                           description = input$run_description,
-                                           date_run = input$date_run,
-                                           filepath = input$sherlock_results$datapath,
-                                           sample_type = input$sample_type,
-                                           layout_type = input$layout_type,
-                                           plate_size = input$plate_size,
+                                      genetic_method = input$genetic_method,
+                                      laboratory = input$laboratory,
+                                      lab_work_performed_by = input$performed_by,
+                                      description = input$run_description,
+                                      date_run = input$date_run,
+                                      filepath = input$sherlock_results$datapath,
+                                      sample_type = input$sample_type,
+                                      layout_type = input$layout_type,
+                                      plate_size = input$plate_size,
                                       .control_id = "EBK",
                                       run_gen_id = input$perform_genetics_id)
-      #)
-      #shinyCatch({message(paste0(messages))}, prefix = '') # this prints out messages (only at the end of the function) to shiny
-      spsComps::shinyCatch({message("Success!")}, position = "top-center")},
-      error = function(e) {
+        #)
+        #shinyCatch({message(paste0(messages))}, prefix = '') # this prints out messages (only at the end of the function) to shiny
+        spsComps::shinyCatch({message("Success!")}, position = "top-center")},
+        error = function(e) {
           spsComps::shinyCatch({stop(paste(e))}, prefix = '', position = "top-center")
-      })
+        })
+    } else {
+      grunID::add_external_plate_results(con, protocol_name = input$protocol,
+                                         genetic_method = input$genetic_method,
+                                         laboratory = input$laboratory,
+                                         lab_work_performed_by = input$performed_by,
+                                         description = input$run_description,
+                                         date_run = input$date_run,
+                                         filepath = input$sherlock_results$datapath,
+                                         sample_type = input$sample_type,
+                                         layout_type = input$layout_type,
+                                         plate_size = input$plate_size,
+                                         .control_id = "EBK",
+                                         run_gen_id = input$perform_genetics_id)
     }
-  )
+  })
 
 
   # Sample Status ---------------------------------------------------------------------

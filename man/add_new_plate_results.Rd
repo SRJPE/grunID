@@ -16,9 +16,10 @@ add_new_plate_results(
   sample_type,
   layout_type,
   plate_size = c(96, 384),
-  .control_id = "NTC",
+  .control_id = "EBK",
   selection_strategy = "recent priority",
-  run_gen_id = FALSE
+  run_gen_id = FALSE,
+  samples_source = c("jpe", "salvage")
 )
 }
 \arguments{

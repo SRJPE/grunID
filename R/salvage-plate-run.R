@@ -39,11 +39,3 @@ add_salvage_samples <- function(con, n_samples = 1000, year) {
 
   walk(1:n_samples, \(x) DBI::dbExecute(con, sql_statement[x]))
 }
-
-
-
-
-
-add_new_salvage_plate_results <- function() {
-
-}
