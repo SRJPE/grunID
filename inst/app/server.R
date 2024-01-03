@@ -283,16 +283,24 @@ output$season_plot <- renderPlot(
 
 # QA/QC -------------------------------------------------------------------
 
+  initial_load_qa_qc <- reactiveVal(TRUE)
+
+  latest_qa_qc_fetch <- eventReactive(list(input$query_refresh, initial_load_qa_qc()), {
+    logger::log_info("Fetching latest results from database for QA/QC tab")
+    data <- flagged_sample_status()
+    data
+  })
+
   flagged_sample_table <- reactive({
     if(input$filter_to_active_plate_runs == TRUE) {
-      flagged_sample_status() |>
+      latest_qa_qc_fetch() |>
         filter(active_plate_run == TRUE) |>
         mutate(updated_at = format(updated_at, "%Y-%m-%d %H:%M")) |>
         distinct(plate_run_id, active_plate_run, .keep_all = TRUE) |>
         select(plate_run_id, date_run, updated_at, lab_work_performed_by,
                genetic_method = method_name, active = active_plate_run)
     } else {
-      flagged_sample_status() |>
+      latest_qa_qc_fetch() |>
         distinct(plate_run_id, active_plate_run, .keep_all = TRUE) |>
         mutate(updated_at = format(updated_at, "%Y-%m-%d %H:%M")) |>
         select(plate_run_id, date_run, updated_at, lab_work_performed_by,
@@ -314,8 +322,6 @@ output$season_plot <- renderPlot(
       slice(input$flagged_table_rows_selected) |>
       pull(plate_run_id)
   })
-
-  # output$flagged_plate_run_id_text = renderPrint(flagged_table_plate_run_id())
 
   flagged_plate_run_table <- reactive({
     # return message if no row is yet selected
@@ -352,6 +358,8 @@ output$season_plot <- renderPlot(
     error = function(e) {
       spsComps::shinyCatch({stop(paste(e))}, prefix = '', position = "top-center")
     })
+    # refresh
+    initial_load_qa_qc(FALSE)
   })
 
   # activate
@@ -363,5 +371,7 @@ output$season_plot <- renderPlot(
     error = function(e) {
       spsComps::shinyCatch({stop(paste(e))}, prefix = '', position = "top-center")
     })
+    # refresh
+    initial_load_qa_qc(FALSE)
   })
 }
