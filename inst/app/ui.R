@@ -96,6 +96,10 @@ navbarPage(
            sidebarLayout(
              sidebarPanel(
                width = 3,
+               tags$div(
+                 actionButton("query_refresh", "Refresh Query", class = "btn-success", icon = icon("refresh")),
+                 style = "padding-bottom: 15px;"
+               ),
                selectInput("season_filter", "Season Filter",
                            available_years),
                actionButton("season_filter_description",

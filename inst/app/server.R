@@ -1,5 +1,7 @@
 function(input, output, session) {
 
+
+# Upload Results ----------------------------------------------------------
   observeEvent(input$show_protocol_details, {
     showModal(modalDialog(
       title = "Protocol Details",
@@ -85,12 +87,12 @@ function(input, output, session) {
 
   # Sample Status ---------------------------------------------------------------------
 
-  initial_load <- reactiveVal(TRUE)
+  initial_load_sample_status <- reactiveVal(TRUE)
   observeEvent(input$sample_status_refresh, {
-    initial_load(FALSE)
+    initial_load_sample_status(FALSE)
   })
 
-  latest_sample_status <- eventReactive(list(input$sample_status_refresh, initial_load()), {
+  latest_sample_status <- eventReactive(list(input$sample_status_refresh, initial_load_sample_status()), {
     logger::log_info("Fetching latest results using sample status query")
     DB_get_sample_status()
   })
@@ -142,9 +144,23 @@ function(input, output, session) {
       )
   })
 
+
+# Query -------------------------------------------------------------------
+
+  initial_load_query <- reactiveVal(TRUE)
+  observeEvent(input$query_refresh, {
+    initial_load_query(FALSE)
+  })
+
+  latest_query <- eventReactive(list(input$query_refresh, initial_load_query()), {
+    logger::log_info("Fetching latest results using grunID::get_samples_by_season()")
+    data <- grunID::get_samples_by_season(con, input$season_filter, input$dataset_type_filter,
+                                          input$filter_to_heterozygotes, input$filter_to_failed)
+    data
+  })
+
   selected_samples_by_season <- reactive({
-    grunID::get_samples_by_season(con, input$season_filter, input$dataset_type_filter,
-                                  input$filter_to_heterozygotes, input$filter_to_failed)
+    latest_query()
   })
 
   output$season_table <- DT::renderDataTable(DT::datatable(selected_samples_by_season(),
@@ -156,9 +172,9 @@ function(input, output, session) {
                  lengthChange = TRUE,
                  pageLength = 20)),
   server = FALSE
-  ) |>
-    shiny::bindCache(input$season_filter, input$dataset_type_filter,
-                     input$filter_to_heterozygotes, input$filter_to_failed)
+  ) #|>
+    # shiny::bindCache(input$season_filter, input$dataset_type_filter,
+    #                  input$filter_to_heterozygotes, input$filter_to_failed)
 
   observeEvent(input$season_filter_description, {
     showModal(modalDialog(
@@ -185,7 +201,7 @@ function(input, output, session) {
   })
 
 output$season_plot <- renderPlot(
-  grunID::get_samples_by_season(con, season = input$season_filter, dataset = input$dataset_type_filter) |>
+  selected_samples_by_season() |>
     dplyr::mutate(week = lubridate::week(datetime_collected)) |>
     dplyr::filter(!is.na(week)) |>
     dplyr::group_by(week) |>
@@ -214,6 +230,9 @@ output$season_plot <- renderPlot(
         size = "l")
       )
     })
+
+
+# Upload Field Sheets -----------------------------------------------------
 
   # read in field data, if available
   clean_field_data <- reactive({
@@ -250,6 +269,9 @@ output$season_plot <- renderPlot(
                  pageLength = 10)),
   server = FALSE
   )
+
+
+# Subsample ---------------------------------------------------------------
 
   # subsample table
   output$subsample_table <- DT::renderDataTable(DT::datatable({
