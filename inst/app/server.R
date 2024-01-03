@@ -333,7 +333,8 @@ output$season_plot <- renderPlot(
   output$flagged_plate_run_table_display <- DT::renderDataTable(DT::datatable(
     flagged_plate_run_table(),
     rownames = FALSE,
-    selection = "none"
+    selection = "none",
+    options = list(dom = 't')
   ))
 
   # deactivate
