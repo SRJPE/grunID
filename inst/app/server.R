@@ -285,8 +285,7 @@ output$season_plot <- renderPlot(
 
   initial_load_qa_qc <- reactiveVal(TRUE)
 
-  latest_qa_qc_fetch <- eventReactive(list({input$do_activate | input$do_deactivate},
-                                           initial_load_qa_qc()), {
+  latest_qa_qc_fetch <- eventReactive(list(initial_load_qa_qc()), {
     logger::log_info("Fetching latest results from database for QA/QC tab")
     data <- flagged_sample_status()
     data
@@ -361,6 +360,7 @@ output$season_plot <- renderPlot(
     })
     # refresh
     initial_load_qa_qc(FALSE)
+    initial_load_qa_qc(TRUE)
   })
 
   # activate
@@ -374,5 +374,6 @@ output$season_plot <- renderPlot(
     })
     # refresh
     initial_load_qa_qc(FALSE)
+    initial_load_qa_qc(TRUE)
   })
 }
