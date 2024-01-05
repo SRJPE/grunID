@@ -51,6 +51,15 @@ INNER JOIN (
   )
 }
 
+# TODO update this query to pull from new db structure
+# pull from plate_run where FLAG like EBK-FLAG and active = TRUE (active depends on check mark)
+# store output from parse_EBK_flag() to produce the table with sub plates
+# allow selection between sub-plates (dropdown? table is less ideal)
+# pull from assay_result where id = plate_run_id and subplate = selected sub_plate id
+# if user 'accepts', set samples in assay_result that have that sub_plate to be active = FALSE but keep plate_run ACTIVE
+# if user 'rejects', reject whole plate run and update assay_result for all samples with plate_run_id to be active = FALSE
+# if user 'rejects', update assay_result table where sub_plate = X and plate_run_id = Y and update active to FALSE
+
 flagged_sample_status <- function() {
   DBI::dbGetQuery(
     con,
