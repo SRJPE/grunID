@@ -92,9 +92,7 @@ ots_early_late_detection <- function(con, sample_id,
   # get all results that match this sample id
   # we filter to just the sample that have an active plate run associated with them
   assay_results <- tbl(con, "assay_result") |>
-    filter(sample_id == !!sample_id) |>
-    left_join(tbl(con, "plate_run") |> select(id, active), by = c("plate_run_id" = "id")) |>
-    filter(active == TRUE)
+    filter(sample_id == !!sample_id, active == TRUE)
 
   # get all the assays run for each
   assays_existing_for_sample <- assay_results |> dplyr::distinct(assay_id) |> dplyr::pull()
@@ -243,9 +241,7 @@ ots_winter_spring_detection <- function(con, sample_id,
   selection_strategy <- match.arg(selection_strategy)
 
   assay_results <- tbl(con, "assay_result") |>
-    filter(sample_id == !!sample_id) |>
-    left_join(tbl(con, "plate_run") |> select(id, active), by = c("plate_run_id" = "id")) |>
-    filter(active == TRUE)
+    filter(sample_id == !!sample_id, active == TRUE)
 
   assays_for_existing_for_sample <- assay_results |> dplyr::distinct(assay_id) |> dplyr::pull()
   assays_3_for_sample <- assay_results |> dplyr::filter(assay_id == 3) |> dplyr::collect()
@@ -661,3 +657,15 @@ parse_spring_winter_detection_results <- function(detection_results) {
     )
   })
 }
+
+
+parse_plate_comment_for_EBK_errors <- function(comment) {
+  matches <- str_match_all(comment, "EBK-(\\d+-\\d+)\\((\\d+)\\)")
+  values <- matches[[1]][,2:3]
+  plate_run_id_number <- str_extract(text, "(?<=plate_run_id = )\\d+")
+  as.data.frame(values) |> dplyr::rename(EBK_ID = V1, threshold = V2) |>
+    tidyr::separate(EBK_ID, into = c("sub_plate_id", "ebk_replicate"), sep = "-") |>
+    dplyr::mutate(plate_run_id = plate_run_id_number)
+
+}
+
