@@ -32,5 +32,3 @@ values <- matches[[1]][, 1]
 matches <- str_match_all(text, "EBK-\\d+-\\d+\\((\\d+)\\)")
 values <- matches[[1]]
 
-library(stringr)
-text <- "MANUAL EBK VALUE CHECK: plate_run_id = 393 Values = EBK-1-1(13000);EBK-3-2(14000)"
