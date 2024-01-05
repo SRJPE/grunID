@@ -34,8 +34,11 @@ generate_threshold <- function(con, plate_run, strategy = "twice average",.contr
            plate_run_id == !!plate_run_identifier) |>
     dplyr::collect()
 
-  controls_for_threshold <- control_blanks |> filter(raw_fluorescence < 12000)
+  controls_for_threshold <- control_blanks |> filter(raw_fluorescence < 12000) |>
+    mutate(sub_plate_from_id = (strsplit(sample_id, "-")[[1]][2]))
   controls_for_flagging <- control_blanks |> filter(raw_fluorescence > 12000)
+
+
 
   if (nrow(controls_for_threshold) == 0) {
     stop(paste0("no control variables found in plate run with id: '", plate_run_identifier, "'"), call. = FALSE)

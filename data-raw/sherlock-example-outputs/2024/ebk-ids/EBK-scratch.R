@@ -14,7 +14,7 @@ add_new_plate_results(
   lab_work_performed_by = "Emanuel",
   description = "test",
   date_run = lubridate::today(),
-  filepath = "data-raw/sherlock-example-outputs/2024/ebk-ids/061223_JPE24_E+L_E1-2_P1_SH_RH.xlsx",
+  filepath = "data-raw/sherlock-example-outputs/2024/061223_JPE24_E+L_E1-2_P1_SH_RH - FAIL.xlsx",
   sample_type = "fin_clip",
   layout_type = "split_plate_early_late",
   plate_size = 384,

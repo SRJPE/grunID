@@ -42,18 +42,19 @@ add_plate_thresholds <- function(con, thresholds, .control_id = "NTC") {
     dplyr::left_join(thresholds, by = c("assay_id" = "assay_id", "plate_run_id" = "plate_run_id")) |>
     dplyr::mutate(positive_detection = raw_fluorescence > threshold) |>
     dplyr::select(sample_id, assay_id, raw_fluorescence,
-                  threshold, positive_detection, plate_run_id)
+                  threshold, positive_detection, plate_run_id, sub_plate)
 
   query <- glue::glue_sql("
   INSERT INTO assay_result (sample_id, assay_id, raw_fluorescence, threshold,
-                            positive_detection, plate_run_id)
+                            positive_detection, plate_run_id, sub_plate)
   VALUES (
           {detection_results$sample_id},
           {detection_results$assay_id},
           {detection_results$raw_fluorescence},
           {detection_results$threshold},
           {detection_results$positive_detection},
-          {detection_results$plate_run_id}::int
+          {detection_results$plate_run_id}::int,
+          {detection_results$sub_plate}::int
   );", .con = con)
 
   assay_results_added <- purrr::map_dbl(query, function(q) {
