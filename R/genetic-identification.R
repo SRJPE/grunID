@@ -670,4 +670,3 @@ parse_plate_flags_for_EBK_errors <- function(text) {
     tidyr::separate(V1, into = c("flag_type","sub_plate", "replicate"), sep= "-") |>
     dplyr::rename(value = V2)
 }
-
