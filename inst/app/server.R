@@ -304,7 +304,7 @@ output$season_plot <- renderPlot(
 
   latest_qa_qc_fetch <- eventReactive(list(initial_load_qa_qc()), {
     logger::log_info("Fetching latest results from database for QA/QC tab")
-    data <- flagged_sample_status()
+    data <- flagged_plate_runs()
     data
   })
 
@@ -314,16 +314,23 @@ output$season_plot <- renderPlot(
         filter(active_plate_run == TRUE) |>
         mutate(updated_at = format(updated_at, "%Y-%m-%d %H:%M")) |>
         distinct(plate_run_id, active_plate_run, .keep_all = TRUE) |>
-        select(plate_run_id, date_run, updated_at, lab_work_performed_by,
+        select(plate_run_id, flags, date_run, updated_at, lab_work_performed_by,
                genetic_method = method_name, active = active_plate_run)
     } else {
       latest_qa_qc_fetch() |>
         distinct(plate_run_id, active_plate_run, .keep_all = TRUE) |>
         mutate(updated_at = format(updated_at, "%Y-%m-%d %H:%M")) |>
-        select(plate_run_id, date_run, updated_at, lab_work_performed_by,
+        select(plate_run_id, flags, date_run, updated_at, lab_work_performed_by,
                genetic_method = method_name, active = active_plate_run)
     }
   })
+
+  output$flagged_sub_plate_choices <- reactive({
+    unique_flags <- unique(flagged_sample_table()$flags)
+    sub_plate_choices <- parse_plate_flags_for_EBK_errors(unique_flags)
+    sub_plate_choices
+  })
+
   # flagged table
   output$flagged_table <- DT::renderDataTable(DT::datatable(
     flagged_sample_table(),

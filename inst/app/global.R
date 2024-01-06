@@ -67,27 +67,49 @@ DB_get_sample_status <- function() {
 # if user 'rejects', reject whole plate run and update assay_result for all samples with plate_run_id to be active = FALSE
 # if user 'rejects', update assay_result table where sub_plate = X and plate_run_id = Y and update active to FALSE
 
-flagged_sample_status <- function() {
+flagged_plate_runs <- function() {
   DBI::dbGetQuery(
     con,
-    "SELECT ar.plate_run_id, ar.sample_id, sc.status_code_name, status.comment, a.assay_name,
-    ar.raw_fluorescence, ar.threshold, ar.positive_detection, pr.active AS active_plate_run,
-    pr.date_run, pr.updated_at, pr.lab_work_performed_by, gm.method_name
-FROM assay_result AS ar
-LEFT JOIN(
-	SELECT sample_id, comment, status_code_id
-	FROM sample_status
-	WHERE comment LIKE '%MANUAL%'
-) AS status ON ar.sample_id = status.sample_id
-LEFT JOIN (
-	SELECT id, active, genetic_method_id, date_run, updated_at, lab_work_performed_by
-	FROM plate_run
-) AS pr ON ar.plate_run_id = pr.id
-JOIN public.genetic_method gm ON gm.id = pr.genetic_method_id
-JOIN public.status_code sc ON sc.id = status.status_code_id
-JOIN public.assay a ON a.id = ar.assay_id;"
+    "SELECT pr.id AS plate_run_id, pr.flags, pr.date_run, pr.updated_at, pr.lab_work_performed_by, gm.method_name,
+    active AS active_plate_run, gm.method_name
+    FROM plate_run AS pr WHERE flags LIKE '%EBK-FLAG%' AND active = 'TRUE'
+    LEFT JOIN public.genetic_method AS gm ON gm.id = pr.genetic_method_id;"
   )
 }
+
+# TODO update this query
+flagged_sub_plates <- function(plate_run_id, sub_plate_id) {
+  DBI::dbGetQuery(
+    con,
+    glue::glue(
+    "SELECT ar.plate_run_id, pr.flags, ar.sample_id, a.assay_name, ar.raw_fluorescence, ar.threshold, ar.positive_detection,
+    ar.plate_run_id, ar.sub_plate, ar.active
+    FROM assay_result as ar WHERE ar.plate_run_id = {plate_run_id} AND ar.sub_plate = {sub_plate_id}
+    LEFT JOIN plate_run pr on pr.id = ar.plate_run_id
+    JOIN public.assay a on a.id = ar.assay_id;")
+  )
+}
+# flagged_sample_status <- function() {
+#   DBI::dbGetQuery(
+#     con,
+#     "SELECT ar.plate_run_id, ar.sample_id, sc.status_code_name, status.comment, a.assay_name,
+#     ar.raw_fluorescence, ar.threshold, ar.positive_detection, pr.active AS active_plate_run,
+#     pr.date_run, pr.updated_at, pr.lab_work_performed_by, gm.method_name
+# FROM assay_result AS ar
+# LEFT JOIN(
+# 	SELECT sample_id, comment, status_code_id
+# 	FROM sample_status
+# 	WHERE comment LIKE '%MANUAL%'
+# ) AS status ON ar.sample_id = status.sample_id
+# LEFT JOIN (
+# 	SELECT id, active, genetic_method_id, date_run, updated_at, lab_work_performed_by
+# 	FROM plate_run
+# ) AS pr ON ar.plate_run_id = pr.id
+# JOIN public.genetic_method gm ON gm.id = pr.genetic_method_id
+# JOIN public.status_code sc ON sc.id = status.status_code_id
+# JOIN public.assay a ON a.id = ar.assay_id;"
+#   )
+# }
 
 # sample_status_options <- dplyr::tbl(con, "status_code") |>
 #   dplyr::distinct(status_code_name) |>
