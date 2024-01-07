@@ -70,10 +70,10 @@ DB_get_sample_status <- function() {
 flagged_plate_runs <- function() {
   DBI::dbGetQuery(
     con,
-    "SELECT pr.id AS plate_run_id, pr.flags, pr.date_run, pr.updated_at, pr.lab_work_performed_by, gm.method_name,
-    active AS active_plate_run, gm.method_name
-    FROM plate_run AS pr WHERE flags LIKE '%EBK-FLAG%' AND active = 'TRUE'
-    LEFT JOIN public.genetic_method AS gm ON gm.id = pr.genetic_method_id;"
+    "SELECT pr.id AS plate_run_id, pr.flags, pr.date_run, pr.updated_at, pr.lab_work_performed_by, gm.method_name, pr.active AS active_plate_run, gm.method_name
+    FROM plate_run AS pr
+    LEFT JOIN public.genetic_method gm ON gm.id = pr.genetic_method_id
+    WHERE pr.flags LIKE '%EBK_FLAG%' AND pr.active = 'TRUE';"
   )
 }
 

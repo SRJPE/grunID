@@ -325,9 +325,18 @@ output$season_plot <- renderPlot(
     }
   })
 
+  # TODO currently no flag in the right format, so can't test this
   output$flagged_sub_plate_choices <- reactive({
     unique_flags <- unique(flagged_sample_table()$flags)
-    sub_plate_choices <- parse_plate_flags_for_EBK_errors(unique_flags)
+    #sub_plate_choices <- grunID::parse_plate_flags_for_EBK_errors(unique_flags) # TODO error this is not exporting
+    sub_plate_choices <- purrr::map_df(unique_flags, function(x) {
+      data.frame(sample_id = x$sample_id,
+                 status_code = x$status_code,
+                 run_type = x$run_type,
+                 winter_plate_id = x$winter_plate_id,
+                 spring_plate_id = x$spring_plate_id
+      )
+    })
     sub_plate_choices
   })
 

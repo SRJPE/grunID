@@ -664,6 +664,7 @@ parse_spring_winter_detection_results <- function(detection_results) {
 #' @param text string to parse
 #'
 #' @keywords internal
+#' @export
 parse_plate_flags_for_EBK_errors <- function(text) {
   matches <- str_match_all(text, "(EBK-\\d+-\\d+)_(\\d+)")
   as.data.frame(matches[[1]][, 2:3]) |>
