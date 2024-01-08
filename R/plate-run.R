@@ -379,7 +379,7 @@ activate_plate_run <- function(con, plate_run_id) {
     res <- DBI::dbSendQuery(con, query)
     DBI::dbClearResult(res)
 
-    cli::cat_bullet(sprintf("Plate run ID '%s' successfully avtivated", plate_run_id), bullet_col = "green")
+    cli::cat_bullet(sprintf("Plate run ID '%s' successfully activated", plate_run_id), bullet_col = "green")
   }
 }
 

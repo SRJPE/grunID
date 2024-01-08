@@ -37,7 +37,7 @@ navbarPage(
              textInput("run_description", "Plate Run Description:"),
              dateInput("date_run", "Date of Run"),
              fileInput("sherlock_results", "Upload Sherlock Results"),
-             selectInput("sample_type", "Select a Sample Type", choices = c("mucus", "fin clip")),
+             selectInput("sample_type", "Select a Sample Type", choices = c("fin clip", "mucus")),
              selectInput("layout_type", "Select Layout Type", choices = c("split_plate_early_late", "split_plate_spring_winter",
                                                                           "triplicate", "single_assay_ots28_early",
                                                                           "single_assay_ots28_late", "single_assay_ots16_spring",
@@ -75,6 +75,10 @@ navbarPage(
            sidebarLayout(
              sidebarPanel(
                width = 3,
+               tags$div(
+                 actionButton("sample_status_refresh", "Refresh Data", class = "btn-success", icon = icon("refresh")),
+                 style = "padding-bottom: 15px;"
+               ),
                selectInput("sample_status_season", "Season", choices = 2023:2024, selected = 2024),
                selectInput("sample_status_filter", "Sample Status",
                            c("All", names(sample_status_options))),
@@ -85,7 +89,7 @@ navbarPage(
                tableOutput("season_summary")
              ),
              mainPanel(
-               DT::dataTableOutput("sample_status_table"))
+               shinycssloaders::withSpinner(DT::dataTableOutput("sample_status_table")))
            )
   ),
   tabPanel(title = "Query",
@@ -146,21 +150,32 @@ navbarPage(
              )
            )),
   tabPanel(title = "QA/QC",
-           sidebarPanel(
-             width = 3,
-             textInput("plate_id_to_deactivate", "Plate Run ID:"),
-             actionButton("do_deactivate", "Deactivate Plate Run"),
-             tags$br(), tags$br(),
-             actionButton("do_activate", "Activate Plate Run")
-           ),
            mainPanel(
-             tags$h4("Flagged result table"),
+             tags$h4("Flagged plate runs"),
+             br(),
              checkboxInput("filter_to_active_plate_runs",
                            label = "Filter to active plate runs", value = TRUE),
              DT::dataTableOutput("flagged_table") |>
-               shinycssloaders::withSpinner()
+               shinycssloaders::withSpinner(),
+             hr(), br(),
+             selectInput("sub_plate_selection", "Select sub-plate to reject or accept:",
+                         choices = "sub_plate_choices"),
+             tags$h4("Validate plate run data:"),
+             textOutput("flagged_plate_run_comment"),
+             br(),
+             DT::dataTableOutput("flagged_plate_run_table_display") |>
+               shinycssloaders::withSpinner(),
+             br(),
+             div(style = "display:inline-block; float:right",
+                 actionButton("do_activate", "Accept Plate Run",
+                              style = "color: #fff; background-color: #81A88D"),
+                 actionButton("do_deactivate", "Reject Plate Run",
+                              style = "color: #fff; background-color: #C93312")),
+             br(), br(),
            )
   )
 )
+
+
 
 # grunID::add_new_plate_results()

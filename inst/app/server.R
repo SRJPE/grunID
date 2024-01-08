@@ -61,30 +61,47 @@ function(input, output, session) {
   observeEvent(input$do_upload, {
     tryCatch({
       #messages <- capture.output(
-        grunID::add_new_plate_results(con, protocol_name = input$protocol,
-                                           genetic_method = input$genetic_method,
-                                           laboratory = input$laboratory,
-                                           lab_work_performed_by = input$performed_by,
-                                           description = input$run_description,
-                                           date_run = input$date_run,
-                                           filepath = input$sherlock_results$datapath,
-                                           sample_type = input$sample_type,
-                                           layout_type = input$layout_type,
-                                           plate_size = input$plate_size,
-                                      .control_id = "EBK",
-                                      run_gen_id = input$perform_genetics_id)
+        grunID::add_new_plate_results(
+          con,
+          protocol_name = input$protocol,
+          genetic_method = input$genetic_method,
+          laboratory = input$laboratory,
+          lab_work_performed_by = input$performed_by,
+          description = input$run_description,
+          date_run = input$date_run,
+          filepath = input$sherlock_results$datapath,
+          sample_type = input$sample_type,
+          layout_type = input$layout_type,
+          plate_size = input$plate_size,
+          selection_strategy = "positive priority",
+          .control_id = "EBK",
+          run_gen_id = input$perform_genetics_id)
       #)
       #shinyCatch({message(paste0(messages))}, prefix = '') # this prints out messages (only at the end of the function) to shiny
       spsComps::shinyCatch({message("Success!")}, position = "top-center")},
       error = function(e) {
-          spsComps::shinyCatch({stop(paste(e))}, prefix = '', position = "top-center")
+        spsComps::shinyCatch({stop(paste(e))}, prefix = '', position = "top-center")
       })
-    }
+  }
   )
 
+
+  # Sample Status ---------------------------------------------------------------------
+
+  initial_load <- reactiveVal(TRUE)
+  observeEvent(input$sample_status_refresh, {
+    initial_load(FALSE)
+  })
+
+  latest_sample_status <- eventReactive(list(input$sample_status_refresh, initial_load()), {
+    logger::log_info("Fetching latest results using sample status query")
+    DB_get_sample_status()
+  })
+
   selected_all_sample_status <- reactive({
+
     re <- ifelse(input$sample_status_season == 2023, "\\b\\w{3}23", "\\b\\w{3}24")
-    data <- all_sample_status() |> filter(str_detect(sample_id, re))
+    data <- latest_sample_status() |> filter(str_detect(sample_id, re))
 
     if(input$sample_status_filter != "All") {
       data <- data |>
@@ -121,7 +138,7 @@ function(input, output, session) {
   output$season_summary <- renderTable({
     re <- ifelse(input$sample_status_season == 2023, "\\b\\w{3}23", "\\b\\w{3}24")
 
-    all_sample_status() |> filter(str_detect(sample_id, re)) |>
+    latest_sample_status() |> filter(str_detect(sample_id, re)) |>
       group_by(status) |>
       summarise(
         total = n()
@@ -280,45 +297,107 @@ output$season_plot <- renderPlot(
   },
   rownames = FALSE))
 
-  # QA/QC
-  # flagged table
-  output$flagged_table <- DT::renderDataTable(DT::datatable({
-    if(input$filter_to_active_plate_runs) {
-      data <- flagged_sample_status() |>
-        dplyr::filter(active_plate_run)
-    } else {
-      data <- flagged_sample_status()
-    }
+
+# QA/QC -------------------------------------------------------------------
+
+  initial_load_qa_qc <- reactiveVal(TRUE)
+
+  latest_qa_qc_fetch <- eventReactive(list(initial_load_qa_qc()), {
+    logger::log_info("Fetching latest results from database for QA/QC tab")
+    data <- flagged_plate_runs()
     data
-  },
-  extensions = "Buttons",
+  })
+
+  flagged_sample_table <- reactive({
+    if(input$filter_to_active_plate_runs == TRUE) {
+      latest_qa_qc_fetch() |>
+        filter(active_plate_run == TRUE) |>
+        mutate(updated_at = format(updated_at, "%Y-%m-%d %H:%M")) |>
+        distinct(plate_run_id, active_plate_run, .keep_all = TRUE) |>
+        select(plate_run_id, flags, date_run, updated_at, lab_work_performed_by,
+               genetic_method = method_name, active = active_plate_run)
+    } else {
+      latest_qa_qc_fetch() |>
+        distinct(plate_run_id, active_plate_run, .keep_all = TRUE) |>
+        mutate(updated_at = format(updated_at, "%Y-%m-%d %H:%M")) |>
+        select(plate_run_id, flags, date_run, updated_at, lab_work_performed_by,
+               genetic_method = method_name, active = active_plate_run)
+    }
+  })
+
+  output$flagged_sub_plate_choices <- reactive({
+    unique_flags <- unique(flagged_sample_table()$flags)
+    sub_plate_choices <- parse_plate_flags_for_EBK_errors(unique_flags)
+    sub_plate_choices
+  })
+
+  # flagged table
+  output$flagged_table <- DT::renderDataTable(DT::datatable(
+    flagged_sample_table(),
   rownames = FALSE,
+  selection = "single",
   options = list(autoWidth = FALSE,
-                 dom = "Bfrtip",
-                 buttons = c("copy", "csv", "excel"),
                  lengthChange = TRUE,
-                 pageLength = 20)),
+                 pageLength = 5)),
   server = FALSE)
+
+  flagged_table_plate_run_id <- reactive({
+    flagged_sample_table() |>
+      slice(input$flagged_table_rows_selected) |>
+      pull(plate_run_id)
+  })
+
+  flagged_plate_run_table <- reactive({
+    # return message if no row is yet selected
+    validate(
+      need(!is.null(input$flagged_table_rows_selected), "No row selected")
+    )
+
+    flagged_sample_status() |>
+      filter(plate_run_id == flagged_table_plate_run_id()) |>
+      select(plate_run_id, sample_id, comment, assay_name, raw_fluorescence, threshold,
+             positive_detection)
+
+  })
+
+  output$flagged_plate_run_comment <- reactive({
+    unique(flagged_plate_run_table()$comment)
+  })
+
+  output$flagged_plate_run_table_display <- DT::renderDataTable(DT::datatable({
+    flagged_plate_run_table() |>
+      select(-comment)
+  },
+    rownames = FALSE,
+    selection = "none",
+    options = list(dom = 't')
+  ))
 
   # deactivate
   observeEvent(input$do_deactivate, {
     tryCatch({
-      grunID::deactivate_plate_run(con, input$plate_id_to_deactivate)
-      spsComps::shinyCatch({message(paste0("Plate run ", input$plate_id_to_deactivate, " deactivated"))}, position = "top-center")
+      grunID::deactivate_plate_run(con, flagged_table_plate_run_id())
+      spsComps::shinyCatch({message(paste0("Plate run ", flagged_table_plate_run_id(), " deactivated"))}, position = "top-center")
     },
     error = function(e) {
       spsComps::shinyCatch({stop(paste(e))}, prefix = '', position = "top-center")
     })
+    # refresh
+    initial_load_qa_qc(FALSE)
+    initial_load_qa_qc(TRUE)
   })
 
   # activate
   observeEvent(input$do_activate, {
     tryCatch({
-      grunID::activate_plate_run(con, input$plate_id_to_deactivate)
-      spsComps::shinyCatch({message(paste0("Plate run ", input$plate_id_to_deactivate, " activated"))}, position = "top-center")
+      grunID::activate_plate_run(con, flagged_table_plate_run_id())
+      spsComps::shinyCatch({message(paste0("Plate run ", flagged_table_plate_run_id(), " activated"))}, position = "top-center")
     },
     error = function(e) {
       spsComps::shinyCatch({stop(paste(e))}, prefix = '', position = "top-center")
     })
+    # refresh
+    initial_load_qa_qc(FALSE)
+    initial_load_qa_qc(TRUE)
   })
 }

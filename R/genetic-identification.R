@@ -42,18 +42,19 @@ add_plate_thresholds <- function(con, thresholds, .control_id = "NTC") {
     dplyr::left_join(thresholds, by = c("assay_id" = "assay_id", "plate_run_id" = "plate_run_id")) |>
     dplyr::mutate(positive_detection = raw_fluorescence > threshold) |>
     dplyr::select(sample_id, assay_id, raw_fluorescence,
-                  threshold, positive_detection, plate_run_id)
+                  threshold, positive_detection, plate_run_id, sub_plate)
 
   query <- glue::glue_sql("
   INSERT INTO assay_result (sample_id, assay_id, raw_fluorescence, threshold,
-                            positive_detection, plate_run_id)
+                            positive_detection, plate_run_id, sub_plate)
   VALUES (
           {detection_results$sample_id},
           {detection_results$assay_id},
           {detection_results$raw_fluorescence},
           {detection_results$threshold},
           {detection_results$positive_detection},
-          {detection_results$plate_run_id}::int
+          {detection_results$plate_run_id}::int,
+          {detection_results$sub_plate}::int
   );", .con = con)
 
   assay_results_added <- purrr::map_dbl(query, function(q) {
@@ -84,13 +85,14 @@ add_plate_thresholds <- function(con, thresholds, .control_id = "NTC") {
 #' @export
 #' @md
 ots_early_late_detection <- function(con, sample_id,
-                                     selection_strategy = "recent priority") {
+                                     selection_strategy = c("recent priority", "positive priority")) {
 
   selection_strategy <- match.arg(selection_strategy)
 
   # get all results that match this sample id
+  # we filter to just the sample that have an active plate run associated with them
   assay_results <- tbl(con, "assay_result") |>
-    filter(sample_id == !!sample_id)
+    filter(sample_id == !!sample_id, active == TRUE)
 
   # get all the assays run for each
   assays_existing_for_sample <- assay_results |> dplyr::distinct(assay_id) |> dplyr::pull()
@@ -144,6 +146,8 @@ ots_early_late_detection <- function(con, sample_id,
     if (selection_strategy == "positive priority") {
       ots_early_priority_results <-
         ots_early |> filter(positive_detection) |>
+        arrange(desc(created_at)) |>
+        head(1) |>
         collect()
       if (nrow(ots_early_priority_results) > 1) {
         cli::cli_abort(c(
@@ -202,7 +206,7 @@ ots_early_late_detection <- function(con, sample_id,
   }
   # positive late and positive early --> HET more testing needed
   else if (ots_early_priority_results$positive_detection && ots_late_priority_results$positive_detection) {
-    return(list(sample_id = sample_id, status_code = "analysis complete", run_type="HET", early_plate = ots_early_priority_results$plate_run_id, late_plate = ots_late_priority_results$plate_run_id))
+    return(list(sample_id = sample_id, status_code = "analysis complete", run_type="EL-HET", early_plate = ots_early_priority_results$plate_run_id, late_plate = ots_late_priority_results$plate_run_id))
   }
   # negative late and positive early --> SPW need ots 16
   else if (ots_early_priority_results$positive_detection && !ots_late_priority_results$positive_detection) {
@@ -210,7 +214,7 @@ ots_early_late_detection <- function(con, sample_id,
   }
   # negative late and negative early --> UNK
   else if (!ots_early_priority_results$positive_detection && !ots_late_priority_results$positive_detection){
-    return(list(sample_id = sample_id, status_code = "created", run_type = "UNK", early_plate = ots_early_priority_results$plate_run_id, late_plate = ots_late_priority_results$plate_run_id))
+    return(list(sample_id = sample_id, status_code = "EL-failed", run_type = "UNK", early_plate = ots_early_priority_results$plate_run_id, late_plate = ots_late_priority_results$plate_run_id))
   }
   else {
     cli::cli_abort(c("x" = "uknown combination of test results for {sample_id}, unable to proceed"))
@@ -236,8 +240,8 @@ ots_winter_spring_detection <- function(con, sample_id,
                                         selection_strategy = c("positive priority", "recent priority")) {
   selection_strategy <- match.arg(selection_strategy)
 
-  assay_results <- dplyr::tbl(con, "assay_result") |>
-    dplyr::filter(sample_id == !!sample_id)
+  assay_results <- tbl(con, "assay_result") |>
+    filter(sample_id == !!sample_id, active == TRUE)
 
   assays_for_existing_for_sample <- assay_results |> dplyr::distinct(assay_id) |> dplyr::pull()
   assays_3_for_sample <- assay_results |> dplyr::filter(assay_id == 3) |> dplyr::collect()
@@ -333,7 +337,7 @@ ots_winter_spring_detection <- function(con, sample_id,
   }
   # positive winter and positive spring ---> HET
   else if (ots_spring_priority_results$positive_detection && ots_winter_priority_results$positive_detection) {
-    return(list(sample_id = sample_id, status_code = "analysis complete", run_type="HET",
+    return(list(sample_id = sample_id, status_code = "analysis complete", run_type="SW-HET",
                 winter_plate_id = ots_winter_priority_results$plate_run_id, spring_plate_id = ots_spring_priority_results$plate_run_id))
   }
   # negative winter and positive spring --> SPR
@@ -343,7 +347,7 @@ ots_winter_spring_detection <- function(con, sample_id,
   }
   # both negative --> UNK
   else if (!ots_spring_priority_results$positive_detection && !ots_winter_priority_results$positive_detection){
-    return(list(sample_id = sample_id, status_code = "ots16 complete", run_type = "UNK",
+    return(list(sample_id = sample_id, status_code = "SW-failed", run_type = "UNK",
                 winter_plate_id = ots_winter_priority_results$plate_run_id, spring_plate_id = ots_spring_priority_results$plate_run_id))
   }
 
@@ -404,19 +408,39 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
     ))
 
   early_late_resp_data <- parse_detection_results(early_late_resp)
-
-  analysis_complete_status_insert <- early_late_resp_data |>
-    dplyr::filter(status_code == "analysis complete")
+  all_status_codes <- grunID::get_status_codes(con)
+  all_run_type_id <- grunID::get_run_types(con)
 
   # updates status code to complete
-  all_status_codes <- grunID::get_status_codes(con)
   status_code_name_to_id <- all_status_codes$id
   names(status_code_name_to_id) <- all_status_codes$status_code_name
 
   # updates run type
-  all_run_type_id <- grunID::get_run_types(con)
   run_type_name_to_id <- all_run_type_id$id
   names(run_type_name_to_id) <- all_run_type_id$code
+
+
+  el_failed_status_insert <- early_late_resp_data |>
+    filter(status_code == "EL-failed")
+
+  if (nrow(el_failed_status_insert) > 0) {
+    el_failed_status_insert$comment <- plate_comment
+    el_failed_status_insert$status_code_id <- status_code_name_to_id["EL-failed"]
+    status_to_insert <- dplyr::select(el_failed_status_insert, sample_id, status_code_id, comment)
+    DBI::dbAppendTable(con, "sample_status", status_to_insert)
+
+    uknown_gen_insert <- early_late_resp_data |>
+      dplyr::filter(status_code == "EL-failed")
+
+    insert_gen_id_to_database(con, uknown_gen_insert, run_type_name_to_id)
+
+  }
+
+
+  analysis_complete_status_insert <- early_late_resp_data |>
+    dplyr::filter(status_code == "analysis complete")
+
+
 
   if (nrow(analysis_complete_status_insert) > 0) {
 
@@ -489,6 +513,23 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
 
   spring_winter_resp_data <- parse_spring_winter_detection_results(spring_winter_resp) |>
     dplyr::left_join(select(early_late_resp_data, sample_id, early_plate, late_plate), by = "sample_id")
+
+  sw_failed_status_insert <- early_late_resp_data |>
+    filter(status_code == "SW-failed")
+
+  if (nrow(sw_failed_status_insert) > 0) {
+    sw_failed_status_insert$comment <- plate_comment
+    sw_failed_status_insert$status_code_id <- status_code_name_to_id["SW-failed"]
+    status_to_insert <- dplyr::select(sw_failed_status_insert, sample_id, status_code_id, comment)
+    DBI::dbAppendTable(con, "sample_status", status_to_insert)
+
+    uknown_gen_insert <- early_late_resp_data |>
+      dplyr::filter(status_code == "SW-failed")
+
+    insert_gen_id_to_database(con, uknown_gen_insert, run_type_name_to_id)
+
+  }
+
 
   sw_analysis_complete_status_insert <- spring_winter_resp_data |>
     dplyr::filter(status_code == "analysis complete")
@@ -604,7 +645,6 @@ parse_detection_results <- function(detection_results) {
                early_plate = x$early_plate,
                late_plate = x$late_plate)
   })
-
 }
 
 parse_spring_winter_detection_results <- function(detection_results) {
@@ -616,5 +656,18 @@ parse_spring_winter_detection_results <- function(detection_results) {
                spring_plate_id = x$spring_plate_id
     )
   })
-
 }
+
+#' @title Parse Comment for EBK Flags
+#' @description
+#' Parse plate comment and extract plate related information for EBK id's that fail the qa/qc check
+#' @param text string to parse
+#'
+#' @keywords internal
+parse_plate_flags_for_EBK_errors <- function(text) {
+  matches <- str_match_all(text, "(EBK-\\d+-\\d+)_(\\d+)")
+  as.data.frame(matches[[1]][, 2:3]) |>
+    tidyr::separate(V1, into = c("flag_type","sub_plate", "replicate"), sep= "-") |>
+    dplyr::rename(value = V2)
+}
+
