@@ -411,6 +411,7 @@ output$season_plot <- renderPlot(
   })
 
   # deactivate
+  # TODO update this action
   observeEvent(input$do_deactivate, {
     tryCatch({
       plate_id_to_deactivate <- selected_flagged_table_row()$plate_run_id
@@ -425,6 +426,7 @@ output$season_plot <- renderPlot(
     initial_load_qa_qc(TRUE)
   })
 
+  # TODO update this action
   # activate
   observeEvent(input$do_activate, {
     tryCatch({

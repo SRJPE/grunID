@@ -77,14 +77,13 @@ flagged_plate_runs <- function() {
 
 }
 
-# TODO update this query
-flagged_sub_plates <- function(plate_run_id, sub_plate_id) {
+flagged_sub_plates <- function(plate_run_id) {
   DBI::dbGetQuery(
     con,
     glue::glue(
     "SELECT ar.plate_run_id, pr.flags, ar.sample_id, a.assay_name, ar.raw_fluorescence, ar.threshold, ar.positive_detection,
     ar.plate_run_id, ar.sub_plate, ar.active
-    FROM assay_result as ar WHERE ar.plate_run_id = {plate_run_id} AND ar.sub_plate = {sub_plate_id}
+    FROM assay_result as ar WHERE ar.plate_run_id = {plate_run_id}
     LEFT JOIN plate_run pr on pr.id = ar.plate_run_id
     JOIN public.assay a on a.id = ar.assay_id;")
   )
