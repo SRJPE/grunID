@@ -416,6 +416,11 @@ output$season_plot <- renderPlot(
     tryCatch({
       plate_id_to_deactivate <- selected_flagged_table_row()$plate_run_id
       grunID::deactivate_plate_run(con, plate_id_to_deactivate)
+
+      sql_statement <- glue::glue_sql("UPDATE assay_result set active = false where plate_run_id = {plate_id_to_deactivate};",
+                                      .con = con)
+
+      DBI::dbExecute(con, sql_statement)
       spsComps::shinyCatch({message(paste0("Plate run ", plate_id_to_deactivate, " deactivated"))}, position = "top-center")
     },
     error = function(e) {
@@ -431,6 +436,9 @@ output$season_plot <- renderPlot(
   observeEvent(input$do_activate, {
     tryCatch({
       plate_id_to_activate <- selected_flagged_table_row()$plate_run_id
+      sql_statement <- glue::glue_sql("UPDATE assay_result set active = true where plate_run_id = {plate_id_to_activate};",
+                                      .con = con)
+      DBI::dbExecute(con, sql_statement)
       grunID::activate_plate_run(con, plate_id_to_activate)
       spsComps::shinyCatch({message(paste0("Plate run ", plate_id_to_activate, " activated"))}, position = "top-center")
     },
