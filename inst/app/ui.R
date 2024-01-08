@@ -149,7 +149,7 @@ navbarPage(
                  shinycssloaders::withSpinner()
              )
            )),
-  tabPanel(title = "QA/QC",
+  tabPanel(title = "Plate Validations",
            mainPanel(
              tags$h4("Flagged plate runs"),
              br(),
@@ -158,10 +158,10 @@ navbarPage(
              DT::dataTableOutput("flagged_table") |>
                shinycssloaders::withSpinner(),
              hr(), br(),
-             selectInput("sub_plate_selection", "Select sub-plate to reject or accept:",
-                         choices = "sub_plate_choices"),
-             tags$h4("Validate plate run data:"),
-             textOutput("flagged_plate_run_comment"),
+             # uiOutput("ui_subplate_selection"),
+
+             # tags$h4("Validate plate run data:"),
+             htmlOutput("flagged_plate_run_comment"),
              br(),
              DT::dataTableOutput("flagged_plate_run_table_display") |>
                shinycssloaders::withSpinner(),

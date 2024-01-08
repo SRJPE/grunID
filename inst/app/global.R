@@ -71,10 +71,10 @@ flagged_plate_runs <- function() {
   DBI::dbGetQuery(
     con,
     "SELECT pr.id AS plate_run_id, pr.flags, pr.date_run, pr.updated_at, pr.lab_work_performed_by, gm.method_name,
-    active AS active_plate_run, gm.method_name
-    FROM plate_run AS pr WHERE flags LIKE '%EBK-FLAG%' AND active = 'TRUE'
-    LEFT JOIN public.genetic_method AS gm ON gm.id = pr.genetic_method_id;"
-  )
+    pr.active AS active_plate_run, gm.method_name
+    FROM plate_run AS pr LEFT JOIN public.genetic_method AS gm ON gm.id = pr.genetic_method_id where pr.flags like 'EBK_FLAG%';"
+    )
+
 }
 
 # TODO update this query

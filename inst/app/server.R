@@ -308,8 +308,10 @@ output$season_plot <- renderPlot(
     data
   })
 
+  observe(latest_qa_qc_fetch())
+
   flagged_sample_table <- reactive({
-    if(input$filter_to_active_plate_runs == TRUE) {
+    if(input$filter_to_active_plate_runs) {
       latest_qa_qc_fetch() |>
         filter(active_plate_run == TRUE) |>
         mutate(updated_at = format(updated_at, "%Y-%m-%d %H:%M")) |>
@@ -325,59 +327,95 @@ output$season_plot <- renderPlot(
     }
   })
 
-  output$flagged_sub_plate_choices <- reactive({
-    unique_flags <- unique(flagged_sample_table()$flags)
-    sub_plate_choices <- parse_plate_flags_for_EBK_errors(unique_flags)
-    sub_plate_choices
-  })
-
   # flagged table
   output$flagged_table <- DT::renderDataTable(DT::datatable(
     flagged_sample_table(),
-  rownames = FALSE,
-  selection = "single",
-  options = list(autoWidth = FALSE,
-                 lengthChange = TRUE,
-                 pageLength = 5)),
-  server = FALSE)
+    rownames = FALSE,
+    selection = "single",
+    options = list(autoWidth = FALSE,
+                   lengthChange = TRUE,
+                   pageLength = 5)),
+    server = FALSE)
 
-  flagged_table_plate_run_id <- reactive({
+  selected_flagged_table_row <- reactive({
     flagged_sample_table() |>
-      slice(input$flagged_table_rows_selected) |>
-      pull(plate_run_id)
+      slice(input$flagged_table_rows_selected)
   })
 
-  flagged_plate_run_table <- reactive({
-    # return message if no row is yet selected
+
+  flag_details_for_selected_row <- reactive({
+    req(nrow(selected_flagged_table_row()) > 0)
+    parse_plate_flags(selected_flagged_table_row()$flags, "ebk")
+  })
+
+  # subplate_choices_for_selected_plate <- reactive({
+  #   if (nrow(selected_flagged_table_row()) == 0) {
+  #     print("no subplate selected")
+  #     return("select plate run")
+  #
+  #   }
+  #
+  #   sub_plate_choices <- flag_details_for_selected_row()
+  #   choices <- glue::glue("sub plate: {sub_plate_choices$sub_plate}-{sub_plate_choices$replicate} - {sub_plate_choices$value}")
+  #   return(choices)
+  # })
+
+  # output$ui_subplate_selection <- renderUI({
+  #   selectInput("subplate_selection", "Select sub-plate to reject or accept:",
+  #               choices = subplate_choices_for_selected_plate())
+  # })
+
+  assay_results_needed_for_validation <- reactive({
+    req(nrow(selected_flagged_table_row()) > 0)
+
+    selected_plate_run_id <- selected_flagged_table_row()$plate_run_id
+    tbl(con, "assay_result") |> dplyr::filter(plate_run_id == selected_plate_run_id)
+  })
+
+  output$flagged_plate_run_comment <- renderUI({
+    req(flag_details_for_selected_row())
+    d <- flag_details_for_selected_row()
+    tagList(
+      tags$hr(),
+      tags$h4("Validation for"),
+      tags$ul(
+        map(1:nrow(d), \(x) tags$li(glue::glue("Subplate: {d$sub_plate[x]} with EBK value: {d$value[x]}")))
+      )
+    )
+  })
+
+  output$flagged_plate_run_table_display <- DT::renderDataTable({
     validate(
-      need(!is.null(input$flagged_table_rows_selected), "No row selected")
+      need(!is.null(input$flagged_table_rows_selected), "select a plate run to view assay results")
     )
 
-    flagged_sample_status() |>
-      filter(plate_run_id == flagged_table_plate_run_id()) |>
-      select(plate_run_id, sample_id, comment, assay_name, raw_fluorescence, threshold,
-             positive_detection)
+    extracted_value <- str_extract(input$subplate_selection, "\\b\\d+-\\d+\\b")
+    subplate_rep <- as.integer(unlist(strsplit(extracted_value, split = "-")))
 
+
+    data <- assay_results_needed_for_validation() |>
+      select(plate_run_id, sample_id, raw_fluorescence, threshold, positive_detection, sub_plate) |>
+      collect() |>
+      filter(!(str_detect(sample_id, "^POS|^NEG|^NTC"))) |>
+      arrange(sample_id)
+      DT::datatable(data,
+                    rownames = FALSE,
+                    selection = "none",
+                    options = list(dom = 't', pageLength = 100)
+      ) |>
+        formatStyle(
+          'sub_plate',
+          target = 'row',
+          backgroundColor = styleEqual(1, '#ffc6c2')
+        )
   })
-
-  output$flagged_plate_run_comment <- reactive({
-    unique(flagged_plate_run_table()$comment)
-  })
-
-  output$flagged_plate_run_table_display <- DT::renderDataTable(DT::datatable({
-    flagged_plate_run_table() |>
-      select(-comment)
-  },
-    rownames = FALSE,
-    selection = "none",
-    options = list(dom = 't')
-  ))
 
   # deactivate
   observeEvent(input$do_deactivate, {
     tryCatch({
-      grunID::deactivate_plate_run(con, flagged_table_plate_run_id())
-      spsComps::shinyCatch({message(paste0("Plate run ", flagged_table_plate_run_id(), " deactivated"))}, position = "top-center")
+      plate_id_to_deactivate <- selected_flagged_table_row()$plate_run_id
+      grunID::deactivate_plate_run(con, plate_id_to_deactivate)
+      spsComps::shinyCatch({message(paste0("Plate run ", plate_id_to_deactivate, " deactivated"))}, position = "top-center")
     },
     error = function(e) {
       spsComps::shinyCatch({stop(paste(e))}, prefix = '', position = "top-center")
@@ -390,8 +428,9 @@ output$season_plot <- renderPlot(
   # activate
   observeEvent(input$do_activate, {
     tryCatch({
-      grunID::activate_plate_run(con, flagged_table_plate_run_id())
-      spsComps::shinyCatch({message(paste0("Plate run ", flagged_table_plate_run_id(), " activated"))}, position = "top-center")
+      plate_id_to_activate <- selected_flagged_table_row()$plate_run_id
+      grunID::activate_plate_run(con, plate_id_to_activate)
+      spsComps::shinyCatch({message(paste0("Plate run ", plate_id_to_activate, " activated"))}, position = "top-center")
     },
     error = function(e) {
       spsComps::shinyCatch({stop(paste(e))}, prefix = '', position = "top-center")
