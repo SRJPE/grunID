@@ -158,7 +158,6 @@ navbarPage(
              DT::dataTableOutput("flagged_table") |>
                shinycssloaders::withSpinner(),
              hr(), br(),
-             textOutput("flagged_sub_plate_choices"),
              selectInput("sub_plate_selection", "Select sub-plate to reject or accept:",
                          choices = "flagged_sub_plate_choices"),
              tags$h4("Validate plate run data:"),

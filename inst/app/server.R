@@ -325,22 +325,28 @@ output$season_plot <- renderPlot(
     }
   })
 
-  # TODO currently no flag in the right format, so can't test this
-  output$flagged_sub_plate_choices <- reactive({
-    unique_flags <- unique(flagged_sample_table()$flags)
-    #sub_plate_choices <- grunID::parse_plate_flags_for_EBK_errors(unique_flags) # TODO error this is not exporting
-    sub_plate_choices <- purrr::map_df(unique_flags, function(x) {
-      data.frame(sample_id = x$sample_id,
-                 status_code = x$status_code,
-                 run_type = x$run_type,
-                 winter_plate_id = x$winter_plate_id,
-                 spring_plate_id = x$spring_plate_id
-      )
-    })
-    sub_plate_choices
+  # get the plate run ID of the selected row
+  flagged_table_plate_run_id <- reactive({
+    flagged_sample_table() |>
+      slice(input$flagged_table_rows_selected) |>
+      pull(plate_run_id)
   })
 
-  # flagged table
+  # have a drop down with the options for the flagged sub plates for that plate run ID
+  flagged_sub_plate_choices <- reactive({
+    unique_flags <- flagged_sample_table() |>
+      filter(plate_run_id == flagged_table_plate_run_id) |>
+      distinct(flags)
+    # now parse the errors to get the options for the unique flags
+    sub_plate_choices <- grunID::parse_plate_flags_for_EBK_errors(unique_flags) |> # TODO error this is not exporting
+      distinct(sub_plate)
+      sub_plate_choices
+  })
+
+  output$flagged_sub_plate_choices <- reactive(flagged_sub_plate_choices())
+
+  # TODO update this to reflect the sub plate choices (with the query)
+  # flagged sub plates to accept or reject
   output$flagged_table <- DT::renderDataTable(DT::datatable(
     flagged_sample_table(),
   rownames = FALSE,
@@ -350,27 +356,21 @@ output$season_plot <- renderPlot(
                  pageLength = 5)),
   server = FALSE)
 
-  flagged_table_plate_run_id <- reactive({
-    flagged_sample_table() |>
-      slice(input$flagged_table_rows_selected) |>
-      pull(plate_run_id)
-  })
-
   flagged_plate_run_table <- reactive({
     # return message if no row is yet selected
     validate(
       need(!is.null(input$flagged_table_rows_selected), "No row selected")
     )
+    flagged_sub_plates(flagged_table_plate_run_id()) |>
+      filter(sub_plate == input$sub_plate_selection) |>
+      select(plate_run_id, sample_id, assay_name, raw_fluorescence, threshold, positive_detection,
+             sub_plate)
+    # OLD CODE (used to work)
+    # flagged_sample_status() |>
+    #   filter(plate_run_id == flagged_table_plate_run_id()) |>
+    #   select(plate_run_id, sample_id, comment, assay_name, raw_fluorescence, threshold,
+    #          positive_detection)
 
-    flagged_sample_status() |>
-      filter(plate_run_id == flagged_table_plate_run_id()) |>
-      select(plate_run_id, sample_id, comment, assay_name, raw_fluorescence, threshold,
-             positive_detection)
-
-  })
-
-  output$flagged_plate_run_comment <- reactive({
-    unique(flagged_plate_run_table()$comment)
   })
 
   output$flagged_plate_run_table_display <- DT::renderDataTable(DT::datatable({
@@ -383,6 +383,7 @@ output$season_plot <- renderPlot(
   ))
 
   # deactivate
+  # TODO update this action
   observeEvent(input$do_deactivate, {
     tryCatch({
       grunID::deactivate_plate_run(con, flagged_table_plate_run_id())
@@ -396,6 +397,7 @@ output$season_plot <- renderPlot(
     initial_load_qa_qc(TRUE)
   })
 
+  # TODO update this action
   # activate
   observeEvent(input$do_activate, {
     tryCatch({
