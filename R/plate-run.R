@@ -361,11 +361,11 @@ activate_plate_run <- function(con, plate_run_id) {
     dplyr::pull(active)
 
   if(length(is_plate_run_active) == 0) {
-    stop(sprintf("plate run ID '%s' does not exist in the database", plate_run_id))
+    stop(sprintf("plate run ID '%s' does not exist in the database", plate_run_id), call. = FALSE)
   }
 
   else if(is_plate_run_active) {
-    stop(sprintf("plate run ID '%s' is already activated", plate_run_id))
+    stop(sprintf("plate run ID '%s' is already activated", plate_run_id), call. = FALSE)
   }
 
   else {

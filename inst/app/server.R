@@ -384,7 +384,7 @@ output$season_plot <- renderPlot(
       DT::datatable(data,
                     rownames = FALSE,
                     selection = "none",
-                    options = list(dom = 't', pageLength = 500, scrollX = TRUE, scrollY = "900px")
+                    options = list(dom = 't', pageLength = 500, scrollX = TRUE, scrollY = "500px")
       ) |>
         formatStyle(
           'sub_plate',
