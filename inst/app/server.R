@@ -348,23 +348,6 @@ output$season_plot <- renderPlot(
     parse_plate_flags(selected_flagged_table_row()$flags, "ebk")
   })
 
-  # subplate_choices_for_selected_plate <- reactive({
-  #   if (nrow(selected_flagged_table_row()) == 0) {
-  #     print("no subplate selected")
-  #     return("select plate run")
-  #
-  #   }
-  #
-  #   sub_plate_choices <- flag_details_for_selected_row()
-  #   choices <- glue::glue("sub plate: {sub_plate_choices$sub_plate}-{sub_plate_choices$replicate} - {sub_plate_choices$value}")
-  #   return(choices)
-  # })
-
-  # output$ui_subplate_selection <- renderUI({
-  #   selectInput("subplate_selection", "Select sub-plate to reject or accept:",
-  #               choices = subplate_choices_for_selected_plate())
-  # })
-
   assay_results_needed_for_validation <- reactive({
     req(nrow(selected_flagged_table_row()) > 0)
 
@@ -396,7 +379,7 @@ output$season_plot <- renderPlot(
     data <- assay_results_needed_for_validation() |>
       select(plate_run_id, sample_id, raw_fluorescence, threshold, positive_detection, sub_plate) |>
       collect() |>
-      filter(!(str_detect(sample_id, "^POS|^NEG|^NTC"))) |>
+      filter(str_detect(sample_id, "^EBK")) |>
       arrange(sample_id)
       DT::datatable(data,
                     rownames = FALSE,
@@ -408,6 +391,13 @@ output$season_plot <- renderPlot(
           target = 'row',
           backgroundColor = styleEqual(1, '#ffc6c2')
         )
+  })
+
+  output$pv_all_plate_data_tbl <- DT::renderDataTable({
+    assay_results_needed_for_validation() |>
+      select(plate_run_id, sample_id, raw_fluorescence, threshold, positive_detection, sub_plate) |>
+      collect() |>
+      DT::datatable(options = list(scrollY="500px", pageLength = 500, dom = "t"))
   })
 
   # deactivate

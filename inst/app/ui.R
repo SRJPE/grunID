@@ -166,6 +166,9 @@ navbarPage(
              DT::dataTableOutput("flagged_plate_run_table_display") |>
                shinycssloaders::withSpinner(),
              br(),
+             bsModal("modal_plate_data", title = "Plate Data", trigger = "pv_view_plate_data_btn", size = "large", DT::dataTableOutput("pv_all_plate_data_tbl")),
+             br(),
+             actionButton("pv_view_plate_data_btn", "View Full Plate Data", class = "btn-default"),
              div(style = "display:inline-block; float:right",
                  actionButton("do_activate", "Accept Plate Run",
                               style = "color: #fff; background-color: #81A88D"),
