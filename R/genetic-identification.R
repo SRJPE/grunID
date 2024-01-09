@@ -671,8 +671,8 @@ parse_plate_flags <- function(flag_text, flag_type) {
   re_str <- switch(tolower(flag_type),
                    "ebk" = "(EBK-\\d+-\\d+)_(\\d+)")
 
-  matches <- str_match_all(flag_text, re_str)
-  as.data.frame(matches[[1]][, 2:3]) |>
+  matches <- str_match_all(flag_text, re_str)[[1]]
+  as.data.frame(matches[, 2:3, drop = FALSE]) |>
     tidyr::separate(V1, into = c("flag_type","sub_plate", "replicate"), sep= "-") |>
     dplyr::rename(value = V2)
 }

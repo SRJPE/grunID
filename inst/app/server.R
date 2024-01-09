@@ -73,7 +73,7 @@ function(input, output, session) {
           sample_type = input$sample_type,
           layout_type = input$layout_type,
           plate_size = input$plate_size,
-          selection_strategy = "positive priority",
+          selection_strategy = "recent priority",
           .control_id = "EBK",
           run_gen_id = input$perform_genetics_id)
       #)
@@ -401,7 +401,7 @@ output$season_plot <- renderPlot(
       DT::datatable(data,
                     rownames = FALSE,
                     selection = "none",
-                    options = list(dom = 't', pageLength = 100)
+                    options = list(dom = 't', pageLength = 500, scrollX = TRUE, scrollY = "900px")
       ) |>
         formatStyle(
           'sub_plate',
