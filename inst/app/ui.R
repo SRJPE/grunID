@@ -14,39 +14,53 @@ navbarPage(
   # tabPanel(title = "About"),
   tabPanel("Upload Results",
            sidebarPanel(
-             width = 3,
-             h4("More Information"),
-             tags$br(),
-             actionButton("show_protocol_details", "Protocol Details", icon = icon("circle-info")),
-             tags$br(),
-             tags$br(),
-             actionButton("show_lab_details", "Lab Details", icon = icon("circle-info")),
-             tags$br(),
-             tags$br(),
-             actionButton("show_methods_details", "Genetic Method Details", icon = icon("circle-info")),
-             tags$br(),
-             tags$br(),
-             actionButton("info_performed_by", "More Info: Lab Work Performed By", icon = icon("circle-info")),
-             tags$br(),
-             tags$br(),
-             actionButton("info_run_description", "More Info: Plate Run Description", icon = icon("circle-info")),
-             tags$br(),
-             tags$br(),
-             actionButton("info_sample_type", "More Info: Sample Type", icon = icon("circle-info")),
-             tags$br(),
-             tags$br()
+             width = 3
            ),
            column(
              width = 6,
              h3("Enter Plate Run"),
-             selectInput("protocol", "Select a Protocol", choices = all_protocols$name),
-             selectInput("laboratory", "Select a Laboratory", choices = all_labs$code),
-             selectInput("genetic_method", "Select a Genetic Method", choices = all_gen_methods$code),
-             textInput("performed_by", "Lab work performed by:"),
-             textInput("run_description", "Plate Run Description:"),
+
+             tags$div(
+               style = "display: flex; align-items: center;",
+               selectInput("protocol", "Select a Protocol", choices = all_protocols$name),
+               actionButton("show_protocol_details", label = NULL, icon = icon("question"), class = "round-btn icon-offset")
+             ),
+
+             tags$div(
+               style = "display: flex; align-items: center;",
+               selectInput("laboratory", "Select a Laboratory", choices = all_labs$code),
+               actionButton("show_lab_details", label = NULL, icon = icon("question"), class = "round-btn icon-offset")
+
+             ),
+
+             tags$div(
+               style = "display: flex; align-items: center;",
+               selectInput("genetic_method", "Select a Genetic Method", choices = all_gen_methods$code),
+               actionButton("show_methods_details", label = NULL, icon = icon("question"), class = "round-btn icon-offset")
+
+             ),
+
+             tags$div(
+               style = "display: flex; align-items: center;",
+               textInput("performed_by", "Lab work performed by:"),
+               actionButton("info_performed_by", label = NULL, icon = icon("question"), class = "round-btn icon-offset")
+
+             ),
+
+             tags$div(
+               style = "display: flex; align-items: center;",
+               textInput("run_description", "Plate Run Description:"),
+               actionButton("info_run_description", label = NULL, icon = icon("question"), class = "round-btn icon-offset")
+
+             ),
              dateInput("date_run", "Date of Run"),
              fileInput("sherlock_results", "Upload Sherlock Results"),
-             selectInput("sample_type", "Select a Sample Type", choices = c("fin clip", "mucus")),
+             tags$div(
+               style = "display: flex; align-items: center;",
+               selectInput("sample_type", "Select a Sample Type", choices = c("fin clip", "mucus")),
+               actionButton("info_sample_type", label = NULL, icon = icon("question"), class = "round-btn icon-offset")
+
+             ),
              tags$div(
                style = "display: flex; align-items: center;",
                selectInput("layout_type", "Select Layout Type",
@@ -64,7 +78,7 @@ navbarPage(
              selectInput("plate_size", "Select Plate Size", choices = c(384, 96)),
              checkboxInput("perform_genetics_id", label = "Run genetic calculations for samples after upload", value = TRUE),
              actionButton("do_upload", "Upload Results", class = "btn-success", icon = icon("rocket")),
-             tags$br(),
+
              tags$br()
            ),
            column(
