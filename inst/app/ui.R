@@ -1,6 +1,16 @@
 navbarPage(
   theme = "lumen",
   title = "grunID UI",
+  header = tags$head(
+    tags$style(HTML('
+      .round-btn {
+        border-radius: 50%;
+      }
+      .icon-offset {
+        margin-left: 5px; /* Adjust the margin as needed */
+      }
+    '))
+  ),
   # tabPanel(title = "About"),
   tabPanel("Upload Results",
            sidebarPanel(
@@ -24,8 +34,7 @@ navbarPage(
              tags$br(),
              actionButton("info_sample_type", "More Info: Sample Type", icon = icon("circle-info")),
              tags$br(),
-             tags$br(),
-             actionButton("info_layout_type", "More Info: Layout Type", icon = icon("circle-info")),
+             tags$br()
            ),
            column(
              width = 6,
@@ -38,14 +47,20 @@ navbarPage(
              dateInput("date_run", "Date of Run"),
              fileInput("sherlock_results", "Upload Sherlock Results"),
              selectInput("sample_type", "Select a Sample Type", choices = c("fin clip", "mucus")),
-             selectInput("layout_type", "Select Layout Type",
-                         choices = c("Split Plate - Early + Late"="split_plate_early_late",
-                                     "Split Plate - Spring + Winter"="split_plate_spring_winter",
-                                     "Triplicate"="triplicate",
-                                     "Single Assay OTS 28 Early (v5 Mapping)"="single_assay_ots28_early",
-                                     "Single Assay OTS 28 Late (v5 Mapping)"="single_assay_ots28_late",
-                                     "Single Assay OTS 16 Spring (v5 Mapping)"="single_assay_ots16_spring",
-                                     "Single Assay OTS 16 Winter (v5 Mapping)"="single_assay_ots16_winter")),
+             tags$div(
+               style = "display: flex; align-items: center;",
+               selectInput("layout_type", "Select Layout Type",
+                           choices = c("Split Plate - Early + Late"="split_plate_early_late",
+                                       "Split Plate - Spring + Winter"="split_plate_spring_winter",
+                                       "Single Assay OTS 28 Early (v5 Mapping)"="single_assay_ots28_early",
+                                       "Single Assay OTS 28 Late (v5 Mapping)"="single_assay_ots28_late",
+                                       "Single Assay OTS 16 Spring (v5 Mapping)"="single_assay_ots16_spring",
+                                       "Single Assay OTS 16 Winter (v5 Mapping)"="single_assay_ots16_winter",
+                                       "Triplicate"="triplicate"
+                           )
+               ),
+               actionButton("info_layout_type", label = NULL, icon = icon("question"), class = "round-btn icon-offset")
+             ),
              selectInput("plate_size", "Select Plate Size", choices = c(384, 96)),
              checkboxInput("perform_genetics_id", label = "Run genetic calculations for samples after upload", value = TRUE),
              actionButton("do_upload", "Upload Results", class = "btn-success", icon = icon("rocket")),

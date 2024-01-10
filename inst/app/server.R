@@ -51,10 +51,15 @@ function(input, output, session) {
 
   observeEvent(input$info_layout_type, {
     showModal(modalDialog(
-      "What plate map layout are you using? This refers to which assays are being run and in what organization on the plate.
-      Current options are split_plate_early_late, split_plate_spring_winter, triplicate, single_assay_ots28_early,
-      single_assay_ots28_late, single_assay_ots16_spring, single_assay_ots16_winter",
-      size = "l"
+      tagList(
+        tags$h3("Dual Assay Layout"),
+        tags$p("For dual assay layouts select either 'Split Plate Early + Late' or 'Split Plate Spring + Winter'"),
+        img(src = "assets/plate-mapping-2-assay.png", width = "100%"),
+        tags$h3("Single Assay V5"),
+        tags$p("For single assay layouts select one of the 'Single Assay' options"),
+        img(src = "assets/plate-mapping-v5.png", width = "100%")
+      ),
+      size = "l",easyClose = TRUE
     ))
   })
 
@@ -385,12 +390,7 @@ output$season_plot <- renderPlot(
                     rownames = FALSE,
                     selection = "none",
                     options = list(dom = 't', pageLength = 500, scrollX = TRUE, scrollY = "500px")
-      ) |>
-        formatStyle(
-          'sub_plate',
-          target = 'row',
-          backgroundColor = styleEqual(1, '#ffc6c2')
-        )
+      )
   })
 
   output$pv_all_plate_data_tbl <- DT::renderDataTable({
