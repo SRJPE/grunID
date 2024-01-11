@@ -9,6 +9,11 @@ navbarPage(
       .icon-offset {
         margin-left: 5px; /* Adjust the margin as needed */
       }
+
+       .shiny-notification {
+        bottom: 0;
+        left: 0;
+      }
     '))
   ),
   # tabPanel(title = "About"),
@@ -17,6 +22,7 @@ navbarPage(
            #   width = 3
            # ),
            column(
+             # offset = 1,
              width = 6,
              h3("Enter Plate Run"),
 
@@ -195,6 +201,7 @@ navbarPage(
 
              # tags$h4("Validate plate run data:"),
              htmlOutput("flagged_plate_run_comment"),
+             htmlOutput("ui_subplate_checkbox"),
              br(),
              DT::dataTableOutput("flagged_plate_run_table_display") |>
                shinycssloaders::withSpinner(),
@@ -203,9 +210,9 @@ navbarPage(
              br(),
              actionButton("pv_view_plate_data_btn", "View Full Plate Data", class = "btn-default"),
              div(style = "display:inline-block; float:right",
-                 actionButton("do_activate", "Accept Plate Run",
+                 actionButton("do_activate", "Accept Selected Subplates",
                               style = "color: #fff; background-color: #81A88D"),
-                 actionButton("do_deactivate", "Reject Plate Run",
+                 actionButton("do_deactivate", "Reject Selected Subplates",
                               style = "color: #fff; background-color: #C93312")),
              br(), br(),
            )

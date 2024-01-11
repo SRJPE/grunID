@@ -73,11 +73,13 @@ process_sherlock <- function(filepath,
 
   layout <- dplyr::left_join(sample_details$data, plate_layout, by="location")
 
+  subplate_mapping <- if (stringr::str_starts(layout_type, "split")) grunID::dual_assay_plate_mapping_V1 else grunID::single_assay_plate_mapping_V5
+
   raw_assay_results <-
     process_raw_assay_results(filepath, ranges = cell_ranges,
                               plate_size, layout,
                               has_background_fluorescence = has_blk_entries) |>
-    left_join(grunID::plate_v4_mapping |> select(idx, plate), by = c("well_location" = "idx")) |>
+    left_join(subplate_mapping |> select(idx, plate), by = c("well_location" = "idx")) |>
     rename(sub_plate = plate)
 
   return(

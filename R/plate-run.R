@@ -305,7 +305,7 @@ print.plate_run <- function(x, ...) {
 #' @returns no return value
 #' @export
 #' @md
-deactivate_plate_run <- function(con, plate_run_id) {
+deactivate_plate_run <- function(con, plate_run_id, sub_plates = NULL) {
   if (!DBI::dbIsValid(con)) {
     stop("Connection argument does not have a valid connection to the run-id database.
          Please try reconnecting to the database using 'DBI::dbConnect'",
@@ -313,7 +313,7 @@ deactivate_plate_run <- function(con, plate_run_id) {
   }
 
   is_plate_run_active <- dplyr::tbl(con, "plate_run") |>
-    dplyr::filter(id == !!plate_run_id) |>
+    dplyr::filter(id == plate_run_id) |>
     dplyr::collect() |>
     dplyr::pull(active)
 
@@ -321,11 +321,9 @@ deactivate_plate_run <- function(con, plate_run_id) {
     stop(sprintf("plate run ID '%s' does not exist in the database", plate_run_id))
   }
 
-  else if(!is_plate_run_active) {
+  if(!is_plate_run_active) {
     stop(sprintf("plate run ID '%s' is already deactivated", plate_run_id))
-  }
-
-  else {
+  } else {
 
     query <- glue::glue_sql("UPDATE plate_run
                            SET active = FALSE

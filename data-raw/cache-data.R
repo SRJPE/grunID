@@ -15,7 +15,7 @@ plate_letters <- LETTERS[1:16]
 plate_letters_odds <- as.character(na.omit(plate_letters[odds]))
 plate_letters_evens <- as.character(na.omit(plate_letters[evens]))
 
-plate_v4_mapping <- expand_grid(rows = LETTERS[1:16], cols = 1:24) |>
+single_assay_plate_mapping_V5 <- expand_grid(rows = LETTERS[1:16], cols = 1:24) |>
   mutate(idx = paste0(rows, cols),
          plate = case_when(
            cols %in% odds & rows %in% plate_letters_odds ~ 1,
@@ -24,5 +24,14 @@ plate_v4_mapping <- expand_grid(rows = LETTERS[1:16], cols = 1:24) |>
            cols %in% evens & rows %in% plate_letters_odds ~ 2
          ))
 
+usethis::use_data(single_assay_plate_mapping_V5, overwrite = TRUE)
 
-usethis::use_data(plate_v4_mapping, overwrite = TRUE)
+dual_assay_plate_mapping_V1 <-
+  expand_grid(rows = LETTERS[1:16], cols = 1:24) |>
+  mutate(idx = paste0(rows, cols),
+         plate = case_when(
+           rows %in% plate_letters_odds ~ 1,
+           rows %in% plate_letters_evens ~ 2
+         ))
+
+usethis::use_data(dual_assay_plate_mapping_V1, overwrite = TRUE)

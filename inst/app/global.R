@@ -3,6 +3,8 @@ library(shiny)
 library(tidyverse)
 library(shinyBS)
 library(DT)
+library(shinyWidgets)
+
 
 renderTableWithScrollOnX <- function(...) {
   tags$div(
