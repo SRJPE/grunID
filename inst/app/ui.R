@@ -13,9 +13,9 @@ navbarPage(
   ),
   # tabPanel(title = "About"),
   tabPanel("Upload Results",
-           sidebarPanel(
-             width = 3
-           ),
+           # sidebarPanel(
+           #   width = 3
+           # ),
            column(
              width = 6,
              h3("Enter Plate Run"),
@@ -117,7 +117,7 @@ navbarPage(
                            c("All", names(sample_status_options))),
                selectInput("location_filter", "Location",
                            c("All", all_locations)),
-               tags$hr(),
+               tags$hr(),... =
                tags$h3("Season Summary"),
                tableOutput("season_summary")
              ),
