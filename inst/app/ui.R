@@ -116,6 +116,10 @@ navbarPage(
                checkboxInput("filter_to_failed",
                              label = "Filter results to failed assays",
                              value = FALSE),
+               tags$div(
+                 actionButton("query_refresh", "Run Query", class = "btn-success"),
+                 style = "padding-bottom: 15px;"
+               ),
                tags$h4("Quick plot"),
                actionButton("show_season_plot", "Show Season Plot",
                             icon = icon("chart-line"))
