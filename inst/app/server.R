@@ -318,4 +318,20 @@ output$season_plot <- renderPlot(
     grunID::generate_subsample(con, as.numeric(input$season_filter))$summary
   },
   rownames = FALSE))
+
+
+  # Add sample -------------------------------------
+
+  observeEvent(input$add_sample_submit, {
+    grunID::add_sample(
+      con = con,
+      location_code = input$add_sample_location_code,
+      sample_event_number = input$add_sample_event_number,
+      first_sample_date = input$add_sample_first_sample_date,
+      sample_bin_code = input$add_sample_sample_bin_code,
+      min_fork_length = input$add_sample_min_fork_length,
+      max_fork_length = input$add_sample_max_fork_length,
+      expected_number_of_samples = input$add_sample_number_samples
+    )
+  })
 }
