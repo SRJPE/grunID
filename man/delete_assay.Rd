@@ -40,7 +40,7 @@ delete_assay(con, 1)
 Other assay functions: 
 \code{\link{add_assay}()},
 \code{\link{get_assays}()},
-\code{\link{update_assay_status}()},
-\code{\link{update_assay}()}
+\code{\link{update_assay}()},
+\code{\link{update_assay_status}()}
 }
 \concept{assay functions}

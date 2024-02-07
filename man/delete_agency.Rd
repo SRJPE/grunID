@@ -40,7 +40,7 @@ delete_agency(con, 4)
 Other agency functions: 
 \code{\link{add_agency}()},
 \code{\link{get_agencies}()},
-\code{\link{update_agency_status}()},
-\code{\link{update_agency}()}
+\code{\link{update_agency}()},
+\code{\link{update_agency_status}()}
 }
 \concept{agency functions}

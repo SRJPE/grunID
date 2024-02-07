@@ -1,6 +1,7 @@
 #' Generate Subsample
-#' @description Subsamples from sampling events in a season.
-#' @details This function subsamples from all samples in a given season according to the following logic:
+#' @description Subsamples from a given sample event in a season.
+#' @details This function takes a subsample from all samples returned from field for a given sampling
+#' event and a given season. It uses the following subsampling logic:
 #'
 #' * At least 50% of samples per site per event will be sampled.
 #' * If the number of samples is odd, divide that number by 2 and round the resulting number up to the nearest integer.
@@ -10,6 +11,7 @@
 #' * If this rule contradicts the “less than 20” rule (above), this rule should be prioritized. For example, if we receive a sample set from a given site and event where Bins A, B, C, D, and E are each represented by five samples (total sample size = 25), process all of the samples for that site/event.
 #' * Subsampling should be random.
 #' @param con connection to the database
+#' @param sampling_event A numeric value for the sampling event you are processing (i.e. 1:10)
 #' @param season The season for which you want to pull subsamples. A season consists of all sampling events
 #' from the given year up to September 30th and from the previous year after October 1st.
 #' @examples
@@ -17,7 +19,7 @@
 #' con <- gr_db_connect()
 #'
 #' # subsample from all sampling events in season 2024
-#' subsamples <- generate_subsample(con, 2024)
+#' subsamples <- generate_subsample(con, 1, 2024)
 #' @returns A named list containing a `results` table and a `summary` table.
 #' The `results` table contains all samples selected by the process with the following columns:
 #'

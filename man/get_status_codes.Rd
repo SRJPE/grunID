@@ -29,7 +29,7 @@ Other status code functions:
 \code{\link{delete_status_code}()},
 \code{\link{get_sample_status}()},
 \code{\link{set_sample_status}()},
-\code{\link{update_status_code_status}()},
-\code{\link{update_status_code}()}
+\code{\link{update_status_code}()},
+\code{\link{update_status_code_status}()}
 }
 \concept{status code functions}
