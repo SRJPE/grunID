@@ -37,17 +37,35 @@
 #' * **subsamples**
 #' @export
 #' @md
-generate_subsample <- function(con, season) {
+generate_subsample <- function(con, sampling_event, season) {
+
   if(!is.numeric(season)) {
     cli::cli_abort("Season must be a numeric value.")
   }
   if(nchar(season) != 4) {
     cli::cli_abort("Season must be in the format YYYY (i.e. 2024).")
   }
-  # get all sample event IDs for a season
+
+  # get samples from the right season
   samples <- grunID::sample_filter_to_season(con, season) |>
+    # filter to sampling event of interest
+    dplyr::filter(sample_event_number == sampling_event) |>
+    # now make sure that they have the right status
+    dplyr::left_join(dplyr::tbl(con, "sample_status") |>
+                       dplyr::collect() |>
+                       dplyr::select(sample_id, status_code_id),
+                     by = "sample_id") |>
+    dplyr::filter(status_code_id %in% c(4, 5)) |>
+    # now get totals for applying logic
     dplyr::add_count(location_code, sample_event_number, name = "total_samples_in_event") |>
     dplyr::add_count(location_code, sample_event_number, sample_bin_code, name = "no_samples_per_bin")
+
+  if(nrow(samples) == 0) {
+    cli::cli_abort(paste0("There are no samples in the database from sampling event ", sampling_event,
+                          " and sampling season ", season, " that are marked as returned from field. Please
+                          make sure you have processed the field sheets using grunID::process_field_sheet_samples()
+                          and added field data to the database using grunID::update_field_sheet_samples()"))
+  }
 
   # apply rules
   samples_with_counts <- samples |>
@@ -96,5 +114,6 @@ generate_subsample <- function(con, season) {
 
 }
 
-
+# TODO generate subsample_plate_map
+# arg dual assay or single assay
 
