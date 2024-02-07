@@ -75,7 +75,7 @@ function(input, output, session) {
           sample_type = input$sample_type,
           layout_type = input$layout_type,
           plate_size = input$plate_size,
-          selection_strategy = "positive priority",
+          selection_strategy = "recent priority",
           .control_id = "EBK",
           run_gen_id = input$perform_genetics_id)
       #)
