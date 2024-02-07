@@ -42,18 +42,19 @@ add_plate_thresholds <- function(con, thresholds, .control_id = "NTC") {
     dplyr::left_join(thresholds, by = c("assay_id" = "assay_id", "plate_run_id" = "plate_run_id")) |>
     dplyr::mutate(positive_detection = raw_fluorescence > threshold) |>
     dplyr::select(sample_id, assay_id, raw_fluorescence,
-                  threshold, positive_detection, plate_run_id)
+                  threshold, positive_detection, plate_run_id, sub_plate)
 
   query <- glue::glue_sql("
   INSERT INTO assay_result (sample_id, assay_id, raw_fluorescence, threshold,
-                            positive_detection, plate_run_id)
+                            positive_detection, plate_run_id, sub_plate)
   VALUES (
           {detection_results$sample_id},
           {detection_results$assay_id},
           {detection_results$raw_fluorescence},
           {detection_results$threshold},
           {detection_results$positive_detection},
-          {detection_results$plate_run_id}::int
+          {detection_results$plate_run_id}::int,
+          {detection_results$sub_plate}::int
   );", .con = con)
 
   assay_results_added <- purrr::map_dbl(query, function(q) {
@@ -89,8 +90,9 @@ ots_early_late_detection <- function(con, sample_id,
   selection_strategy <- match.arg(selection_strategy)
 
   # get all results that match this sample id
+  # we filter to just the sample that have an active plate run associated with them
   assay_results <- tbl(con, "assay_result") |>
-    filter(sample_id == !!sample_id)
+    filter(sample_id == !!sample_id, active == TRUE)
 
   # get all the assays run for each
   assays_existing_for_sample <- assay_results |> dplyr::distinct(assay_id) |> dplyr::pull()
@@ -238,8 +240,8 @@ ots_winter_spring_detection <- function(con, sample_id,
                                         selection_strategy = c("positive priority", "recent priority")) {
   selection_strategy <- match.arg(selection_strategy)
 
-  assay_results <- dplyr::tbl(con, "assay_result") |>
-    dplyr::filter(sample_id == !!sample_id)
+  assay_results <- tbl(con, "assay_result") |>
+    filter(sample_id == !!sample_id, active == TRUE)
 
   assays_for_existing_for_sample <- assay_results |> dplyr::distinct(assay_id) |> dplyr::pull()
   assays_3_for_sample <- assay_results |> dplyr::filter(assay_id == 3) |> dplyr::collect()
@@ -654,4 +656,17 @@ parse_spring_winter_detection_results <- function(detection_results) {
                spring_plate_id = x$spring_plate_id
     )
   })
+}
+
+#' @title Parse Comment for EBK Flags
+#' @description
+#' Parse plate comment and extract plate related information for EBK id's that fail the qa/qc check
+#' @param text string to parse
+#'
+#' @keywords internal
+parse_plate_flags_for_EBK_errors <- function(text) {
+  matches <- str_match_all(text, "(EBK-\\d+-\\d+)_(\\d+)")
+  as.data.frame(matches[[1]][, 2:3]) |>
+    tidyr::separate(V1, into = c("flag_type","sub_plate", "replicate"), sep= "-") |>
+    dplyr::rename(value = V2)
 }

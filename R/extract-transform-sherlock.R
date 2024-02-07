@@ -73,7 +73,12 @@ process_sherlock <- function(filepath,
 
   layout <- dplyr::left_join(sample_details$data, plate_layout, by="location")
 
-  raw_assay_results <- process_raw_assay_results(filepath, ranges = cell_ranges, plate_size, layout, has_background_fluorescence = has_blk_entries)
+  raw_assay_results <-
+    process_raw_assay_results(filepath, ranges = cell_ranges,
+                              plate_size, layout,
+                              has_background_fluorescence = has_blk_entries) |>
+    left_join(grunID::plate_v4_mapping |> select(idx, plate), by = c("well_location" = "idx")) |>
+    rename(sub_plate = plate)
 
   return(
     structure(
@@ -275,9 +280,12 @@ process_well_sample_details <- function(filepath,
     assay_ids <- dplyr::case_when(layout_type == "split_plate_early_late" ~ c(1, 2),
                                   layout_type == "split_plate_spring_winter" ~ c(3, 4))
 
+    # there are certain excel files that cause this first column to no be named ...1 always
+    layout_first_col <- names(layout_raw)[1]
+
     plate_layout <- layout_raw |>
-      tidyr::pivot_longer(names_to="col_num", values_to = "sample_id", -...1) |>
-      dplyr::rename(row_num = ...1) |>
+      tidyr::pivot_longer(names_to="col_num", values_to = "sample_id", -layout_first_col) |>
+      dplyr::rename(row_num = layout_first_col) |>
       dplyr::mutate(assay_id = ifelse(col_num %in% 1:12, assay_ids[1], assay_ids[2])) |>
       dplyr::transmute(
         location = paste0(row_num, col_num),
