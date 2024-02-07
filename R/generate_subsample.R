@@ -116,6 +116,65 @@ generate_subsample <- function(con, sampling_event, season) {
 
 }
 
-# TODO generate subsample_plate_map
-# arg dual assay or single assay
+
+#' Generate Plate Map from Subsample
+#' @description Generates a plate map from a list of sample IDs
+#' @details Fill this out TODO
+#' @param sample_ids list of sample IDs with which to populate a plate map
+#' @param plate_assay_structure Either `dual_assay` or `single_assay`
+#' @param out_filepath Directory to which you want to write the csv(s)
+#' @returns A named list containing a `results` table and a `summary` table.
+#' A .csv file with rows `A:P` and columns `1:24` populated with sample IDs and control blanks
+#' @export
+#' @md
+generate_subsample_plate_map <- function(sample_ids, plate_assay_structure, out_filepath) {
+  no_sample_ids <- length(sample_ids)
+  no_plate_maps <- ceiling(no_sample_ids / 96)
+
+  cli::cli_bullets(paste0(no_sample_ids, " sample IDs detected; generating ", no_plate_maps, " plate map(s)"))
+
+  if(plate_assay_structure == "dual_assay") {
+    # TODO implement logic for more than one CSV
+    # split into the number of rows you have to fill out
+    fill_rows <- split(test_ids, ceiling(seq_along(test_ids)/11))
+    nrows_to_fill <- length(fill_rows)
+
+    out_table <- matrix(NA, nrow = 16, ncol = 24)
+
+    if(no_rows_to_fill <= 6) {
+      # get every other row
+      fill_indices <- which(1:nrows_to_fill %% 2 == 1)
+
+      for(i in fill_indices) {
+        fill_cols <- 1:length(fill_rows[[i]]) # fill all cells in a row
+        out_table[i, fill_cols] <- fill_rows[[i]]
+      }
+    } else {
+      # get every other row, and then fill in in-between
+      fill_indices <- c(which(1:nrows_to_fill %% 2 == 1),
+                        which(1:nrows_to_fill %% 2 == 1) + 1)
+      for(i in fill_indices) {
+        fill_cols <- 1:length(fill_rows[[i]])
+        out_table[i, fill_cols] <- fill_rows[[i]]
+      }
+    }
+
+    control_blanks <- c("EBK-1-1", NA, "EBK-1-2", NA, "EBK-1-3", NA, "EBK-1-4",
+                        "POS-DNA-1", "POS_DNA-2", "POS-DNA-3", "NEG-DNA-1",
+                        "NEG-DNA-2", "NEG-DNA-3", "NTC-1", "NTC-2", "NTC-3")
+    out_table[, 13:24] <- out_table[, 1:12]
+    out_table[, 12] <- control_blanks
+    out_table[, 24] <- control_blanks
+    out_table[is.na(out_table)] <- ""
+    out_df <- data.frame(out_table)
+
+    names(out_df) <- c(1:24)
+    rownames(out_df) <- LETTERS[1:16]
+
+  } else if(plate_assay_structure == "single_assay") {
+    # TODO do something
+  }
+  write.csv(out_df, out_filepath, row.names = TRUE)
+  cli::cli_alert_success(paste0("Plate maps generated - see ", out_filepath))
+}
 
