@@ -13,10 +13,12 @@ fill_dual_assay_plate_map(sample_ids)
 A list of plate map tables
 }
 \description{
-Generates a plate map from a list of sample IDs
+Generates a dual assay 384-well plate map from a list of sample IDs
 }
 \details{
 Generate Plate Map for Dual Assay layout
 
-Fill this out TODO
+This is called in \code{generate_subsample_plate_map()} and fills in alternating rows first, and then
+the rows inbetween on a 384-well plate. Sample IDs are populated in the left half of a 384-well plate
+and then replicated on the right half of the plate with control blanks in rows 12 and 24.
 }

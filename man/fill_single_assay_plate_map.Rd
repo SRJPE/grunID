@@ -13,10 +13,12 @@ fill_single_assay_plate_map(sample_ids)
 A list of plate map tables
 }
 \description{
-Generates a plate map from a list of sample IDs
+Generates a single-assay 384-well plate map from a list of sample IDs
 }
 \details{
-Generate Plate Map for Single Assay v5 layout
+Generate Plate Map for Single Assay v4 layout
 
-Fill this out TODO
+This is called in \code{generate_subsample_plate_map()} and fills samples in the 384-well
+layout in blocks of four (A1, B1, A2 and B2 would all be the same sample but with different assays).
+for more detail on this mapping structure, see \code{grunID::plate_v4_mapping}.
 }

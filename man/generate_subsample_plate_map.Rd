@@ -14,7 +14,6 @@ generate_subsample_plate_map(sample_ids, plate_assay_structure, out_filepath)
 \item{out_filepath}{Filename. Do not include ".csv" at the end of the filepath.}
 }
 \value{
-A named list containing a \code{results} table and a \code{summary} table.
 A .csv file with rows \code{A:P} and columns \code{1:24} populated with sample IDs and control blanks
 }
 \description{

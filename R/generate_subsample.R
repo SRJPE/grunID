@@ -141,8 +141,7 @@ generate_subsample <- function(con, sampling_event, season) {
 #' @param sample_ids list of sample IDs with which to populate a plate map
 #' @param plate_assay_structure Either `dual_assay` or `single_assay`
 #' @param out_filepath Filename. Do not include ".csv" at the end of the filepath.
-#' @returns A named list containing a `results` table and a `summary` table.
-#' A .csv file with rows `A:P` and columns `1:24` populated with sample IDs and control blanks
+#' @returns A .csv file with rows `A:P` and columns `1:24` populated with sample IDs and control blanks
 #' @export
 #' @md
 generate_subsample_plate_map <- function(sample_ids, plate_assay_structure, out_filepath) {
@@ -195,8 +194,10 @@ generate_subsample_plate_map <- function(sample_ids, plate_assay_structure, out_
 
 #' Generate Plate Map for Dual Assay layout
 #' @title fill_dual_assay_plate_map
-#' @description Generates a plate map from a list of sample IDs
-#' @details Fill this out TODO
+#' @description Generates a dual assay 384-well plate map from a list of sample IDs
+#' @details This is called in `generate_subsample_plate_map()` and fills in alternating rows first, and then
+#' the rows inbetween on a 384-well plate. Sample IDs are populated in the left half of a 384-well plate
+#' and then replicated on the right half of the plate with control blanks in rows 12 and 24.
 #' @param sample_ids list of sample IDs with which to populate a plate map
 #' @returns A list of plate map tables
 #' @export
@@ -213,7 +214,6 @@ fill_dual_assay_plate_map <- function(sample_ids) {
 
   if(nrows_to_fill <= 8) {
     # get every other row
-    # this isn't getting all fill indices
     fill_indices <- row_fill_lookup[1:nrows_to_fill]
     for(i in 1:nrows_to_fill) {
       fill_cols <- 1:length(fill_rows[[i]]) # fill all cells in a row
@@ -241,10 +241,12 @@ fill_dual_assay_plate_map <- function(sample_ids) {
 }
 
 
-#' Generate Plate Map for Single Assay v5 layout
+#' Generate Plate Map for Single Assay v4 layout
 #' @title fill_single_assay_plate_map
-#' @description Generates a plate map from a list of sample IDs
-#' @details Fill this out TODO
+#' @description Generates a single-assay 384-well plate map from a list of sample IDs
+#' @details This is called in `generate_subsample_plate_map()` and fills samples in the 384-well
+#' layout in blocks of four (A1, B1, A2 and B2 would all be the same sample but with different assays).
+#' for more detail on this mapping structure, see `grunID::plate_v4_mapping`.
 #' @param sample_ids list of sample IDs with which to populate a plate map
 #' @returns A list of plate map tables
 #' @export
