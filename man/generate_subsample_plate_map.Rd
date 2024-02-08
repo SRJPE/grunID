@@ -2,7 +2,7 @@
 % Please edit documentation in R/generate_subsample.R
 \name{generate_subsample_plate_map}
 \alias{generate_subsample_plate_map}
-\title{Generate Plate Map from Subsample}
+\title{generate_subsample_plate_map}
 \usage{
 generate_subsample_plate_map(sample_ids, plate_assay_structure, out_filepath)
 }
@@ -11,7 +11,7 @@ generate_subsample_plate_map(sample_ids, plate_assay_structure, out_filepath)
 
 \item{plate_assay_structure}{Either \code{dual_assay} or \code{single_assay}}
 
-\item{out_filepath}{Directory to which you want to write the csv(s)}
+\item{out_filepath}{Filename. Do not include ".csv" at the end of the filepath.}
 }
 \value{
 A named list containing a \code{results} table and a \code{summary} table.
@@ -21,5 +21,7 @@ A .csv file with rows \code{A:P} and columns \code{1:24} populated with sample I
 Generates a plate map from a list of sample IDs
 }
 \details{
+Generate Plate Map from Subsample
+
 Fill this out TODO
 }

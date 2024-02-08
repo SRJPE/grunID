@@ -135,69 +135,152 @@ generate_subsample <- function(con, sampling_event, season) {
 
 
 #' Generate Plate Map from Subsample
+#' @title generate_subsample_plate_map
 #' @description Generates a plate map from a list of sample IDs
 #' @details Fill this out TODO
 #' @param sample_ids list of sample IDs with which to populate a plate map
 #' @param plate_assay_structure Either `dual_assay` or `single_assay`
-#' @param out_filepath Directory to which you want to write the csv(s)
+#' @param out_filepath Filename. Do not include ".csv" at the end of the filepath.
 #' @returns A named list containing a `results` table and a `summary` table.
 #' A .csv file with rows `A:P` and columns `1:24` populated with sample IDs and control blanks
 #' @export
 #' @md
 generate_subsample_plate_map <- function(sample_ids, plate_assay_structure, out_filepath) {
 
-  control_blanks <- c("EBK-1-1", NA, "EBK-1-2", NA, "EBK-1-3", NA, "EBK-1-4",
-                      "POS-DNA-1", "POS_DNA-2", "POS-DNA-3", "NEG-DNA-1",
-                      "NEG-DNA-2", "NEG-DNA-3", "NTC-1", "NTC-2", "NTC-3")
-
-  total_available_wells <- 12 * 16
-  available_wells_for_samples <- total_available_wells- length(control_blanks)
-
-  no_sample_ids <- length(sample_ids)
-  no_plate_maps <- ceiling(no_sample_ids / available_wells_for_samples)
-
-  cli::cli_bullets(paste0(no_sample_ids, " sample IDs detected; generating ", no_plate_maps, " plate map(s)"))
-
   if(plate_assay_structure == "dual_assay") {
-    # TODO implement logic for more than one CSV
-    # split into the number of rows you have to fill out
-    fill_rows <- split(sample_ids, ceiling(seq_along(sample_ids)/11))
-    nrows_to_fill <- length(fill_rows)
 
-    out_table <- matrix(NA, nrow = 16, ncol = 24)
-    # order in which to fill in rows
-    row_fill_lookup <- c(1, 3, 5, 7, 9, 11, 13, 15, 2, 4, 6, 8, 10, 12, 14, 16, 18)
+    # determine number of plate maps to generate
+    control_blanks <- c("EBK-1-1", NA, "EBK-1-2", NA, "EBK-1-3", NA, "EBK-1-4",
+                        "POS-DNA-1", "POS_DNA-2", "POS-DNA-3", "NEG-DNA-1",
+                        "NEG-DNA-2", "NEG-DNA-3", "NTC-1", "NTC-2", "NTC-3")
 
-    if(nrows_to_fill <= 8) {
-      # get every other row
-      # this isn't getting all fill indices
-      fill_indices <- row_fill_lookup[1:nrows_to_fill]
-      for(i in 1:nrows_to_fill) {
-        fill_cols <- 1:length(fill_rows[[i]]) # fill all cells in a row
-        out_table[fill_indices[i], fill_cols] <- fill_rows[[i]]
-      }
-    } else {
-      # get every other row, and then fill in in-between
-      fill_indices <- row_fill_lookup[1:nrows_to_fill]
-      for(i in 1:nrows_to_fill) {
-        fill_cols <- 1:length(fill_rows[[i]])
-        out_table[fill_indices[i], fill_cols] <- fill_rows[[i]]
-      }
+    total_available_wells <- 12 * 16 # 1/2 of a 384-well plate
+    available_wells_for_samples <- total_available_wells- length(control_blanks)
+
+    no_sample_ids <- length(sample_ids)
+    no_plate_maps <- ceiling(no_sample_ids / available_wells_for_samples)
+
+    cli::cli_bullets(paste0(no_sample_ids, " sample IDs detected; generating ", no_plate_maps, " plate map(s)"))
+    # split sample ids into the number of necessary plate map lengths
+    split_sample_ids_by_plate_map <- split(sample_ids, ceiling(seq_along(sample_ids)/available_wells_for_samples))
+
+    plate_maps <- purrr::map(split_sample_ids_by_plate_map, grunID::fill_dual_assay_plate_map)
+
+    for(i in 1:no_plate_maps) {
+      new_filepath <- paste0(out_filepath, "_", i, ".csv")
+      write.csv(plate_maps[[i]], new_filepath, row.names = TRUE)
+      cli::cli_alert_success(paste0("Plate map generated - see ", new_filepath))
     }
 
-    out_table[, 13:24] <- out_table[, 1:12]
-    out_table[, 12] <- control_blanks
-    out_table[, 24] <- control_blanks
-    out_table[is.na(out_table)] <- ""
-    out_df <- data.frame(out_table)
-
-    names(out_df) <- c(1:24)
-    rownames(out_df) <- LETTERS[1:16]
-
   } else if(plate_assay_structure == "single_assay") {
-    # TODO do something
+
+    total_available_sample_blocks <- 92 # 4 96 well plates (384 total wells) - 16 control blanks
+
+    no_sample_ids <- length(sample_ids)
+    no_plate_maps <- ceiling(no_sample_ids / total_available_sample_blocks)
+
+    cli::cli_bullets(paste0(no_sample_ids, " sample IDs detected; generating ", no_plate_maps, " plate map(s)"))
+    # split sample ids into the number of necessary plate map lengths
+    split_sample_ids_by_plate_map <- split(sample_ids, ceiling(seq_along(sample_ids)/total_available_sample_blocks))
+
+    plate_maps <- purrr::map(split_sample_ids_by_plate_map, grunID::fill_single_assay_plate_map)
+
+    for(i in 1:no_plate_maps) {
+      new_filepath <- paste0(out_filepath, "_", i, ".csv")
+      write.csv(plate_maps[[i]], new_filepath, row.names = TRUE)
+      cli::cli_alert_success(paste0("Plate map generated - see ", new_filepath))
+    }
   }
-  write.csv(out_df, out_filepath, row.names = TRUE)
-  cli::cli_alert_success(paste0("Plate maps generated - see ", out_filepath))
+}
+
+#' Generate Plate Map for Dual Assay layout
+#' @title fill_dual_assay_plate_map
+#' @description Generates a plate map from a list of sample IDs
+#' @details Fill this out TODO
+#' @param sample_ids list of sample IDs with which to populate a plate map
+#' @returns A list of plate map tables
+#' @export
+#' @md
+fill_dual_assay_plate_map <- function(sample_ids) {
+
+  # split into the number of rows you have to fill out
+  fill_rows <- split(sample_ids, ceiling(seq_along(sample_ids)/11))
+  nrows_to_fill <- length(fill_rows)
+
+  out_table <- matrix(NA, nrow = 16, ncol = 24)
+  # order in which to fill in rows
+  row_fill_lookup <- c(1, 3, 5, 7, 9, 11, 13, 15, 2, 4, 6, 8, 10, 12, 14, 16, 18)
+
+  if(nrows_to_fill <= 8) {
+    # get every other row
+    # this isn't getting all fill indices
+    fill_indices <- row_fill_lookup[1:nrows_to_fill]
+    for(i in 1:nrows_to_fill) {
+      fill_cols <- 1:length(fill_rows[[i]]) # fill all cells in a row
+      out_table[fill_indices[i], fill_cols] <- fill_rows[[i]]
+    }
+  } else {
+    # get every other row, and then fill in in-between
+    fill_indices <- row_fill_lookup[1:nrows_to_fill]
+    for(i in 1:nrows_to_fill) {
+      fill_cols <- 1:length(fill_rows[[i]])
+      out_table[fill_indices[i], fill_cols] <- fill_rows[[i]]
+    }
+  }
+
+  out_table[, 13:24] <- out_table[, 1:12]
+  out_table[, 12] <- control_blanks
+  out_table[, 24] <- control_blanks
+  out_table[is.na(out_table)] <- ""
+  out_df <- data.frame(out_table)
+
+  names(out_df) <- c(1:24)
+  rownames(out_df) <- LETTERS[1:16]
+
+  out_df
+}
+
+
+#' Generate Plate Map for Single Assay v5 layout
+#' @title fill_single_assay_plate_map
+#' @description Generates a plate map from a list of sample IDs
+#' @details Fill this out TODO
+#' @param sample_ids list of sample IDs with which to populate a plate map
+#' @returns A list of plate map tables
+#' @export
+#' @md
+fill_single_assay_plate_map <- function(sample_ids) {
+
+  samples_to_match_to_blocks <- tibble("sample_id" = sample_ids) |>
+    mutate(id = row_number())
+
+  sample_mapping <- grunID::plate_v4_mapping |>
+    left_join(samples_to_match_to_blocks, by = c("sample_blocks" = "id")) |>
+    mutate(row_number = match(rows, LETTERS),
+           sample_id = ifelse(!is.na(control_blocks), control_blocks, sample_id)) |>
+    select(row_number, cols, sample_blocks, sample_id) |>
+    filter(!is.na(sample_id))
+
+  out_table <- matrix(NA, nrow = 16, ncol = 24)
+  no_sample_ids <- length(sample_mapping$sample_id)
+
+  for(i in unique(sample_mapping$sample_id)) {
+    fill_row <- sample_mapping |>
+      filter(sample_id == i) |>
+      pull(row_number)
+    fill_col <- sample_mapping |>
+      filter(sample_id == i) |>
+      pull(cols)
+
+    out_table[fill_row, fill_col] <- i
+  }
+
+  out_table[is.na(out_table)] <- ""
+  out_df <- data.frame(out_table)
+
+  names(out_df) <- c(1:24)
+  rownames(out_df) <- LETTERS[1:16]
+
+  out_df
 }
 

@@ -32,7 +32,7 @@ plating_blocks <- tibble("rows" = c(rep(c("A", "A", "B", "B"), 12),
                                           7, 8, 9, 10, 9, 10, 11, 12, 11, 12, 13, 14,
                                           13, 14, 15, 16, 15, 16, 17, 18, 17, 18, 19,
                                           20, 19, 20, 21, 22, 21, 22), 4)),
-                         "sample_blocks" = as.character(rep(1:92, each = 4)))
+                         "sample_blocks" = rep(1:92, each = 4))
 
 control_blank_mapping <- tibble("control_blocks" = c("EBK-1-1", "EBK-2-1", "EBK-3-1", "EBK-4-1",
                                                      "NEG-DNA-1", "POS-DNA-1", "NEG-DNA-2", "POS-DNA-2",
@@ -52,9 +52,7 @@ plate_v4_mapping <- expand_grid(rows = LETTERS[1:16], cols = 1:24) |>
            cols %in% evens & rows %in% plate_letters_odds ~ 2
          )) |>
   left_join(plating_blocks) |>
-  left_join(control_blank_mapping) |>
-  mutate(sample_blocks = ifelse(is.na(sample_blocks), control_blocks, sample_blocks)) |>
-  select(-control_blocks)
+  left_join(control_blank_mapping)
 
 
 usethis::use_data(plate_v4_mapping, overwrite = TRUE)
