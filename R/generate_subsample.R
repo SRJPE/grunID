@@ -20,16 +20,18 @@
 #'
 #' # subsample from all sampling events in season 2024
 #' subsamples <- generate_subsample(con, 1, 2024)
-#' @returns A named list containing a `results` table and a `summary` table.
-#' The `results` table contains all samples selected by the process with the following columns:
+#' @returns A named list containing a `subsample_for_sherlock` table, a `subsample_summary` table,
+#' and a `remainders_for_gt_seq` table.
+#' The `subsample_for_sherlock` table contains all samples selected by the process with the following columns:
 #'
 #' * **sample_id**
 #' * **datetime_collected**
 #' * **stream_name**
 #' * **sample_bin_code**
 #' * **sample_event_number**
+#' * **scenario**
 #'
-#' The `summary` table contains a short summary summarizing the number of samples for a given subsampling scenario by stream,
+#' The `subsample_summary` table contains a short summary summarizing the number of samples for a given subsampling scenario by stream,
 #' event, and bin. It contains the following columns:
 #'
 #' * **stream**
@@ -37,6 +39,15 @@
 #' * **bin**
 #' * **scenario**
 #' * **subsamples**
+#'
+#' The `remainders_for_gt_seq` table contains all samples **not** selected by the subsampling process with the following columns:
+#'
+#' * **sample_id**
+#' * **datetime_collected**
+#' * **stream_name**
+#' * **sample_bin_code**
+#' * **sample_event_number**
+#' * **scenario**
 #' @export
 #' @md
 generate_subsample <- function(con, sampling_event, season) {
@@ -111,8 +122,14 @@ generate_subsample <- function(con, sampling_event, season) {
     dplyr::rename(stream = stream_name, event = sample_event_number, bin = sample_bin_code, subsamples = n) |>
     dplyr::arrange(stream, event, bin)
 
-  return(list("results" = subsample_table,
-              "summary" = subsample_summary))
+  remainder_samples_for_gt_seq <- samples_with_counts |>
+    dplyr::filter(!sample_id %in% subsample_table$sample_id) |>
+    dplyr::mutate(scenario = "Remainder samples - for GT-Seq") |>
+    dplyr::select(sample_id, datetime_collected, stream_name, sample_bin_code, sample_event_number, scenario)
+
+  return(list("subsample_for_sherlock" = subsample_table,
+              "subsample_summary" = subsample_summary,
+              "remainders_for_gt_seq" = remainder_samples_for_gt_seq))
 
 }
 
@@ -128,40 +145,46 @@ generate_subsample <- function(con, sampling_event, season) {
 #' @export
 #' @md
 generate_subsample_plate_map <- function(sample_ids, plate_assay_structure, out_filepath) {
+
+  control_blanks <- c("EBK-1-1", NA, "EBK-1-2", NA, "EBK-1-3", NA, "EBK-1-4",
+                      "POS-DNA-1", "POS_DNA-2", "POS-DNA-3", "NEG-DNA-1",
+                      "NEG-DNA-2", "NEG-DNA-3", "NTC-1", "NTC-2", "NTC-3")
+
+  total_available_wells <- 12 * 16
+  available_wells_for_samples <- total_available_wells- length(control_blanks)
+
   no_sample_ids <- length(sample_ids)
-  no_plate_maps <- ceiling(no_sample_ids / 96)
+  no_plate_maps <- ceiling(no_sample_ids / available_wells_for_samples)
 
   cli::cli_bullets(paste0(no_sample_ids, " sample IDs detected; generating ", no_plate_maps, " plate map(s)"))
 
   if(plate_assay_structure == "dual_assay") {
     # TODO implement logic for more than one CSV
     # split into the number of rows you have to fill out
-    fill_rows <- split(test_ids, ceiling(seq_along(test_ids)/11))
+    fill_rows <- split(sample_ids, ceiling(seq_along(sample_ids)/11))
     nrows_to_fill <- length(fill_rows)
 
     out_table <- matrix(NA, nrow = 16, ncol = 24)
+    # order in which to fill in rows
+    row_fill_lookup <- c(1, 3, 5, 7, 9, 11, 13, 15, 2, 4, 6, 8, 10, 12, 14, 16, 18)
 
-    if(no_rows_to_fill <= 6) {
+    if(nrows_to_fill <= 8) {
       # get every other row
-      fill_indices <- which(1:nrows_to_fill %% 2 == 1)
-
-      for(i in fill_indices) {
+      # this isn't getting all fill indices
+      fill_indices <- row_fill_lookup[1:nrows_to_fill]
+      for(i in 1:nrows_to_fill) {
         fill_cols <- 1:length(fill_rows[[i]]) # fill all cells in a row
-        out_table[i, fill_cols] <- fill_rows[[i]]
+        out_table[fill_indices[i], fill_cols] <- fill_rows[[i]]
       }
     } else {
       # get every other row, and then fill in in-between
-      fill_indices <- c(which(1:nrows_to_fill %% 2 == 1),
-                        which(1:nrows_to_fill %% 2 == 1) + 1)
-      for(i in fill_indices) {
+      fill_indices <- row_fill_lookup[1:nrows_to_fill]
+      for(i in 1:nrows_to_fill) {
         fill_cols <- 1:length(fill_rows[[i]])
-        out_table[i, fill_cols] <- fill_rows[[i]]
+        out_table[fill_indices[i], fill_cols] <- fill_rows[[i]]
       }
     }
 
-    control_blanks <- c("EBK-1-1", NA, "EBK-1-2", NA, "EBK-1-3", NA, "EBK-1-4",
-                        "POS-DNA-1", "POS_DNA-2", "POS-DNA-3", "NEG-DNA-1",
-                        "NEG-DNA-2", "NEG-DNA-3", "NTC-1", "NTC-2", "NTC-3")
     out_table[, 13:24] <- out_table[, 1:12]
     out_table[, 12] <- control_blanks
     out_table[, 24] <- control_blanks
