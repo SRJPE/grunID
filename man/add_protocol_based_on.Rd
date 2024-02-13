@@ -55,7 +55,7 @@ Other protocol functions:
 \code{\link{add_protocol}()},
 \code{\link{delete_protocol}()},
 \code{\link{get_protocols}()},
-\code{\link{update_protocol_status}()},
-\code{\link{update_protocol}()}
+\code{\link{update_protocol}()},
+\code{\link{update_protocol_status}()}
 }
 \concept{protocol functions}

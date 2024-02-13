@@ -27,7 +27,7 @@ assays <- get_assays(con)
 Other assay functions: 
 \code{\link{add_assay}()},
 \code{\link{delete_assay}()},
-\code{\link{update_assay_status}()},
-\code{\link{update_assay}()}
+\code{\link{update_assay}()},
+\code{\link{update_assay_status}()}
 }
 \concept{assay functions}

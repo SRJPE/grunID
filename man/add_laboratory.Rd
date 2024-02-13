@@ -38,7 +38,7 @@ add_laboratory(con, new_laboratory)
 Other laboratory functions: 
 \code{\link{delete_laboratory}()},
 \code{\link{get_laboratories}()},
-\code{\link{update_laboratory_status}()},
-\code{\link{update_laboratory}()}
+\code{\link{update_laboratory}()},
+\code{\link{update_laboratory_status}()}
 }
 \concept{laboratory functions}

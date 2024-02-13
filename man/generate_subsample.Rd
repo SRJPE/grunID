@@ -4,7 +4,7 @@
 \alias{generate_subsample}
 \title{Generate Subsample}
 \usage{
-generate_subsample(con, season)
+generate_subsample(con, sampling_event, season)
 }
 \arguments{
 \item{con}{connection to the database}
