@@ -53,6 +53,17 @@ navbarPage(
              textOutput("console_logs")
            ),
   ),
+  tabPanel(title = "Add Samples",
+           textInput("add_sample_location_code", label = "Locaiton Code"),
+           textInput("add_sample_event_number", label = "Event Number"),
+           textInput("add_sample_first_sample_date", label = "First Sample Date (YYYY-mm-dd)"),
+           textInput("add_sample_sample_bin_code", label = "Bin Code (A-Z)"),
+           textInput("add_sample_min_fork_length", label = "Min Fork Length"),
+           textInput("add_sample_max_fork_length", label = "Max Fork Length"),
+           textInput("add_sample_number_samples", label = "Expected Number of Samples"),
+
+           actionButton("add_sample_submit", label = "Submit")
+           ),
   tabPanel(title = "Upload Field Sheets",
            mainPanel(
              tags$h3("Process and upload completed field sheets"),
@@ -120,9 +131,9 @@ navbarPage(
                  actionButton("query_refresh", "Run Query", class = "btn-success"),
                  style = "padding-bottom: 15px;"
                ),
-               tags$h4("Quick plot"),
-               actionButton("show_season_plot", "Show Season Plot",
-                            icon = icon("chart-line"))
+               # tags$h4("Quick plot"),
+               # actionButton("show_season_plot", "Show Season Plot",
+               #              icon = icon("chart-line"))
              ),
              mainPanel(
                DT::dataTableOutput("season_table") |>
