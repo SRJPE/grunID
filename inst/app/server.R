@@ -54,7 +54,8 @@ function(input, output, session) {
   observeEvent(input$info_layout_type, {
     showModal(modalDialog(
       "What plate map layout are you using? This refers to which assays are being run and in what organization on the plate.
-      Current options are split_plate_early_late, split_plate_spring_winter, triplicate, single_assay_ots28_early,
+      Current options are split_plate_early_late, split_plate_late_early, split_plate_spring_winter, split_plate_winter_spring,
+      triplicate, single_assay_ots28_early,
       single_assay_ots28_late, single_assay_ots16_spring, single_assay_ots16_winter",
       size = "l"
     ))
