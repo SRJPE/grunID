@@ -9,21 +9,25 @@ generate_subsample(con, sampling_event, season)
 \arguments{
 \item{con}{connection to the database}
 
+\item{sampling_event}{A numeric value for the sampling event you are processing (i.e. 1:10)}
+
 \item{season}{The season for which you want to pull subsamples. A season consists of all sampling events
 from the given year up to September 30th and from the previous year after October 1st.}
 }
 \value{
-A named list containing a \code{results} table and a \code{summary} table.
-The \code{results} table contains all samples selected by the process with the following columns:
+A named list containing a \code{subsample_for_sherlock} table, a \code{subsample_summary} table,
+and a \code{remainders_for_gt_seq} table.
+The \code{subsample_for_sherlock} table contains all samples selected by the process with the following columns:
 \itemize{
 \item \strong{sample_id}
 \item \strong{datetime_collected}
 \item \strong{stream_name}
 \item \strong{sample_bin_code}
 \item \strong{sample_event_number}
+\item \strong{scenario}
 }
 
-The \code{summary} table contains a short summary summarizing the number of samples for a given subsampling scenario by stream,
+The \code{subsample_summary} table contains a short summary summarizing the number of samples for a given subsampling scenario by stream,
 event, and bin. It contains the following columns:
 \itemize{
 \item \strong{stream}
@@ -32,12 +36,23 @@ event, and bin. It contains the following columns:
 \item \strong{scenario}
 \item \strong{subsamples}
 }
+
+The \code{remainders_for_gt_seq} table contains all samples \strong{not} selected by the subsampling process with the following columns:
+\itemize{
+\item \strong{sample_id}
+\item \strong{datetime_collected}
+\item \strong{stream_name}
+\item \strong{sample_bin_code}
+\item \strong{sample_event_number}
+\item \strong{scenario}
+}
 }
 \description{
-Subsamples from sampling events in a season.
+Subsamples from a given sample event in a season.
 }
 \details{
-This function subsamples from all samples in a given season according to the following logic:
+This function takes a subsample from all samples returned from field for a given sampling
+event and a given season. It uses the following subsampling logic:
 \itemize{
 \item At least 50\% of samples per site per event will be sampled.
 \item If the number of samples is odd, divide that number by 2 and round the resulting number up to the nearest integer.
@@ -53,5 +68,5 @@ This function subsamples from all samples in a given season according to the fol
 con <- gr_db_connect()
 
 # subsample from all sampling events in season 2024
-subsamples <- generate_subsample(con, 2024)
+subsamples <- generate_subsample(con, 1, 2024)
 }
