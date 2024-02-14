@@ -35,8 +35,8 @@ update_protocol(con, 1, updated_protocol)
 }
 \seealso{
 Other protocol functions: 
-\code{\link{add_protocol_based_on}()},
 \code{\link{add_protocol}()},
+\code{\link{add_protocol_based_on}()},
 \code{\link{delete_protocol}()},
 \code{\link{get_protocols}()},
 \code{\link{update_protocol_status}()}
