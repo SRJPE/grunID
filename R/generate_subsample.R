@@ -65,10 +65,10 @@ generate_subsample <- function(con, sampling_event, season) {
     dplyr::filter(sample_event_number == sampling_event) |>
     # now make sure that they have the right status
     dplyr::left_join(dplyr::tbl(con, "sample_status") |>
-                       dplyr::collect() |>
                        dplyr::select(sample_id, status_code_id),
                      by = "sample_id") |>
     dplyr::filter(status_code_id %in% c(4, 5)) |>
+    dplyr::collect() |>
     # now get totals for applying logic
     dplyr::add_count(location_code, sample_event_number, name = "total_samples_in_event") |>
     dplyr::add_count(location_code, sample_event_number, sample_bin_code, name = "no_samples_per_bin")
