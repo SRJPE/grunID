@@ -27,7 +27,7 @@ sample_types <- get_sample_types(con)
 Other sample type functions: 
 \code{\link{add_sample_type}()},
 \code{\link{delete_sample_type}()},
-\code{\link{update_sample_type_status}()},
-\code{\link{update_sample_type}()}
+\code{\link{update_sample_type}()},
+\code{\link{update_sample_type_status}()}
 }
 \concept{sample type functions}
