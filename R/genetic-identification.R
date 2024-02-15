@@ -676,4 +676,3 @@ parse_plate_flags <- function(flag_text, flag_type) {
     tidyr::separate(V1, into = c("flag_type","sub_plate", "replicate"), sep= "-") |>
     dplyr::rename(value = V2)
 }
-

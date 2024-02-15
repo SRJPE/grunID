@@ -1,5 +1,7 @@
 function(input, output, session) {
 
+
+# Upload Results ----------------------------------------------------------
   observeEvent(input$show_protocol_details, {
     showModal(modalDialog(
       title = "Protocol Details",
@@ -51,6 +53,7 @@ function(input, output, session) {
 
   observeEvent(input$info_layout_type, {
     showModal(modalDialog(
+
       tagList(
         tags$h3("Dual Assay Layout"),
         tags$p("For dual assay layouts select either 'Split Plate Early + Late' or 'Split Plate Spring + Winter'"),
@@ -60,6 +63,13 @@ function(input, output, session) {
         img(src = "assets/plate-mapping-v5.png", width = "100%")
       ),
       size = "l",easyClose = TRUE
+
+      "What plate map layout are you using? This refers to which assays are being run and in what organization on the plate.
+      Current options are split_plate_early_late, split_plate_late_early, split_plate_spring_winter, split_plate_winter_spring,
+      triplicate, single_assay_ots28_early,
+      single_assay_ots28_late, single_assay_ots16_spring, single_assay_ots16_winter",
+      size = "l"
+
     ))
   })
 
@@ -93,12 +103,12 @@ function(input, output, session) {
 
   # Sample Status ---------------------------------------------------------------------
 
-  initial_load <- reactiveVal(TRUE)
+  initial_load_sample_status <- reactiveVal(TRUE)
   observeEvent(input$sample_status_refresh, {
-    initial_load(FALSE)
+    initial_load_sample_status(FALSE)
   })
 
-  latest_sample_status <- eventReactive(list(input$sample_status_refresh, initial_load()), {
+  latest_sample_status <- eventReactive(list(input$sample_status_refresh, initial_load_sample_status()), {
     logger::log_info("Fetching latest results using sample status query")
     DB_get_sample_status()
   })
@@ -150,9 +160,23 @@ function(input, output, session) {
       )
   })
 
+
+# Query -------------------------------------------------------------------
+
+  initial_load_query <- reactiveVal(TRUE)
+  observeEvent(input$query_refresh, {
+    initial_load_query(FALSE)
+  })
+
+  latest_query <- eventReactive(list(input$query_refresh, initial_load_query()), {
+    logger::log_info("Fetching latest results using grunID::get_samples_by_season()")
+    data <- grunID::get_samples_by_season(con, input$season_filter, input$dataset_type_filter,
+                                          input$filter_to_heterozygotes, input$filter_to_failed)
+    data
+  })
+
   selected_samples_by_season <- reactive({
-    grunID::get_samples_by_season(con, input$season_filter, input$dataset_type_filter,
-                                  input$filter_to_heterozygotes, input$filter_to_failed)
+    latest_query()
   })
 
   output$season_table <- DT::renderDataTable(DT::datatable(selected_samples_by_season(),
@@ -164,9 +188,9 @@ function(input, output, session) {
                  lengthChange = TRUE,
                  pageLength = 20)),
   server = FALSE
-  ) |>
-    shiny::bindCache(input$season_filter, input$dataset_type_filter,
-                     input$filter_to_heterozygotes, input$filter_to_failed)
+  ) #|>
+    # shiny::bindCache(input$season_filter, input$dataset_type_filter,
+    #                  input$filter_to_heterozygotes, input$filter_to_failed)
 
   observeEvent(input$season_filter_description, {
     showModal(modalDialog(
@@ -193,7 +217,7 @@ function(input, output, session) {
   })
 
 output$season_plot <- renderPlot(
-  grunID::get_samples_by_season(con, season = input$season_filter, dataset = input$dataset_type_filter) |>
+  selected_samples_by_season() |>
     dplyr::mutate(week = lubridate::week(datetime_collected)) |>
     dplyr::filter(!is.na(week)) |>
     dplyr::group_by(week) |>
@@ -222,6 +246,9 @@ output$season_plot <- renderPlot(
         size = "l")
       )
     })
+
+
+# Upload Field Sheets -----------------------------------------------------
 
   # read in field data, if available
   clean_field_data <- reactive({
@@ -258,6 +285,9 @@ output$season_plot <- renderPlot(
                  pageLength = 10)),
   server = FALSE
   )
+
+
+# Subsample ---------------------------------------------------------------
 
   # subsample table
   output$subsample_table <- DT::renderDataTable(DT::datatable({
@@ -301,6 +331,7 @@ output$season_plot <- renderPlot(
     grunID::generate_subsample(con, as.numeric(input$season_filter))$summary
   },
   rownames = FALSE))
+
 
 
 # QA/QC -------------------------------------------------------------------
@@ -474,4 +505,20 @@ output$season_plot <- renderPlot(
     initial_load_qa_qc(FALSE)
     initial_load_qa_qc(TRUE)
   })
+
+  # Add sample -------------------------------------
+
+  observeEvent(input$add_sample_submit, {
+    grunID::add_sample(
+      con = con,
+      location_code = input$add_sample_location_code,
+      sample_event_number = input$add_sample_event_number,
+      first_sample_date = input$add_sample_first_sample_date,
+      sample_bin_code = input$add_sample_sample_bin_code,
+      min_fork_length = input$add_sample_min_fork_length,
+      max_fork_length = input$add_sample_max_fork_length,
+      expected_number_of_samples = input$add_sample_number_samples
+    )
+  })
+
 }

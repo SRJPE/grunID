@@ -61,6 +61,7 @@ navbarPage(
              ),
              dateInput("date_run", "Date of Run"),
              fileInput("sherlock_results", "Upload Sherlock Results"),
+
              tags$div(
                style = "display: flex; align-items: center;",
                selectInput("sample_type", "Select a Sample Type", choices = c("fin clip", "mucus")),
@@ -81,6 +82,14 @@ navbarPage(
                ),
                actionButton("info_layout_type", label = NULL, icon = icon("question"), class = "round-btn icon-offset")
              ),
+
+             selectInput("sample_type", "Select a Sample Type", choices = c("fin clip", "mucus")),
+             selectInput("layout_type", "Select Layout Type", choices = c("split_plate_early_late", "split_plate_late_early",
+                                                                          "split_plate_spring_winter", "split_plate_winter_spring",
+                                                                          "triplicate", "single_assay_ots28_early",
+                                                                          "single_assay_ots28_late", "single_assay_ots16_spring",
+                                                                          "single_assay_ots16_winter")),
+
              selectInput("plate_size", "Select Plate Size", choices = c(384, 96)),
              checkboxInput("perform_genetics_id", label = "Run genetic calculations for samples after upload", value = TRUE),
              actionButton("do_upload", "Upload Results", class = "btn-success", icon = icon("rocket")),
@@ -92,6 +101,17 @@ navbarPage(
              textOutput("console_logs")
            ),
   ),
+  tabPanel(title = "Add Samples",
+           textInput("add_sample_location_code", label = "Locaiton Code"),
+           textInput("add_sample_event_number", label = "Event Number"),
+           textInput("add_sample_first_sample_date", label = "First Sample Date (YYYY-mm-dd)"),
+           textInput("add_sample_sample_bin_code", label = "Bin Code (A-Z)"),
+           textInput("add_sample_min_fork_length", label = "Min Fork Length"),
+           textInput("add_sample_max_fork_length", label = "Max Fork Length"),
+           textInput("add_sample_number_samples", label = "Expected Number of Samples"),
+
+           actionButton("add_sample_submit", label = "Submit")
+           ),
   tabPanel(title = "Upload Field Sheets",
            mainPanel(
              tags$h3("Process and upload completed field sheets"),
@@ -155,9 +175,13 @@ navbarPage(
                checkboxInput("filter_to_failed",
                              label = "Filter results to failed assays",
                              value = FALSE),
-               tags$h4("Quick plot"),
-               actionButton("show_season_plot", "Show Season Plot",
-                            icon = icon("chart-line"))
+               tags$div(
+                 actionButton("query_refresh", "Run Query", class = "btn-success"),
+                 style = "padding-bottom: 15px;"
+               ),
+               # tags$h4("Quick plot"),
+               # actionButton("show_season_plot", "Show Season Plot",
+               #              icon = icon("chart-line"))
              ),
              mainPanel(
                DT::dataTableOutput("season_table") |>
