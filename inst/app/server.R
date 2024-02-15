@@ -53,11 +53,23 @@ function(input, output, session) {
 
   observeEvent(input$info_layout_type, {
     showModal(modalDialog(
+
+      tagList(
+        tags$h3("Dual Assay Layout"),
+        tags$p("For dual assay layouts select either 'Split Plate Early + Late' or 'Split Plate Spring + Winter'"),
+        img(src = "assets/plate-mapping-2-assay.png", width = "100%"),
+        tags$h3("Single Assay V5"),
+        tags$p("For single assay layouts select one of the 'Single Assay' options"),
+        img(src = "assets/plate-mapping-v5.png", width = "100%")
+      ),
+      size = "l",easyClose = TRUE
+
       "What plate map layout are you using? This refers to which assays are being run and in what organization on the plate.
       Current options are split_plate_early_late, split_plate_late_early, split_plate_spring_winter, split_plate_winter_spring,
       triplicate, single_assay_ots28_early,
       single_assay_ots28_late, single_assay_ots16_spring, single_assay_ots16_winter",
       size = "l"
+
     ))
   })
 
@@ -321,6 +333,179 @@ output$season_plot <- renderPlot(
   rownames = FALSE))
 
 
+
+# QA/QC -------------------------------------------------------------------
+
+  initial_load_qa_qc <- reactiveVal(TRUE)
+
+  latest_qa_qc_fetch <- eventReactive(list(initial_load_qa_qc()), {
+    logger::log_info("Fetching latest results from database for QA/QC tab")
+    data <- flagged_plate_runs()
+    data
+  })
+
+  observe(latest_qa_qc_fetch())
+
+  flagged_sample_table <- reactive({
+    if(input$filter_to_active_plate_runs) {
+      latest_qa_qc_fetch() |>
+        filter(active_plate_run == TRUE) |>
+        mutate(updated_at = format(updated_at, "%Y-%m-%d %H:%M")) |>
+        distinct(plate_run_id, active_plate_run, .keep_all = TRUE) |>
+        select(plate_run_id, flags, date_run, updated_at, lab_work_performed_by,
+               genetic_method = method_name, active = active_plate_run, last_review = updated_by)
+    } else {
+      latest_qa_qc_fetch() |>
+        distinct(plate_run_id, active_plate_run, .keep_all = TRUE) |>
+        mutate(updated_at = format(updated_at, "%Y-%m-%d %H:%M")) |>
+        select(plate_run_id, flags, date_run, updated_at, lab_work_performed_by,
+               genetic_method = method_name, active = active_plate_run, last_review = updated_by)
+    }
+  })
+
+  # flagged table
+  output$flagged_table <- DT::renderDataTable(DT::datatable(
+    flagged_sample_table(),
+    rownames = FALSE,
+    selection = "single",
+    options = list(autoWidth = FALSE,
+                   lengthChange = TRUE,
+                   pageLength = 5)),
+    server = FALSE)
+
+  selected_flagged_table_row <- reactive({
+    flagged_sample_table() |>
+      slice(input$flagged_table_rows_selected)
+  })
+
+
+  flag_details_for_selected_row <- reactive({
+    req(nrow(selected_flagged_table_row()) > 0)
+    parse_plate_flags(selected_flagged_table_row()$flags, "ebk")
+  })
+
+
+  assay_results_needed_for_validation <- reactive({
+    req(nrow(selected_flagged_table_row()) > 0)
+
+    selected_plate_run_id <- selected_flagged_table_row()$plate_run_id
+    tbl(con, "assay_result") |> dplyr::filter(plate_run_id == selected_plate_run_id)
+  })
+
+  total_subplates_in_selected_plate <- reactive({
+    assay_results_needed_for_validation() |>
+      collect() |>
+      filter(!str_detect(sample_id, "^EBK|^POS|^NEG|^NTC")) |>
+      distinct(sub_plate) |> arrange(sub_plate) |> pull(sub_plate)
+  })
+
+  output$flagged_plate_run_comment <- renderUI({
+    req(flag_details_for_selected_row())
+    d <- flag_details_for_selected_row()
+    tagList(
+      tags$hr(),
+      tags$h4("Validation for"),
+      tags$ul(
+        map(1:nrow(d), \(x) tags$li(glue::glue("Subplate: {d$sub_plate[x]} with EBK value: {d$value[x]}")))
+      )
+    )
+  })
+
+  output$ui_subplate_checkbox <- renderUI({
+    req(total_subplates_in_selected_plate())
+
+    choices <- total_subplates_in_selected_plate()
+    names(choices) <- paste("subplate:", total_subplates_in_selected_plate())
+    checkboxGroupButtons(
+      inputId = "subplate_in_selceted_plate",
+      label = "",
+      choices = choices,
+      individual = TRUE,
+      checkIcon = list(
+        yes = tags$i(class = "fa fa-circle",
+                     style = "color: steelblue"),
+        no = tags$i(class = "fa fa-circle-o",
+                    style = "color: steelblue"))
+    )
+  })
+
+  output$flagged_plate_run_table_display <- DT::renderDataTable({
+    validate(
+      need(!is.null(input$flagged_table_rows_selected), "select a plate run to view assay results")
+    )
+
+    extracted_value <- str_extract(input$subplate_selection, "\\b\\d+-\\d+\\b")
+    subplate_rep <- as.integer(unlist(strsplit(extracted_value, split = "-")))
+
+
+    data <- assay_results_needed_for_validation() |>
+      select(plate_run_id, sample_id, raw_fluorescence, threshold, positive_detection, sub_plate) |>
+      collect() |>
+      filter(str_detect(sample_id, "^EBK")) |>
+      arrange(sample_id)
+      DT::datatable(data,
+                    rownames = FALSE,
+                    selection = "none",
+                    options = list(dom = 't', pageLength = 500, scrollX = TRUE, scrollY = "500px")
+      )
+  })
+
+  output$pv_all_plate_data_tbl <- DT::renderDataTable({
+    assay_results_needed_for_validation() |>
+      select(plate_run_id, sample_id, raw_fluorescence, threshold, positive_detection, sub_plate, active) |>
+      collect() |>
+      DT::datatable(options = list(scrollY="500px", pageLength = 500, dom = "t")) |>
+      formatStyle("active",
+                  target = "row",
+                  backgroundColor = styleEqual(
+                    levels = c(FALSE),
+                    values = c("#a1a1a1")
+                  ))
+  })
+
+  # deactivate
+  # TODO update this action
+  observeEvent(input$do_deactivate, {
+    tryCatch({
+      plate_id_to_deactivate <- selected_flagged_table_row()$plate_run_id
+      # grunID::deactivate_plate_run(con, plate_id_to_deactivate)
+
+      subplates_to_deactivate <- as.integer(input$subplate_in_selceted_plate)
+
+      sql_statement <- glue::glue_sql("UPDATE assay_result set active = false where plate_run_id = {plate_id_to_deactivate} and sub_plate IN ({subplates_to_deactivate*});",
+                                      .con = con)
+
+      DBI::dbExecute(con, sql_statement)
+      spsComps::shinyCatch({message(paste0("Plate run ", plate_id_to_deactivate, " deactivated"))}, position = "top-center")
+    },
+    error = function(e) {
+      spsComps::shinyCatch({stop(paste(e))}, prefix = '', position = "top-center")
+    })
+    # refresh
+    initial_load_qa_qc(FALSE)
+    initial_load_qa_qc(TRUE)
+  })
+
+  # TODO update this action
+  # activate
+  observeEvent(input$do_activate, {
+    tryCatch({
+      plate_id_to_activate <- selected_flagged_table_row()$plate_run_id
+      subplates_to_activate <- as.integer(input$subplate_in_selceted_plate)
+
+      sql_statement <- glue::glue_sql("UPDATE assay_result set active = true where plate_run_id = {plate_id_to_activate} and sub_plate IN ({subplates_to_activate*});",
+                                      .con = con)
+      DBI::dbExecute(con, sql_statement)
+      spsComps::shinyCatch({message(paste0("Plate run ", plate_id_to_activate, " activated"))}, position = "top-center")
+    },
+    error = function(e) {
+      spsComps::shinyCatch({stop(paste(e))}, prefix = '', position = "top-center")
+    })
+    # refresh
+    initial_load_qa_qc(FALSE)
+    initial_load_qa_qc(TRUE)
+  })
+
   # Add sample -------------------------------------
 
   observeEvent(input$add_sample_submit, {
@@ -335,4 +520,5 @@ output$season_plot <- renderPlot(
       expected_number_of_samples = input$add_sample_number_samples
     )
   })
+
 }

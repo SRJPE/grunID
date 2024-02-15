@@ -1,52 +1,99 @@
 navbarPage(
   theme = "lumen",
   title = "grunID UI",
+  header = tags$head(
+    tags$style(HTML('
+      .round-btn {
+        border-radius: 50%;
+      }
+      .icon-offset {
+        margin-left: 5px; /* Adjust the margin as needed */
+      }
+
+       .shiny-notification {
+        bottom: 0;
+        left: 0;
+      }
+    '))
+  ),
   # tabPanel(title = "About"),
   tabPanel("Upload Results",
-           sidebarPanel(
-             width = 3,
-             h4("More Information"),
-             tags$br(),
-             actionButton("show_protocol_details", "Protocol Details", icon = icon("circle-info")),
-             tags$br(),
-             tags$br(),
-             actionButton("show_lab_details", "Lab Details", icon = icon("circle-info")),
-             tags$br(),
-             tags$br(),
-             actionButton("show_methods_details", "Genetic Method Details", icon = icon("circle-info")),
-             tags$br(),
-             tags$br(),
-             actionButton("info_performed_by", "More Info: Lab Work Performed By", icon = icon("circle-info")),
-             tags$br(),
-             tags$br(),
-             actionButton("info_run_description", "More Info: Plate Run Description", icon = icon("circle-info")),
-             tags$br(),
-             tags$br(),
-             actionButton("info_sample_type", "More Info: Sample Type", icon = icon("circle-info")),
-             tags$br(),
-             tags$br(),
-             actionButton("info_layout_type", "More Info: Layout Type", icon = icon("circle-info")),
-           ),
+           # sidebarPanel(
+           #   width = 3
+           # ),
            column(
+             # offset = 1,
              width = 6,
              h3("Enter Plate Run"),
-             selectInput("protocol", "Select a Protocol", choices = all_protocols$name),
-             selectInput("laboratory", "Select a Laboratory", choices = all_labs$code),
-             selectInput("genetic_method", "Select a Genetic Method", choices = all_gen_methods$code),
-             textInput("performed_by", "Lab work performed by:"),
-             textInput("run_description", "Plate Run Description:"),
+
+             tags$div(
+               style = "display: flex; align-items: center;",
+               selectInput("protocol", "Select a Protocol", choices = all_protocols$name),
+               actionButton("show_protocol_details", label = NULL, icon = icon("question"), class = "round-btn icon-offset")
+             ),
+
+             tags$div(
+               style = "display: flex; align-items: center;",
+               selectInput("laboratory", "Select a Laboratory", choices = all_labs$code),
+               actionButton("show_lab_details", label = NULL, icon = icon("question"), class = "round-btn icon-offset")
+
+             ),
+
+             tags$div(
+               style = "display: flex; align-items: center;",
+               selectInput("genetic_method", "Select a Genetic Method", choices = all_gen_methods$code),
+               actionButton("show_methods_details", label = NULL, icon = icon("question"), class = "round-btn icon-offset")
+
+             ),
+
+             tags$div(
+               style = "display: flex; align-items: center;",
+               textInput("performed_by", "Lab work performed by:"),
+               actionButton("info_performed_by", label = NULL, icon = icon("question"), class = "round-btn icon-offset")
+
+             ),
+
+             tags$div(
+               style = "display: flex; align-items: center;",
+               textInput("run_description", "Plate Run Description:"),
+               actionButton("info_run_description", label = NULL, icon = icon("question"), class = "round-btn icon-offset")
+
+             ),
              dateInput("date_run", "Date of Run"),
              fileInput("sherlock_results", "Upload Sherlock Results"),
+
+             tags$div(
+               style = "display: flex; align-items: center;",
+               selectInput("sample_type", "Select a Sample Type", choices = c("fin clip", "mucus")),
+               actionButton("info_sample_type", label = NULL, icon = icon("question"), class = "round-btn icon-offset")
+
+             ),
+             tags$div(
+               style = "display: flex; align-items: center;",
+               selectInput("layout_type", "Select Layout Type",
+                           choices = c("Split Plate - Early + Late"="split_plate_early_late",
+                                       "Split Plate - Spring + Winter"="split_plate_spring_winter",
+                                       "Single Assay OTS 28 Early (v5 Mapping)"="single_assay_ots28_early",
+                                       "Single Assay OTS 28 Late (v5 Mapping)"="single_assay_ots28_late",
+                                       "Single Assay OTS 16 Spring (v5 Mapping)"="single_assay_ots16_spring",
+                                       "Single Assay OTS 16 Winter (v5 Mapping)"="single_assay_ots16_winter",
+                                       "Triplicate"="triplicate"
+                           )
+               ),
+               actionButton("info_layout_type", label = NULL, icon = icon("question"), class = "round-btn icon-offset")
+             ),
+
              selectInput("sample_type", "Select a Sample Type", choices = c("fin clip", "mucus")),
              selectInput("layout_type", "Select Layout Type", choices = c("split_plate_early_late", "split_plate_late_early",
                                                                           "split_plate_spring_winter", "split_plate_winter_spring",
                                                                           "triplicate", "single_assay_ots28_early",
                                                                           "single_assay_ots28_late", "single_assay_ots16_spring",
                                                                           "single_assay_ots16_winter")),
+
              selectInput("plate_size", "Select Plate Size", choices = c(384, 96)),
              checkboxInput("perform_genetics_id", label = "Run genetic calculations for samples after upload", value = TRUE),
              actionButton("do_upload", "Upload Results", class = "btn-success", icon = icon("rocket")),
-             tags$br(),
+
              tags$br()
            ),
            column(
@@ -96,7 +143,7 @@ navbarPage(
                            c("All", names(sample_status_options))),
                selectInput("location_filter", "Location",
                            c("All", all_locations)),
-               tags$hr(),
+               tags$hr(),... =
                tags$h3("Season Summary"),
                tableOutput("season_summary")
              ),
@@ -164,7 +211,38 @@ navbarPage(
                DT::dataTableOutput("subsample_table") |>
                  shinycssloaders::withSpinner()
              )
-           ))
+           )),
+  tabPanel(title = "Plate Validations",
+           mainPanel(
+             tags$h4("Flagged plate runs"),
+             br(),
+             checkboxInput("filter_to_active_plate_runs",
+                           label = "Filter to active plate runs", value = TRUE),
+             DT::dataTableOutput("flagged_table") |>
+               shinycssloaders::withSpinner(),
+             hr(), br(),
+             # uiOutput("ui_subplate_selection"),
+
+             # tags$h4("Validate plate run data:"),
+             htmlOutput("flagged_plate_run_comment"),
+             htmlOutput("ui_subplate_checkbox"),
+             br(),
+             DT::dataTableOutput("flagged_plate_run_table_display") |>
+               shinycssloaders::withSpinner(),
+             br(),
+             bsModal("modal_plate_data", title = "Plate Data", trigger = "pv_view_plate_data_btn", size = "large", DT::dataTableOutput("pv_all_plate_data_tbl")),
+             br(),
+             actionButton("pv_view_plate_data_btn", "View Full Plate Data", class = "btn-default"),
+             div(style = "display:inline-block; float:right",
+                 actionButton("do_activate", "Accept Selected Subplates",
+                              style = "color: #fff; background-color: #81A88D"),
+                 actionButton("do_deactivate", "Reject Selected Subplates",
+                              style = "color: #fff; background-color: #C93312")),
+             br(), br(),
+           )
+  )
 )
+
+
 
 # grunID::add_new_plate_results()
