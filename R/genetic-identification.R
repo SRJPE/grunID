@@ -661,12 +661,18 @@ parse_spring_winter_detection_results <- function(detection_results) {
 #' @title Parse Comment for EBK Flags
 #' @description
 #' Parse plate comment and extract plate related information for EBK id's that fail the qa/qc check
-#' @param text string to parse
+#' @param flag_text string to parse
+#' @param flag_type what flag to parse for
 #'
-#' @keywords internal
-parse_plate_flags_for_EBK_errors <- function(text) {
-  matches <- str_match_all(text, "(EBK-\\d+-\\d+)_(\\d+)")
-  as.data.frame(matches[[1]][, 2:3]) |>
+#' @export
+parse_plate_flags <- function(flag_text, flag_type) {
+
+
+  re_str <- switch(tolower(flag_type),
+                   "ebk" = "(EBK-\\d+-\\d+)_(\\d+)")
+
+  matches <- str_match_all(flag_text, re_str)[[1]]
+  as.data.frame(matches[, 2:3, drop = FALSE]) |>
     tidyr::separate(V1, into = c("flag_type","sub_plate", "replicate"), sep= "-") |>
     dplyr::rename(value = V2)
 }

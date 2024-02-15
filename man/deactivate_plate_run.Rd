@@ -4,7 +4,7 @@
 \alias{deactivate_plate_run}
 \title{Deactivate Plate Run}
 \usage{
-deactivate_plate_run(con, plate_run_id)
+deactivate_plate_run(con, plate_run_id, sub_plates = NULL)
 }
 \arguments{
 \item{con}{valid connection to the database}
