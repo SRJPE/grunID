@@ -38,7 +38,7 @@ add_sample_type(con, new_sample_type)
 Other sample type functions: 
 \code{\link{delete_sample_type}()},
 \code{\link{get_sample_types}()},
-\code{\link{update_sample_type}()},
-\code{\link{update_sample_type_status}()}
+\code{\link{update_sample_type_status}()},
+\code{\link{update_sample_type}()}
 }
 \concept{sample type functions}

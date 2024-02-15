@@ -36,7 +36,7 @@ Other status code functions:
 \code{\link{delete_status_code}()},
 \code{\link{get_status_codes}()},
 \code{\link{set_sample_status}()},
-\code{\link{update_status_code}()},
-\code{\link{update_status_code_status}()}
+\code{\link{update_status_code_status}()},
+\code{\link{update_status_code}()}
 }
 \concept{status code functions}

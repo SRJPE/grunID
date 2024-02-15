@@ -27,7 +27,7 @@ agencies <- get_agencies(con)
 Other agency functions: 
 \code{\link{add_agency}()},
 \code{\link{delete_agency}()},
-\code{\link{update_agency}()},
-\code{\link{update_agency_status}()}
+\code{\link{update_agency_status}()},
+\code{\link{update_agency}()}
 }
 \concept{agency functions}

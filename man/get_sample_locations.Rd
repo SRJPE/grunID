@@ -27,7 +27,7 @@ sample_locations <- get_sample_locations(con)
 Other sample location functions: 
 \code{\link{add_sample_location}()},
 \code{\link{delete_sample_location}()},
-\code{\link{update_sample_location}()},
-\code{\link{update_sample_location_status}()}
+\code{\link{update_sample_location_status}()},
+\code{\link{update_sample_location}()}
 }
 \concept{sample location functions}

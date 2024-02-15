@@ -38,7 +38,7 @@ delete_genetic_method(con, 1)
 Other genetic method functions: 
 \code{\link{add_genetic_method}()},
 \code{\link{get_genetic_methods}()},
-\code{\link{update_genetic_method}()},
-\code{\link{update_genetic_method_status}()}
+\code{\link{update_genetic_method_status}()},
+\code{\link{update_genetic_method}()}
 }
 \concept{genetic method functions}

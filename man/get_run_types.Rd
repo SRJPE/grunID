@@ -27,7 +27,7 @@ run_types <- get_run_types(con)
 Other run type functions: 
 \code{\link{add_run_type}()},
 \code{\link{delete_run_type}()},
-\code{\link{update_run_type}()},
-\code{\link{update_run_type_status}()}
+\code{\link{update_run_type_status}()},
+\code{\link{update_run_type}()}
 }
 \concept{run type functions}
