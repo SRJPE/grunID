@@ -53,7 +53,6 @@ function(input, output, session) {
 
   observeEvent(input$info_layout_type, {
     showModal(modalDialog(
-
       tagList(
         tags$h3("Dual Assay Layout"),
         tags$p("For dual assay layouts select either 'Split Plate Early + Late' or 'Split Plate Spring + Winter'"),
@@ -62,15 +61,8 @@ function(input, output, session) {
         tags$p("For single assay layouts select one of the 'Single Assay' options"),
         img(src = "assets/plate-mapping-v5.png", width = "100%")
       ),
-      size = "l",easyClose = TRUE
-
-      "What plate map layout are you using? This refers to which assays are being run and in what organization on the plate.
-      Current options are split_plate_early_late, split_plate_late_early, split_plate_spring_winter, split_plate_winter_spring,
-      triplicate, single_assay_ots28_early,
-      single_assay_ots28_late, single_assay_ots16_spring, single_assay_ots16_winter",
-      size = "l"
-
-    ))
+      size = "l",easyClose = TRUE)
+    )
   })
 
   observeEvent(input$do_upload, {
@@ -352,13 +344,13 @@ output$season_plot <- renderPlot(
         filter(active_plate_run == TRUE) |>
         mutate(updated_at = format(updated_at, "%Y-%m-%d %H:%M")) |>
         distinct(plate_run_id, active_plate_run, .keep_all = TRUE) |>
-        select(plate_run_id, flags, date_run, updated_at, lab_work_performed_by,
+        select(plate_run_id, flags, date_run, updated_at, description, lab_work_performed_by,
                genetic_method = method_name, active = active_plate_run, last_review = updated_by)
     } else {
       latest_qa_qc_fetch() |>
         distinct(plate_run_id, active_plate_run, .keep_all = TRUE) |>
         mutate(updated_at = format(updated_at, "%Y-%m-%d %H:%M")) |>
-        select(plate_run_id, flags, date_run, updated_at, lab_work_performed_by,
+        select(plate_run_id, flags, date_run, updated_at, description, lab_work_performed_by,
                genetic_method = method_name, active = active_plate_run, last_review = updated_by)
     }
   })
@@ -518,6 +510,37 @@ output$season_plot <- renderPlot(
       min_fork_length = input$add_sample_min_fork_length,
       max_fork_length = input$add_sample_max_fork_length,
       expected_number_of_samples = input$add_sample_number_samples
+    )
+  })
+
+  observeEvent(input$add_protocol_submit, {
+    new_protocol <- protocol_template
+
+    new_protocol$name <- input$add_protocol_name
+    new_protocol$software_version <- input$add_protocol_software_version
+    new_protocol$reader_type <- input$add_protocol_reader_type
+    new_protocol$reader_serial_number <- input$add_protocol_serial_number
+    new_protocol$plate_type <- input$add_protocol_plate_type
+    new_protocol$set_point <- as.double(input$add_protocol_set_point)
+    new_protocol$preheat_before_moving <- input$add_protocol_preheat_before_moving
+    new_protocol$runtime <- input$add_protocol_runtime
+    new_protocol$interval <- input$add_protocol_interval
+    new_protocol$read_count <- as.double(input$add_protocol_read_count)
+    new_protocol$run_mode <- input$add_protocol_run_mode
+    new_protocol$excitation <- as.double(input$add_protocol_excitation)
+    new_protocol$emissions <- as.double(input$add_protocol_emissions)
+    new_protocol$optics <- input$add_protocol_optics
+    new_protocol$gain <- as.double(input$add_protocol_gain)
+    new_protocol$light_source <- input$add_protocol_light_source
+    new_protocol$lamp_energy <- input$add_protocol_lamp_energy
+    new_protocol$read_height <- as.double(input$add_protocol_read_height)
+
+    new_protocol |> glimpse()
+
+
+    grunID::add_protocol(
+      con = con,
+      protocol = new_protocol
     )
   })
 

@@ -71,8 +71,10 @@ navbarPage(
              tags$div(
                style = "display: flex; align-items: center;",
                selectInput("layout_type", "Select Layout Type",
-                           choices = c("Split Plate - Early + Late"="split_plate_early_late",
-                                       "Split Plate - Spring + Winter"="split_plate_spring_winter",
+                           choices = c("Split Plate - Early (left)+ Late (right)"="split_plate_early_late",
+                                       "Split Plate - Late (left) + Early (right)"="split_plate_late_early",
+                                       "Split Plate - Spring (left) + Winter (right)"="split_plate_spring_winter",
+                                       "Split Plate - Winter (left) + Spring (right)"="split_plate_winter_spring",
                                        "Single Assay OTS 28 Early (v5 Mapping)"="single_assay_ots28_early",
                                        "Single Assay OTS 28 Late (v5 Mapping)"="single_assay_ots28_late",
                                        "Single Assay OTS 16 Spring (v5 Mapping)"="single_assay_ots16_spring",
@@ -82,13 +84,6 @@ navbarPage(
                ),
                actionButton("info_layout_type", label = NULL, icon = icon("question"), class = "round-btn icon-offset")
              ),
-
-             selectInput("sample_type", "Select a Sample Type", choices = c("fin clip", "mucus")),
-             selectInput("layout_type", "Select Layout Type", choices = c("split_plate_early_late", "split_plate_late_early",
-                                                                          "split_plate_spring_winter", "split_plate_winter_spring",
-                                                                          "triplicate", "single_assay_ots28_early",
-                                                                          "single_assay_ots28_late", "single_assay_ots16_spring",
-                                                                          "single_assay_ots16_winter")),
 
              selectInput("plate_size", "Select Plate Size", choices = c(384, 96)),
              checkboxInput("perform_genetics_id", label = "Run genetic calculations for samples after upload", value = TRUE),
@@ -101,16 +96,42 @@ navbarPage(
              textOutput("console_logs")
            ),
   ),
-  tabPanel(title = "Add Samples",
-           selectInput("add_sample_location_code", label = "Locaiton Code", choices = all_locations),
-           selectInput("add_sample_event_number", label = "Event Number", choices = 1:20),
-           textInput("add_sample_first_sample_date", label = "First Sample Date (YYYY-mm-dd)"),
-           selectInput("add_sample_sample_bin_code", label = "Bin Code (A-Z)", choices = LETTERS[1:20]),
-           numericInput("add_sample_min_fork_length", label = "Min Fork Length", min = 1, value = 1),
-           numericInput("add_sample_max_fork_length", label = "Max Fork Length", max = 200, value = 100),
-           numericInput("add_sample_number_samples", label = "Expected Number of Samples", min = 1, value = 1),
+  tabPanel(title = "Add Data",
+           tabsetPanel(
+             tabPanel(title = "Sample",
+                      selectInput("add_sample_location_code", label = "Locaiton Code", choices = all_locations),
+                      selectInput("add_sample_event_number", label = "Event Number", choices = 1:20),
+                      textInput("add_sample_first_sample_date", label = "First Sample Date (YYYY-mm-dd)"),
+                      selectInput("add_sample_sample_bin_code", label = "Bin Code (A-Z)", choices = LETTERS[1:20]),
+                      numericInput("add_sample_min_fork_length", label = "Min Fork Length", min = 1, value = 1),
+                      numericInput("add_sample_max_fork_length", label = "Max Fork Length", max = 200, value = 100),
+                      numericInput("add_sample_number_samples", label = "Expected Number of Samples", min = 1, value = 1),
 
-           actionButton("add_sample_submit", label = "Submit")
+                      actionButton("add_sample_submit", label = "Submit")),
+             tabPanel("Protocol",
+                      textInput("add_protocol_name", "Protocol Name"),
+                      textInput("add_protocol_software_version", "Software Version", value = protocol_template$software_version),
+                      textInput("add_protocol_reader_type", "Reader Type", value = protocol_template$reader_type),
+                      textInput("add_protocol_serial_number", "Serial Number", value = protocol_template$reader_serial_number),
+                      textInput("add_protocol_plate_type", "Plate Type", value = protocol_template$plate_type),
+                      numericInput("add_protocol_set_point", "Set Point", value = protocol_template$set_point),
+                      checkboxInput("add_protocol_preheat_before_moving", "Preheat Before Moving", value = TRUE),
+                      textInput("add_protocol_runtime", "Runtime", value = protocol_template$runtime),
+                      textInput("add_protocol_interval", "Interval", value = protocol_template$interval),
+                      numericInput("add_protocol_read_count", "Read Count", value = protocol_template$read_count),
+                      textInput("add_protocol_run_mode", "Run Mode", value = protocol_template$run_mode),
+                      numericInput("add_protocol_excitation", "Excitation", value = protocol_template$excitation),
+                      numericInput("add_protocol_emissions", "Emissions", value = protocol_template$emissions),
+                      textInput("add_protocol_optics", "Optics", value = protocol_template$optics),
+                      numericInput("add_protocol_gain", "Gain", value = protocol_template$gain),
+                      textInput("add_protocol_light_source", "Light Source", value = protocol_template$light_source),
+                      textInput("add_protocol_lamp_energy", "Lamp Energy", value = protocol_template$lamp_energy),
+                      numericInput("add_protocol_read_height", "Read Height", value = protocol_template$read_height),
+
+
+                      actionButton("add_protocol_submit", label = "Submit")
+                      ),
+           )
            ),
   tabPanel(title = "Upload Field Sheets",
            mainPanel(
