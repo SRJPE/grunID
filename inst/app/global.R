@@ -73,7 +73,7 @@ flagged_plate_runs <- function() {
     con,
     "SELECT pr.id AS plate_run_id, pr.flags, pr.date_run, pr.updated_at, pr.created_at, pr.updated_by, pr.description, pr.lab_work_performed_by, gm.method_name,
     pr.active AS active_plate_run, gm.method_name
-    FROM plate_run AS pr LEFT JOIN public.genetic_method AS gm ON gm.id = pr.genetic_method_id;"
+    FROM plate_run AS pr LEFT JOIN public.genetic_method AS gm ON gm.id = pr.genetic_method_id where pr.flags like 'EBK_FLAG%';"
     )
 
 }
@@ -164,3 +164,17 @@ available_years <- dplyr::tbl(con, "sample_event") |>
 
 
 
+# check for failed sherlock
+check_for_failed_status <- function() {
+  res <- DBI::dbGetQuery(con,
+                  "
+SELECT sample_id, status_code_id
+FROM (
+    SELECT sample_id, status_code_id,
+           ROW_NUMBER() OVER (PARTITION BY sample_id ORDER BY updated_at DESC) AS rn
+    FROM sample_status
+) sub
+WHERE rn = 1;")
+
+  res |> filter(status_code_id %in% c(16:17), !str_detect(sample_id, "EBK|NTC|POS|NEG"))
+}

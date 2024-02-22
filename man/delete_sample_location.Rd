@@ -40,7 +40,7 @@ delete_sample_location(con, 4)
 Other sample location functions: 
 \code{\link{add_sample_location}()},
 \code{\link{get_sample_locations}()},
-\code{\link{update_sample_location_status}()},
-\code{\link{update_sample_location}()}
+\code{\link{update_sample_location}()},
+\code{\link{update_sample_location_status}()}
 }
 \concept{sample location functions}

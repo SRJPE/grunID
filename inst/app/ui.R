@@ -9,11 +9,6 @@ navbarPage(
       .icon-offset {
         margin-left: 5px; /* Adjust the margin as needed */
       }
-
-       .shiny-notification {
-        bottom: 0;
-        left: 0;
-      }
     '))
   ),
   # tabPanel(title = "About"),
@@ -25,6 +20,8 @@ navbarPage(
              # offset = 1,
              width = 6,
              h3("Enter Plate Run"),
+
+             uiOutput("ui_banner_for_failed_status"),
 
              tags$div(
                style = "display: flex; align-items: center;",
@@ -71,10 +68,10 @@ navbarPage(
              tags$div(
                style = "display: flex; align-items: center;",
                selectInput("layout_type", "Select Layout Type",
-                           choices = c("Split Plate - Early (left)+ Late (right)"="split_plate_early_late",
-                                       "Split Plate - Late (left) + Early (right)"="split_plate_late_early",
-                                       "Split Plate - Spring (left) + Winter (right)"="split_plate_spring_winter",
-                                       "Split Plate - Winter (left) + Spring (right)"="split_plate_winter_spring",
+                           choices = c("Split Plate - Early + Late"="split_plate_early_late",
+                                       "Split Plate - Late + Early"="split_plate_late_early",
+                                       "Split Plate - Spring + Winter"="split_plate_spring_winter",
+                                       "Split Plate - Winter + Spring"="split_plate_winter_spring",
                                        "Single Assay OTS 28 Early (v5 Mapping)"="single_assay_ots28_early",
                                        "Single Assay OTS 28 Late (v5 Mapping)"="single_assay_ots28_late",
                                        "Single Assay OTS 16 Spring (v5 Mapping)"="single_assay_ots16_spring",
@@ -256,9 +253,12 @@ navbarPage(
              actionButton("pv_view_plate_data_btn", "View Full Plate Data", class = "btn-default"),
              div(style = "display:inline-block; float:right",
                  actionButton("do_activate", "Accept Selected Subplates",
-                              style = "color: #fff; background-color: #81A88D"),
+                              class = "btn-success"),
                  actionButton("do_deactivate", "Reject Selected Subplates",
-                              style = "color: #fff; background-color: #C93312")),
+                              class = "btn-warning"),
+                 actionButton("do_deactivate_entire_plate", "Deactive Entire Plate",
+                              class = "btn-danger")),
+
              br(), br(),
            )
   )
