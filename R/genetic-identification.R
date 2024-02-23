@@ -247,7 +247,19 @@ ots_winter_spring_detection <- function(con, sample_id,
   assays_3_for_sample <- assay_results |> dplyr::filter(assay_id == 3) |> dplyr::collect()
   assays_4_for_sample <- assay_results |> dplyr::filter(assay_id == 4) |> dplyr::collect()
 
-  if (nrow(assays_3_for_sample) == 0) {
+  if ((nrow(assays_3_for_sample) == 0) && (nrow(assays_4_for_sample) == 0)) {
+    cli::cli_warn(c(
+      "x" = "spring and winter assay not found for sample {sample_id}, setting status to 'need-ots16'"
+    ))
+
+    return(list(
+      sample_id = sample_id,
+      status_code = "need ots16",
+      run_type = "SPW",
+      spring_plate_id = NA_integer_,
+      winter_plate_id = NA_integer_
+    ))
+  } else if (nrow(assays_3_for_sample) == 0 && (nrow(assays_4_for_sample) > 0)) {
     cli::cli_warn(c(
       "x" = "spring and winter assay needed to run spring/winter detection but assay = 3 was not found for sample {sample_id}"
     ))
@@ -256,12 +268,10 @@ ots_winter_spring_detection <- function(con, sample_id,
       sample_id = sample_id,
       status_code = "ots16 inprogress",
       run_type = "SPW",
-      spring_plate_id = NA,
-      winter_plate_id = NA
+      spring_plate_id = NA_integer_,
+      winter_plate_id = NA_integer_
     ))
-  }
-
-  if (nrow(assays_4_for_sample) == 0) {
+  } else if (nrow(assays_4_for_sample) == 0 && (nrow(assays_3_for_sample) > 0)) {
     cli::cli_warn(c(
       "x" = "spring and winter assay needed to run spring/winter detection but assay = 4 was not found for sample {sample_id}"
     ))
@@ -270,8 +280,8 @@ ots_winter_spring_detection <- function(con, sample_id,
       sample_id = sample_id,
       status_code = "ots16 inprogress",
       run_type = NA_character_,
-      spring_plate_id = NA,
-      winter_plate_id = NA
+      spring_plate_id = NA_integer_,
+      winter_plate_id = NA_integer_
     ))
   }
 
@@ -329,6 +339,9 @@ ots_winter_spring_detection <- function(con, sample_id,
     ots_winter_priority_results <- collect(ots_winter)
   }
 
+
+
+  cat(ots_spring_priority_results$plate_run_id, "\n")
 
   # positive winter and negative spring ---> WIN
   if (!ots_spring_priority_results$positive_detection && ots_winter_priority_results$positive_detection) {
@@ -481,6 +494,7 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
 
   # OTS28 in progress / eihter assay 1 or 2 is not done
 
+
   ots28_inprogress_to_insert <- early_late_resp_data |>
     dplyr::filter(status_code == "ots28 in progress")
 
@@ -549,6 +563,24 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
 
   }
 
+  # need ots 16
+  ots16_need_inserts <- spring_winter_resp_data |>
+    dplyr::filter(status_code == "need ots16")
+
+  if (nrow(ots16_need_inserts) > 0) {
+    ots16_need_inserts$comment <- plate_comment
+    ots16_need_inserts$status_code_id <- status_code_name_to_id["need ots16"]
+    ots16_need_inserts <- dplyr::select(ots16_need_inserts, sample_id, status_code_id, comment)
+    DBI::dbAppendTable(con, "sample_status", ots16_need_inserts)
+
+    spw_gen_to_insert <- spring_winter_resp_data |>
+      filter(run_type == "SPW")
+
+    if (nrow(spw_gen_to_insert) > 0) {
+      insert_gen_id_to_database(con, spw_gen_to_insert, run_type_name_to_id)
+    }
+  }
+
   # ots 16 in progress status updates
   ots16_inprogress_inserts <- spring_winter_resp_data |>
     dplyr::filter(status_code == "ots16 inprogress")
@@ -569,16 +601,7 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
 
   }
 
-  # need ots 16
-  ots16_need_inserts <- spring_winter_resp_data |>
-    dplyr::filter(status_code == "need ots16")
 
-  if (nrow(ots16_need_inserts) > 0) {
-    ots16_need_inserts$comment <- plate_comment
-    ots16_need_inserts$status_code_id <- status_code_name_to_id["need ots16"]
-    ots16_need_inserts <- dplyr::select(ots16_need_inserts, sample_id, status_code_id, comment)
-    DBI::dbAppendTable(con, "sample_status", ots16_need_inserts)
-  }
 
 }
 

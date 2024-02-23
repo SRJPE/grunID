@@ -36,7 +36,7 @@ add_agency(con, new_agency)
 Other agency functions: 
 \code{\link{delete_agency}()},
 \code{\link{get_agencies}()},
-\code{\link{update_agency_status}()},
-\code{\link{update_agency}()}
+\code{\link{update_agency}()},
+\code{\link{update_agency_status}()}
 }
 \concept{agency functions}

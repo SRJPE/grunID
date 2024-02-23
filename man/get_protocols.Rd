@@ -25,10 +25,10 @@ protocols <- get_protocols(con)
 }
 \seealso{
 Other protocol functions: 
-\code{\link{add_protocol_based_on}()},
 \code{\link{add_protocol}()},
+\code{\link{add_protocol_based_on}()},
 \code{\link{delete_protocol}()},
-\code{\link{update_protocol_status}()},
-\code{\link{update_protocol}()}
+\code{\link{update_protocol}()},
+\code{\link{update_protocol_status}()}
 }
 \concept{protocol functions}

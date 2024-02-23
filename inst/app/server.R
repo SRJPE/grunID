@@ -1,18 +1,34 @@
 function(input, output, session) {
 
 
-# Upload Results ----------------------------------------------------------
+  # Upload Results ----------------------------------------------------------
   observeEvent(input$show_protocol_details, {
     showModal(modalDialog(
       title = "Protocol Details",
       renderTableWithScrollOnX(all_protocols |>
-                    filter(active == TRUE) |>
-                    select(name, reader = reader_type, serial_no = reader_serial_number,
-                           plate = plate_type, set_point, preheat = preheat_before_moving,
-                           runtime, interval, read_count, mode = run_mode, excitation,
-                           emissions, light_source, lamp = lamp_energy, height = read_height), striped = TRUE, width = "auto"),
-    size = "l"))
+                                 filter(active == TRUE) |>
+                                 select(name, reader = reader_type, serial_no = reader_serial_number,
+                                        plate = plate_type, set_point, preheat = preheat_before_moving,
+                                        runtime, interval, read_count, mode = run_mode, excitation,
+                                        emissions, light_source, lamp = lamp_energy, height = read_height), striped = TRUE, width = "auto"),
+      size = "l"))
   })
+
+  samples_failing <- reactiveVal(nrow(check_for_failed_status()))
+
+  # Render the banner based on the failed samples status
+  output$ui_banner_for_failed_status <- renderUI({
+    if (samples_failing() == 0) {
+      return(NULL)
+    } else {
+      total_samples_failing <- nrow(samples_failing())
+      HTML(paste0('<div class="alert alert-danger" role="alert">',
+                  samples_failing(), ' samples were found with a failed status, please review using query',
+                  '</div>'))
+    }
+  })
+
+
 
   observeEvent(input$show_lab_details, {
     showModal(modalDialog(
@@ -53,7 +69,6 @@ function(input, output, session) {
 
   observeEvent(input$info_layout_type, {
     showModal(modalDialog(
-
       tagList(
         tags$h3("Dual Assay Layout"),
         tags$p("For dual assay layouts select either 'Split Plate Early + Late' or 'Split Plate Spring + Winter'"),
@@ -62,20 +77,39 @@ function(input, output, session) {
         tags$p("For single assay layouts select one of the 'Single Assay' options"),
         img(src = "assets/plate-mapping-v5.png", width = "100%")
       ),
-      size = "l",easyClose = TRUE
-
-      "What plate map layout are you using? This refers to which assays are being run and in what organization on the plate.
-      Current options are split_plate_early_late, split_plate_late_early, split_plate_spring_winter, split_plate_winter_spring,
-      triplicate, single_assay_ots28_early,
-      single_assay_ots28_late, single_assay_ots16_spring, single_assay_ots16_winter",
-      size = "l"
-
-    ))
+      size = "l",easyClose = TRUE)
+    )
   })
 
   observeEvent(input$do_upload, {
-    tryCatch({
-      #messages <- capture.output(
+    showModal(modalDialog(
+      title = "Confirm data submission",
+      tagList(
+        h5(tags$b("Please confirm Plate Layout Selection")),
+        h5("This extra check is here to ensure that the order of the layout present in the results file matches the layout selected in this upload tool."),
+        h5("Layout Selected:", tags$b(glue::glue("{input$layout_type}"))),
+        h5("Results filename:", tags$b(glue::glue("{input$sherlock_results$name}"))),
+        h5("Is this selection correct?"),
+      ),
+      size = "l",
+      easyClose = F,
+      footer = tagList(
+        actionButton("yes_upload", "Yes", class= "btn-success"),
+        actionButton("no_upload", "Cancel", class = "btn-danger")
+      )
+    ))
+  })
+
+  observe({
+
+    cat(input$yes_upload)
+  })
+
+
+  observeEvent(input$yes_upload | input$no_upload, ignoreInit = TRUE, {
+    if(input$yes_upload > 0){
+      tryCatch({
+        removeModal(session = session)
         grunID::add_new_plate_results(
           con,
           protocol_name = input$protocol,
@@ -91,14 +125,20 @@ function(input, output, session) {
           selection_strategy = "recent priority",
           .control_id = "EBK",
           run_gen_id = input$perform_genetics_id)
-      #)
-      #shinyCatch({message(paste0(messages))}, prefix = '') # this prints out messages (only at the end of the function) to shiny
-      spsComps::shinyCatch({message("Success!")}, position = "top-center")},
+
+        spsComps::shinyCatch({message("Success!")}, position = "top-center")
+      },
       error = function(e) {
+        removeModal(session = session)
         spsComps::shinyCatch({stop(paste(e))}, prefix = '', position = "top-center")
-      })
-  }
-  )
+      },
+      finally = samples_failing(nrow(check_for_failed_status())))
+
+    } else if (input$no_upload > 0) {
+      removeModal(session = session)
+      print("Submission cancelled by user.")
+    }
+  }, priority = 999)
 
 
   # Sample Status ---------------------------------------------------------------------
@@ -161,7 +201,7 @@ function(input, output, session) {
   })
 
 
-# Query -------------------------------------------------------------------
+  # Query -------------------------------------------------------------------
 
   initial_load_query <- reactiveVal(TRUE)
   observeEvent(input$query_refresh, {
@@ -180,17 +220,17 @@ function(input, output, session) {
   })
 
   output$season_table <- DT::renderDataTable(DT::datatable(selected_samples_by_season(),
-  extensions = "Buttons",
-  rownames = FALSE,
-  options = list(autoWidth = FALSE,
-                 dom = "Bfrtip",
-                 buttons = c("copy", "csv", "excel"),
-                 lengthChange = TRUE,
-                 pageLength = 20)),
-  server = FALSE
+                                                           extensions = "Buttons",
+                                                           rownames = FALSE,
+                                                           options = list(autoWidth = FALSE,
+                                                                          dom = "Bfrtip",
+                                                                          buttons = c("copy", "csv", "excel"),
+                                                                          lengthChange = TRUE,
+                                                                          pageLength = 20)),
+                                             server = FALSE
   ) #|>
-    # shiny::bindCache(input$season_filter, input$dataset_type_filter,
-    #                  input$filter_to_heterozygotes, input$filter_to_failed)
+  # shiny::bindCache(input$season_filter, input$dataset_type_filter,
+  #                  input$filter_to_heterozygotes, input$filter_to_failed)
 
   observeEvent(input$season_filter_description, {
     showModal(modalDialog(
@@ -216,25 +256,25 @@ function(input, output, session) {
     ))
   })
 
-output$season_plot <- renderPlot(
-  selected_samples_by_season() |>
-    dplyr::mutate(week = lubridate::week(datetime_collected)) |>
-    dplyr::filter(!is.na(week)) |>
-    dplyr::group_by(week) |>
-    dplyr::summarise(prop_spring_gen = sum(genetic_run_assignment == "Spring") / n(),
-                     prop_spring_field = sum(field_run_assignment == "Spring") / n()) |>
-    dplyr::ungroup() |>
-    tidyr::pivot_longer(c(prop_spring_gen, prop_spring_field),
-                        names_to = "method",
-                        values_to = "prop_spring") |>
-    dplyr::mutate(method = ifelse(method == "prop_spring_field", "Field assignment", "Genetic assignment")) |>
-    ggplot2::ggplot(aes(x = week, y = prop_spring, color = method)) +
-    geom_line() +
-    xlab("Week") + xlim(c(0, 52)) +
-    ylab("Proportion Spring Run") + ylim(c(0, 1)) +
-    scale_color_manual(values = c("#F1BB7B", "#FD6467")) +
-    theme_minimal() +
-    theme(legend.position = "bottom")
+  output$season_plot <- renderPlot(
+    selected_samples_by_season() |>
+      dplyr::mutate(week = lubridate::week(datetime_collected)) |>
+      dplyr::filter(!is.na(week)) |>
+      dplyr::group_by(week) |>
+      dplyr::summarise(prop_spring_gen = sum(genetic_run_assignment == "Spring") / n(),
+                       prop_spring_field = sum(field_run_assignment == "Spring") / n()) |>
+      dplyr::ungroup() |>
+      tidyr::pivot_longer(c(prop_spring_gen, prop_spring_field),
+                          names_to = "method",
+                          values_to = "prop_spring") |>
+      dplyr::mutate(method = ifelse(method == "prop_spring_field", "Field assignment", "Genetic assignment")) |>
+      ggplot2::ggplot(aes(x = week, y = prop_spring, color = method)) +
+      geom_line() +
+      xlab("Week") + xlim(c(0, 52)) +
+      ylab("Proportion Spring Run") + ylim(c(0, 1)) +
+      scale_color_manual(values = c("#F1BB7B", "#FD6467")) +
+      theme_minimal() +
+      theme(legend.position = "bottom")
   )
 
 
@@ -244,11 +284,11 @@ output$season_plot <- renderPlot(
         title = "Proportion spring run by weeks within season",
         plotOutput("season_plot"),
         size = "l")
-      )
-    })
+    )
+  })
 
 
-# Upload Field Sheets -----------------------------------------------------
+  # Upload Field Sheets -----------------------------------------------------
 
   # read in field data, if available
   clean_field_data <- reactive({
@@ -287,7 +327,7 @@ output$season_plot <- renderPlot(
   )
 
 
-# Subsample ---------------------------------------------------------------
+  # Subsample ---------------------------------------------------------------
 
   # subsample table
   output$subsample_table <- DT::renderDataTable(DT::datatable({
@@ -334,7 +374,7 @@ output$season_plot <- renderPlot(
 
 
 
-# QA/QC -------------------------------------------------------------------
+  # Plate Validations -------------------------------------------------------------------
 
   initial_load_qa_qc <- reactiveVal(TRUE)
 
@@ -352,13 +392,13 @@ output$season_plot <- renderPlot(
         filter(active_plate_run == TRUE) |>
         mutate(updated_at = format(updated_at, "%Y-%m-%d %H:%M")) |>
         distinct(plate_run_id, active_plate_run, .keep_all = TRUE) |>
-        select(plate_run_id, flags, date_run, updated_at, lab_work_performed_by,
+        select(plate_run_id, flags, date_run, updated_at, description, lab_work_performed_by,
                genetic_method = method_name, active = active_plate_run, last_review = updated_by)
     } else {
       latest_qa_qc_fetch() |>
         distinct(plate_run_id, active_plate_run, .keep_all = TRUE) |>
         mutate(updated_at = format(updated_at, "%Y-%m-%d %H:%M")) |>
-        select(plate_run_id, flags, date_run, updated_at, lab_work_performed_by,
+        select(plate_run_id, flags, date_run, updated_at, description, lab_work_performed_by,
                genetic_method = method_name, active = active_plate_run, last_review = updated_by)
     }
   })
@@ -443,11 +483,11 @@ output$season_plot <- renderPlot(
       collect() |>
       filter(str_detect(sample_id, "^EBK")) |>
       arrange(sample_id)
-      DT::datatable(data,
-                    rownames = FALSE,
-                    selection = "none",
-                    options = list(dom = 't', pageLength = 500, scrollX = TRUE, scrollY = "500px")
-      )
+    DT::datatable(data,
+                  rownames = FALSE,
+                  selection = "none",
+                  options = list(dom = 't', pageLength = 500, scrollX = TRUE, scrollY = "500px")
+    )
   })
 
   output$pv_all_plate_data_tbl <- DT::renderDataTable({
@@ -462,6 +502,39 @@ output$season_plot <- renderPlot(
                     values = c("#a1a1a1")
                   ))
   })
+
+  observeEvent(input$do_deactivate_entire_plate, {
+    showModal(modalDialog(
+      title = "Confirm data deletion",
+      tagList(
+        h5(tags$b("Please confirm you wish to delete the full plate run and corresponding data.")),
+        h5("Deleting the plate run will delete all data uploaded from this plate, this can potentially revert any run assignments and status codes assigned to a sample.")
+      ),
+      size = "l",
+      easyClose = F,
+      footer = tagList(
+        actionButton("yes_delete_full_plate", "Yes, Delete", class= "btn-default"),
+        actionButton("no_delete_full_plate", "Cancel", class = "btn-danger")
+      )
+    ))
+  })
+
+  observeEvent(
+    eventExpr = list(
+      input$yes_delete_full_plate,
+      input$no_delete_full_plate
+    ),
+    handlerExpr = {
+      if (input$yes_delete_full_plate > 0) {
+        removeModal()
+        # do delete
+      } else if (input$no_delete_full_plate > 0) {
+        removeModal()
+        cat("cancel out of the delete full plate prompt", "\n")
+        return(NULL)
+      }
+    },
+    ignoreInit = TRUE)
 
   # deactivate
   # TODO update this action
@@ -518,6 +591,37 @@ output$season_plot <- renderPlot(
       min_fork_length = input$add_sample_min_fork_length,
       max_fork_length = input$add_sample_max_fork_length,
       expected_number_of_samples = input$add_sample_number_samples
+    )
+  })
+
+  observeEvent(input$add_protocol_submit, {
+    new_protocol <- protocol_template
+
+    new_protocol$name <- input$add_protocol_name
+    new_protocol$software_version <- input$add_protocol_software_version
+    new_protocol$reader_type <- input$add_protocol_reader_type
+    new_protocol$reader_serial_number <- input$add_protocol_serial_number
+    new_protocol$plate_type <- input$add_protocol_plate_type
+    new_protocol$set_point <- as.double(input$add_protocol_set_point)
+    new_protocol$preheat_before_moving <- input$add_protocol_preheat_before_moving
+    new_protocol$runtime <- input$add_protocol_runtime
+    new_protocol$interval <- input$add_protocol_interval
+    new_protocol$read_count <- as.double(input$add_protocol_read_count)
+    new_protocol$run_mode <- input$add_protocol_run_mode
+    new_protocol$excitation <- as.double(input$add_protocol_excitation)
+    new_protocol$emissions <- as.double(input$add_protocol_emissions)
+    new_protocol$optics <- input$add_protocol_optics
+    new_protocol$gain <- as.double(input$add_protocol_gain)
+    new_protocol$light_source <- input$add_protocol_light_source
+    new_protocol$lamp_energy <- input$add_protocol_lamp_energy
+    new_protocol$read_height <- as.double(input$add_protocol_read_height)
+
+    new_protocol |> glimpse()
+
+
+    grunID::add_protocol(
+      con = con,
+      protocol = new_protocol
     )
   })
 

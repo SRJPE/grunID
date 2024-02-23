@@ -46,7 +46,6 @@ logger::log_info(config_file_log_message)
 all_protocols <- get_protocols(con) |> collect()
 all_labs <- get_laboratories(con) |> select(id, code, laboratory_name, description) |> collect()
 all_gen_methods <- get_genetic_methods(con) |> select(id, code, method_name, description) |> collect()
-
 # the actual current status for a given sample is always the latest update
 DB_get_sample_status <- function() {
   DBI::dbGetQuery(
@@ -72,12 +71,14 @@ DB_get_sample_status <- function() {
 flagged_plate_runs <- function() {
   DBI::dbGetQuery(
     con,
-    "SELECT pr.id AS plate_run_id, pr.flags, pr.date_run, pr.updated_at, pr.lab_work_performed_by, gm.method_name,
+    "SELECT pr.id AS plate_run_id, pr.flags, pr.date_run, pr.updated_at, pr.created_at, pr.updated_by, pr.description, pr.lab_work_performed_by, gm.method_name,
     pr.active AS active_plate_run, gm.method_name
     FROM plate_run AS pr LEFT JOIN public.genetic_method AS gm ON gm.id = pr.genetic_method_id where pr.flags like 'EBK_FLAG%';"
     )
 
 }
+
+# where pr.flags like 'EBK_FLAG%'
 
 flagged_sub_plates <- function(plate_run_id) {
   DBI::dbGetQuery(
@@ -162,4 +163,22 @@ available_years <- dplyr::tbl(con, "sample_event") |>
   dplyr::pull(year)
 
 
+status_code_ids_for_failed_states <- DBI::dbGetQuery(
+  con,
+  "select id from status_code where status_code_name like '%failed';"
+) |> pull()
 
+# check for failed sherlock
+check_for_failed_status <- function() {
+  res <- DBI::dbGetQuery(con,
+                  "
+SELECT sample_id, status_code_id
+FROM (
+    SELECT sample_id, status_code_id,
+           ROW_NUMBER() OVER (PARTITION BY sample_id ORDER BY updated_at DESC) AS rn
+    FROM sample_status
+) sub
+WHERE rn = 1;")
+
+  res |> filter(status_code_id %in% status_code_ids_for_failed_states, !str_detect(sample_id, "EBK|NTC|POS|NEG"))
+}
