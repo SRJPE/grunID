@@ -563,6 +563,24 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
 
   }
 
+  # need ots 16
+  ots16_need_inserts <- spring_winter_resp_data |>
+    dplyr::filter(status_code == "need ots16")
+
+  if (nrow(ots16_need_inserts) > 0) {
+    ots16_need_inserts$comment <- plate_comment
+    ots16_need_inserts$status_code_id <- status_code_name_to_id["need ots16"]
+    ots16_need_inserts <- dplyr::select(ots16_need_inserts, sample_id, status_code_id, comment)
+    DBI::dbAppendTable(con, "sample_status", ots16_need_inserts)
+
+    spw_gen_to_insert <- spring_winter_resp_data |>
+      filter(run_type == "SPW")
+
+    if (nrow(spw_gen_to_insert) > 0) {
+      insert_gen_id_to_database(con, spw_gen_to_insert, run_type_name_to_id)
+    }
+  }
+
   # ots 16 in progress status updates
   ots16_inprogress_inserts <- spring_winter_resp_data |>
     dplyr::filter(status_code == "ots16 inprogress")
@@ -583,16 +601,7 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
 
   }
 
-  # need ots 16
-  ots16_need_inserts <- spring_winter_resp_data |>
-    dplyr::filter(status_code == "need ots16")
 
-  if (nrow(ots16_need_inserts) > 0) {
-    ots16_need_inserts$comment <- plate_comment
-    ots16_need_inserts$status_code_id <- status_code_name_to_id["need ots16"]
-    ots16_need_inserts <- dplyr::select(ots16_need_inserts, sample_id, status_code_id, comment)
-    DBI::dbAppendTable(con, "sample_status", ots16_need_inserts)
-  }
 
 }
 

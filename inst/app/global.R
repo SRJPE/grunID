@@ -163,6 +163,10 @@ available_years <- dplyr::tbl(con, "sample_event") |>
   dplyr::pull(year)
 
 
+status_code_ids_for_failed_states <- DBI::dbGetQuery(
+  con,
+  "select id from status_code where status_code_name like '%failed';"
+) |> pull()
 
 # check for failed sherlock
 check_for_failed_status <- function() {
@@ -176,5 +180,5 @@ FROM (
 ) sub
 WHERE rn = 1;")
 
-  res |> filter(status_code_id %in% c(16:17), !str_detect(sample_id, "EBK|NTC|POS|NEG"))
+  res |> filter(status_code_id %in% status_code_ids_for_failed_states, !str_detect(sample_id, "EBK|NTC|POS|NEG"))
 }
