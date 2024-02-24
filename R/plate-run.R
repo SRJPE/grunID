@@ -178,7 +178,7 @@ add_new_plate_results <- function(con, protocol_name, genetic_method,
       dplyr::collect() |>
       dplyr::pull(sample_id)
 
-    run_genetic_identification(con, samples_to_use, selection_strategy = selection_strategy, plate_comment = unique(thresholds_event$plate_comment))
+    run_genetic_identification(con, samples_to_use, layout_type = layout_type, selection_strategy = selection_strategy, plate_comment = unique(thresholds_event$plate_comment))
   }
 
   return(thresholds_event)
