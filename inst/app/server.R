@@ -356,6 +356,20 @@ function(input, output, session) {
                       choices = subsample_sample_event_choices()
   )})
 
+  subsample_sample_ids <- reactive({
+    grunID::generate_subsample(con, as.numeric(input$subsample_sampling_event_filter),
+                               as.numeric(input$season_filter))$results |>
+      dplyr::pull(sample_id)
+  })
+
+  observeEvent(input$do_generate_subsample_plate_map, {
+    grunID::generate_subsample_plate_map(subsample_sample_ids,
+                                         input$subsample_plate_map_type,
+                                         input$subsample_plate_map_filepath)
+  })
+
+
+
   # subsample logic
   observeEvent(input$subsample_logic, {
     showModal(modalDialog(
