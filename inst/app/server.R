@@ -332,7 +332,7 @@ function(input, output, session) {
   # subsample table
   output$subsample_table <- DT::renderDataTable(DT::datatable({
 
-    grunID::generate_subsample(con, as.numeric(input$season_filter))$results
+    grunID::generate_subsample(con, as.numeric(input$subsample_sampling_event_filter), as.numeric(input$season_filter))$results
 
   },
   extensions = "Buttons",
@@ -345,6 +345,16 @@ function(input, output, session) {
   server = FALSE
   ) |>
     shiny::bindCache(input$season_filter)
+
+  subsample_sample_event_choices <- reactive({
+    grunID::sample_filter_to_season(con, as.numeric(input$season_filter)) |>
+    dplyr::pull(sample_event_number)
+  })
+
+  observe({
+    updateSelectInput(session, "subsample_sampling_event_filter",
+                      choices = subsample_sample_event_choices()
+  )})
 
   # subsample logic
   observeEvent(input$subsample_logic, {

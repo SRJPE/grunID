@@ -225,6 +225,8 @@ navbarPage(
              mainPanel(
                selectInput("subsample_season_filter", "Season Filter",
                            2024),
+               selectInput("subsample_sampling_event_filter", "Sampling Event",
+                           ""),
                tags$h4("Full result table"),
                DT::dataTableOutput("subsample_table") |>
                  shinycssloaders::withSpinner()
