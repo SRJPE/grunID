@@ -55,16 +55,8 @@ insert_detection_results <- function(con, detection_results, table = c("assay_re
   destination_table <- match.arg(table)
 
   query <- glue::glue_sql("
-<<<<<<< HEAD
   INSERT INTO {`destination_table`} (sample_id, assay_id, raw_fluorescence, threshold,
-                            positive_detection, plate_run_id)
-||||||| 48748f2
-  INSERT INTO assay_result (sample_id, assay_id, raw_fluorescence, threshold,
-                            positive_detection, plate_run_id)
-=======
-  INSERT INTO assay_result (sample_id, assay_id, raw_fluorescence, threshold,
                             positive_detection, plate_run_id, sub_plate)
->>>>>>> dev
   VALUES (
           {detection_results$sample_id},
           {detection_results$assay_id},
