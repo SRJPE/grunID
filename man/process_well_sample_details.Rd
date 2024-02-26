@@ -7,7 +7,8 @@
 process_well_sample_details(
   filepath,
   sample_type = c("mucus", "fin clip"),
-  layout_type = c("split_plate_early_late", "split_plate_spring_winter", "triplicate",
+  layout_type = c("split_plate_early_late", "split_plate_late_early",
+    "split_plate_spring_winter", "split_plate_winter_spring", "triplicate",
     "single_assay_ots28_early", "single_assay_ots28_late", "single_assay_ots16_spring",
     "single_assay_ots16_winter"),
   plate_run_id,
@@ -20,7 +21,8 @@ in a sheet titled "Plate Map"}
 
 \item{sample_type}{either \code{mucus} or \code{fin_clip}}
 
-\item{layout_type}{either \code{split_plate_early_late}, \code{split_plate_spring_winter}, \code{triplicate},
+\item{layout_type}{either \code{split_plate_early_late}, \code{split_plate_late_early}, \code{split_plate_spring_winter},
+\code{split_plate_winter_spring}, \code{triplicate},
 \code{single_assay_ots28_early}, \code{single_assay_ots28_late}, \code{single_assay_ots16_spring},
 \code{single_assay_ots16_winter}}
 
@@ -52,7 +54,9 @@ by the Synergy H1 reader to sample identifiers in the database. If the \code{lay
 following logic:
 \itemize{
 \item \code{split_plate_early_late}: columns 1:12 are OTS 28 Early and columns 13:24 are OTS 28 Late
+\item \code{split_plate_late_early}: columns 1:12 are OTS 28 Late and columns 13:24 are OTS 28 Early
 \item \code{split_plate_spring_winter}: columns 1:12 are OTS 16 Spring and columns 13:24 are OTS 16 Winter
+\item \code{split_plate_winter_spring}: columns 1:12 are OTS 16 Winter and columns 13:24 are OTS 16 Spring
 }
 
 If the \code{layout_type} argument is \code{triplicate}, the assay ids are assigned as follows:

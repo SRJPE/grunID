@@ -34,8 +34,11 @@ generate_threshold <- function(con, plate_run, results_table, strategy = "twice 
            plate_run_id == !!plate_run_identifier) |>
     dplyr::collect()
 
-  controls_for_threshold <- control_blanks |> filter(raw_fluorescence < 12000)
+  controls_for_threshold <- control_blanks |> filter(raw_fluorescence < 12000) |>
+    mutate(sub_plate_from_id = (strsplit(sample_id, "-")[[1]][2]))
   controls_for_flagging <- control_blanks |> filter(raw_fluorescence > 12000)
+
+
 
   if (nrow(controls_for_threshold) == 0) {
     stop(paste0("no control variables found in plate run with id: '", plate_run_identifier, "'"), call. = FALSE)
@@ -57,6 +60,9 @@ generate_threshold <- function(con, plate_run, results_table, strategy = "twice 
   }
 
   if (nrow(controls_for_flagging) > 0) {
+    plate_flag = glue::glue("EBK_FLAG;{glue::glue_collapse(glue::glue('{controls_for_flagging$sample_id}_{controls_for_flagging$raw_fluorescence}'), sep = ';')}")
+    sql_statement <- glue::glue_sql("UPDATE plate_run SET flags = {plate_flag} WHERE id = {plate_run_identifier}", .con = con)
+    DBI::dbExecute(con, sql_statement)
     comment <- glue::glue("
   MANUAL EBK VALUE CHECK: plate_run_id = {plate_run$plate_run_id} Values = {glue::glue_collapse(glue::glue('{controls_for_flagging$sample_id}({controls_for_flagging$raw_fluorescence})'), sep = ';')}"
     )

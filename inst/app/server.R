@@ -1,22 +1,33 @@
 function(input, output, session) {
 
-  iv <- shinyvalidate::InputValidator$new()
-
-  iv$add_rule("performed_by", shinyvalidate::sv_required())
-  iv$add_rule("run_description", shinyvalidate::sv_required())
-
-
+  # Upload Results ----------------------------------------------------------
   observeEvent(input$show_protocol_details, {
     showModal(modalDialog(
       title = "Protocol Details",
       renderTableWithScrollOnX(all_protocols |>
-                    filter(active == TRUE) |>
-                    select(name, reader = reader_type, serial_no = reader_serial_number,
-                           plate = plate_type, set_point, preheat = preheat_before_moving,
-                           runtime, interval, read_count, mode = run_mode, excitation,
-                           emissions, light_source, lamp = lamp_energy, height = read_height), striped = TRUE, width = "auto"),
-    size = "l"))
+                                 filter(active == TRUE) |>
+                                 select(name, reader = reader_type, serial_no = reader_serial_number,
+                                        plate = plate_type, set_point, preheat = preheat_before_moving,
+                                        runtime, interval, read_count, mode = run_mode, excitation,
+                                        emissions, light_source, lamp = lamp_energy, height = read_height), striped = TRUE, width = "auto"),
+      size = "l"))
   })
+
+  samples_failing <- reactiveVal(nrow(check_for_failed_status()))
+
+  # Render the banner based on the failed samples status
+  output$ui_banner_for_failed_status <- renderUI({
+    if (samples_failing() == 0) {
+      return(NULL)
+    } else {
+      total_samples_failing <- nrow(samples_failing())
+      HTML(paste0('<div class="alert alert-danger" role="alert">',
+                  samples_failing(), ' samples were found with a failed status, please review using query',
+                  '</div>'))
+    }
+  })
+
+
 
   observeEvent(input$show_lab_details, {
     showModal(modalDialog(
@@ -57,64 +68,80 @@ function(input, output, session) {
 
   observeEvent(input$info_layout_type, {
     showModal(modalDialog(
-      "What plate map layout are you using? This refers to which assays are being run and in what organization on the plate.
-      Current options are split_plate_early_late, split_plate_spring_winter, triplicate, single_assay_ots28_early,
-      single_assay_ots28_late, single_assay_ots16_spring, single_assay_ots16_winter",
-      size = "l"
-    ))
+      tagList(
+        tags$h3("Dual Assay Layout"),
+        tags$p("For dual assay layouts select either 'Split Plate Early + Late' or 'Split Plate Spring + Winter'"),
+        img(src = "assets/plate-mapping-2-assay.png", width = "100%"),
+        tags$h3("Single Assay V5"),
+        tags$p("For single assay layouts select one of the 'Single Assay' options"),
+        img(src = "assets/plate-mapping-v5.png", width = "100%")
+      ),
+      size = "l",easyClose = TRUE)
+    )
   })
 
   observeEvent(input$do_upload, {
-    iv$enable()
-    req(iv$is_valid())
-
-
-    if (input$sample_id_type == "JPE Samples") {
-      tryCatch({
-        #messages <- capture.output(
-        grunID::add_new_plate_results(con, protocol_name = input$protocol,
-                                      genetic_method = input$genetic_method,
-                                      laboratory = input$laboratory,
-                                      lab_work_performed_by = input$performed_by,
-                                      description = input$run_description,
-                                      date_run = input$date_run,
-                                      filepath = input$sherlock_results$datapath,
-                                      sample_type = input$sample_type,
-                                      layout_type = input$layout_type,
-                                      plate_size = input$plate_size,
-                                      .control_id = "EBK",
-                                      run_gen_id = input$perform_genetics_id)
-        #)
-        #shinyCatch({message(paste0(messages))}, prefix = '') # this prints out messages (only at the end of the function) to shiny
-        spsComps::shinyCatch({message("Success!")}, position = "top-center")},
-        error = function(e) {
-          spsComps::shinyCatch({stop(paste(e))}, prefix = '', position = "top-center")
-        })
-    } else {
-      grunID::add_external_plate_results(con, protocol_name = input$protocol,
-                                         genetic_method = input$genetic_method,
-                                         laboratory = input$laboratory,
-                                         lab_work_performed_by = input$performed_by,
-                                         description = input$run_description,
-                                         date_run = input$date_run,
-                                         filepath = input$sherlock_results$datapath,
-                                         sample_type = input$sample_type,
-                                         layout_type = input$layout_type,
-                                         plate_size = input$plate_size,
-                                         .control_id = "EBK",
-                                         run_gen_id = input$perform_genetics_id)
-    }
+    showModal(modalDialog(
+      title = "Confirm data submission",
+      tagList(
+        h5(tags$b("Please confirm Plate Layout Selection")),
+        h5("This extra check is here to ensure that the order of the layout present in the results file matches the layout selected in this upload tool."),
+        h5("Layout Selected:", tags$b(glue::glue("{input$layout_type}"))),
+        h5("Results filename:", tags$b(glue::glue("{input$sherlock_results$name}"))),
+        h5("Is this selection correct?"),
+      ),
+      size = "l",
+      easyClose = F,
+      footer = tagList(
+        actionButton("yes_upload", "Yes", class= "btn-success"),
+        actionButton("no_upload", "Cancel", class = "btn-danger")
+      )
+    ))
   })
+
+
+  observeEvent(input$yes_upload | input$no_upload, ignoreInit = TRUE, {
+    if(input$yes_upload > 0){
+      tryCatch({
+        removeModal(session = session)
+        grunID::add_new_plate_results(
+          con,
+          protocol_name = input$protocol,
+          genetic_method = input$genetic_method,
+          laboratory = input$laboratory,
+          lab_work_performed_by = input$performed_by,
+          description = input$run_description,
+          date_run = input$date_run,
+          filepath = input$sherlock_results$datapath,
+          sample_type = input$sample_type,
+          layout_type = input$layout_type,
+          plate_size = input$plate_size,
+          selection_strategy = "recent priority",
+          .control_id = "EBK",
+          run_gen_id = input$perform_genetics_id)
+
+        spsComps::shinyCatch({message("Success!")}, position = "top-center")
+      },
+      error = function(e) {
+        removeModal(session = session)
+        spsComps::shinyCatch({stop(paste(e))}, prefix = '', position = "top-center")
+      },
+      finally = samples_failing(nrow(check_for_failed_status())))
+
+    } else if (input$no_upload > 0) {
+      removeModal(session = session)
+      print("Submission cancelled by user.")
+  }}, priority = 999)
 
 
   # Sample Status ---------------------------------------------------------------------
 
-  initial_load <- reactiveVal(TRUE)
+  initial_load_sample_status <- reactiveVal(TRUE)
   observeEvent(input$sample_status_refresh, {
-    initial_load(FALSE)
+    initial_load_sample_status(FALSE)
   })
 
-  latest_sample_status <- eventReactive(list(input$sample_status_refresh, initial_load()), {
+  latest_sample_status <- eventReactive(list(input$sample_status_refresh, initial_load_sample_status()), {
     logger::log_info("Fetching latest results using sample status query")
     DB_get_sample_status()
   })
@@ -166,23 +193,37 @@ function(input, output, session) {
       )
   })
 
+
+  # Query -------------------------------------------------------------------
+
+  initial_load_query <- reactiveVal(TRUE)
+  observeEvent(input$query_refresh, {
+    initial_load_query(FALSE)
+  })
+
+  latest_query <- eventReactive(list(input$query_refresh, initial_load_query()), {
+    logger::log_info("Fetching latest results using grunID::get_samples_by_season()")
+    data <- grunID::get_samples_by_season(con, input$season_filter, input$dataset_type_filter,
+                                          input$filter_to_heterozygotes, input$filter_to_failed)
+    data
+  })
+
   selected_samples_by_season <- reactive({
-    grunID::get_samples_by_season(con, input$season_filter, input$dataset_type_filter,
-                                  input$filter_to_heterozygotes, input$filter_to_failed)
+    latest_query()
   })
 
   output$season_table <- DT::renderDataTable(DT::datatable(selected_samples_by_season(),
-  extensions = "Buttons",
-  rownames = FALSE,
-  options = list(autoWidth = FALSE,
-                 dom = "Bfrtip",
-                 buttons = c("copy", "csv", "excel"),
-                 lengthChange = TRUE,
-                 pageLength = 20)),
-  server = FALSE
-  ) |>
-    shiny::bindCache(input$season_filter, input$dataset_type_filter,
-                     input$filter_to_heterozygotes, input$filter_to_failed)
+                                                           extensions = "Buttons",
+                                                           rownames = FALSE,
+                                                           options = list(autoWidth = FALSE,
+                                                                          dom = "Bfrtip",
+                                                                          buttons = c("copy", "csv", "excel"),
+                                                                          lengthChange = TRUE,
+                                                                          pageLength = 20)),
+                                             server = FALSE
+  ) #|>
+  # shiny::bindCache(input$season_filter, input$dataset_type_filter,
+  #                  input$filter_to_heterozygotes, input$filter_to_failed)
 
   observeEvent(input$season_filter_description, {
     showModal(modalDialog(
@@ -208,25 +249,25 @@ function(input, output, session) {
     ))
   })
 
-output$season_plot <- renderPlot(
-  grunID::get_samples_by_season(con, season = input$season_filter, dataset = input$dataset_type_filter) |>
-    dplyr::mutate(week = lubridate::week(datetime_collected)) |>
-    dplyr::filter(!is.na(week)) |>
-    dplyr::group_by(week) |>
-    dplyr::summarise(prop_spring_gen = sum(genetic_run_assignment == "Spring") / n(),
-                     prop_spring_field = sum(field_run_assignment == "Spring") / n()) |>
-    dplyr::ungroup() |>
-    tidyr::pivot_longer(c(prop_spring_gen, prop_spring_field),
-                        names_to = "method",
-                        values_to = "prop_spring") |>
-    dplyr::mutate(method = ifelse(method == "prop_spring_field", "Field assignment", "Genetic assignment")) |>
-    ggplot2::ggplot(aes(x = week, y = prop_spring, color = method)) +
-    geom_line() +
-    xlab("Week") + xlim(c(0, 52)) +
-    ylab("Proportion Spring Run") + ylim(c(0, 1)) +
-    scale_color_manual(values = c("#F1BB7B", "#FD6467")) +
-    theme_minimal() +
-    theme(legend.position = "bottom")
+  output$season_plot <- renderPlot(
+    selected_samples_by_season() |>
+      dplyr::mutate(week = lubridate::week(datetime_collected)) |>
+      dplyr::filter(!is.na(week)) |>
+      dplyr::group_by(week) |>
+      dplyr::summarise(prop_spring_gen = sum(genetic_run_assignment == "Spring") / n(),
+                       prop_spring_field = sum(field_run_assignment == "Spring") / n()) |>
+      dplyr::ungroup() |>
+      tidyr::pivot_longer(c(prop_spring_gen, prop_spring_field),
+                          names_to = "method",
+                          values_to = "prop_spring") |>
+      dplyr::mutate(method = ifelse(method == "prop_spring_field", "Field assignment", "Genetic assignment")) |>
+      ggplot2::ggplot(aes(x = week, y = prop_spring, color = method)) +
+      geom_line() +
+      xlab("Week") + xlim(c(0, 52)) +
+      ylab("Proportion Spring Run") + ylim(c(0, 1)) +
+      scale_color_manual(values = c("#F1BB7B", "#FD6467")) +
+      theme_minimal() +
+      theme(legend.position = "bottom")
   )
 
 
@@ -236,8 +277,11 @@ output$season_plot <- renderPlot(
         title = "Proportion spring run by weeks within season",
         plotOutput("season_plot"),
         size = "l")
-      )
-    })
+    )
+  })
+
+
+  # Upload Field Sheets -----------------------------------------------------
 
   # read in field data, if available
   clean_field_data <- reactive({
@@ -274,6 +318,9 @@ output$season_plot <- renderPlot(
                  pageLength = 10)),
   server = FALSE
   )
+
+
+  # Subsample ---------------------------------------------------------------
 
   # subsample table
   output$subsample_table <- DT::renderDataTable(DT::datatable({
@@ -317,4 +364,258 @@ output$season_plot <- renderPlot(
     grunID::generate_subsample(con, as.numeric(input$season_filter))$summary
   },
   rownames = FALSE))
+
+
+
+  # Plate Validations -------------------------------------------------------------------
+
+  initial_load_qa_qc <- reactiveVal(TRUE)
+
+  latest_qa_qc_fetch <- eventReactive(list(initial_load_qa_qc()), {
+    logger::log_info("Fetching latest results from database for QA/QC tab")
+    data <- flagged_plate_runs()
+    data
+  })
+
+  observe(latest_qa_qc_fetch())
+
+  flagged_sample_table <- reactive({
+    if(input$filter_to_active_plate_runs) {
+      latest_qa_qc_fetch() |>
+        filter(active_plate_run == TRUE) |>
+        mutate(updated_at = format(updated_at, "%Y-%m-%d %H:%M")) |>
+        distinct(plate_run_id, active_plate_run, .keep_all = TRUE) |>
+        select(plate_run_id, flags, date_run, updated_at, description, lab_work_performed_by,
+               genetic_method = method_name, active = active_plate_run, last_review = updated_by)
+    } else {
+      latest_qa_qc_fetch() |>
+        distinct(plate_run_id, active_plate_run, .keep_all = TRUE) |>
+        mutate(updated_at = format(updated_at, "%Y-%m-%d %H:%M")) |>
+        select(plate_run_id, flags, date_run, updated_at, description, lab_work_performed_by,
+               genetic_method = method_name, active = active_plate_run, last_review = updated_by)
+    }
+  })
+
+  # flagged table
+  output$flagged_table <- DT::renderDataTable(DT::datatable(
+    flagged_sample_table(),
+    rownames = FALSE,
+    selection = "single",
+    options = list(autoWidth = FALSE,
+                   lengthChange = TRUE,
+                   pageLength = 5)),
+    server = FALSE)
+
+  selected_flagged_table_row <- reactive({
+    flagged_sample_table() |>
+      slice(input$flagged_table_rows_selected)
+  })
+
+
+  flag_details_for_selected_row <- reactive({
+    req(nrow(selected_flagged_table_row()) > 0)
+    parse_plate_flags(selected_flagged_table_row()$flags, "ebk")
+  })
+
+
+  assay_results_needed_for_validation <- reactive({
+    req(nrow(selected_flagged_table_row()) > 0)
+
+    selected_plate_run_id <- selected_flagged_table_row()$plate_run_id
+    tbl(con, "assay_result") |> dplyr::filter(plate_run_id == selected_plate_run_id)
+  })
+
+  total_subplates_in_selected_plate <- reactive({
+    assay_results_needed_for_validation() |>
+      collect() |>
+      filter(!str_detect(sample_id, "^EBK|^POS|^NEG|^NTC")) |>
+      distinct(sub_plate) |> arrange(sub_plate) |> pull(sub_plate)
+  })
+
+  output$flagged_plate_run_comment <- renderUI({
+    req(flag_details_for_selected_row())
+    d <- flag_details_for_selected_row()
+    tagList(
+      tags$hr(),
+      tags$h4("Validation for"),
+      tags$ul(
+        map(1:nrow(d), \(x) tags$li(glue::glue("Subplate: {d$sub_plate[x]} with EBK value: {d$value[x]}")))
+      )
+    )
+  })
+
+  output$ui_subplate_checkbox <- renderUI({
+    req(total_subplates_in_selected_plate())
+
+    choices <- total_subplates_in_selected_plate()
+    names(choices) <- paste("subplate:", total_subplates_in_selected_plate())
+    checkboxGroupButtons(
+      inputId = "subplate_in_selceted_plate",
+      label = "",
+      choices = choices,
+      individual = TRUE,
+      checkIcon = list(
+        yes = tags$i(class = "fa fa-circle",
+                     style = "color: steelblue"),
+        no = tags$i(class = "fa fa-circle-o",
+                    style = "color: steelblue"))
+    )
+  })
+
+  output$flagged_plate_run_table_display <- DT::renderDataTable({
+    validate(
+      need(!is.null(input$flagged_table_rows_selected), "select a plate run to view assay results")
+    )
+
+    extracted_value <- str_extract(input$subplate_selection, "\\b\\d+-\\d+\\b")
+    subplate_rep <- as.integer(unlist(strsplit(extracted_value, split = "-")))
+
+
+    data <- assay_results_needed_for_validation() |>
+      select(plate_run_id, sample_id, raw_fluorescence, threshold, positive_detection, sub_plate) |>
+      collect() |>
+      filter(str_detect(sample_id, "^EBK")) |>
+      arrange(sample_id)
+    DT::datatable(data,
+                  rownames = FALSE,
+                  selection = "none",
+                  options = list(dom = 't', pageLength = 500, scrollX = TRUE, scrollY = "500px")
+    )
+  })
+
+  output$pv_all_plate_data_tbl <- DT::renderDataTable({
+    assay_results_needed_for_validation() |>
+      select(plate_run_id, sample_id, raw_fluorescence, threshold, positive_detection, sub_plate, active) |>
+      collect() |>
+      DT::datatable(options = list(scrollY="500px", pageLength = 500, dom = "t")) |>
+      formatStyle("active",
+                  target = "row",
+                  backgroundColor = styleEqual(
+                    levels = c(FALSE),
+                    values = c("#a1a1a1")
+                  ))
+  })
+
+  observeEvent(input$do_deactivate_entire_plate, {
+    showModal(modalDialog(
+      title = "Confirm data deletion",
+      tagList(
+        h5(tags$b("Please confirm you wish to delete the full plate run and corresponding data.")),
+        h5("Deleting the plate run will delete all data uploaded from this plate, this can potentially revert any run assignments and status codes assigned to a sample.")
+      ),
+      size = "l",
+      easyClose = F,
+      footer = tagList(
+        actionButton("yes_delete_full_plate", "Yes, Delete", class= "btn-default"),
+        actionButton("no_delete_full_plate", "Cancel", class = "btn-danger")
+      )
+    ))
+  })
+
+  observeEvent(
+    eventExpr = list(
+      input$yes_delete_full_plate,
+      input$no_delete_full_plate
+    ),
+    handlerExpr = {
+      if (input$yes_delete_full_plate > 0) {
+        removeModal()
+        # do delete
+      } else if (input$no_delete_full_plate > 0) {
+        removeModal()
+        cat("cancel out of the delete full plate prompt", "\n")
+        return(NULL)
+      }
+    },
+    ignoreInit = TRUE)
+
+  # deactivate
+  # TODO update this action
+  observeEvent(input$do_deactivate, {
+    tryCatch({
+      plate_id_to_deactivate <- selected_flagged_table_row()$plate_run_id
+      # grunID::deactivate_plate_run(con, plate_id_to_deactivate)
+
+      subplates_to_deactivate <- as.integer(input$subplate_in_selceted_plate)
+
+      sql_statement <- glue::glue_sql("UPDATE assay_result set active = false where plate_run_id = {plate_id_to_deactivate} and sub_plate IN ({subplates_to_deactivate*});",
+                                      .con = con)
+
+      DBI::dbExecute(con, sql_statement)
+      spsComps::shinyCatch({message(paste0("Plate run ", plate_id_to_deactivate, " deactivated"))}, position = "top-center")
+    },
+    error = function(e) {
+      spsComps::shinyCatch({stop(paste(e))}, prefix = '', position = "top-center")
+    })
+    # refresh
+    initial_load_qa_qc(FALSE)
+    initial_load_qa_qc(TRUE)
+  })
+
+  # TODO update this action
+  # activate
+  observeEvent(input$do_activate, {
+    tryCatch({
+      plate_id_to_activate <- selected_flagged_table_row()$plate_run_id
+      subplates_to_activate <- as.integer(input$subplate_in_selceted_plate)
+
+      sql_statement <- glue::glue_sql("UPDATE assay_result set active = true where plate_run_id = {plate_id_to_activate} and sub_plate IN ({subplates_to_activate*});",
+                                      .con = con)
+      DBI::dbExecute(con, sql_statement)
+      spsComps::shinyCatch({message(paste0("Plate run ", plate_id_to_activate, " activated"))}, position = "top-center")
+    },
+    error = function(e) {
+      spsComps::shinyCatch({stop(paste(e))}, prefix = '', position = "top-center")
+    })
+    # refresh
+    initial_load_qa_qc(FALSE)
+    initial_load_qa_qc(TRUE)
+  })
+
+  # Add sample -------------------------------------
+
+  observeEvent(input$add_sample_submit, {
+    grunID::add_sample(
+      con = con,
+      location_code = input$add_sample_location_code,
+      sample_event_number = input$add_sample_event_number,
+      first_sample_date = input$add_sample_first_sample_date,
+      sample_bin_code = input$add_sample_sample_bin_code,
+      min_fork_length = input$add_sample_min_fork_length,
+      max_fork_length = input$add_sample_max_fork_length,
+      expected_number_of_samples = input$add_sample_number_samples
+    )
+  })
+
+  observeEvent(input$add_protocol_submit, {
+    new_protocol <- protocol_template
+
+    new_protocol$name <- input$add_protocol_name
+    new_protocol$software_version <- input$add_protocol_software_version
+    new_protocol$reader_type <- input$add_protocol_reader_type
+    new_protocol$reader_serial_number <- input$add_protocol_serial_number
+    new_protocol$plate_type <- input$add_protocol_plate_type
+    new_protocol$set_point <- as.double(input$add_protocol_set_point)
+    new_protocol$preheat_before_moving <- input$add_protocol_preheat_before_moving
+    new_protocol$runtime <- input$add_protocol_runtime
+    new_protocol$interval <- input$add_protocol_interval
+    new_protocol$read_count <- as.double(input$add_protocol_read_count)
+    new_protocol$run_mode <- input$add_protocol_run_mode
+    new_protocol$excitation <- as.double(input$add_protocol_excitation)
+    new_protocol$emissions <- as.double(input$add_protocol_emissions)
+    new_protocol$optics <- input$add_protocol_optics
+    new_protocol$gain <- as.double(input$add_protocol_gain)
+    new_protocol$light_source <- input$add_protocol_light_source
+    new_protocol$lamp_energy <- input$add_protocol_lamp_energy
+    new_protocol$read_height <- as.double(input$add_protocol_read_height)
+
+    new_protocol |> glimpse()
+
+
+    grunID::add_protocol(
+      con = con,
+      protocol = new_protocol
+    )
+  })
+
 }
