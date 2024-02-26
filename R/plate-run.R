@@ -15,12 +15,12 @@ add_new_plate_results <- function(con, protocol_name, genetic_method, laboratory
                                   lab_work_performed_by, description, date_run,
                                   filepath, sample_type, layout_type, plate_size = c(96, 384),
                                   .control_id = "EBK", selection_strategy = "recent priority",
-                                  run_gen_id = FALSE, samples_source = c("jpe", "salvage")) {
+                                  run_gen_id = FALSE, samples_type = c("jpe", "salvage")) {
 
 
-  samples_source <- match.arg(samples_source)
+  samples_type <- match.arg(samples_type)
 
-  db_tables <- switch(samples_source,
+  db_tables <- switch(samples_type,
                       "jpe" = list(
                         "raw_assay" = "raw_assay_result",
                         "assay" = "assay_result",
