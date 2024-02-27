@@ -33,7 +33,7 @@ add_new_plate_results <- function(con, protocol_name, genetic_method, laboratory
                         "assay" = "external_assay_result",
                         "run_id" = "external_genetic_run_identification",
                         "samples" = "external_sample",
-                        "sample_status" = "external_samples_status"
+                        "sample_status" = "external_sample_status"
                       )
   )
 

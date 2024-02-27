@@ -19,7 +19,7 @@ add_new_plate_results(
   .control_id = "EBK",
   selection_strategy = "recent priority",
   run_gen_id = FALSE,
-  samples_source = c("jpe", "salvage")
+  samples_type = c("jpe", "salvage")
 )
 }
 \arguments{

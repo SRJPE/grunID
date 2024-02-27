@@ -95,13 +95,13 @@ insert_detection_results <- function(con, detection_results, table = c("assay_re
 #' - "recent priority" - will choose the most recent assays from the available assays needed.
 #' @export
 #' @md
-ots_early_late_detection <- function(con, sample_id,
+ots_early_late_detection <- function(con, sample_id, results_table,
                                      selection_strategy = c("recent priority", "positive priority")) {
   selection_strategy <- match.arg(selection_strategy)
 
   # get all results that match this sample id
   # we filter to just the sample that have an active plate run associated with them
-  assay_results <- tbl(con, "assay_result") |>
+  assay_results <- tbl(con, results_table) |>
     filter(sample_id == !!sample_id, active == TRUE)
 
   # get all the assays run for each
@@ -251,7 +251,7 @@ ots_winter_spring_detection <- function(con, sample_id, results_table,
   selection_strategy <- match.arg(selection_strategy)
 
 
-  assay_results <- tbl(con, "assay_result") |>
+  assay_results <- tbl(con, results_table) |>
     filter(sample_id == !!sample_id, active == TRUE)
 
   assays_for_existing_for_sample <- assay_results |> dplyr::distinct(assay_id) |> dplyr::pull()
@@ -449,12 +449,12 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
     el_failed_status_insert$comment <- plate_comment
     el_failed_status_insert$status_code_id <- status_code_name_to_id["EL-failed"]
     status_to_insert <- dplyr::select(el_failed_status_insert, sample_id, status_code_id, comment)
-    DBI::dbAppendTable(con, "sample_status", status_to_insert)
+    DBI::dbAppendTable(con, sample_status_table, status_to_insert)
 
     uknown_gen_insert <- early_late_resp_data |>
       dplyr::filter(status_code == "EL-failed")
 
-    insert_gen_id_to_database(con, uknown_gen_insert, run_type_name_to_id)
+    insert_gen_id_to_database(con, uknown_gen_insert, run_type_name_to_id, destination_table)
 
   }
 
@@ -544,12 +544,12 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
     sw_failed_status_insert$comment <- plate_comment
     sw_failed_status_insert$status_code_id <- status_code_name_to_id["SW-failed"]
     status_to_insert <- dplyr::select(sw_failed_status_insert, sample_id, status_code_id, comment)
-    DBI::dbAppendTable(con, "sample_status", status_to_insert)
+    DBI::dbAppendTable(con, sample_status_table, status_to_insert)
 
     uknown_gen_insert <- early_late_resp_data |>
       dplyr::filter(status_code == "SW-failed")
 
-    insert_gen_id_to_database(con, uknown_gen_insert, run_type_name_to_id)
+    insert_gen_id_to_database(con, uknown_gen_insert, run_type_name_to_id, destination_table)
 
   }
 
@@ -580,13 +580,13 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
     ots16_need_inserts$comment <- plate_comment
     ots16_need_inserts$status_code_id <- status_code_name_to_id["need ots16"]
     ots16_need_inserts <- dplyr::select(ots16_need_inserts, sample_id, status_code_id, comment)
-    DBI::dbAppendTable(con, "sample_status", ots16_need_inserts)
+    DBI::dbAppendTable(con, sample_status_table, ots16_need_inserts)
 
     spw_gen_to_insert <- spring_winter_resp_data |>
       filter(run_type == "SPW")
 
     if (nrow(spw_gen_to_insert) > 0) {
-      insert_gen_id_to_database(con, spw_gen_to_insert, run_type_name_to_id)
+      insert_gen_id_to_database(con, spw_gen_to_insert, run_type_name_to_id, destination_table)
     }
   }
 
