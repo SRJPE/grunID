@@ -7,6 +7,7 @@
 generate_threshold(
   con,
   plate_run,
+  results_table,
   strategy = "twice average",
   .control_id = "EBK"
 )

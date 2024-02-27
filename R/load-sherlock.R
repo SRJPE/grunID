@@ -10,7 +10,7 @@
 #' assay on a plate will have its own control blanks and threshold value.
 #' @returns a table containing thresholds for an event, to be passed to `update_assay_detections()`
 #' @export
-generate_threshold <- function(con, plate_run, strategy = "twice average",.control_id="EBK") {
+generate_threshold <- function(con, plate_run, results_table, strategy = "twice average", .control_id="EBK") {
 
   if (!DBI::dbIsValid(con)) {
     stop("Connection argument does not have a valid connection the run-id database.
@@ -28,7 +28,7 @@ generate_threshold <- function(con, plate_run, strategy = "twice average",.contr
     dplyr::filter(id == !!protocol_id) |>
     dplyr::pull(runtime)
 
-  control_blanks <- dplyr::tbl(con, "raw_assay_result") |>
+  control_blanks <- dplyr::tbl(con, results_table) |>
     dplyr::filter(time == runtime,
                   stringr::str_detect(sample_id, .control_id),
            plate_run_id == !!plate_run_identifier) |>
@@ -195,9 +195,9 @@ check_results_complete <- function(con, sample_identifiers) {
 
 #' @title Add Raw Results
 #' @export
-add_raw_assay_results <- function(con, assay_results) {
+add_raw_assay_results <- function(con, assay_results, destination_table = c("raw_assay_result", "externtal_raw_assay_result")) {
 
-  res <- DBI::dbAppendTable(con, "raw_assay_result", assay_results$data)
+  res <- DBI::dbAppendTable(con, destination_table, assay_results$data)
 
   return(c("raw assay results added" = res))
 }

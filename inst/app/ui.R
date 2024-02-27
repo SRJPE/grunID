@@ -20,6 +20,13 @@ navbarPage(
              # offset = 1,
              width = 6,
              h3("Enter Plate Run"),
+             radioButtons("sample_id_type", "Sample ID Types",
+                          choices = c("JPE Samples", "Salvage Samples"), inline = TRUE),
+             selectInput("protocol", "Select a Protocol", choices = all_protocols$name),
+             selectInput("laboratory", "Select a Laboratory", choices = all_labs$code),
+             selectInput("genetic_method", "Select a Genetic Method", choices = all_gen_methods$code),
+             textInput("performed_by", "Lab work performed by:"),
+             textInput("run_description", "Plate Run Description:"),
 
              uiOutput("ui_banner_for_failed_status"),
 
@@ -83,7 +90,7 @@ navbarPage(
              ),
 
              selectInput("plate_size", "Select Plate Size", choices = c(384, 96)),
-             checkboxInput("perform_genetics_id", label = "Run genetic calculations for samples after upload", value = TRUE),
+             tags$br(),
              actionButton("do_upload", "Upload Results", class = "btn-success", icon = icon("rocket")),
 
              tags$br()

@@ -1,6 +1,5 @@
 function(input, output, session) {
 
-
   # Upload Results ----------------------------------------------------------
   observeEvent(input$show_protocol_details, {
     showModal(modalDialog(
@@ -100,11 +99,6 @@ function(input, output, session) {
     ))
   })
 
-  observe({
-
-    cat(input$yes_upload)
-  })
-
 
   observeEvent(input$yes_upload | input$no_upload, ignoreInit = TRUE, {
     if(input$yes_upload > 0){
@@ -137,8 +131,7 @@ function(input, output, session) {
     } else if (input$no_upload > 0) {
       removeModal(session = session)
       print("Submission cancelled by user.")
-    }
-  }, priority = 999)
+  }}, priority = 999)
 
 
   # Sample Status ---------------------------------------------------------------------
