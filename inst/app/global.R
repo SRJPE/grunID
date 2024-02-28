@@ -168,8 +168,14 @@ status_code_ids_for_failed_states <- DBI::dbGetQuery(
   "select id from status_code where status_code_name like '%failed';"
 ) |> pull()
 
+status_code_ids_for_need_ots16 <- DBI::dbGetQuery(
+  con,
+  "select id from status_code where status_code_name = 'need ots16';"
+) |> pull()
+
+
 # check for failed sherlock
-check_for_failed_status <- function() {
+check_for_status <- function() {
   res <- DBI::dbGetQuery(con,
                   "
 SELECT sample_id, status_code_id
@@ -180,5 +186,11 @@ FROM (
 ) sub
 WHERE rn = 1;")
 
-  res |> filter(status_code_id %in% status_code_ids_for_failed_states, !str_detect(sample_id, "EBK|NTC|POS|NEG"))
+  failed <- res |> filter(status_code_id %in% status_code_ids_for_failed_states, !str_detect(sample_id, "EBK|NTC|POS|NEG"))
+  need16 <- res |> filter(status_code_id %in% status_code_ids_for_need_ots16, !str_detect(sample_id, "EBK|NTC|POS|NEG"))
+
+  return(list(
+    failed = failed,
+    need_ots16 = need16
+  ))
 }
