@@ -14,7 +14,8 @@ function(input, output, session) {
       size = "l"))
   })
 
-  samples_failing <- reactiveVal(nrow(check_for_failed_status()))
+  samples_failing <- reactiveVal(nrow(check_for_status()$failed))
+  samples_need_ots16 <- reactiveVal(nrow(check_for_status()$need_ots16))
 
   # Render the banner based on the failed samples status
   output$ui_banner_for_failed_status <- renderUI({
@@ -24,6 +25,17 @@ function(input, output, session) {
       total_samples_failing <- nrow(samples_failing())
       HTML(paste0('<div class="alert alert-danger" role="alert">',
                   samples_failing(), ' samples were found with a failed status, please review using query',
+                  '</div>'))
+    }
+  })
+
+  output$ui_banner_for_need_ots16_status <- renderUI({
+    if (samples_need_ots16() == 0) {
+      return(NULL)
+    } else {
+      total_samples_failing <- nrow(samples_need_ots16())
+      HTML(paste0('<div class="alert alert-warning" role="alert">',
+                  samples_need_ots16(), ' samples were found that need OTS16, please seach "need ots16" in query tab for details',
                   '</div>'))
     }
   })
@@ -132,7 +144,11 @@ function(input, output, session) {
         removeModal(session = session)
         spsComps::shinyCatch({stop(paste(e))}, prefix = '', position = "top-center")
       },
-      finally = samples_failing(nrow(check_for_failed_status())))
+      finally = {
+        samples_failing(nrow(check_for_status()$failed))
+        samples_need_ots16(nrow(check_for_status()$need_ots16))
+      }
+      )
 
     } else if (input$no_upload > 0) {
       removeModal(session = session)

@@ -22,6 +22,7 @@ navbarPage(
              h3("Enter Plate Run"),
 
              uiOutput("ui_banner_for_failed_status"),
+             uiOutput("ui_banner_for_need_ots16_status"),
 
              tags$div(
                style = "display: flex; align-items: center;",
