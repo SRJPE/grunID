@@ -361,6 +361,34 @@ process_field_sheet_samples <- function(filepath){
   return(formatted_data)
 }
 
+#' @title Process Field Sheets Version 2
+#' @export
+process_field_sheet_samples2 <- function(filepath) {
+  raw_field_data <- readxl::read_excel(filepath, skip = 1,
+                                       col_names = c("site", "site_abbrev", "event", "bin", "sample_number", "sample_id",
+                                                     "date", "time", "fl", "field_run_id", "entered_by",
+                                                     "verified_by", "alias", "biosample_id", "comments"),
+                                       col_types = c("text", "text", "numeric", "text", "numeric", "text",
+                                                     "date", "date", "numeric", "text", "text", "text",
+                                                     "text", "text", "text")) |>
+    select(sample_id, date, time, fl, field_run_id, comments)
+
+
+  run_lookups <- tbl(con, "run_type") |> collect()
+  run_id_lookup <- run_lookups$id
+  names(run_id_lookup) <- run_lookups$run_name
+
+
+  raw_field_data |>
+    transmute(
+      sample_id,
+      datetime_collected = lubridate::as_datetime(paste(as_date(date), format(time, "%H:%M:%S"))),
+      fork_length_mm = fl,
+      field_run_type_id = run_id_lookup[field_run_id],
+      field_comment = comments
+    )
+}
+
 
 #' Update Sample Field Sheet Data
 #' @description `update_field_sheet_samples()` takes a formatted tibble of field sample
@@ -393,7 +421,7 @@ process_field_sheet_samples <- function(filepath){
 update_field_sheet_samples <- function(con, field_data) {
 
   is_valid_connection(con)
-  is_valid_sample_field_data(field_data)
+  # is_valid_sample_field_data(field_data)
 
   query <- glue::glue_sql("UPDATE sample
                            SET datetime_collected = {field_data$datetime_collected},
@@ -411,13 +439,6 @@ update_field_sheet_samples <- function(con, field_data) {
     clear = FALSE,
     name = "inserting field sheets into database"
   ))
-
-  # for(i in 1:length(query)) {
-  #   res <- DBI::dbSendQuery(con, query[i])
-  #   DBI::dbClearResult(res)
-  # }
-
-  #return(results)
 }
 
 

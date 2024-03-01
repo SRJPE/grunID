@@ -4,7 +4,7 @@
 \alias{set_sample_status}
 \title{Set Status Code}
 \usage{
-set_sample_status(con, sample_ids, status_code_id, comment = NULL)
+set_sample_status(con, sample_ids, sample_status_code, comment = NULL)
 }
 \arguments{
 \item{con}{connection to the database}
