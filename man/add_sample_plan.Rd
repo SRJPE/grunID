@@ -4,7 +4,12 @@
 \alias{add_sample_plan}
 \title{Add Sample Plan}
 \usage{
-add_sample_plan(con, sample_plan, verbose = FALSE)
+add_sample_plan(
+  con,
+  sample_plan,
+  verbose = FALSE,
+  sample_status_code = "created"
+)
 }
 \arguments{
 \item{con}{A DBI connection object}

@@ -308,19 +308,13 @@ function(input, output, session) {
 
   # read in field data, if available
   clean_field_data <- reactive({
-    if(is.null(input$filled_field_sheets$datapath)) return(NULL)
-    tryCatch({
-      data <- grunID::process_field_sheet_samples(input$filled_field_sheets$datapath)
-    }, error = function(e) {
-      spsComps::shinyCatch({stop(paste(e))}, prefix = '', position = "top-center")
-    })
-    data
+      process_field_sheet_samples2(input$filled_field_sheets$datapath)
   })
 
   # if button pressed, upload field sheet data to database
   observeEvent(input$do_upload_field_sheets, {
     tryCatch({
-      grunID::update_field_sheet_samples(con, clean_field_data())
+      update_field_sheet_samples(con, clean_field_data())
       spsComps::shinyCatch({message("Field sheets updated in database")}, position = "top-center")
     },
     error = function(e) {
@@ -330,6 +324,7 @@ function(input, output, session) {
 
   # display field sheets
   output$field_sheet_summary <- DT::renderDataTable(DT::datatable({
+    req(clean_field_data())
     clean_field_data()
   },
   extensions = "Buttons",
@@ -640,5 +635,27 @@ function(input, output, session) {
       protocol = new_protocol
     )
   })
+
+
+  # Samples Check-in --------------------------------------------------
+
+  samples_created_from_checkin <- reactiveVal(c())
+
+  output$check_in_notification <- renderUI({
+    if (length(samples_created_from_checkin()) == 0) {
+      return(NULL)
+    } else {
+      HTML(paste0('<div class="alert alert-info" role="alert">',
+                  length(samples_created_from_checkin()), ' additional samples were created from check-in file! You can view the list in Rstudio Output',
+                  '</div>'))
+    }
+  })
+
+
+  observeEvent(input$check_in_samples_submit, {
+    samples_created <- grunID::check_in_jpe_field_samples(con, input$check_in_samples_file$datapath)
+    samples_created_from_checkin(samples_created)
+  })
+
 
 }
