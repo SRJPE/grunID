@@ -646,7 +646,7 @@ function(input, output, session) {
       return(NULL)
     } else {
       HTML(paste0('<div class="alert alert-info" role="alert">',
-                  length(samples_created_from_checkin()), ' additional samples were created from check-in file! You can view the list in Rstudio Output',
+                  length(samples_created_from_checkin()), ' additional samples were created from check-in file! You can view the list in Rstudio Output.',
                   '</div>'))
     }
   })
