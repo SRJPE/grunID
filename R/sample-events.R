@@ -12,14 +12,14 @@
 #' add_sample_plan(con, sample_plan)
 #' @export
 #' @md
-add_sample_plan <- function(con, sample_plan, verbose = FALSE) {
+add_sample_plan <- function(con, sample_plan, verbose = FALSE, sample_status_code = "created") {
   is_valid_connection(con)
   is_valid_sample_plan(sample_plan)
 
   sample_event_ids <- add_sample_events(con, sample_plan)
   sample_id_insert <- add_sample_bins(con, sample_plan, sample_event_ids)
   sample_ids <- add_samples(con, sample_plan, sample_id_insert, verbose = verbose)
-  number_of_samples_added <- set_sample_status(con, sample_ids, 1)
+  number_of_samples_added <- set_sample_status(con, sample_ids, sample_status_code = sample_status_code)
 
   return(c("number_of_samples_added" = number_of_samples_added))
 }

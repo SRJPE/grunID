@@ -29,8 +29,10 @@
 #' @family status code functions
 #' @export
 #' @md
-set_sample_status <- function(con, sample_ids, status_code_id, comment = NULL) {
+set_sample_status <- function(con, sample_ids, sample_status_code, comment = NULL) {
   is_valid_connection(con)
+
+  status_code_id <- tbl(con, "status_code") |> filter(status_code_name == sample_status_code) |> pull(id)
 
 
   if (length(sample_ids) != length(status_code_id)) {
