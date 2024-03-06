@@ -147,7 +147,7 @@ add_new_plate_results <- function(con, protocol_name, genetic_method,
     tally() |>
     filter(n < 2)
 
-  if (nrow(pos_dna_values_are_above_threshold) > 0) {
+  if (nrow(pos_dna_values_are_above_threshold) < 2) {
     stop(
       cli::format_error(c(
         "x" = "Qa/Qc Test Not Passed: 2 of 3 Positive DNA were not above threshold",
