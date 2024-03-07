@@ -112,12 +112,6 @@ function(input, output, session) {
     ))
   })
 
-  observe({
-
-    cat(input$yes_upload)
-  })
-
-
   observeEvent(input$yes_upload | input$no_upload, ignoreInit = TRUE, {
     if(input$yes_upload > 0){
       tryCatch({
