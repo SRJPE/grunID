@@ -142,7 +142,7 @@ function(input, output, session) {
       },
       error = function(e) {
         removeModal(session = session)
-        spsComps::shinyCatch({stop(paste(e))}, prefix = '', position = "top-center")
+        spsComps::shinyCatch({stop(paste(str_split(e$message, pattern = "Qa/Qc ")[[1]][-1], collapse = " ---- "), call. = FALSE)}, prefix = '', position = "top-full-width")
       },
       finally = {
         samples_failing(nrow(check_for_status()$failed))

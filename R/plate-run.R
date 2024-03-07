@@ -144,7 +144,7 @@ add_new_plate_results <- function(con, protocol_name, genetic_method,
 
   # Print all error messages together
   if (length(error_messages) > 0) {
-    stop(cli::format_error(error_messages), call. = FALSE)
+    stop(unlist(error_messages), call. = FALSE)
   }
 
 
