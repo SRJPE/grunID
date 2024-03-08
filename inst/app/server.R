@@ -363,6 +363,10 @@ function(input, output, session) {
   })
 
   observeEvent(input$do_generate_subsample_plate_map, {
+
+    shinyDirChoose(input, "subsample_plate_map_filepath",
+                   roots = c(wd = "."), filetypes = c("", "txt"))
+
     grunID::generate_subsample_plate_map(subsample_sample_ids,
                                          input$subsample_plate_map_type,
                                          input$subsample_plate_map_filepath)
