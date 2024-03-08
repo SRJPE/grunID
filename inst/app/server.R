@@ -14,7 +14,8 @@ function(input, output, session) {
       size = "l"))
   })
 
-  samples_failing <- reactiveVal(nrow(check_for_failed_status()))
+  samples_failing <- reactiveVal(nrow(check_for_status()$failed))
+  samples_need_ots16 <- reactiveVal(nrow(check_for_status()$need_ots16))
 
   # Render the banner based on the failed samples status
   output$ui_banner_for_failed_status <- renderUI({
@@ -24,6 +25,17 @@ function(input, output, session) {
       total_samples_failing <- nrow(samples_failing())
       HTML(paste0('<div class="alert alert-danger" role="alert">',
                   samples_failing(), ' samples were found with a failed status, please review using query',
+                  '</div>'))
+    }
+  })
+
+  output$ui_banner_for_need_ots16_status <- renderUI({
+    if (samples_need_ots16() == 0) {
+      return(NULL)
+    } else {
+      total_samples_failing <- nrow(samples_need_ots16())
+      HTML(paste0('<div class="alert alert-warning" role="alert">',
+                  samples_need_ots16(), ' samples were found that need OTS16, please seach "need ots16" in query tab for details',
                   '</div>'))
     }
   })
@@ -100,12 +112,6 @@ function(input, output, session) {
     ))
   })
 
-  observe({
-
-    cat(input$yes_upload)
-  })
-
-
   observeEvent(input$yes_upload | input$no_upload, ignoreInit = TRUE, {
     if(input$yes_upload > 0){
       tryCatch({
@@ -130,9 +136,13 @@ function(input, output, session) {
       },
       error = function(e) {
         removeModal(session = session)
-        spsComps::shinyCatch({stop(paste(e))}, prefix = '', position = "top-center")
+        spsComps::shinyCatch({stop(paste(str_split(e$message, pattern = "Qa/Qc ")[[1]][-1], collapse = " ---- "), call. = FALSE)}, prefix = '', position = "top-full-width")
       },
-      finally = samples_failing(nrow(check_for_failed_status())))
+      finally = {
+        samples_failing(nrow(check_for_status()$failed))
+        samples_need_ots16(nrow(check_for_status()$need_ots16))
+      }
+      )
 
     } else if (input$no_upload > 0) {
       removeModal(session = session)
@@ -292,19 +302,13 @@ function(input, output, session) {
 
   # read in field data, if available
   clean_field_data <- reactive({
-    if(is.null(input$filled_field_sheets$datapath)) return(NULL)
-    tryCatch({
-      data <- grunID::process_field_sheet_samples(input$filled_field_sheets$datapath)
-    }, error = function(e) {
-      spsComps::shinyCatch({stop(paste(e))}, prefix = '', position = "top-center")
-    })
-    data
+      process_field_sheet_samples2(input$filled_field_sheets$datapath)
   })
 
   # if button pressed, upload field sheet data to database
   observeEvent(input$do_upload_field_sheets, {
     tryCatch({
-      grunID::update_field_sheet_samples(con, clean_field_data())
+      update_field_sheet_samples(con, clean_field_data())
       spsComps::shinyCatch({message("Field sheets updated in database")}, position = "top-center")
     },
     error = function(e) {
@@ -314,6 +318,7 @@ function(input, output, session) {
 
   # display field sheets
   output$field_sheet_summary <- DT::renderDataTable(DT::datatable({
+    req(clean_field_data())
     clean_field_data()
   },
   extensions = "Buttons",
@@ -652,5 +657,27 @@ function(input, output, session) {
       protocol = new_protocol
     )
   })
+
+
+  # Samples Check-in --------------------------------------------------
+
+  samples_created_from_checkin <- reactiveVal(c())
+
+  output$check_in_notification <- renderUI({
+    if (length(samples_created_from_checkin()) == 0) {
+      return(NULL)
+    } else {
+      HTML(paste0('<div class="alert alert-info" role="alert">',
+                  length(samples_created_from_checkin()), ' additional samples were created from check-in file! You can view the list in Rstudio Output.',
+                  '</div>'))
+    }
+  })
+
+
+  observeEvent(input$check_in_samples_submit, {
+    samples_created <- grunID::check_in_jpe_field_samples(con, input$check_in_samples_file$datapath)
+    samples_created_from_checkin(samples_created)
+  })
+
 
 }
