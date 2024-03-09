@@ -235,9 +235,21 @@ navbarPage(
                DT::dataTableOutput("subsample_table") |>
                  shinycssloaders::withSpinner(),
                hr(),
-               selectInput("subsample_plate_map_type", "Plate Map Type", c("dual_assay", "single_assay")),
-               textInput("subsample_plate_map_filepath", "Name of Plate Map for Download", value = ""), # TODO include button here with example naming convention
-               actionButton("do_generate_subsample_plate_map", "Generate Subsample Plate Map", class = "btn-default")
+               column(
+                 width = 6,
+                 tags$div(
+                   selectInput("subsample_plate_map_type", "Plate Map Type", c("dual_assay", "single_assay"))
+                 ),
+                 tags$div(
+                   style = "display: flex; align-items: center;",
+                   textInput("subsample_plate_map_filepath", "Name of Plate Map for Download", value = ""),
+                   actionButton("show_subsampling_plate_map_naming_conventions", label = NULL, icon = icon("question"),
+                                class = "round-btn icon-offset")
+                 ),
+                 tags$div(
+                   actionButton("do_generate_subsample_plate_map", "Generate Subsample Plate Map", class = "btn-success", icon = icon("rocket"))
+                 )
+               )
              ),
            )),
   tabPanel(title = "Plate Validations",

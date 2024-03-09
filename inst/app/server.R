@@ -369,6 +369,17 @@ function(input, output, session) {
       pull()
   })
 
+  observeEvent(input$show_subsampling_plate_map_naming_conventions, {
+    showModal(modalDialog(
+      HTML(paste0("<strong> Only include the filename in this entry: do not include
+            `.csv` or a path (/data) </strong> </br> Subsampling plate map names by default are written directly to your downloads folder.
+            Plate map name entered here should follow the conventions set out for SHERLOCK samples below: ",
+            "<br>", "<br>")),
+            img(src = "assets/2024_JPE_Plating_Scheme_v6.png", width = "100%"),
+      size = "l"
+    ))
+  })
+
   observeEvent(input$do_generate_subsample_plate_map, {
 
     tryCatch({
