@@ -204,6 +204,10 @@ generate_subsample_plate_map <- function(sample_ids, plate_assay_structure, out_
 #' @md
 fill_dual_assay_plate_map <- function(sample_ids) {
 
+  control_blanks <- c("EBK-1-1", NA, "EBK-1-2", NA, "EBK-1-3", NA, "EBK-1-4",
+                      "POS-DNA-1", "POS_DNA-2", "POS-DNA-3", "NEG-DNA-1",
+                      "NEG-DNA-2", "NEG-DNA-3", "NTC-1", "NTC-2", "NTC-3")
+
   # split into the number of rows you have to fill out
   fill_rows <- split(sample_ids, ceiling(seq_along(sample_ids)/11))
   nrows_to_fill <- length(fill_rows)

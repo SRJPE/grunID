@@ -236,7 +236,7 @@ navbarPage(
                  shinycssloaders::withSpinner(),
                hr(),
                selectInput("subsample_plate_map_type", "Plate Map Type", c("dual_assay", "single_assay")),
-               shinyDirButton("subsample_plate_map_filepath", "Select folder", "Subsample Plate Map Filepath"),
+               textInput("subsample_plate_map_filepath", "Name of Plate Map for Download", value = ""), # TODO include button here with example naming convention
                actionButton("do_generate_subsample_plate_map", "Generate Subsample Plate Map", class = "btn-default")
              ),
            )),

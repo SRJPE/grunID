@@ -335,21 +335,23 @@ function(input, output, session) {
   # Subsample ---------------------------------------------------------------
 
   # subsample table
-  output$subsample_table <- DT::renderDataTable(DT::datatable({
 
-    grunID::generate_subsample(con, as.numeric(input$subsample_sampling_event_filter), as.numeric(input$season_filter))$results
+  subsample_table <- reactive({
+    grunID::generate_subsample(con, as.numeric(input$subsample_sampling_event_filter),
+                               as.numeric(input$season_filter))$subsample_for_sherlock
+  })
 
-  },
+  output$subsample_table <- DT::renderDataTable(DT::datatable(subsample_table()),
   extensions = "Buttons",
   rownames = FALSE,
   options = list(autoWidth = FALSE,
                  dom = "Bfrtip",
                  buttons = c("copy", "csv", "excel"),
                  lengthChange = TRUE,
-                 pageLength = 20)),
+                 pageLength = 20),
   server = FALSE
   ) |>
-    shiny::bindCache(input$season_filter)
+    shiny::bindCache(input$season_filter, input$subsample_sampling_event_filter)
 
   subsample_sample_event_choices <- reactive({
     grunID::sample_filter_to_season(con, as.numeric(input$season_filter)) |>
@@ -362,19 +364,27 @@ function(input, output, session) {
   )})
 
   subsample_sample_ids <- reactive({
-    grunID::generate_subsample(con, as.numeric(input$subsample_sampling_event_filter),
-                               as.numeric(input$season_filter))$results |>
-      dplyr::pull(sample_id)
+    subsample_table() |>
+      distinct(sample_id) |>
+      pull()
   })
 
   observeEvent(input$do_generate_subsample_plate_map, {
 
-    shinyDirChoose(input, "subsample_plate_map_filepath",
-                   roots = c(wd = "."), filetypes = c("", "txt"))
+    tryCatch({
 
-    grunID::generate_subsample_plate_map(subsample_sample_ids,
-                                         input$subsample_plate_map_type,
-                                         input$subsample_plate_map_filepath)
+      grunID::generate_subsample_plate_map(subsample_sample_ids(),
+                                           input$subsample_plate_map_type,
+                                           paste0("~/Downloads/", input$subsample_plate_map_filepath))
+      spsComps::shinyCatch({message(paste0("Plate map written as .csv to ~/Downloads/",
+                                           input$subsample_plate_map_filepath, ".csv"))},
+                           position = "top-center")
+    },
+    error = function(e) {
+      spsComps::shinyCatch({stop(paste(e))}, prefix = "", position = "top-center")
+    })
+
+
   })
 
 
