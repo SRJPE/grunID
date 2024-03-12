@@ -242,7 +242,7 @@ navbarPage(
                  ),
                  tags$div(
                    style = "display: flex; align-items: center;",
-                   textInput("subsample_plate_map_filepath", "Name of Plate Map for Download", value = ""),
+                   textInput("subsample_plate_map_filepath", "Name of Plate Map for Download", value = "e.g. JPE24_E1-2_P1_SH"),
                    actionButton("show_subsampling_plate_map_naming_conventions", label = NULL, icon = icon("question"),
                                 class = "round-btn icon-offset")
                  ),
