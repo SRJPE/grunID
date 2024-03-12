@@ -19,6 +19,7 @@ in_dev_mode <- Sys.getenv("GRUNID_IS_DEV")
 if (!is.na(in_dev_mode) && in_dev_mode == 1) {
   # logger::log_threshold(level = logger::INFO) # Just always capture all the input?
   run_mode_log_message <- "app started in development mode"
+  env_server <- "development"
   cfg <- config::get(file = config_path)
   config_file_log_message <- glue::glue("using config file found at: {config_path}")
   con <- DBI::dbConnect(RPostgres::Postgres(),
@@ -29,6 +30,7 @@ if (!is.na(in_dev_mode) && in_dev_mode == 1) {
                         password = cfg$password)
 
 } else {
+  env_server <- ifelse(str_detect(cfg$dbname, "prod"), "production", "staging")
   run_mode_log_message <- "app started in production mode"
   config_file_log_message <- glue::glue("using config file found at: {config_path}")
   cfg <- config::get(file = config_path)

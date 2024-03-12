@@ -42,7 +42,8 @@ check_in_jpe_field_samples <- function(con, filepath, season = year(today())) {
       ) |>
       mutate(sample_event_number = as.integer(sample_event_number),
              min_fork_length = as.integer(min_fork_length),
-             max_fork_length = as.integer(max_fork_length))
+             max_fork_length = as.integer(max_fork_length)) |>
+      filter(!is.na(location_code))
 
 
 

@@ -1,6 +1,7 @@
 navbarPage(
   theme = "lumen",
-  title = "grunID UI",
+  title = paste0("grunID UI", " (", env_server, ")"),
+  inverse = ifelse(env_server == "production", FALSE, TRUE),
   header = tags$head(
     tags$style(HTML('
       .round-btn {
@@ -9,6 +10,10 @@ navbarPage(
       .icon-offset {
         margin-left: 5px; /* Adjust the margin as needed */
       }
+
+      .navbar-text {
+      padding-right: 15px; /* Adjust as needed */
+    }
     '))
   ),
   # tabPanel(title = "About"),
