@@ -10,6 +10,9 @@
 #' * If the total number of samples in a bin is less than or equal to 5, process all of the samples for that bin.
 #' * If this rule contradicts the “less than 20” rule (above), this rule should be prioritized. For example, if we receive a sample set from a given site and event where Bins A, B, C, D, and E are each represented by five samples (total sample size = 25), process all of the samples for that site/event.
 #' * Subsampling should be random.
+#'
+#' This function uses `set.seed()`, so that the subsample will be the same for a given
+#' `sampling_event` and `season`.
 #' @param con connection to the database
 #' @param sampling_event A numeric value for the sampling event you are processing (i.e. 1:10)
 #' @param season The season for which you want to pull subsamples. A season consists of all sampling events
@@ -51,6 +54,8 @@
 #' @export
 #' @md
 generate_subsample <- function(con, sampling_event, season) {
+
+  set.seed(5674)
 
   if(!is.numeric(season)) {
     cli::cli_abort("Season must be a numeric value.")
