@@ -59,6 +59,11 @@ generate_subsample <- function(con, sampling_event, season) {
     cli::cli_abort("Season must be in the format YYYY (i.e. 2024).")
   }
 
+  # get sample status IDs
+  sample_status_codes <- tbl(con, "status_code") |>
+    filter(status_code_name %in% c("returned from field", "need ots28")) |>
+    pull(id)
+
   # get samples from the right season
   samples <- grunID::sample_filter_to_season(con, season) |>
     # filter to sampling event of interest
@@ -68,7 +73,7 @@ generate_subsample <- function(con, sampling_event, season) {
                        dplyr::collect() |>
                        dplyr::select(sample_id, status_code_id),
                      by = "sample_id") |>
-    dplyr::filter(status_code_id %in% c(4, 5)) |>
+    dplyr::filter(status_code_id %in% sample_status_codes) |>
     # now get totals for applying logic
     dplyr::add_count(location_code, sample_event_number, name = "total_samples_in_event") |>
     dplyr::add_count(location_code, sample_event_number, sample_bin_code, name = "no_samples_per_bin")
