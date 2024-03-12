@@ -422,7 +422,7 @@ function(input, output, session) {
   # subsample summary table
   output$subsample_summary_table <- DT::renderDataTable(DT::datatable({
 
-    grunID::generate_subsample(con, as.numeric(input$subsample_sampling_event_filter), as.numeric(input$season_filter))$summary
+    grunID::generate_subsample(con, as.numeric(input$subsample_sampling_event_filter), as.numeric(input$season_filter))$subsample_summary
   },
   rownames = FALSE))
 
