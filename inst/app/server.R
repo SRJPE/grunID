@@ -338,10 +338,14 @@ function(input, output, session) {
 
   subsample_table <- reactive({
     grunID::generate_subsample(con, as.numeric(input$subsample_sampling_event_filter),
-                               as.numeric(input$season_filter))$subsample_for_sherlock
+                               as.numeric(input$season_filter))
   })
 
-  output$subsample_table <- DT::renderDataTable(DT::datatable(subsample_table()),
+
+  output$subsample_table <- shiny::bindCache(DT::renderDataTable({
+    validate(need(!is.na(subsample_table()$subsample_for_sherlock), "Selected sampling event has no samples set to 'Returned from Field'"))
+    DT::datatable(subsample_table()$subsample_for_sherlock)
+  },
   extensions = "Buttons",
   rownames = FALSE,
   options = list(autoWidth = FALSE,
@@ -349,9 +353,7 @@ function(input, output, session) {
                  buttons = c("copy", "csv", "excel"),
                  lengthChange = TRUE,
                  pageLength = 20),
-  server = FALSE
-  ) |>
-    shiny::bindCache(input$season_filter, input$subsample_sampling_event_filter)
+  server = FALSE), input$season_filter, input$subsample_sampling_event_filter)
 
   subsample_sample_event_choices <- reactive({
     grunID::sample_filter_to_season(con, as.numeric(input$season_filter)) |>
@@ -384,7 +386,7 @@ function(input, output, session) {
 
     tryCatch({
 
-      grunID::generate_subsample_plate_map(subsample_sample_ids(),
+      generate_subsample_plate_map(subsample_sample_ids(),
                                            input$subsample_plate_map_type,
                                            paste0("~/Downloads/", input$subsample_plate_map_filepath))
       spsComps::shinyCatch({message(paste0("Plate map written as .csv to ~/Downloads/",
@@ -421,8 +423,8 @@ function(input, output, session) {
 
   # subsample summary table
   output$subsample_summary_table <- DT::renderDataTable(DT::datatable({
-
-    grunID::generate_subsample(con, as.numeric(input$subsample_sampling_event_filter), as.numeric(input$season_filter))$subsample_summary
+    validate(need(!is.na(subsample_table()$subsample_summary), "selected sampling event contains no samples with status 'Returned from Field'"))
+    subsample_table()$subsample_summary
   },
   rownames = FALSE))
 
