@@ -58,10 +58,10 @@ generate_subsample <- function(con, sampling_event, season) {
   set.seed(5674)
 
   if(!is.numeric(season)) {
-    cli::cli_abort("Season must be a numeric value.")
+    stop("Season must be a numeric value.", call. = FALSE)
   }
   if(nchar(season) != 4) {
-    cli::cli_abort("Season must be in the format YYYY (i.e. 2024).")
+    stop("Season must be in the format YYYY (i.e. 2024).", call. = FALSE)
   }
 
   # get sample status IDs
@@ -84,10 +84,9 @@ generate_subsample <- function(con, sampling_event, season) {
     dplyr::add_count(location_code, sample_event_number, sample_bin_code, name = "no_samples_per_bin")
 
   if(nrow(samples) == 0) {
-    cli::cli_abort(paste0("There are no samples in the database from sampling event ", sampling_event,
-                          " and sampling season ", season, " that are marked as returned from field. Please
-                          make sure you have processed the field sheets using grunID::process_field_sheet_samples()
-                          and added field data to the database using grunID::update_field_sheet_samples()"))
+    return(list("subsample_for_sherlock" = NA,
+                "subsample_summary" = NA,
+                "remainders_for_gt_seq" =  NA))
   }
 
   # apply rules
@@ -151,10 +150,11 @@ generate_subsample <- function(con, sampling_event, season) {
 #' @param sample_ids list of sample IDs with which to populate a plate map
 #' @param plate_assay_structure Either `dual_assay` or `single_assay`
 #' @param out_filepath Filename. Do not include ".csv" at the end of the filepath.
-#' @returns A .csv file with rows `A:P` and columns `1:24` populated with sample IDs and control blanks
+#' @returns A list of filepath(s) to .csv file(s) with rows `A:P` and columns `1:24` populated with sample IDs and control blanks
 #' @export
 #' @md
-generate_subsample_plate_map <- function(sample_ids, plate_assay_structure, out_filepath) {
+generate_subsample_plate_map <- function(sample_ids, plate_assay_structure, out_filepath = tempdir()) {
+  filepaths_created <- c()
 
   if(plate_assay_structure == "dual_assay") {
 
@@ -178,9 +178,9 @@ generate_subsample_plate_map <- function(sample_ids, plate_assay_structure, out_
     for(i in 1:no_plate_maps) {
       new_filepath <- paste0(out_filepath, "_", i, ".csv")
       write.csv(plate_maps[[i]], new_filepath, row.names = TRUE)
+      filepaths_created <- append(filepaths_created, filepath)
       cli::cli_alert_success(paste0("Plate map generated - see ", new_filepath))
     }
-
   } else if(plate_assay_structure == "single_assay") {
 
     total_available_sample_blocks <- 92 # 4 96 well plates (384 total wells) - 16 control blanks
@@ -197,9 +197,11 @@ generate_subsample_plate_map <- function(sample_ids, plate_assay_structure, out_
     for(i in 1:no_plate_maps) {
       new_filepath <- paste0(out_filepath, "_", i, ".csv")
       write.csv(plate_maps[[i]], new_filepath, row.names = TRUE)
+      filepaths_created <- append(filepaths_created, filepath)
       cli::cli_alert_success(paste0("Plate map generated - see ", new_filepath))
     }
   }
+  return(filepaths_created)
 }
 
 #' Generate Plate Map for Dual Assay layout
