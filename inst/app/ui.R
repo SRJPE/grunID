@@ -247,7 +247,7 @@ navbarPage(
                                 class = "round-btn icon-offset")
                  ),
                  tags$div(
-                   actionButton("do_generate_subsample_plate_map", "Generate Subsample Plate Map", class = "btn-success", icon = icon("rocket"))
+                   downloadButton("do_generate_subsample_plate_map", "Generate Subsample Plate Map")
                  )
                )
              ),

@@ -302,7 +302,7 @@ function(input, output, session) {
 
   # read in field data, if available
   clean_field_data <- reactive({
-      process_field_sheet_samples2(input$filled_field_sheets$datapath)
+    process_field_sheet_samples2(input$filled_field_sheets$datapath)
   })
 
   # if button pressed, upload field sheet data to database
@@ -337,9 +337,15 @@ function(input, output, session) {
   # subsample table
 
   subsample_table <- reactive({
+    cat("the selected sample filter is: ", input$subsample_sampling_event_filter, "\n")
     grunID::generate_subsample(con, as.numeric(input$subsample_sampling_event_filter),
                                as.numeric(input$season_filter))
   })
+
+  observe({
+    updateSelectInput(session, "subsample_sampling_event_filter",
+                      choices = subsample_sample_event_choices()
+    )})
 
 
   output$subsample_table <- shiny::bindCache(DT::renderDataTable({
@@ -357,18 +363,18 @@ function(input, output, session) {
 
   subsample_sample_event_choices <- reactive({
     grunID::sample_filter_to_season(con, as.numeric(input$season_filter)) |>
-    dplyr::pull(sample_event_number)
+      dplyr::pull(sample_event_number)
+  })
+
+
+  subsample_sample_ids <- reactive({
+    subsample_table()$subsample_for_sherlock |>
+      distinct(sample_id) |>
+      pull()
   })
 
   observe({
-    updateSelectInput(session, "subsample_sampling_event_filter",
-                      choices = subsample_sample_event_choices()
-  )})
-
-  subsample_sample_ids <- reactive({
-    subsample_table() |>
-      distinct(sample_id) |>
-      pull()
+    cat(str(subsample_table()))
   })
 
   observeEvent(input$show_subsampling_plate_map_naming_conventions, {
@@ -377,30 +383,34 @@ function(input, output, session) {
             `.csv` or a path (/data) </strong> </br> Subsampling plate map names by default are written directly to your downloads folder.
             Plate map name entered here should follow the conventions set out for SHERLOCK samples below: ",
             "<br>", "<br>")),
-            img(src = "assets/2024_JPE_Plating_Scheme_v6.png", width = "100%"),
+      img(src = "assets/2024_JPE_Plating_Scheme_v6.png", width = "100%"),
       size = "l"
     ))
   })
 
-  observeEvent(input$do_generate_subsample_plate_map, {
-
-    tryCatch({
-
-      generate_subsample_plate_map(subsample_sample_ids(),
-                                           input$subsample_plate_map_type,
-                                           paste0("~/Downloads/", input$subsample_plate_map_filepath))
-      spsComps::shinyCatch({message(paste0("Plate map written as .csv to ~/Downloads/",
-                                           input$subsample_plate_map_filepath, ".csv"))},
-                           position = "top-center")
+  output$do_generate_subsample_plate_map <- downloadHandler(
+    filename = function() {
+      paste0("plate-maps-", format(Sys.time(), "%Y-%m-%d_%H-%M-%S"), ".zip")
     },
-    error = function(e) {
-      spsComps::shinyCatch({stop(paste(e))}, prefix = "", position = "top-center")
-    })
+    content = function(file) {
+      csvs_created <- generate_subsample_plate_map(
+        sample_ids = subsample_sample_ids(),
+        plate_assay_structure = input$subsample_plate_map_type,
+        file_basename = input$subsample_plate_map_filepath
+      )
 
+      owd <- getwd()
+      tmp_dir <- tempdir()
+      csv_files <- basename(csvs_created)
+      file.copy(csvs_created, tmp_dir, overwrite = TRUE)
+      setwd(tmp_dir)
+      on.exit(setwd(owd))
 
-  })
-
-
+      # Create the zip file using zip() with relative file paths
+      zip::zip(file, files = csv_files)
+    },
+    contentType = "application/zip"
+  )
 
   # subsample logic
   observeEvent(input$subsample_logic, {
