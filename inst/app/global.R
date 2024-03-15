@@ -30,11 +30,11 @@ if (!is.na(in_dev_mode) && in_dev_mode == 1) {
                         password = cfg$password)
 
 } else {
-  env_server <- ifelse(str_detect(cfg$dbname, "prod"), "production", "staging")
   run_mode_log_message <- "app started in production mode"
   config_file_log_message <- glue::glue("using config file found at: {config_path}")
   cfg <- config::get(file = config_path)
   con <- grunID::gr_db_connect(username = cfg$username, host = cfg$host, dbname = cfg$dbname)
+  env_server <- ifelse(str_detect(cfg$dbname, "prod"), "production", "staging")
 }
 
 logger::log_appender(logger::appender_console, index = 1)
