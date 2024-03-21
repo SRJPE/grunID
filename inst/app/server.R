@@ -337,7 +337,6 @@ function(input, output, session) {
   # subsample table
 
   subsample_table <- reactive({
-    cat("the selected sample filter is: ", input$subsample_sampling_event_filter, "\n")
     grunID::generate_subsample(con, as.numeric(input$subsample_sampling_event_filter),
                                as.numeric(input$season_filter))
   })
@@ -593,7 +592,6 @@ function(input, output, session) {
         # do delete
       } else if (input$no_delete_full_plate > 0) {
         removeModal()
-        cat("cancel out of the delete full plate prompt", "\n")
         return(NULL)
       }
     },
