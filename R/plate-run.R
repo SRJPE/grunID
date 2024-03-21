@@ -125,6 +125,7 @@ add_new_plate_results <- function(con, protocol_name, genetic_method,
     collect()
 
   if (nrow(ntc_ndna_are_above_thresholds) > 0) {
+    # remove the data that was added to db up to this point
     error_messages <- c(error_messages, glue::glue("Qa/Qc Test Not Passed: NTC/NEG-DNA Value above Threshold for sample_id(s): {ntc_ndna_are_above_thresholds$sample_id}"))
   }
 
@@ -144,6 +145,12 @@ add_new_plate_results <- function(con, protocol_name, genetic_method,
 
   # Print all error messages together
   if (length(error_messages) > 0) {
+    del_raw_assay_sql_statement <- glue::glue_sql("DELETE FROM raw_assay_result where plate_run_id={as.integer(plate_run$plate_run_id)};", .con = con)
+    del_assay_sql_statement <- glue::glue_sql("DELETE FROM assay_result where plate_run_id={plate_run$plate_run_id};", .con = con)
+    deactivate_plate_statement <- glue::glue_sql("UPDATE plate_run SET active = false where id={plate_run$plate_run_id};", .con = con)
+    DBI::dbExecute(con, del_raw_assay_sql_statement)
+    DBI::dbExecute(con, del_assay_sql_statement)
+    DBI::dbExecute(con, deactivate_plate_statement)
     stop(unlist(error_messages), call. = FALSE)
   }
 
