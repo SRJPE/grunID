@@ -153,7 +153,7 @@ generate_subsample <- function(con, sampling_event, season) {
 #' @returns A list of filepath(s) to .csv file(s) with rows `A:P` and columns `1:24` populated with sample IDs and control blanks
 #' @export
 #' @md
-generate_subsample_plate_map <- function(sample_ids, plate_assay_structure, file_basename) {
+generate_subsample_plate_map <- function(sample_ids, plate_assay_structure, file_basename, path) {
   filepaths_created <- c()
 
   if(plate_assay_structure == "dual_assay") {
@@ -176,7 +176,7 @@ generate_subsample_plate_map <- function(sample_ids, plate_assay_structure, file
     plate_maps <- purrr::map(split_sample_ids_by_plate_map, grunID::fill_dual_assay_plate_map)
 
     for(i in 1:no_plate_maps) {
-      new_filepath <- fs::file_temp(glue::glue("{file_basename}-{i}"), ext = ".csv")
+      new_filepath <- fs::file_temp(pattern = glue::glue("{file_basename}-{i}"), tmp_dir = ".", ext = ".csv")
       write.csv(plate_maps[[i]], new_filepath, row.names = TRUE)
       filepaths_created <- append(filepaths_created, new_filepath)
       cli::cli_alert_success(paste0("Plate map generated - see ", new_filepath))
@@ -195,7 +195,7 @@ generate_subsample_plate_map <- function(sample_ids, plate_assay_structure, file
     plate_maps <- purrr::map(split_sample_ids_by_plate_map, grunID::fill_single_assay_plate_map)
 
     for(i in 1:no_plate_maps) {
-      new_filepath <- fs::file_temp(glue::glue("{file_basename}-{i}"), ext = ".csv")
+      new_filepath <- fs::file_temp(pattern = glue::glue("{file_basename}-{i}"),temp_dir = ".",  ext = ".csv")
       write.csv(plate_maps[[i]], new_filepath, row.names = TRUE)
       filepaths_created <- append(filepaths_created, new_filepath)
       cli::cli_alert_success(paste0("Plate map generated - see ", new_filepath))

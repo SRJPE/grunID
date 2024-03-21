@@ -4,7 +4,12 @@
 \alias{generate_subsample_plate_map}
 \title{generate_subsample_plate_map}
 \usage{
-generate_subsample_plate_map(sample_ids, plate_assay_structure, file_basename)
+generate_subsample_plate_map(
+  sample_ids,
+  plate_assay_structure,
+  file_basename,
+  path
+)
 }
 \arguments{
 \item{sample_ids}{list of sample IDs with which to populate a plate map}

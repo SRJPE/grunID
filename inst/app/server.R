@@ -373,9 +373,6 @@ function(input, output, session) {
       pull()
   })
 
-  observe({
-    cat(str(subsample_table()))
-  })
 
   observeEvent(input$show_subsampling_plate_map_naming_conventions, {
     showModal(modalDialog(
@@ -407,7 +404,7 @@ function(input, output, session) {
       on.exit(setwd(owd))
 
       # Create the zip file using zip() with relative file paths
-      zip::zip(file, files = csv_files)
+      zip::zip(file, files = list.files(tmp_dir, pattern = input$subsample_plate_map_filepath), mode = "cherry-pick")
     },
     contentType = "application/zip"
   )
