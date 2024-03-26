@@ -354,7 +354,7 @@ function(input, output, session) {
 
   output$subsample_table <- shiny::bindCache(DT::renderDataTable({
     shiny::validate(
-      need(subsample_table()$subsample_for_sherlock, "Selected sampling event has no samples set to _Returned from Field_"
+      need(subsample_table()$subsample_for_sherlock, "Selected sampling event has no samples set to 'Returned from Field'"
       )
     )
     DT::datatable(subsample_table()$subsample_for_sherlock)

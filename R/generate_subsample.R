@@ -276,8 +276,8 @@ fill_single_assay_plate_map <- function(sample_ids) {
     arrange(loc, event, bin, samp) |>
     transmute(sample_id = paste(loc, event, bin, samp, sep = "_"), id)
 
-  sample_mapping <- grunID::plate_v4_mapping |>
-    left_join(samples_to_match_to_blocks, by = c("sample_blocks" = "id")) |>
+  sample_mapping <- grunID::plate_v4_mapping |> mutate(id = row_number()) |>
+    left_join(samples_to_match_to_blocks, by = c("id" = "id")) |>
     mutate(row_number = match(rows, LETTERS),
            sample_id = ifelse(!is.na(control_blocks), control_blocks, sample_id)) |>
     select(row_number, cols, sample_blocks, sample_id) |>
