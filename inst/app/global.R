@@ -4,6 +4,7 @@ library(tidyverse)
 library(shinyBS)
 library(DT)
 library(shinyWidgets)
+library(shinyFiles)
 
 
 renderTableWithScrollOnX <- function(...) {

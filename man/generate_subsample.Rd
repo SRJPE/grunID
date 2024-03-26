@@ -62,6 +62,9 @@ event and a given season. It uses the following subsampling logic:
 \item If this rule contradicts the “less than 20” rule (above), this rule should be prioritized. For example, if we receive a sample set from a given site and event where Bins A, B, C, D, and E are each represented by five samples (total sample size = 25), process all of the samples for that site/event.
 \item Subsampling should be random.
 }
+
+This function uses \code{set.seed()}, so that the subsample will be the same for a given
+\code{sampling_event} and \code{season}.
 }
 \examples{
 # connect with database
