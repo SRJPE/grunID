@@ -195,7 +195,7 @@ generate_subsample_plate_map <- function(sample_ids, plate_assay_structure, file
     plate_maps <- purrr::map(split_sample_ids_by_plate_map, grunID::fill_single_assay_plate_map)
 
     for(i in 1:no_plate_maps) {
-      new_filepath <- fs::file_temp(pattern = glue::glue("{file_basename}-{i}"),temp_dir = ".",  ext = ".csv")
+      new_filepath <- fs::file_temp(pattern = glue::glue("{file_basename}-{i}"),tmp_dir = ".",  ext = ".csv")
       write.csv(plate_maps[[i]], new_filepath, row.names = TRUE)
       filepaths_created <- append(filepaths_created, new_filepath)
       cli::cli_alert_success(paste0("Plate map generated - see ", new_filepath))
@@ -270,7 +270,11 @@ fill_dual_assay_plate_map <- function(sample_ids) {
 fill_single_assay_plate_map <- function(sample_ids) {
 
   samples_to_match_to_blocks <- tibble("sample_id" = sample_ids) |>
-    mutate(id = row_number())
+    mutate(id = row_number()) |>
+    separate_wider_delim(cols = sample_id, delim = "_", names = c("loc", "event", "bin", "samp")) |>
+    mutate(event = as.numeric(event), samp = as.numeric(samp)) |>
+    arrange(loc, event, bin, samp) |>
+    transmute(sample_id = paste(loc, event, bin, samp, sep = "_"), id)
 
   sample_mapping <- grunID::plate_v4_mapping |>
     left_join(samples_to_match_to_blocks, by = c("sample_blocks" = "id")) |>

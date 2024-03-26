@@ -341,6 +341,11 @@ function(input, output, session) {
                                as.numeric(input$season_filter))
   })
 
+  subsample_sample_event_choices <- reactive({
+    grunID::sample_filter_to_season(con, as.numeric(input$season_filter)) |>
+      dplyr::pull(sample_event_number)
+  })
+
   observe({
     updateSelectInput(session, "subsample_sampling_event_filter",
                       choices = subsample_sample_event_choices()
@@ -348,7 +353,10 @@ function(input, output, session) {
 
 
   output$subsample_table <- shiny::bindCache(DT::renderDataTable({
-    validate(need(!is.na(subsample_table()$subsample_for_sherlock), "Selected sampling event has no samples set to 'Returned from Field'"))
+    shiny::validate(
+      need(subsample_table()$subsample_for_sherlock, "Selected sampling event has no samples set to _Returned from Field_"
+      )
+    )
     DT::datatable(subsample_table()$subsample_for_sherlock)
   },
   extensions = "Buttons",
@@ -360,10 +368,6 @@ function(input, output, session) {
                  pageLength = 20),
   server = FALSE), input$season_filter, input$subsample_sampling_event_filter)
 
-  subsample_sample_event_choices <- reactive({
-    grunID::sample_filter_to_season(con, as.numeric(input$season_filter)) |>
-      dplyr::pull(sample_event_number)
-  })
 
 
   subsample_sample_ids <- reactive({
@@ -395,6 +399,9 @@ function(input, output, session) {
         file_basename = input$subsample_plate_map_filepath
       )
 
+      print("the csv's created")
+      print(csvs_created)
+
       owd <- getwd()
       tmp_dir <- tempdir()
       csv_files <- basename(csvs_created)
@@ -403,7 +410,7 @@ function(input, output, session) {
       on.exit(setwd(owd))
 
       # Create the zip file using zip() with relative file paths
-      zip::zip(file, files = list.files(tmp_dir, pattern = input$subsample_plate_map_filepath), mode = "cherry-pick")
+      zip::zip(file, files = csv_files, mode = "cherry-pick")
     },
     contentType = "application/zip"
   )
@@ -429,7 +436,7 @@ function(input, output, session) {
 
   # subsample summary table
   output$subsample_summary_table <- DT::renderDataTable(DT::datatable({
-    validate(need(!is.na(subsample_table()$subsample_summary), "selected sampling event contains no samples with status 'Returned from Field'"))
+    shiny::validate(need(!is.na(subsample_table()$subsample_summary), "selected sampling event contains no samples with status 'Returned from Field'"))
     subsample_table()$subsample_summary
   },
   rownames = FALSE))
