@@ -1,6 +1,7 @@
 navbarPage(
   theme = "lumen",
-  title = "grunID UI",
+  title = paste0("grunID UI", " (", env_server, ")"),
+  inverse = ifelse(env_server == "production", FALSE, TRUE),
   header = tags$head(
     tags$style(HTML('
       .round-btn {
@@ -9,99 +10,103 @@ navbarPage(
       .icon-offset {
         margin-left: 5px; /* Adjust the margin as needed */
       }
+
+      .navbar-text {
+      padding-right: 15px; /* Adjust as needed */
+    }
     '))
   ),
   # tabPanel(title = "About"),
-  tabPanel("Upload Results",
-           # sidebarPanel(
-           #   width = 3
-           # ),
-           column(
-             # offset = 1,
-             width = 6,
-             h3("Enter Plate Run"),
-             radioButtons("sample_id_type", "Sample ID Types",
-                          choices = c("JPE Samples", "Salvage Samples"), inline = TRUE),
-             selectInput("protocol", "Select a Protocol", choices = all_protocols$name),
-             selectInput("laboratory", "Select a Laboratory", choices = all_labs$code),
-             selectInput("genetic_method", "Select a Genetic Method", choices = all_gen_methods$code),
-             textInput("performed_by", "Lab work performed by:"),
-             textInput("run_description", "Plate Run Description:"),
+  navbarMenu("Add Data",
+             tabPanel("Upload Results",
+                      # sidebarPanel(
+                      #   width = 3
+                      # ),
+                      column(
+                        # offset = 1,
+                        width = 6,
+                        h3("Enter Plate Run"),
 
-             uiOutput("ui_banner_for_failed_status"),
+                        uiOutput("ui_banner_for_failed_status"),
+                        uiOutput("ui_banner_for_need_ots16_status"),
+                        radioButtons("sample_id_type", "Sample ID Types",
+                                     choices = c("JPE Samples", "Salvage Samples"), inline = TRUE),
+                        tags$div(
+                          style = "display: flex; align-items: center;",
+                          selectInput("protocol", "Select a Protocol", choices = all_protocols$name),
+                          actionButton("show_protocol_details", label = NULL, icon = icon("question"), class = "round-btn icon-offset")
+                        ),
 
-             tags$div(
-               style = "display: flex; align-items: center;",
-               selectInput("protocol", "Select a Protocol", choices = all_protocols$name),
-               actionButton("show_protocol_details", label = NULL, icon = icon("question"), class = "round-btn icon-offset")
+                        tags$div(
+                          style = "display: flex; align-items: center;",
+                          selectInput("laboratory", "Select a Laboratory", choices = all_labs$code),
+                          actionButton("show_lab_details", label = NULL, icon = icon("question"), class = "round-btn icon-offset")
+
+                        ),
+
+                        tags$div(
+                          style = "display: flex; align-items: center;",
+                          selectInput("genetic_method", "Select a Genetic Method", choices = all_gen_methods$code),
+                          actionButton("show_methods_details", label = NULL, icon = icon("question"), class = "round-btn icon-offset")
+
+                        ),
+
+                        tags$div(
+                          style = "display: flex; align-items: center;",
+                          textInput("performed_by", "Lab work performed by:"),
+                          actionButton("info_performed_by", label = NULL, icon = icon("question"), class = "round-btn icon-offset")
+
+                        ),
+
+                        tags$div(
+                          style = "display: flex; align-items: center;",
+                          textInput("run_description", "Plate Run Description:"),
+                          actionButton("info_run_description", label = NULL, icon = icon("question"), class = "round-btn icon-offset")
+
+                        ),
+                        dateInput("date_run", "Date of Run"),
+                        fileInput("sherlock_results", "Upload Sherlock Results"),
+
+                        tags$div(
+                          style = "display: flex; align-items: center;",
+                          selectInput("sample_type", "Select a Sample Type", choices = c("fin clip", "mucus")),
+                          actionButton("info_sample_type", label = NULL, icon = icon("question"), class = "round-btn icon-offset")
+
+                        ),
+                        tags$div(
+                          style = "display: flex; align-items: center;",
+                          selectInput("layout_type", "Select Layout Type",
+                                      choices = c("Split Plate - Early + Late"="split_plate_early_late",
+                                                  "Split Plate - Late + Early"="split_plate_late_early",
+                                                  "Split Plate - Spring + Winter"="split_plate_spring_winter",
+                                                  "Split Plate - Winter + Spring"="split_plate_winter_spring",
+                                                  "Single Assay OTS 28 Early (v5 Mapping)"="single_assay_ots28_early",
+                                                  "Single Assay OTS 28 Late (v5 Mapping)"="single_assay_ots28_late",
+                                                  "Single Assay OTS 16 Spring (v5 Mapping)"="single_assay_ots16_spring",
+                                                  "Single Assay OTS 16 Winter (v5 Mapping)"="single_assay_ots16_winter",
+                                                  "Triplicate"="triplicate"
+                                      )
+                          ),
+                          actionButton("info_layout_type", label = NULL, icon = icon("question"), class = "round-btn icon-offset")
+                        ),
+
+                        selectInput("plate_size", "Select Plate Size", choices = c(384, 96)),
+                        checkboxInput("perform_genetics_id", label = "Run genetic calculations for samples after upload", value = TRUE),
+                        actionButton("do_upload", "Upload Results", class = "btn-success", icon = icon("rocket")),
+
+                        tags$br()
+                      ),
+                      column(
+                        width = 3,
+                        textOutput("console_logs")
+                      ),
              ),
 
-             tags$div(
-               style = "display: flex; align-items: center;",
-               selectInput("laboratory", "Select a Laboratory", choices = all_labs$code),
-               actionButton("show_lab_details", label = NULL, icon = icon("question"), class = "round-btn icon-offset")
-
-             ),
-
-             tags$div(
-               style = "display: flex; align-items: center;",
-               selectInput("genetic_method", "Select a Genetic Method", choices = all_gen_methods$code),
-               actionButton("show_methods_details", label = NULL, icon = icon("question"), class = "round-btn icon-offset")
-
-             ),
-
-             tags$div(
-               style = "display: flex; align-items: center;",
-               textInput("performed_by", "Lab work performed by:"),
-               actionButton("info_performed_by", label = NULL, icon = icon("question"), class = "round-btn icon-offset")
-
-             ),
-
-             tags$div(
-               style = "display: flex; align-items: center;",
-               textInput("run_description", "Plate Run Description:"),
-               actionButton("info_run_description", label = NULL, icon = icon("question"), class = "round-btn icon-offset")
-
-             ),
-             dateInput("date_run", "Date of Run"),
-             fileInput("sherlock_results", "Upload Sherlock Results"),
-
-             tags$div(
-               style = "display: flex; align-items: center;",
-               selectInput("sample_type", "Select a Sample Type", choices = c("fin clip", "mucus")),
-               actionButton("info_sample_type", label = NULL, icon = icon("question"), class = "round-btn icon-offset")
-
-             ),
-             tags$div(
-               style = "display: flex; align-items: center;",
-               selectInput("layout_type", "Select Layout Type",
-                           choices = c("Split Plate - Early + Late"="split_plate_early_late",
-                                       "Split Plate - Late + Early"="split_plate_late_early",
-                                       "Split Plate - Spring + Winter"="split_plate_spring_winter",
-                                       "Split Plate - Winter + Spring"="split_plate_winter_spring",
-                                       "Single Assay OTS 28 Early (v5 Mapping)"="single_assay_ots28_early",
-                                       "Single Assay OTS 28 Late (v5 Mapping)"="single_assay_ots28_late",
-                                       "Single Assay OTS 16 Spring (v5 Mapping)"="single_assay_ots16_spring",
-                                       "Single Assay OTS 16 Winter (v5 Mapping)"="single_assay_ots16_winter",
-                                       "Triplicate"="triplicate"
-                           )
-               ),
-               actionButton("info_layout_type", label = NULL, icon = icon("question"), class = "round-btn icon-offset")
-             ),
-
-             selectInput("plate_size", "Select Plate Size", choices = c(384, 96)),
-             tags$br(),
-             actionButton("do_upload", "Upload Results", class = "btn-success", icon = icon("rocket")),
-
-             tags$br()
-           ),
-           column(
-             width = 3,
-             textOutput("console_logs")
-           ),
-  ),
-  tabPanel(title = "Add Data",
-           tabsetPanel(
+             tabPanel("Check-in Samples",
+                      uiOutput("check_in_notification"),
+                      fileInput("check_in_samples_file", label = "Check-in Samples File"),
+                      actionButton("check_in_samples_submit", "Submit", class = "btn-success")
+                      ),
              tabPanel(title = "Sample",
                       selectInput("add_sample_location_code", label = "Locaiton Code", choices = all_locations),
                       selectInput("add_sample_event_number", label = "Event Number", choices = 1:20),
@@ -134,9 +139,8 @@ navbarPage(
 
 
                       actionButton("add_protocol_submit", label = "Submit")
-                      ),
-           )
-           ),
+             ),
+  ),
   tabPanel(title = "Upload Field Sheets",
            mainPanel(
              tags$h3("Process and upload completed field sheets"),
@@ -169,7 +173,7 @@ navbarPage(
                selectInput("location_filter", "Location",
                            c("All", all_locations)),
                tags$hr(),... =
-               tags$h3("Season Summary"),
+                 tags$h3("Season Summary"),
                tableOutput("season_summary")
              ),
              mainPanel(

@@ -350,10 +350,6 @@ ots_winter_spring_detection <- function(con, sample_id, results_table,
     ots_winter_priority_results <- collect(ots_winter)
   }
 
-
-
-  cat(ots_spring_priority_results$plate_run_id, "\n")
-
   # positive winter and negative spring ---> WIN
   if (!ots_spring_priority_results$positive_detection && ots_winter_priority_results$positive_detection) {
     return(list(sample_id = sample_id, status_code = "analysis complete", run_type="WIN",

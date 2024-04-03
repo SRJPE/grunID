@@ -168,58 +168,57 @@ validate_results <- function(con, plate_run, results_table = c("assay_result", "
   assays_results_for_qaqc <- tbl(con, results_table) |>
     filter(plate_run_id == !!plate_run$plate_run_id)
 
-  values_are_below_12k <- assays_results_for_qaqc |>
+  # for qa/qc error output
+  error_messages <- list()
+
+  # Check if NTC/NDNA values are above 12k
+  ntc_ndna_are_above_12k <- assays_results_for_qaqc %>%
     filter(raw_fluorescence > 12000,
            sample_id %in% c("NEG-DNA-1", "NEG-DNA-2", "NEG-DNA-3",
-                            "NTC-1", "NTC-2", "NTC-3")) |> collect()
-
-  if (nrow(values_are_below_12k) > 0) {
-    stop(
-      cli::format_error(c(
-        "x" = "Qa/Qc Test Not Passed: Value above 12k",
-        "i" = glue::glue("the value for {values_are_below_12k$sample_id} (id = {values_are_below_12k$id}) has a value ({values_are_below_12k$raw_fluorescence }) greater then 12,000 RFU")
-      )), call. = FALSE
-    )
-  }
-
-
-  # EBK exceed 12k then only flag do not stop execution ,  "EBK-1", "EBK-2", "EBK-3", "EBK-4" - map these so they can find them in the raw data
-  # IF an EBK is over 12k then DO NOT USE it for thresholds calculation - continue
-
-  # Check NTCs, NEG-DNA controls, and POS-DNA controls (n = 3) against 2xEBK threshold.
-  values_are_above_thresholds <- assays_results_for_qaqc |>
-    filter(raw_fluorescence > threshold,
-           sample_id %in% c("NEG-DNA-1", "NEG-DNA-2", "NEG-DNA-3",
-                            "NTC-1", "NTC-2", "NTC-3")) |>
+                            "NTC-1", "NTC-2", "NTC-3")) %>%
     collect()
 
 
-  if (nrow(values_are_above_thresholds) > 0) {
-    stop(
-      cli::format_error(c(
-        "x" = "Qa/Qc Test Not Passed: NTC/NEG-DNA Value above Threshold",
-        "i" = glue::glue("the value for {values_are_above_thresholds$sample_id} (id = {values_are_above_thresholds$id}) has a value ({values_are_above_thresholds$raw_fluorescence }) greater then the plate threshold ({values_are_above_thresholds$threshold})")
-      )), call. = FALSE
-    )
+  if (nrow(ntc_ndna_are_above_12k) > 0) {
+    error_messages <- c(error_messages, glue::glue("Qa/Qc Test Not Passed: Value above 12k for sample_id(s): {ntc_ndna_are_above_12k$sample_id}"))
   }
 
-  # 2 out of the 3 POS-DNA controls must return a positive result (greater than 2xEBK threshold).
-  pos_dna_values_are_above_threshold <- assays_results_for_qaqc |>
-    filter(raw_fluorescence > threshold, sample_id %in% c("POS-DNA-1", "POS-DNA-2", "POS-DNA-3")) |>
-    collect() |>
-    group_by(assay_id) |>
-    tally() |>
-    filter(n < 2)
+  # Check NTC/NDNA values against thresholds
+  ntc_ndna_are_above_thresholds <- assays_results_for_qaqc %>%
+    filter(raw_fluorescence > threshold,
+           sample_id %in% c("NEG-DNA-1", "NEG-DNA-2", "NEG-DNA-3",
+                            "NTC-1", "NTC-2", "NTC-3")) %>%
+    collect()
 
-  if (nrow(pos_dna_values_are_above_threshold) > 0) {
-    stop(
-      cli::format_error(c(
-        "x" = "Qa/Qc Test Not Passed: 2 of 3 Positive DNA were not above threshold",
-        "i" = glue::glue("the plate with id: '{plate_run$plate_run_id}' contained at least 2 positive DNA controls that did not exceed the plate threshold.")
-      )), call. = FALSE
-    )
+  if (nrow(ntc_ndna_are_above_thresholds) > 0) {
+    # remove the data that was added to db up to this point
+    error_messages <- c(error_messages, glue::glue("Qa/Qc Test Not Passed: NTC/NEG-DNA Value above Threshold for sample_id(s): {ntc_ndna_are_above_thresholds$sample_id}"))
   }
 
+  # Check POS-DNA controls
+  pos_dna_values_are_below_threshold <- assays_results_for_qaqc %>%
+    filter(raw_fluorescence < threshold, sample_id %in% c("POS-DNA-1", "POS-DNA-2", "POS-DNA-3")) %>%
+    collect() %>%
+    group_by(assay_id) %>%
+    tally() %>%
+    filter(n >= 2)
+
+  if (nrow(pos_dna_values_are_below_threshold)) {
+    purrr::walk(seq_along(pos_dna_values_are_below_threshold$assay_id), function(id) {
+      error_messages <<- c(error_messages, glue::glue("Qa/Qc Test Not Passed: 2 of 3 Positive DNA were not above threshold for plate with id: '{plate_run$plate_run_id}' on assay: '{id}'"))
+    })
+  }
+
+  # Print all error messages together
+  if (length(error_messages) > 0) {
+    del_raw_assay_sql_statement <- glue::glue_sql("DELETE FROM raw_assay_result where plate_run_id={as.integer(plate_run$plate_run_id)};", .con = con)
+    del_assay_sql_statement <- glue::glue_sql("DELETE FROM assay_result where plate_run_id={plate_run$plate_run_id};", .con = con)
+    deactivate_plate_statement <- glue::glue_sql("UPDATE plate_run SET active = false where id={plate_run$plate_run_id};", .con = con)
+    DBI::dbExecute(con, del_raw_assay_sql_statement)
+    DBI::dbExecute(con, del_assay_sql_statement)
+    DBI::dbExecute(con, deactivate_plate_statement)
+    stop(unlist(error_messages), call. = FALSE)
+  }
 
   return(TRUE)
 

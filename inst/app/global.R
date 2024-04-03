@@ -19,6 +19,7 @@ in_dev_mode <- Sys.getenv("GRUNID_IS_DEV")
 if (!is.na(in_dev_mode) && in_dev_mode == 1) {
   # logger::log_threshold(level = logger::INFO) # Just always capture all the input?
   run_mode_log_message <- "app started in development mode"
+  env_server <- "development"
   cfg <- config::get(file = config_path)
   config_file_log_message <- glue::glue("using config file found at: {config_path}")
   con <- DBI::dbConnect(RPostgres::Postgres(),
@@ -33,6 +34,7 @@ if (!is.na(in_dev_mode) && in_dev_mode == 1) {
   config_file_log_message <- glue::glue("using config file found at: {config_path}")
   cfg <- config::get(file = config_path)
   con <- grunID::gr_db_connect(username = cfg$username, host = cfg$host, dbname = cfg$dbname)
+  env_server <- ifelse(str_detect(cfg$dbname, "prod"), "production", "staging")
 }
 
 logger::log_appender(logger::appender_console, index = 1)
@@ -168,8 +170,14 @@ status_code_ids_for_failed_states <- DBI::dbGetQuery(
   "select id from status_code where status_code_name like '%failed';"
 ) |> pull()
 
+status_code_ids_for_need_ots16 <- DBI::dbGetQuery(
+  con,
+  "select id from status_code where status_code_name = 'need ots16';"
+) |> pull()
+
+
 # check for failed sherlock
-check_for_failed_status <- function() {
+check_for_status <- function() {
   res <- DBI::dbGetQuery(con,
                   "
 SELECT sample_id, status_code_id
@@ -180,5 +188,11 @@ FROM (
 ) sub
 WHERE rn = 1;")
 
-  res |> filter(status_code_id %in% status_code_ids_for_failed_states, !str_detect(sample_id, "EBK|NTC|POS|NEG"))
+  failed <- res |> filter(status_code_id %in% status_code_ids_for_failed_states, !str_detect(sample_id, "EBK|NTC|POS|NEG"))
+  need16 <- res |> filter(status_code_id %in% status_code_ids_for_need_ots16, !str_detect(sample_id, "EBK|NTC|POS|NEG"))
+
+  return(list(
+    failed = failed,
+    need_ots16 = need16
+  ))
 }
