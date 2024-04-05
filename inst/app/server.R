@@ -136,7 +136,11 @@ function(input, output, session) {
       },
       error = function(e) {
         removeModal(session = session)
-        spsComps::shinyCatch({stop(paste(str_split(e$message, pattern = "Qa/Qc ")[[1]][-1], collapse = " ---- "), call. = FALSE)}, prefix = '', position = "top-full-width")
+        if (startsWith(e$message, "Error attempting insert data")) {
+          spsComps::shinyCatch({stop(paste(e$message), call. = FALSE)}, prefix = '', position = "top-full-width")
+        } else {
+          spsComps::shinyCatch({stop(paste(str_split(e$message, pattern = "Qa/Qc ")[[1]][-1], collapse = " ---- "), call. = FALSE)}, prefix = '', position = "top-full-width")
+        }
       },
       finally = {
         samples_failing(nrow(check_for_status()$failed))
