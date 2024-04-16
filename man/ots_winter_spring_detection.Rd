@@ -7,6 +7,7 @@
 ots_winter_spring_detection(
   con,
   sample_id,
+  results_table,
   selection_strategy = c("positive priority", "recent priority")
 )
 }

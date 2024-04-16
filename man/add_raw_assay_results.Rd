@@ -4,7 +4,11 @@
 \alias{add_raw_assay_results}
 \title{Add Raw Results}
 \usage{
-add_raw_assay_results(con, assay_results)
+add_raw_assay_results(
+  con,
+  assay_results,
+  destination_table = c("raw_assay_result", "externtal_raw_assay_result")
+)
 }
 \description{
 Add Raw Results

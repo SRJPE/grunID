@@ -4,7 +4,13 @@
 \alias{add_plate_thresholds}
 \title{Add Thresholds to Database}
 \usage{
-add_plate_thresholds(con, thresholds, .control_id = "NTC")
+add_plate_thresholds(
+  con,
+  thresholds,
+  destination_table,
+  results_table,
+  .control_id = "EBK"
+)
 }
 \arguments{
 \item{con}{a connection the database}

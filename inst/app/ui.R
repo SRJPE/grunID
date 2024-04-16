@@ -29,7 +29,8 @@ navbarPage(
 
                         uiOutput("ui_banner_for_failed_status"),
                         uiOutput("ui_banner_for_need_ots16_status"),
-
+                        radioButtons("sample_id_type", "Sample ID Types",
+                                     choices = c("JPE Samples", "Salvage Samples"), inline = TRUE),
                         tags$div(
                           style = "display: flex; align-items: center;",
                           selectInput("protocol", "Select a Protocol", choices = all_protocols$name),
@@ -100,6 +101,7 @@ navbarPage(
                         textOutput("console_logs")
                       ),
              ),
+
              tabPanel("Check-in Samples",
                       uiOutput("check_in_notification"),
                       fileInput("check_in_samples_file", label = "Check-in Samples File"),

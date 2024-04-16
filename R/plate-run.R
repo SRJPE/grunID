@@ -9,13 +9,34 @@
 #' @param sample_type the sample type
 #' @param layout_type the layout that was used for this assay
 #' @param plate_size either 96 or 384
+#' @param is_salvage samples are obtained from salvage program
 #' @export
-add_new_plate_results <- function(con, protocol_name, genetic_method,
-                                  laboratory, lab_work_performed_by, description, date_run,
-                                  filepath, sample_type, layout_type,
-                                  plate_size = c(96, 384), .control_id = "NTC",
-                                  selection_strategy = "recent priority",
-                                  run_gen_id = FALSE) {
+add_new_plate_results <- function(con, protocol_name, genetic_method, laboratory,
+                                  lab_work_performed_by, description, date_run,
+                                  filepath, sample_type, layout_type, plate_size = c(96, 384),
+                                  .control_id = "EBK", selection_strategy = "recent priority",
+                                  run_gen_id = FALSE, samples_type = c("jpe", "salvage")) {
+
+
+  samples_type <- match.arg(samples_type)
+
+  db_tables <- switch(samples_type,
+                      "jpe" = list(
+                        "raw_assay" = "raw_assay_result",
+                        "assay" = "assay_result",
+                        "run_id" = "genetic_run_identification",
+                        "samples" = "sample",
+                        "sample_status" = "sample_status"
+                      ),
+                      "salvage" = list(
+                        "raw_assay" = "external_raw_assay_result",
+                        "assay" = "external_assay_result",
+                        "run_id" = "external_genetic_run_identification",
+                        "samples" = "external_sample",
+                        "sample_status" = "external_sample_status"
+                      )
+  )
+
 
   is_valid_connection(con)
 
@@ -59,7 +80,6 @@ add_new_plate_results <- function(con, protocol_name, genetic_method,
                              description = description)
   cli::cli_alert_success("Plate run added to database with id = {plate_run$plate_run_id}")
 
-
   cli::cli_alert_info("Processing sherlock data")
   sherlock_results_event <- suppressMessages(
     process_sherlock(
@@ -73,7 +93,7 @@ add_new_plate_results <- function(con, protocol_name, genetic_method,
 
   cli::cli_alert_info("adding results to database")
   add_raw_res <- tryCatch(
-    add_raw_assay_results(con, sherlock_results_event),
+    add_raw_assay_results(con, sherlock_results_event, destination_table = db_tables$raw_assay),
     error = function(e) {
       cli::cli_alert_danger("there was an error attempting to add new raw data, removing plate run associated with this from database, see the error below for more details:")
       sql_query <- glue::glue_sql("DELETE FROM plate_run where id = {plate_run$plate_run_id}", .con = con)
@@ -104,14 +124,59 @@ add_new_plate_results <- function(con, protocol_name, genetic_method,
 
   cli::cli_alert_info("Generating thresholds for plate run")
 
-  thresholds_event <- generate_threshold(con, plate_run = plate_run, .control_id = .control_id)
+  thresholds_event <- generate_threshold(con, plate_run = plate_run, results_table = db_tables$raw_assay, .control_id = .control_id)
+
   cli::cli_alert_success("Threshold done")
 
 
-  add_plate_thresholds(con, thresholds_event, .control_id = .control_id)
+  add_plate_thresholds(con, thresholds_event, destination_table = db_tables$assay, results_table = db_tables$raw_assay)
+  results_valid <- validate_results(con, plate_run = plate_run, results_table = db_tables$assay)
 
+
+  if (results_valid) {
+    cli::cli_alert_success("all validation checks passed!")
+  }
+
+  if (run_gen_id) {
+    # for now just get the samples based on the plate runs
+    samples_not_valid <- c(
+      "POS-DNA-1",
+      "POS-DNA-2",
+      "POS-DNA-3",
+      "NEG-DNA-1",
+      "NEG-DNA-2",
+      "NEG-DNA-3",
+      "NTC-1",
+      "NTC-2",
+      "NTC-3",
+      "CONTROL", paste0(.control_id, "-", 1:4))
+
+    samples_to_use <- dplyr::tbl(con, db_tables$raw_assay) |>
+      dplyr::filter(plate_run_id %in% !!thresholds_event$plate_run_id) |>
+      dplyr::filter(!(sample_id %in% samples_not_valid)) |>
+      dplyr::collect() |>
+      dplyr::pull(sample_id)
+
+    run_genetic_identification(con, samples_to_use, selection_strategy = selection_strategy,
+                               plate_comment = unique(thresholds_event$plate_comment),
+                               destination_table = db_tables$run_id,
+                               sample_table = db_tables$samples,
+                               results_table = db_tables$assay,
+                               sample_status_table = db_tables$sample_status)
+  }
+
+  return(thresholds_event)
+
+}
+
+
+#' @title Validate Results
+#' @param con a connection to the database
+#' @param plate_run_id plate to run through the validation process
+#' @md
+validate_results <- function(con, plate_run, results_table = c("assay_result", "external_assay_result")) {
   # Check all NTCs (n = 3), NEG-DNA controls (n = 3), and EBKs ("extraction blanks" - n = 4) for RFU values greater than 12,000 (flag if any one has RFU > 12,000).
-  assays_results_for_qaqc <- tbl(con, "assay_result") |>
+  assays_results_for_qaqc <- tbl(con, results_table) |>
     filter(plate_run_id == !!plate_run$plate_run_id)
 
   # for qa/qc error output
@@ -123,6 +188,7 @@ add_new_plate_results <- function(con, protocol_name, genetic_method,
            sample_id %in% c("NEG-DNA-1", "NEG-DNA-2", "NEG-DNA-3",
                             "NTC-1", "NTC-2", "NTC-3")) %>%
     collect()
+
 
   if (nrow(ntc_ndna_are_above_12k) > 0) {
     error_messages <- c(error_messages, glue::glue("Qa/Qc Test Not Passed: Value above 12k for sample_id(s): {ntc_ndna_are_above_12k$sample_id}"))
@@ -165,31 +231,7 @@ add_new_plate_results <- function(con, protocol_name, genetic_method,
     stop(unlist(error_messages), call. = FALSE)
   }
 
-
-  if (run_gen_id) {
-    # for now just get the samples based on the plate runs
-    samples_not_valid <- c(
-      "POS-DNA-1",
-      "POS-DNA-2",
-      "POS-DNA-3",
-      "NEG-DNA-1",
-      "NEG-DNA-2",
-      "NEG-DNA-3",
-      "NTC-1",
-      "NTC-2",
-      "NTC-3",
-      "CONTROL", paste0(.control_id, "-", 1:4))
-
-    samples_to_use <- dplyr::tbl(con, "raw_assay_result") |>
-      dplyr::filter(plate_run_id %in% !!thresholds_event$plate_run_id) |>
-      dplyr::filter(!(sample_id %in% samples_not_valid)) |>
-      dplyr::collect() |>
-      dplyr::pull(sample_id)
-
-    run_genetic_identification(con, samples_to_use, selection_strategy = selection_strategy, plate_comment = unique(thresholds_event$plate_comment))
-  }
-
-  return(thresholds_event)
+  return(TRUE)
 
 }
 
@@ -388,4 +430,5 @@ activate_plate_run <- function(con, plate_run_id) {
     cli::cat_bullet(sprintf("Plate run ID '%s' successfully activated", plate_run_id), bullet_col = "green")
   }
 }
+
 

@@ -16,9 +16,10 @@ add_new_plate_results(
   sample_type,
   layout_type,
   plate_size = c(96, 384),
-  .control_id = "NTC",
+  .control_id = "EBK",
   selection_strategy = "recent priority",
-  run_gen_id = FALSE
+  run_gen_id = FALSE,
+  samples_type = c("jpe", "salvage")
 )
 }
 \arguments{
@@ -41,6 +42,8 @@ add_new_plate_results(
 \item{plate_size}{either 96 or 384}
 
 \item{protocol}{name pf the protocol used for this run}
+
+\item{is_salvage}{samples are obtained from salvage program}
 }
 \description{
 Add New Plate Results
