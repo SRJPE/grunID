@@ -637,21 +637,16 @@ function(input, output, session) {
 
   samples_created_from_checkin <- reactiveVal(c())
 
-  output$check_in_notification <- renderUI({
-    if (length(samples_created_from_checkin()) == 0) {
-      return(NULL)
-    } else {
-      HTML(paste0('<div class="alert alert-info" role="alert">',
-                  length(samples_created_from_checkin()), ' additional samples were created from check-in file! You can view the list in Rstudio Output.',
-                  '</div>'))
-    }
-  })
-
 
   observeEvent(input$check_in_samples_submit, {
     samples_created <- grunID::check_in_jpe_field_samples(con, input$check_in_samples_file$datapath)
     samples_created_from_checkin(samples_created)
-  })
 
+    if (length(samples_created) == 0) {
+      showNotification("no new results found in the check-in file", closeButton = TRUE, type = "message")
+    } else {
+      showNotification(glue::glue("{length(samples_created_from_checkin())} additional sample(s) created from check-in file! You can view the list in Rstudio Output. You can view the list in Rstudio Output."), closeButton = TRUE, type = "message")
+    }
+  })
 
 }

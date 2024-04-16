@@ -13,6 +13,14 @@ navbarPage(
 
       .navbar-text {
       padding-right: 15px; /* Adjust as needed */
+      }
+
+    .shiny-notification {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      font-size: 24px;
     }
     '))
   ),

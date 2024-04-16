@@ -18,7 +18,7 @@ check_in_jpe_field_samples <- function(con, filepath, season = year(today())) {
   if (length(samples_to_be_created) > 0) {
     temp_df <- tibble(sample_id = samples_to_be_created) %>%
       mutate(
-        matches = str_match(sample_id, "^([A-Z0-9]+)(\\d{2})_(\\d{1,2})_([A-Z])_(\\d{1,2})$"),
+        matches = str_match(sample_id, "^([A-Z0-9]+)(\\d{2})_(\\d{1,2})_([A-Z])_(\\d{1,3})$"),
         location = matches[,2],
         year = as.numeric(matches[,3]),
         event = as.numeric(matches[,4]),
