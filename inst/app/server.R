@@ -1,6 +1,5 @@
 function(input, output, session) {
 
-
   # Upload Results ----------------------------------------------------------
   observeEvent(input$show_protocol_details, {
     showModal(modalDialog(
@@ -112,12 +111,6 @@ function(input, output, session) {
     ))
   })
 
-  observe({
-
-    cat(input$yes_upload)
-  })
-
-
   observeEvent(input$yes_upload | input$no_upload, ignoreInit = TRUE, {
     if(input$yes_upload > 0){
       tryCatch({
@@ -142,7 +135,7 @@ function(input, output, session) {
       },
       error = function(e) {
         removeModal(session = session)
-        spsComps::shinyCatch({stop(paste(e))}, prefix = '', position = "top-center")
+        spsComps::shinyCatch({stop(paste(str_split(e$message, pattern = "Qa/Qc ")[[1]][-1], collapse = " ---- "), call. = FALSE)}, prefix = '', position = "top-full-width")
       },
       finally = {
         samples_failing(nrow(check_for_status()$failed))
@@ -153,8 +146,7 @@ function(input, output, session) {
     } else if (input$no_upload > 0) {
       removeModal(session = session)
       print("Submission cancelled by user.")
-    }
-  }, priority = 999)
+  }}, priority = 999)
 
 
   # Sample Status ---------------------------------------------------------------------

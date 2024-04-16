@@ -42,7 +42,8 @@ check_in_jpe_field_samples <- function(con, filepath, season = year(today())) {
       ) |>
       mutate(sample_event_number = as.integer(sample_event_number),
              min_fork_length = as.integer(min_fork_length),
-             max_fork_length = as.integer(max_fork_length))
+             max_fork_length = as.integer(max_fork_length)) |>
+      filter(!is.na(location_code))
 
 
 
@@ -67,7 +68,7 @@ WHERE row_num = 1;") |>
     filter(status_code_id == created_status_id)
 
   samples_needs_status_update <-
-    samples_current_status$sample_id[which(samples_current_status$sample_id %in% samples_received$sample_id)]
+    samples_current_status_is_created$sample_id[which(samples_current_status_is_created$sample_id %in% samples_received$sample_id)]
 
   if (length(samples_needs_status_update) > 0) {
     set_sample_status(con, samples_needs_status_update, sample_status_code = "returned from field")

@@ -1,6 +1,7 @@
 navbarPage(
   theme = "lumen",
-  title = "grunID UI",
+  title = paste0("grunID UI", " (", env_server, ")"),
+  inverse = ifelse(env_server == "production", FALSE, TRUE),
   header = tags$head(
     tags$style(HTML('
       .round-btn {
@@ -9,6 +10,10 @@ navbarPage(
       .icon-offset {
         margin-left: 5px; /* Adjust the margin as needed */
       }
+
+      .navbar-text {
+      padding-right: 15px; /* Adjust as needed */
+    }
     '))
   ),
   # tabPanel(title = "About"),
@@ -24,7 +29,8 @@ navbarPage(
 
                         uiOutput("ui_banner_for_failed_status"),
                         uiOutput("ui_banner_for_need_ots16_status"),
-
+                        radioButtons("sample_id_type", "Sample ID Types",
+                                     choices = c("JPE Samples", "Salvage Samples"), inline = TRUE),
                         tags$div(
                           style = "display: flex; align-items: center;",
                           selectInput("protocol", "Select a Protocol", choices = all_protocols$name),
@@ -95,6 +101,7 @@ navbarPage(
                         textOutput("console_logs")
                       ),
              ),
+
              tabPanel("Check-in Samples",
                       uiOutput("check_in_notification"),
                       fileInput("check_in_samples_file", label = "Check-in Samples File"),
