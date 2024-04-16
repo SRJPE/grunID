@@ -99,12 +99,23 @@ add_new_plate_results <- function(con, protocol_name, genetic_method, laboratory
       sql_query <- glue::glue_sql("DELETE FROM plate_run where id = {plate_run$plate_run_id}", .con = con)
       res <- DBI::dbSendQuery(con, sql_query)
       DBI::dbClearResult(res)
-      is_sample_fk_violation <- stringr::str_detect(e$message, "COPY returned error: ERROR:  insert or update on table \"raw_assay_result\" violates foreign key constraint \"raw_assay_result_sample_id_fkey")
+      is_sample_fk_violation <- stringr::str_detect(e$message, "COPY returned error")
       if (is_sample_fk_violation) {
-        sample_needs_to_be_created <- str_match(e$message, "Key \\(sample_id\\)=\\(([^)]+)\\)")[1, 2]
-        stop(glue::glue("the sample {sample_needs_to_be_created} was not found, please add to database using the `add_sample_plan()` function"), call. = FALSE)
+        regex_pattern <- "COPY returned error : ERROR:\\s+insert or update on table \"(\\w+)\" violates foreign key constraint \"\\w+\"\\s+DETAIL:\\s+Key \\(sample_id\\)=\\(([^)]+)\\) is not present in table \"sample\""
+
+        match_result <- stringr::str_match(e$message, regex_pattern)
+
+        if (!is.na(match_result[1, 1])) {
+          table_name <- match_result[1, 2]
+          sample_needs_to_be_created <- match_result[1, 3]
+
+          error_message <- glue::glue("Error attempting insert data into {table_name} table, the sample {sample_needs_to_be_created} does not exists in the sample table")
+          stop(error_message, call. = FALSE)
+        } else {
+          stop(e$message)
+        }
       } else {
-        stop(e)
+        stop(e$message)
       }
     }
   )
