@@ -12,7 +12,8 @@ process_well_sample_details(
     "single_assay_ots28_early", "single_assay_ots28_late", "single_assay_ots16_spring",
     "single_assay_ots16_winter"),
   plate_run_id,
-  assay_order = NULL
+  assay_order = NULL,
+  custom_layout = NULL
 )
 }
 \arguments{

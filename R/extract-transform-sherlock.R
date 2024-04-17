@@ -54,18 +54,30 @@ process_sherlock <- function(filepath,
                                              "split_plate_spring_winter", "split_plate_winter_spring",
                                              "triplicate",
                                              "single_assay_ots28_early", "single_assay_ots28_late",
-                                             "single_assay_ots16_spring", "single_assay_ots16_winter"),
-                             plate_run_id = NULL, plate_size = c(96, 384)) {
+                                             "single_assay_ots16_spring", "single_assay_ots16_winter",
+                                             "custom"),
+                             plate_run_id = NULL, plate_size = c(96, 384), custom_layout_filepath = NULL) {
 
   if (!class(plate_run_id) == "plate_run") {
     stop(sprintf("the plate_run_id must be created by calling 'add_plate_run'"))
   }
   metadata <- parse_metadata(filepath)
 
+  if (layout_type == "custom" & is.null(custom_layout_filepath)) {
+    stop("selecting 'custom' layout requires a csv file passed in for 'custom_layout_filepath' argument")
+  } else {
+    # read in the custom layout
+    custom_assay_layout <- read_csv(custom_layout_filepath) |>
+      pivot_longer(cols=-...1) |>
+      mutate(assay_id = case_when(value == "spring" ~ 1, value == "winter" ~ 2), idx = paste0(...1, name)) |>
+      select(idx, assay_id)
+  }
+
   sample_details <- process_well_sample_details(filepath = filepath,
                                                 sample_type = sample_type,
                                                 layout_type = layout_type,
-                                                plate_run_id = plate_run_id$plate_run_id)
+                                                plate_run_id = plate_run_id$plate_run_id,
+                                                custom_layout = custom_assay_layout)
 
   plate_layout <- process_plate_layout(filepath, plate_size = plate_size, layout_start_row = metadata$end_metadata_row + 3)
   has_blk_entries <- nrow(dplyr::filter(plate_layout, psuedo_sample_id == "BLK")) > 0
@@ -277,7 +289,8 @@ process_well_sample_details <- function(filepath,
                                                         "single_assay_ots28_early", "single_assay_ots28_late",
                                                         "single_assay_ots16_spring", "single_assay_ots16_winter"),
                                         plate_run_id,
-                                        assay_order = NULL) {
+                                        assay_order = NULL,
+                                        custom_layout = NULL) {
 
   layout_type <- tolower(layout_type)
   sample_type_id <- ifelse(sample_type == "mucus", 1, 2)
@@ -346,6 +359,21 @@ process_well_sample_details <- function(filepath,
         assay_id = assay_id,
         plate_run_id = plate_run_id
       )
+  }
+
+  else if (layout_type == "custom") {
+    # do the custom layout logic here
+    plate_layout <- layout_raw |>
+      tidyr::pivot_longer(names_to="col_num", values_to = "sample_id", -...1) |>
+      dplyr::rename(row_num = ...1) |>
+      dplyr::transmute(
+        location = paste0(row_num, col_num),
+        sample_id,
+        sample_type_id = sample_type_id,
+        plate_run_id = plate_run_id
+      ) |>
+      left_join(custom_layout, by = c("location" = "idx"))
+
   }
 
   plate_layout <- plate_layout|> dplyr::filter(!is.na(sample_id))

@@ -15,7 +15,8 @@ add_new_plate_results <- function(con, protocol_name, genetic_method, laboratory
                                   lab_work_performed_by, description, date_run,
                                   filepath, sample_type, layout_type, plate_size = c(96, 384),
                                   .control_id = "EBK", selection_strategy = "recent priority",
-                                  run_gen_id = FALSE, samples_type = c("jpe", "salvage")) {
+                                  run_gen_id = FALSE, samples_type = c("jpe", "salvage"),
+                                  custom_layout_filepath = NULL) {
 
 
   samples_type <- match.arg(samples_type)
@@ -87,7 +88,8 @@ add_new_plate_results <- function(con, protocol_name, genetic_method, laboratory
       sample_type = sample_type,
       layout_type = layout_type,
       plate_run_id = plate_run,
-      plate_size = plate_size)
+      plate_size = plate_size,
+      custom_layout_filepath = custom_layout_filepath)
   )
   cli::cli_alert_success("Sherlock results processing complete")
 
