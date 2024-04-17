@@ -111,26 +111,46 @@ function(input, output, session) {
     ))
   })
 
+
   observeEvent(input$yes_upload | input$no_upload, ignoreInit = TRUE, {
     if(input$yes_upload > 0){
       tryCatch({
         removeModal(session = session)
-        grunID::add_new_plate_results(
-          con,
-          protocol_name = input$protocol,
-          genetic_method = input$genetic_method,
-          laboratory = input$laboratory,
-          lab_work_performed_by = input$performed_by,
-          description = input$run_description,
-          date_run = input$date_run,
-          filepath = input$sherlock_results$datapath,
-          sample_type = input$sample_type,
-          layout_type = input$layout_type,
-          plate_size = input$plate_size,
-          selection_strategy = "recent priority",
-          .control_id = "EBK",
-          run_gen_id = input$perform_genetics_id)
+        if (!is.null(input$custom_layout_file)) {
+          grunID::add_new_plate_results(
+            con,
+            protocol_name = input$protocol,
+            genetic_method = input$genetic_method,
+            laboratory = input$laboratory,
+            lab_work_performed_by = input$performed_by,
+            description = input$run_description,
+            date_run = input$date_run,
+            filepath = input$sherlock_results$datapath,
+            sample_type = input$sample_type,
+            layout_type = input$layout_type,
+            plate_size = input$plate_size,
+            selection_strategy = "recent priority",
+            .control_id = "EBK",
+            run_gen_id = input$perform_genetics_id,
+            custom_layout_filepath = input$custom_layout_file$datapath)
+        } else {
+          grunID::add_new_plate_results(
+            con,
+            protocol_name = input$protocol,
+            genetic_method = input$genetic_method,
+            laboratory = input$laboratory,
+            lab_work_performed_by = input$performed_by,
+            description = input$run_description,
+            date_run = input$date_run,
+            filepath = input$sherlock_results$datapath,
+            sample_type = input$sample_type,
+            layout_type = input$layout_type,
+            plate_size = input$plate_size,
+            selection_strategy = "recent priority",
+            .control_id = "EBK",
+            run_gen_id = input$perform_genetics_id)
 
+        }
         spsComps::shinyCatch({message("Success!")}, position = "top-center")
       },
       error = function(e) {
