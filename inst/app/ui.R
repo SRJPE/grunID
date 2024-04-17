@@ -22,6 +22,23 @@ navbarPage(
       width: 100%;
       font-size: 24px;
     }
+
+      .shiny-notification-error {
+      background-color: #FF5252;
+      color: white;
+    }
+
+    .shiny-notification-warning {
+    color: #8a6d3b;
+    background-color: #fff3b3;
+    border: 1px solid #faebcc;
+}
+
+    .shiny-notification-message {
+      background-color: #4CAF50;
+      color: white;
+
+    }
     '))
   ),
   # tabPanel(title = "About"),
