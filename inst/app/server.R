@@ -643,9 +643,10 @@ function(input, output, session) {
     samples_created_from_checkin(samples_created)
 
     if (length(samples_created) == 0) {
-      showNotification("no new results found in the check-in file", closeButton = TRUE, type = "message")
+      showNotification("no new results found in the check-in file", closeButton = TRUE, type = "warning", duration = NULL)
     } else {
-      showNotification(glue::glue("{length(samples_created_from_checkin())} additional sample(s) created from check-in file! You can view the list in Rstudio Output. You can view the list in Rstudio Output."), closeButton = TRUE, type = "message")
+      showNotification(glue::glue("{length(samples_created_from_checkin())} additional sample(s) created from check-in file! You can view the list in Rstudio Output. You can view the list in Rstudio Output."),
+                       closeButton = TRUE, type = "warning", duration = NULL)
     }
   })
 
