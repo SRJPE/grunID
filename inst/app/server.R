@@ -137,8 +137,10 @@ function(input, output, session) {
         removeModal(session = session)
         if (startsWith(e$message, "Error attempting insert data")) {
           spsComps::shinyCatch({stop(paste(e$message), call. = FALSE)}, prefix = '', position = "top-full-width")
-        } else {
+        } else if (startsWith(e$message, "Qa/Qc Test Not Passed")){
           spsComps::shinyCatch({stop(paste(str_split(e$message, pattern = "Qa/Qc ")[[1]][-1], collapse = " ---- "), call. = FALSE)}, prefix = '', position = "top-full-width")
+        } else {
+          spsComps::shinyCatch(stop(paste(e)))
         }
       },
       finally = {
