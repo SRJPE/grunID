@@ -61,16 +61,21 @@ process_sherlock <- function(filepath,
   if (!class(plate_run_id) == "plate_run") {
     stop(sprintf("the plate_run_id must be created by calling 'add_plate_run'"))
   }
+
   metadata <- parse_metadata(filepath)
 
-  if (layout_type == "custom" & is.null(custom_layout_filepath)) {
-    stop("selecting 'custom' layout requires a csv file passed in for 'custom_layout_filepath' argument")
+  if (layout_type == "custom") {
+    if (is.null(custom_layout_filepath)) {
+      stop("selecting 'custom' layout requires a csv file passed in for 'custom_layout_filepath' argument")
+    } else {
+      # read in the custom layout
+      custom_assay_layout <- read_csv(custom_layout_filepath) |>
+        pivot_longer(cols=-...1) |>
+        mutate(assay_id = case_when(value == "spring" ~ 1, value == "winter" ~ 2), idx = paste0(...1, name)) |>
+        select(idx, assay_id)
+    }
   } else {
-    # read in the custom layout
-    custom_assay_layout <- read_csv(custom_layout_filepath) |>
-      pivot_longer(cols=-...1) |>
-      mutate(assay_id = case_when(value == "spring" ~ 1, value == "winter" ~ 2), idx = paste0(...1, name)) |>
-      select(idx, assay_id)
+    custom_assay_layout = NULL
   }
 
   sample_details <- process_well_sample_details(filepath = filepath,
@@ -287,7 +292,8 @@ process_well_sample_details <- function(filepath,
                                                         "split_plate_spring_winter", "split_plate_winter_spring",
                                                         "triplicate",
                                                         "single_assay_ots28_early", "single_assay_ots28_late",
-                                                        "single_assay_ots16_spring", "single_assay_ots16_winter"),
+                                                        "single_assay_ots16_spring", "single_assay_ots16_winter",
+                                                        "custom"),
                                         plate_run_id,
                                         assay_order = NULL,
                                         custom_layout = NULL) {
