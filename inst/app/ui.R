@@ -109,11 +109,15 @@ navbarPage(
                                                   "Single Assay OTS 28 Late (v5 Mapping)"="single_assay_ots28_late",
                                                   "Single Assay OTS 16 Spring (v5 Mapping)"="single_assay_ots16_spring",
                                                   "Single Assay OTS 16 Winter (v5 Mapping)"="single_assay_ots16_winter",
-                                                  "Triplicate"="triplicate"
+                                                  "Triplicate"="triplicate",
+                                                  "Custom"="custom"
                                       )
                           ),
                           actionButton("info_layout_type", label = NULL, icon = icon("question"), class = "round-btn icon-offset")
                         ),
+
+                        shiny::conditionalPanel(condition = "input.layout_type == 'custom'",
+                                                fileInput("custom_layout_file", "Select Custom Layout File")),
 
                         selectInput("plate_size", "Select Plate Size", choices = c(384, 96)),
                         checkboxInput("perform_genetics_id", label = "Run genetic calculations for samples after upload", value = TRUE),
