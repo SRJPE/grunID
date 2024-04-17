@@ -116,7 +116,7 @@ function(input, output, session) {
     if(input$yes_upload > 0){
       tryCatch({
         removeModal(session = session)
-        if (!is.null(input$custom_layout_file)) {
+        if (input$layout_type == "custom") {
           grunID::add_new_plate_results(
             con,
             protocol_name = input$protocol,
@@ -132,6 +132,7 @@ function(input, output, session) {
             selection_strategy = "recent priority",
             .control_id = "EBK",
             run_gen_id = input$perform_genetics_id,
+            samples_type = input$sample_id_type,
             custom_layout_filepath = input$custom_layout_file$datapath)
         } else {
           grunID::add_new_plate_results(
@@ -148,6 +149,7 @@ function(input, output, session) {
             plate_size = input$plate_size,
             selection_strategy = "recent priority",
             .control_id = "EBK",
+            samples_type = input$sample_id_type,
             run_gen_id = input$perform_genetics_id)
 
         }
@@ -156,11 +158,23 @@ function(input, output, session) {
       error = function(e) {
         removeModal(session = session)
         if (startsWith(e$message, "Error attempting insert data")) {
-          spsComps::shinyCatch({stop(paste(e$message), call. = FALSE)}, prefix = '', position = "top-full-width")
+          showNotification(
+            ui = tags$p(paste(e$message), call. = FALSE),
+            closeButton = TRUE,
+            duration = 20,
+            type = "error"
+          )
+          # spsComps::shinyCatch({stop(paste(e$message), call. = FALSE)}, prefix = '', position = "top-full-width")
         } else if (startsWith(e$message, "Qa/Qc Test Not Passed")){
           spsComps::shinyCatch({stop(paste(str_split(e$message, pattern = "Qa/Qc ")[[1]][-1], collapse = " ---- "), call. = FALSE)}, prefix = '', position = "top-full-width")
         } else {
-          spsComps::shinyCatch(stop(paste(e)))
+          showNotification(
+            ui = tags$p(paste(e)),
+            closeButton = TRUE,
+            duration = 20,
+            type = "error"
+          )
+          # spsComps::shinyCatch(stop(paste(e)))
         }
       },
       finally = {
