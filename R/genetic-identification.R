@@ -50,7 +50,7 @@ add_plate_thresholds <- function(con, thresholds, destination_table, results_tab
 
 }
 
-insert_detection_results <- function(con, detection_results, table = c("assay_results", "external_assay_result")) {
+insert_detection_results <- function(con, detection_results, table = c("assay_result", "external_assay_result")) {
 
   destination_table <- match.arg(table)
 
