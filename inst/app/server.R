@@ -166,7 +166,13 @@ function(input, output, session) {
           )
           # spsComps::shinyCatch({stop(paste(e$message), call. = FALSE)}, prefix = '', position = "top-full-width")
         } else if (startsWith(e$message, "Qa/Qc Test Not Passed")){
-          spsComps::shinyCatch({stop(paste(str_split(e$message, pattern = "Qa/Qc ")[[1]][-1], collapse = " ---- "), call. = FALSE)}, prefix = '', position = "top-full-width")
+          showNotification(
+            ui = tags$p(paste(str_split(e$message, pattern = "Qa/Qc ")[[1]][-1], collapse = " ---- ")),
+            closeButton = TRUE,
+            duration = 20,
+            type = "error"
+          )
+          # spsComps::shinyCatch({stop(paste(str_split(e$message, pattern = "Qa/Qc ")[[1]][-1], collapse = " ---- "), call. = FALSE)}, prefix = '', position = "top-full-width")
         } else {
           showNotification(
             ui = tags$p(paste(e)),
