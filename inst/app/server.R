@@ -130,7 +130,7 @@ function(input, output, session) {
             layout_type = input$layout_type,
             plate_size = input$plate_size,
             selection_strategy = "recent priority",
-            .control_id = "EBK",
+            .control_id = input$control_blank,
             run_gen_id = input$perform_genetics_id,
             samples_type = input$sample_id_type,
             custom_layout_filepath = input$custom_layout_file$datapath)
@@ -148,7 +148,7 @@ function(input, output, session) {
             layout_type = input$layout_type,
             plate_size = input$plate_size,
             selection_strategy = "recent priority",
-            .control_id = "EBK",
+            .control_id = input$control_blank,
             samples_type = input$sample_id_type,
             run_gen_id = input$perform_genetics_id)
 
@@ -164,7 +164,6 @@ function(input, output, session) {
             duration = 20,
             type = "error"
           )
-          # spsComps::shinyCatch({stop(paste(e$message), call. = FALSE)}, prefix = '', position = "top-full-width")
         } else if (startsWith(e$message, "Qa/Qc Test Not Passed")){
           showNotification(
             ui = tags$p(paste(str_split(e$message, pattern = "Qa/Qc ")[[1]][-1], collapse = " ---- ")),
@@ -172,7 +171,6 @@ function(input, output, session) {
             duration = 20,
             type = "error"
           )
-          # spsComps::shinyCatch({stop(paste(str_split(e$message, pattern = "Qa/Qc ")[[1]][-1], collapse = " ---- "), call. = FALSE)}, prefix = '', position = "top-full-width")
         } else {
           showNotification(
             ui = tags$p(paste(e)),
@@ -180,7 +178,6 @@ function(input, output, session) {
             duration = 20,
             type = "error"
           )
-          # spsComps::shinyCatch(stop(paste(e)))
         }
       },
       finally = {

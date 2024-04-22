@@ -49,11 +49,8 @@ navbarPage(
                       # ),
                       column(
                         # offset = 1,
-                        width = 6,
+                        width = 3,
                         h3("Enter Plate Run"),
-
-                        uiOutput("ui_banner_for_failed_status"),
-                        uiOutput("ui_banner_for_need_ots16_status"),
                         radioButtons("sample_id_type", "Sample ID Types",
                                      choices = c("JPE Samples" = "jpe", "Salvage Samples" = "salvage"), inline = TRUE),
                         tags$div(
@@ -120,6 +117,7 @@ navbarPage(
                                                 fileInput("custom_layout_file", "Select Custom Layout File")),
 
                         selectInput("plate_size", "Select Plate Size", choices = c(384, 96)),
+                        selectInput("control_blank", "Select Control", choices = c("EBK", "NTC")),
                         checkboxInput("perform_genetics_id", label = "Run genetic calculations for samples after upload", value = TRUE),
                         actionButton("do_upload", "Upload Results", class = "btn-success", icon = icon("rocket")),
 
@@ -127,8 +125,16 @@ navbarPage(
                       ),
                       column(
                         width = 3,
+                        tags$h4("JPE Status"),
+                        uiOutput("ui_banner_for_failed_status"),
+                        uiOutput("ui_banner_for_need_ots16_status"),
                         textOutput("console_logs")
                       ),
+                      column(
+                        width = 3,
+                        tags$h4("Salvage Status"),
+                        print("test")
+                      )
              ),
 
              tabPanel("Check-in Samples",
@@ -220,8 +226,11 @@ navbarPage(
                             icon = icon("circle-info")),
                br(),
                br(),
+               selectInput("dataset_sample_type", "Select Sample Source", choices = c("JPE", "Salvage")),
+               br(),
+               br(),
                selectInput("dataset_type_filter", "Dataset Type",
-                           c("clean", "raw", "unprocessed")),
+                           c("run assignments" = "runid","clean"="clean", "raw"="raw", "unprocessed"="unprocessed")),
                actionButton("dataset_type_description",
                             "What are the dataset types?",
                             icon = icon("circle-info")),
