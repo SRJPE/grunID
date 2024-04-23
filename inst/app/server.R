@@ -258,7 +258,23 @@ function(input, output, session) {
 
   selected_samples_by_season <- eventReactive(input$query_refresh, {
     if (input$dataset_type_filter == "runid") {
-      data <- DBI::dbGetQuery(con, "select sample_id, run_name from genetic_run_identification join public.run_type rt on rt.id = genetic_run_identification.run_type_id;")
+      data <- DBI::dbGetQuery(con, "SELECT
+    gri.sample_id,
+    rt.run_name,
+
+    substring(gri.sample_id FROM '^[^_]+_((?:100|[1-9][0-9]?))_') AS sample_event,
+    st.datetime_collected,
+    st.fork_length_mm,
+    st.field_run_type_id
+FROM
+    genetic_run_identification gri
+JOIN
+    public.run_type rt
+ON
+    rt.id = gri.run_type_id
+JOIN
+    public.sample st
+ON st.id = gri.sample_id;;")
 
     } else {
 
@@ -278,7 +294,7 @@ function(input, output, session) {
                  dom = "Bfrtip",
                  buttons = c("copy", "csv", "excel"),
                  lengthChange = TRUE,
-                 pageLength = 20), server = FALSE, editable = list(target = "cell", disable = list(columns = c(0))), selection="none")
+                 pageLength = 20), server = FALSE, editable = list(target = "cell", disable = list(columns = c(0, 2:5))), selection="none")
 
 
   observeEvent(input$season_table_cell_edit, {
