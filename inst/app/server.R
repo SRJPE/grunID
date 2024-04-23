@@ -254,34 +254,76 @@ function(input, output, session) {
 
   # Query -------------------------------------------------------------------
 
-  initial_load_query <- reactiveVal(TRUE)
-  observeEvent(input$query_refresh, {
-    initial_load_query(FALSE)
-  })
+  edit_data_submissions <- reactiveValues()
 
-  latest_query <- eventReactive(list(input$query_refresh, initial_load_query()), {
-    logger::log_info("Fetching latest results using grunID::get_samples_by_season()")
-    data <- grunID::get_samples_by_season(con, input$season_filter, input$dataset_type_filter,
-                                          input$filter_to_heterozygotes, input$filter_to_failed)
+  selected_samples_by_season <- eventReactive(input$query_refresh, {
+    if (input$dataset_type_filter == "runid") {
+      data <- DBI::dbGetQuery(con, "select sample_id, run_name from genetic_run_identification join public.run_type rt on rt.id = genetic_run_identification.run_type_id;")
+
+    } else {
+
+      logger::log_info("Fetching latest results using grunID::get_samples_by_season()")
+      data <- grunID::get_samples_by_season(con, input$season_filter, input$dataset_type_filter,
+                                            input$filter_to_heterozygotes, input$filter_to_failed)
+    }
     data
   })
 
-  selected_samples_by_season <- reactive({
-    latest_query()
+  output$season_table <- DT::renderDT({
+    validate(need(nrow(selected_samples_by_season()) > 0, "Select a dataset and run query to view data"))
+    selected_samples_by_season()
+  },     extensions = "Buttons",
+  rownames = FALSE,
+  options = list(autoWidth = FALSE,
+                 dom = "Bfrtip",
+                 buttons = c("copy", "csv", "excel"),
+                 lengthChange = TRUE,
+                 pageLength = 20), server = FALSE, editable = list(target = "cell", disable = list(columns = c(0))), selection="none")
+
+
+  observeEvent(input$season_table_cell_edit, {
+    sample_id_to_update <- selected_samples_by_season()[input$season_table_cell_edit$row,]$sample_id
+    edit_data_submissions[[sample_id_to_update]] <- input$season_table_cell_edit$value
+    })
+
+  observeEvent(input$runid_submit_edits, {
+    d <- reactiveValuesToList(edit_data_submissions)
+    print(str(d))
+    samples_to_update <- names(d)
+    run_types <- c("Fall" = "FAL", "Spring" = "SPR", "Winter" = "WIN", "Unknown" = "UNK")
+    for (sample in samples_to_update) {
+      new_run_type = run_types[d[[sample]]]
+      print(new_run_type)
+      tryCatch(
+      grunID::update_genetic_run_id(con, sample_id = sample, run_type = new_run_type),
+      error = function(e) {
+        showNotification(tags$p(print(e$message)), type = "error")
+      }
+      )
+    }
+
+    selected_samples_by_season()
+
+    # Highlight the edited row
+    proxy <- dataTableProxy("season_table")
+    proxy %>% selectRows(edit_data_submissions$row)
   })
 
-  output$season_table <- DT::renderDataTable(DT::datatable(selected_samples_by_season(),
-                                                           extensions = "Buttons",
-                                                           rownames = FALSE,
-                                                           options = list(autoWidth = FALSE,
-                                                                          dom = "Bfrtip",
-                                                                          buttons = c("copy", "csv", "excel"),
-                                                                          lengthChange = TRUE,
-                                                                          pageLength = 20)),
-                                             server = FALSE
-  ) #|>
-  # shiny::bindCache(input$season_filter, input$dataset_type_filter,
-  #                  input$filter_to_heterozygotes, input$filter_to_failed)
+  observeEvent(input$runid_cancel_edits, {
+    edit_data_submissions <- reactiveValues()
+    output$season_table <- DT::renderDT({
+      validate(need(nrow(selected_samples_by_season()) > 0, "Select a dataset and run query to view data"))
+      selected_samples_by_season()
+    },     extensions = "Buttons",
+    rownames = FALSE,
+    options = list(autoWidth = FALSE,
+                   dom = "Bfrtip",
+                   buttons = c("copy", "csv", "excel"),
+                   lengthChange = TRUE,
+                   pageLength = 20), server = FALSE, editable = list(target = "cell", disable = list(columns = c(0))), selection="none")
+
+
+  })
 
   observeEvent(input$season_filter_description, {
     showModal(modalDialog(
@@ -337,7 +379,7 @@ function(input, output, session) {
         size = "l")
     )
   })
-
+#
 
   # Upload Field Sheets -----------------------------------------------------
 

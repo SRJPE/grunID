@@ -141,7 +141,7 @@ navbarPage(
                       uiOutput("check_in_notification"),
                       fileInput("check_in_samples_file", label = "Check-in Samples File"),
                       actionButton("check_in_samples_submit", "Submit", class = "btn-success")
-                      ),
+             ),
              tabPanel(title = "Sample",
                       selectInput("add_sample_location_code", label = "Locaiton Code", choices = all_locations),
                       selectInput("add_sample_event_number", label = "Event Number", choices = 1:20),
@@ -252,7 +252,16 @@ navbarPage(
              ),
              mainPanel(
                DT::dataTableOutput("season_table") |>
-                 shinycssloaders::withSpinner()
+                 shinycssloaders::withSpinner(),
+
+               tags$div(
+                 style = "display: flex; align-items: center;",
+
+                 conditionalPanel(condition = "input.dataset_type_filter == 'runid'",
+                                  actionButton("runid_submit_edits", "Submit Edits", class = "btn-info", style="margin: 10px")),
+                 conditionalPanel(condition = "input.dataset_type_filter == 'runid'",
+                                  actionButton("runid_cancel_edits", "Cancel Edits", class = "btn-danger"))
+               )
              )
            )),
   tabPanel(title = "Subsample",
