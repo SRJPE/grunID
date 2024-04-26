@@ -129,12 +129,13 @@ navbarPage(
                         uiOutput("ui_banner_for_failed_status"),
                         uiOutput("ui_banner_for_need_ots16_status"),
                         textOutput("console_logs")
-                      ),
-                      column(
-                        width = 3,
-                        tags$h4("Salvage Status"),
-                        print("test")
                       )
+                      # ,
+                      # column(
+                      #   width = 3,
+                      #   tags$h4("Salvage Status"),
+                      #   print("test")
+                      # )
              ),
 
              tabPanel("Check-in Samples",
