@@ -1,4 +1,7 @@
 #' @title Check-in Samples from field
+#' @param con a connection to the database
+#' @param filepath filepath to check-in excel file
+#' @param season year for season
 #' @export
 check_in_jpe_field_samples <- function(con, filepath, season = year(today())) {
   raw_data <- readxl::read_excel(filepath,

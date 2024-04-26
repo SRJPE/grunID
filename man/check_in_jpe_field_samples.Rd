@@ -6,6 +6,13 @@
 \usage{
 check_in_jpe_field_samples(con, filepath, season = year(today()))
 }
+\arguments{
+\item{con}{a connection to the database}
+
+\item{filepath}{filepath to check-in excel file}
+
+\item{season}{year for season}
+}
 \description{
 Check-in Samples from field
 }

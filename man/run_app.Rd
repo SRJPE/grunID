@@ -15,5 +15,7 @@ the grunID application can be run when the user has a completed plate run
 with assay results. This application calls \code{add_new_plate_results()}.
 }
 \examples{
+\dontrun{
 grunID::run_app()
+}
 }

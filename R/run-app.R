@@ -4,7 +4,9 @@
 #' @details the grunID application can be run when the user has a completed plate run
 #' with assay results. This application calls `add_new_plate_results()`.
 #' @examples
+#' \dontrun{
 #' grunID::run_app()
+#' }
 #' @md
 #' @export
 run_app <- function(config_path = NULL, ...)

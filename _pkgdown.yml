@@ -30,6 +30,9 @@ reference:
   - add_samples
   - add_status_code
   - protocol_template
+  - add_salvage_samples
+  - add_sample
+
 
 - title: Deleting data
   desc: These functions allow users to delete information about samples being run
@@ -104,6 +107,7 @@ reference:
   - create_season_field_sheets
   - process_field_sheet_samples
   - update_field_sheet_samples
+  - check_in_jpe_field_samples
 
 - title: Helper functions
   desc: These functions are generally not used in standard workflow but are employed within functions.
@@ -127,6 +131,25 @@ reference:
   - ots_winter_spring_detection
   - run_genetic_identification
 
+- title: Misc
+  contents:
+  - fill_dual_assay_plate_map
+  - fill_single_assay_plate_map
+  - generate_subsample
+  - generate_subsample_plate_map
+  - get_clean_dataset
+  - get_genetic_run_results
+  - get_raw_dataset
+  - get_samples_by_season
+  - get_unprocessed_dataset
+  - make_salvage_ids
+  - parse_plate_flags
+  - process_field_sheet_samples2
+  - sample_filter_to_season
+  - update_genetic_run_id
+  - validate_results
+  - view_genetic_id_audits
+
 - title: App functions
   contents:
   - run_app
@@ -143,14 +166,14 @@ navbar:
     menu:
       - text: 'Authentication with Azure AD'
         href: 'articles/azure-authentication.html'
+      - text: 'Shiny App'
+        href: 'articles/grunid-app.html'
       - text: 'Process and add assay results to database'
         href: 'articles/process_and_add_assay_results.html'
       - text: 'Querying Sample Status'
         href: 'articles/query_sample_status.html'
       - text: 'Adding In-Season Seeds'
         href: 'articles/in_season_seeds.html'
-      - text: 'grunID Shiny App'
-        href: 'articles/grunid-app.html'
   - text: 'Templates'
     href: "articles/grunID-data-templates.html"
 

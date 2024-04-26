@@ -18,16 +18,15 @@ knitr::opts_chunk$set(
 library(grunID)
 ```
 
-# Introduction
+## Using the Shiny App
 
-Starting from version 0.5 of `grunID`, an R Shiny app is included in the package. To launch the app, simply call the function `grunID::run_app()`. Like `grunID::gr_db_connect()`, the app will search for a configuration file to obtain the necessary parameters for connecting to the database. In this guide, we will explore the various features of the app and provide instructions on how to use it.
+The Shiny app bundled with the grunID package provides a user-friendly interface for interacting with the database and performing various tasks. This article will guide you through the features and functionalities of the app.
+
+## Launching the App
+
+To launch the Shiny app, simply call the `grunID::run_app()` function in your R environment. The app will automatically search for a configuration file to obtain the necessary parameters for connecting to the database, similar to the `grunID::gr_db_connect()` function.
 
 *Note: The app is currently in development, and changes may be made. As a result, this documentation may not always be up-to-date. Please report any bugs to erodriguez@flowwest.com.*
-
-# Usage
-
-To launch the app, run `grunID::run_app()`. You can optionally pass in a path to a config file, but by 
-default, the app will search for a config file within the working directory.
 
 ```r
 grunID::run_app()
@@ -36,7 +35,51 @@ grunID::run_app()
 ![](assets/app-landing.png)
 
 
-The options available for each element of the form are the latest data from the database. Additionally, each form value has a corresponding 'More Information' window that either lists the available options in more detail or provides a more detailed explanation of the input.
+The homepage of the application presents a form for submitting new Sherlock results. Each form field has a corresponding 'More Information' button that either lists the available options in more detail or provides a more detailed explanation of the input.
 
 
 ![](assets/grunid-app-more-info.gif)
+
+### Uploading Results
+
+The landing page of the app allows you to upload results to the database. In this section, we will walk through an example of this process.
+
+The first step is to ensure that your results file is formatted correctly for uploading. You can find a template for this on the "Templates" page of this site. Before uploading, you must know the following information about your results:
+
+1. JPE or Salvage Samples - each of these are stored in different tables in the backend. 
+2. A Protocol - this is the configuration set on the BioTek machine. The most important settings are the **runtime** and **total\_counts**.
+3. The laboratory where the analysis is taking place.
+4. The Genetic Method
+5. Lab Work Performed by: name of personnel who performed the lab work, this is not a strict value but it is a good idea to ensure it is correct in order to be able trace back any issues.
+6. Date when the analysis was run
+7. Sample Type
+8. The layout used for the analysis
+9. The plate size
+10. The control used for calculating thresholds. 
+
+Submitting is as easy as using this required information and filling in each section if the form. Once complete you click "Upload Results"
+
+<iframe width="100%" height="500" src="https://www.youtube.com/embed/2oe8iLaBTJM" frameborder="0" allowfullscreen></iframe>
+
+
+### Checking In Samples
+
+The "Check-in" feature allows users to upload a file containing sample information to update the database. This process serves two main purposes:
+
+1. If a sample in the uploaded file does not exist in the database, it will be automatically created.
+2. The status of the samples included in the file will be set to "returned from field", indicating that they are ready for genetic analysis.
+
+This functionality ensures that all necessary samples are properly tracked and available for generating plate maps used in genetic analysis, even if they were not initially included in the pre-season sample plan.
+
+### Upload Field Data
+
+The next step in the process is to upload field data for samples that have been returned from the field. The field sample data
+is also uploaded using a predfined templates available in the templates of this site. Uploading the data is as simple as 
+selecting the file from the be
+
+
+## Query Data
+
+### Query data
+
+### Update data
