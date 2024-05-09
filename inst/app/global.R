@@ -75,9 +75,23 @@ flagged_plate_runs <- function() {
     con,
     "SELECT pr.id AS plate_run_id, pr.flags, pr.date_run, pr.updated_at, pr.created_at, pr.updated_by, pr.description, pr.lab_work_performed_by, gm.method_name,
     pr.active AS active_plate_run, gm.method_name
-    FROM plate_run AS pr LEFT JOIN public.genetic_method AS gm ON gm.id = pr.genetic_method_id where pr.flags like 'EBK_FLAG%';"
+    FROM plate_run AS pr LEFT JOIN public.genetic_method AS gm ON gm.id = pr.genetic_method_id;"
     )
 
+}
+
+plate_runs_used_for_genid <- function() {
+  DBI::dbGetQuery(con,
+                  "select * from plate_run where id in (
+SELECT id FROM (
+    SELECT early_plate_id AS id FROM genetic_run_identification where early_plate_id is not null
+    UNION
+    SELECT late_plate_id AS id FROM genetic_run_identification where late_plate_id is not null
+    UNION
+    SELECT winter_plate_id AS id FROM genetic_run_identification where winter_plate_id is not null
+    UNION
+    SELECT spring_plate_id AS id FROM genetic_run_identification where spring_plate_id is not null
+) AS combined_ids) order by created_at;")
 }
 
 # where pr.flags like 'EBK_FLAG%'

@@ -293,8 +293,7 @@ navbarPage(
            mainPanel(
              tags$h4("Flagged plate runs"),
              br(),
-             checkboxInput("filter_to_active_plate_runs",
-                           label = "Filter to active plate runs", value = TRUE),
+             tags$p("You can only delete the latest plate run, if you need to delete a plate run that is not the most recent, you will need to delete those plates that were uploaded after."),
              DT::dataTableOutput("flagged_table") |>
                shinycssloaders::withSpinner(),
              hr(), br(),
@@ -311,11 +310,11 @@ navbarPage(
              br(),
              actionButton("pv_view_plate_data_btn", "View Full Plate Data", class = "btn-default"),
              div(style = "display:inline-block; float:right",
-                 actionButton("do_activate", "Accept Selected Subplates",
-                              class = "btn-success"),
-                 actionButton("do_deactivate", "Reject Selected Subplates",
-                              class = "btn-warning"),
-                 actionButton("do_deactivate_entire_plate", "Deactive Entire Plate",
+                 # actionButton("do_activate", "Accept Selected Subplates",
+                 #              class = "btn-success"),
+                 # actionButton("do_deactivate", "Reject Selected Subplates",
+                 #              class = "btn-warning"),
+                 actionButton("delete_selected_plate", "Delete Plate",
                               class = "btn-danger")),
 
              br(), br(),

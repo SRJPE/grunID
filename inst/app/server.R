@@ -482,107 +482,36 @@ ON st.id = gri.sample_id;;")
 
   initial_load_qa_qc <- reactiveVal(TRUE)
 
-  latest_qa_qc_fetch <- eventReactive(list(initial_load_qa_qc()), {
+  plate_run_stack <- eventReactive(list(initial_load_qa_qc()), {
     logger::log_info("Fetching latest results from database for QA/QC tab")
-    data <- flagged_plate_runs()
-    data
-  })
-
-  observe(latest_qa_qc_fetch())
-
-  flagged_sample_table <- reactive({
-    if(input$filter_to_active_plate_runs) {
-      latest_qa_qc_fetch() |>
-        filter(active_plate_run == TRUE) |>
-        mutate(updated_at = format(updated_at, "%Y-%m-%d %H:%M")) |>
-        distinct(plate_run_id, active_plate_run, .keep_all = TRUE) |>
-        select(plate_run_id, flags, date_run, updated_at, description, lab_work_performed_by,
-               genetic_method = method_name, active = active_plate_run, last_review = updated_by)
-    } else {
-      latest_qa_qc_fetch() |>
-        distinct(plate_run_id, active_plate_run, .keep_all = TRUE) |>
-        mutate(updated_at = format(updated_at, "%Y-%m-%d %H:%M")) |>
-        select(plate_run_id, flags, date_run, updated_at, description, lab_work_performed_by,
-               genetic_method = method_name, active = active_plate_run, last_review = updated_by)
-    }
+    data <- plate_runs_used_for_genid()
+    data |> arrange(desc(created_at))
   })
 
   # flagged table
   output$flagged_table <- DT::renderDataTable(DT::datatable(
-    flagged_sample_table(),
+    plate_run_stack(),
     rownames = FALSE,
     selection = "single",
     options = list(autoWidth = FALSE,
                    lengthChange = TRUE,
-                   pageLength = 5)),
+                   pageLength = 5,
+                   dom = "ts")),
     server = FALSE)
 
-  selected_flagged_table_row <- reactive({
-    flagged_sample_table() |>
-      slice(input$flagged_table_rows_selected)
-  })
-
-
-  flag_details_for_selected_row <- reactive({
-    req(nrow(selected_flagged_table_row()) > 0)
-    parse_plate_flags(selected_flagged_table_row()$flags, "ebk")
-  })
-
-
-  assay_results_needed_for_validation <- reactive({
-    req(nrow(selected_flagged_table_row()) > 0)
-
-    selected_plate_run_id <- selected_flagged_table_row()$plate_run_id
+  plate_data_top_stack <- reactive({
+    selected_plate_run_id <- plate_run_stack()[1, ]$id
     tbl(con, "assay_result") |> dplyr::filter(plate_run_id == selected_plate_run_id)
   })
 
-  total_subplates_in_selected_plate <- reactive({
-    assay_results_needed_for_validation() |>
-      collect() |>
-      filter(!str_detect(sample_id, "^EBK|^POS|^NEG|^NTC")) |>
-      distinct(sub_plate) |> arrange(sub_plate) |> pull(sub_plate)
-  })
-
-  output$flagged_plate_run_comment <- renderUI({
-    req(flag_details_for_selected_row())
-    d <- flag_details_for_selected_row()
-    tagList(
-      tags$hr(),
-      tags$h4("Validation for"),
-      tags$ul(
-        map(1:nrow(d), \(x) tags$li(glue::glue("Subplate: {d$sub_plate[x]} with EBK value: {d$value[x]}")))
-      )
-    )
-  })
-
-  output$ui_subplate_checkbox <- renderUI({
-    req(total_subplates_in_selected_plate())
-
-    choices <- total_subplates_in_selected_plate()
-    names(choices) <- paste("subplate:", total_subplates_in_selected_plate())
-    checkboxGroupButtons(
-      inputId = "subplate_in_selceted_plate",
-      label = "",
-      choices = choices,
-      individual = TRUE,
-      checkIcon = list(
-        yes = tags$i(class = "fa fa-circle",
-                     style = "color: steelblue"),
-        no = tags$i(class = "fa fa-circle-o",
-                    style = "color: steelblue"))
-    )
-  })
+  # observe({
+  #   print("the total number of rows in the data are: ")
+  #   print(selected_flagged_table_row()$plate_run_id)
+  #   print(head(assay_results_needed_for_validation()))
+  # })
 
   output$flagged_plate_run_table_display <- DT::renderDataTable({
-    validate(
-      need(!is.null(input$flagged_table_rows_selected), "select a plate run to view assay results")
-    )
-
-    extracted_value <- str_extract(input$subplate_selection, "\\b\\d+-\\d+\\b")
-    subplate_rep <- as.integer(unlist(strsplit(extracted_value, split = "-")))
-
-
-    data <- assay_results_needed_for_validation() |>
+    data <- plate_data_top_stack() |>
       select(plate_run_id, sample_id, raw_fluorescence, threshold, positive_detection, sub_plate) |>
       collect() |>
       filter(str_detect(sample_id, "^EBK")) |>
@@ -595,7 +524,7 @@ ON st.id = gri.sample_id;;")
   })
 
   output$pv_all_plate_data_tbl <- DT::renderDataTable({
-    assay_results_needed_for_validation() |>
+    plate_data_top_stack() |>
       select(plate_run_id, sample_id, raw_fluorescence, threshold, positive_detection, sub_plate, active) |>
       collect() |>
       DT::datatable(options = list(scrollY="500px", pageLength = 500, dom = "t")) |>
@@ -607,7 +536,7 @@ ON st.id = gri.sample_id;;")
                   ))
   })
 
-  observeEvent(input$do_deactivate_entire_plate, {
+  observeEvent(input$delete_selected_plate, {
     showModal(modalDialog(
       title = "Confirm data deletion",
       tagList(
@@ -631,8 +560,9 @@ ON st.id = gri.sample_id;;")
     handlerExpr = {
       if (input$yes_delete_full_plate > 0) {
         removeModal()
-        # do delete
-      } else if (input$no_delete_full_plate > 0) {
+        remove_plate_run(con, plate_run_stack()[1, ]$id)
+
+        } else if (input$no_delete_full_plate > 0) {
         removeModal()
         cat("cancel out of the delete full plate prompt", "\n")
         return(NULL)
