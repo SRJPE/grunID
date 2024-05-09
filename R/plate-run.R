@@ -161,6 +161,7 @@ add_new_plate_results <- function(con, protocol_name, genetic_method, laboratory
 
     run_genetic_identification(con, samples_to_use, selection_strategy = selection_strategy,
                                plate_comment = unique(thresholds_event$plate_comment),
+                               plate_run_id = plate_run$plate_run_id,
                                destination_table = db_tables$run_id,
                                sample_table = db_tables$samples,
                                results_table = db_tables$assay,
@@ -432,5 +433,78 @@ activate_plate_run <- function(con, plate_run_id) {
     cli::cat_bullet(sprintf("Plate run ID '%s' successfully activated", plate_run_id), bullet_col = "green")
   }
 }
+
+#' @export
+remove_plate_run <- function(con, plate_run_id) {
+  # check if this is the latest plate on the stack
+  latest_plate_run <- tbl(con, "plate_run") |>
+    arrange(desc(created_at)) |>
+    head(1) |>
+    pull(id)
+
+  if (latest_plate_run != plate_run_id) {
+    rlang::abort(glue::glue("only the latest plate run can be removed, the latest plate run is currrently: {latest_plate_run}"),
+                 call = NULL)
+  }
+
+  dbBegin(con)
+
+  tryCatch({
+    sql_stm <- glue::glue_sql("DELETE FROM genetic_run_identification
+                              WHERE
+                              early_plate_id={plate_run_id} OR
+                              late_plate_id={plate_run_id} OR
+                              spring_plate_id={plate_run_id} OR
+                              winter_plate_id={plate_run_id};", .con = con)
+    gen_id_rows_affected <- DBI::dbExecute(con, sql_stm)
+    if (gen_id_rows_affected == 0) {
+      stop("No rows were deleted from genetic_run_identification")
+    }
+
+    sql_stm <- glue::glue_sql("DELETE FROM sample_status WHERE plate_run_id={plate_run_id}", .con = con)
+    sample_status_rows_affected <- DBI::dbExecute(con, sql_stm)
+    if (sample_status_rows_affected == 0) {
+      stop("No rows were deleted from sample_status")
+    }
+
+    sql_stm <- glue::glue_sql("DELETE FROM assay_result WHERE plate_run_id={plate_run_id}", .con = con)
+    assay_result_rows_affected <- DBI::dbExecute(con, sql_stm)
+    if (assay_result_rows_affected == 0) {
+      stop("No rows were deleted from assay_result")
+    }
+
+    sql_stm <- glue::glue_sql("DELETE FROM raw_assay_result WHERE plate_run_id={plate_run_id}", .con = con)
+    raw_assay_result_rows_affected <- DBI::dbExecute(con, sql_stm)
+    if (raw_assay_result_rows_affected == 0) {
+      stop("No rows were deleted from raw_assay_result")
+    }
+
+    sql_stm <- glue::glue_sql("DELETE FROM plate_run WHERE id={plate_run_id}", .con = con)
+    plate_run_rows_affected <- DBI::dbExecute(con, sql_stm)
+    if (plate_run_rows_affected == 0) {
+      stop("No rows were deleted from plate_run")
+    }
+
+    dbCommit(con)
+
+    return(list(
+      gen_id_rows_affected = gen_id_rows_affected,
+      sample_status_rows_affected = sample_status_rows_affected,
+      assay_result_rows_affected = assay_result_rows_affected,
+      raw_assay_result_rows_affected = raw_assay_result_rows_affected,
+      plate_run_rows_affected = plate_run_rows_affected
+    ))
+  }, error = function(e) {
+    # roll back the transaction if an error occurred
+    dbRollback(con)
+    stop(e)
+  })
+}
+
+
+
+
+
+
 
 

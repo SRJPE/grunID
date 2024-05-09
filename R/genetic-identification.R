@@ -381,7 +381,7 @@ ots_winter_spring_detection <- function(con, sample_id, results_table,
 #' @param year optional year to identification on
 #' @param selection_strategy a selection strategy to help resolve cases where many assays exists per sample
 #' @export
-run_genetic_identification <- function(con, sample_id = NULL, location = NULL, year = NULL, selection_strategy = "positive priority",
+run_genetic_identification <- function(con, sample_id = NULL, location = NULL, year = NULL, selection_strategy = "positive priority", plate_run_id,
                                        plate_comment, destination_table, sample_table, results_table,
                                        sample_status_table) {
 
@@ -444,7 +444,8 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
   if (nrow(el_failed_status_insert) > 0) {
     el_failed_status_insert$comment <- plate_comment
     el_failed_status_insert$status_code_id <- status_code_name_to_id["EL-failed"]
-    status_to_insert <- dplyr::select(el_failed_status_insert, sample_id, status_code_id, comment)
+    el_failed_status_insert$plate_run_id <- plate_run_id
+    status_to_insert <- dplyr::select(el_failed_status_insert, sample_id, status_code_id, comment, plate_run_id)
     DBI::dbAppendTable(con, sample_status_table, status_to_insert)
 
     uknown_gen_insert <- early_late_resp_data |>
@@ -464,7 +465,8 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
 
     analysis_complete_status_insert$comment <- plate_comment
     analysis_complete_status_insert$status_code_id <- status_code_name_to_id["analysis complete"]
-    analysis_complete_status_insert <- dplyr::select(analysis_complete_status_insert, sample_id, status_code_id, comment)
+    analysis_complete_status_insert$plate_run_id <- plate_run_id
+    analysis_complete_status_insert <- dplyr::select(analysis_complete_status_insert, sample_id, status_code_id, comment, plate_run_id)
     DBI::dbAppendTable(con, sample_status_table, analysis_complete_status_insert)
 
     analysis_complete_gen_insert <- early_late_resp_data |>
@@ -483,7 +485,8 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
 
     created_status_to_insert$comment <- plate_comment
     created_status_to_insert$status_code_id <- status_code_name_to_id["created"]
-    created_status_to_insert <- dplyr::select(created_status_to_insert, sample_id, status_code_id, comment)
+    created_status_to_insert$plate_run_id <- plate_run_id
+    created_status_to_insert <- dplyr::select(created_status_to_insert, sample_id, status_code_id, comment, plate_run_id)
     DBI::dbAppendTable(con, sample_status_table, created_status_to_insert)
 
     # for sample status with "created" the run type needs to be set to UNK so they can be discovered
@@ -508,7 +511,8 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
 
     ots28_inprogress_to_insert$comment <- plate_comment
     ots28_inprogress_to_insert$status_code_id <- status_code_name_to_id["ots28 in progress"]
-    ots28_inprogress_to_insert <- dplyr::select(ots28_inprogress_to_insert, sample_id, status_code_id, comment)
+    ots28_inprogress_to_insert$plate_run_id <- plate_run_id
+    ots28_inprogress_to_insert <- dplyr::select(ots28_inprogress_to_insert, sample_id, status_code_id, comment, plate_run_id)
     DBI::dbAppendTable(con, sample_status_table, ots28_inprogress_to_insert)
 
   }
@@ -539,7 +543,8 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
   if (nrow(sw_failed_status_insert) > 0) {
     sw_failed_status_insert$comment <- plate_comment
     sw_failed_status_insert$status_code_id <- status_code_name_to_id["SW-failed"]
-    status_to_insert <- dplyr::select(sw_failed_status_insert, sample_id, status_code_id, comment)
+    sw_failed_status_insert$plate_run_id <- plate_run_id
+    status_to_insert <- dplyr::select(sw_failed_status_insert, sample_id, status_code_id, comment, plate_run_id)
     DBI::dbAppendTable(con, sample_status_table, status_to_insert)
 
     uknown_gen_insert <- early_late_resp_data |>
@@ -558,7 +563,8 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
 
     sw_analysis_complete_status_insert$comment <- plate_comment
     sw_analysis_complete_status_insert$status_code_id <- status_code_name_to_id["analysis complete"]
-    sw_analysis_complete_status_insert <- dplyr::select(sw_analysis_complete_status_insert, sample_id, status_code_id, comment)
+    sw_analysis_complete_status_insert$plate_run_id <- plate_run_id
+    sw_analysis_complete_status_insert <- dplyr::select(sw_analysis_complete_status_insert, sample_id, status_code_id, comment, plate_run_id)
     DBI::dbAppendTable(con, sample_status_table, sw_analysis_complete_status_insert)
 
     sw_analysis_complete_gen_insert <- spring_winter_resp_data |>
@@ -575,7 +581,8 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
   if (nrow(ots16_need_inserts) > 0) {
     ots16_need_inserts$comment <- plate_comment
     ots16_need_inserts$status_code_id <- status_code_name_to_id["need ots16"]
-    ots16_need_inserts <- dplyr::select(ots16_need_inserts, sample_id, status_code_id, comment)
+    ots16_need_inserts$plate_run_id <- plate_run_id
+    ots16_need_inserts <- dplyr::select(ots16_need_inserts, sample_id, status_code_id, comment, plate_run_id)
     DBI::dbAppendTable(con, sample_status_table, ots16_need_inserts)
 
     spw_gen_to_insert <- spring_winter_resp_data |>
@@ -593,6 +600,7 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
   if (nrow(ots16_inprogress_inserts) > 0 ) {
     ots16_inprogress_inserts$comment <- plate_comment
     ots16_inprogress_inserts$status_code_id <- status_code_name_to_id["ots16 inprogress"]
+    ots16_inprogress_inserts$plate_run_id <- plate_run_id
     ots16_inprogress_inserts <- dplyr::select(ots16_inprogress_inserts, sample_id, status_code_id, comment)
     DBI::dbAppendTable(con, sample_status_table, ots16_inprogress_inserts)
 
@@ -634,13 +642,7 @@ insert_gen_id_to_database <- function(con, insert_data, run_lookups, destination
       glue::glue_sql(
         "INSERT INTO {`destination_table`} (sample_id, run_type_id, early_plate_id, late_plate_id, spring_plate_id, winter_plate_Id, updated_at)
     VALUES
-      ({this_sample_id}, {this_run_type_id}, {this_early_plate}, {this_late_plate}, {this_spring_plate_id}, {this_winter_plate_id}, CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
-    ON CONFLICT (sample_id) DO UPDATE
-    SET
-      run_type_id = EXCLUDED.run_type_id,
-      spring_plate_id = EXCLUDED.spring_plate_id,
-      winter_plate_id = EXCLUDED.winter_plate_id,
-      updated_at = EXCLUDED.updated_at;
+      ({this_sample_id}, {this_run_type_id}, {this_early_plate}, {this_late_plate}, {this_spring_plate_id}, {this_winter_plate_id}, CURRENT_TIMESTAMP AT TIME ZONE 'UTC');
     ",
         .con = con
       )
@@ -648,13 +650,7 @@ insert_gen_id_to_database <- function(con, insert_data, run_lookups, destination
       glue::glue_sql(
         "INSERT INTO {`destination_table`} (sample_id, run_type_id, early_plate_id, late_plate_id, updated_at)
     VALUES
-      ({this_sample_id}, {this_run_type_id}, {this_early_plate}, {this_late_plate}, CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
-    ON CONFLICT (sample_id) DO UPDATE
-    SET
-      run_type_id = EXCLUDED.run_type_id,
-      early_plate_id = EXCLUDED.early_plate_id,
-      late_plate_id = EXCLUDED.late_plate_id,
-      updated_at = EXCLUDED.updated_at;
+      ({this_sample_id}, {this_run_type_id}, {this_early_plate}, {this_late_plate}, CURRENT_TIMESTAMP AT TIME ZONE 'UTC');
     ",
         .con = con
       )

@@ -10,6 +10,7 @@ run_genetic_identification(
   location = NULL,
   year = NULL,
   selection_strategy = "positive priority",
+  plate_run_id,
   plate_comment,
   destination_table,
   sample_table,
