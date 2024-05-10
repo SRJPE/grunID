@@ -258,10 +258,9 @@ function(input, output, session) {
 
   selected_samples_by_season <- eventReactive(input$query_refresh, {
     if (input$dataset_type_filter == "runid") {
-      data <- DBI::dbGetQuery(con, "SELECT
+      data <- DBI::dbGetQuery(con, "SELECT DISTINCT ON (gri.sample_id)
     gri.sample_id,
     rt.run_name,
-
     substring(gri.sample_id FROM '^[^_]+_((?:100|[1-9][0-9]?))_') AS sample_event,
     st.datetime_collected,
     st.fork_length_mm,
@@ -274,7 +273,10 @@ ON
     rt.id = gri.run_type_id
 JOIN
     public.sample st
-ON st.id = gri.sample_id;;")
+ON st.id = gri.sample_id
+ORDER BY gri.sample_id, gri.updated_at DESC;
+;
+;")
 
     } else {
 
@@ -560,11 +562,17 @@ ON st.id = gri.sample_id;;")
     handlerExpr = {
       if (input$yes_delete_full_plate > 0) {
         removeModal()
-        remove_plate_run(con, plate_run_stack()[1, ]$id)
+        logger::log_info("Removing plate run: {plate_run_stack()[1, ]$id}")
+        tryCatch(
+        remove_plate_run(con, plate_run_stack()[1, ]$id),
+        error = function(e) {
+          showNotification(ui = tags$p(paste0(e$message)), type = "error")
+        }
+
+        )
 
         } else if (input$no_delete_full_plate > 0) {
         removeModal()
-        cat("cancel out of the delete full plate prompt", "\n")
         return(NULL)
       }
     },
