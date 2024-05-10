@@ -60,12 +60,15 @@ generate_threshold <- function(con, plate_run, results_table, strategy = "twice 
   }
 
   if (nrow(controls_for_flagging) > 0) {
-    plate_flag = glue::glue("EBK_FLAG;{glue::glue_collapse(glue::glue('{controls_for_flagging$sample_id}_{controls_for_flagging$raw_fluorescence}'), sep = ';')}")
+
+    # Replace '_' with ':' using gsub()
+    flag_id <- gsub("-", ":", controls_for_flagging$sample_id)
+    flag_vals <- controls_for_flagging$raw_fluorescence
+    plate_flag <- paste(flag_id, flag_vals, sep=":")
+
     sql_statement <- glue::glue_sql("UPDATE plate_run SET flags = {plate_flag} WHERE id = {plate_run_identifier}", .con = con)
     DBI::dbExecute(con, sql_statement)
-    comment <- glue::glue("
-  MANUAL EBK VALUE CHECK: plate_run_id = {plate_run$plate_run_id} Values = {glue::glue_collapse(glue::glue('{controls_for_flagging$sample_id}({controls_for_flagging$raw_fluorescence})'), sep = ';')}"
-    )
+    comment <- "MANUAL EBK VALUE CHECK"
 
 
     thresholds$plate_comment <- comment
