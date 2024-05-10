@@ -42,35 +42,37 @@ add_new_plate_results <- function(con, protocol_name, genetic_method, laboratory
   is_valid_connection(con)
 
   if(is.null(filepath)) {
-    stop(cli::format_error(c("x" = "No results file was provided",
-                             "i" = "Please upload a valid plate layout and results excel file")), call. = FALSE)
+    rlang::abort(glue::glue(
+      "no results file provided, upload valid plate layout and results file"
+      ), call = NULL)
   }
   # TODO add check for if single assay type is selected and no single assay type is presented
 
   protocol_id <- get_protocols(con, name == !!protocol_name) |> dplyr::pull(id)
 
   if (length(protocol_id) == 0) {
-    stop(cli::format_error(c("x" = "There are no protocols with name = '{protocol_name}'",
-                             "i" = "Use `grunID::get_protocols` to see existing protocol names")), call. = FALSE)
+    rlang::abort(glue::glue(
+      "there are not protocols with name = '{protocol_name}'"
+    ), call = NULL)
   }
 
   genetic_method_id <- get_genetic_methods(con, code == !!genetic_method) |> dplyr::pull(id)
 
   if (length(genetic_method_id) == 0) {
-    stop(cli::format_error(c(
-      "x" = "There are no genetic methods with name = '{genetic_method}'",
-      "i" = "Use `grunID::get_genetic_methods` to see existing method codes")), call. = FALSE)
+    rlang::abort(glue::glue(
+      "there are no genetic methods with name = '{genetic_method}'"
+    ), call = NULL)
   }
 
   lab_id <- get_laboratories(con, is_active = TRUE, all_results = FALSE, code == laboratory) |> dplyr::pull(id)
 
   if (length(lab_id) == 0) {
-    stop(cli::format_error(c(
-      "x" = "There are no laboratories with name = '{laboratory}'",
-      "i" = "Use `grunID::get_laboratories` to see existing lab codes")), call. = FALSE)
+    rlang::abort(glue::glue(
+      "there are no laboratories with name = '{laboratory}'"
+    ), call = NULL)
   }
 
-  cli::cli_alert_info("Adding plate run to database")
+  logger::log_info("Adding plate run to database")
   # create a new plate run in db for these results
   plate_run <- add_plate_run(con,
                              date_run = date_run,
@@ -79,9 +81,10 @@ add_new_plate_results <- function(con, protocol_name, genetic_method, laboratory
                              laboratory_id = lab_id,
                              lab_work_performed_by = lab_work_performed_by,
                              description = description)
-  cli::cli_alert_success("Plate run added to database with id = {plate_run$plate_run_id}")
 
-  cli::cli_alert_info("Processing sherlock data")
+  logger::log_info("Plate run added to database with id = {plate_run$plate_run_id}")
+
+  logger::log_info("Processing sherlock data")
   sherlock_results_event <- suppressMessages(
     process_sherlock(
       filepath = filepath,
@@ -91,13 +94,13 @@ add_new_plate_results <- function(con, protocol_name, genetic_method, laboratory
       plate_size = plate_size,
       custom_layout_filepath = custom_layout_filepath)
   )
-  cli::cli_alert_success("Sherlock results processing complete")
+  logger::log_info("Sherlock results processing complete")
 
-  cli::cli_alert_info("adding results to database")
+  logger::log_info("adding results to database")
   add_raw_res <- tryCatch(
     add_raw_assay_results(con, sherlock_results_event, destination_table = db_tables$raw_assay),
     error = function(e) {
-      cli::cli_alert_danger("there was an error attempting to add new raw data, removing plate run associated with this from database, see the error below for more details:")
+      logger::log_error("there was an error attempting to add new raw data, removing plate run associated with this from database, see the error below for more details:")
       sql_query <- glue::glue_sql("DELETE FROM plate_run where id = {plate_run$plate_run_id}", .con = con)
       res <- DBI::dbSendQuery(con, sql_query)
       DBI::dbClearResult(res)
@@ -122,13 +125,13 @@ add_new_plate_results <- function(con, protocol_name, genetic_method, laboratory
     }
   )
 
-  cli::cli_alert_success("Added {as.numeric(add_raw_res)} results to the database")
+  logger::log_info("Added {as.numeric(add_raw_res)} results to the database")
 
-  cli::cli_alert_info("Generating thresholds for plate run")
+  logger::log_info("Generating thresholds for plate run")
 
   thresholds_event <- generate_threshold(con, plate_run = plate_run, results_table = db_tables$raw_assay, .control_id = .control_id)
 
-  cli::cli_alert_success("Threshold done")
+  logger::log_info("Threshold done")
 
 
   add_plate_thresholds(con, thresholds_event, destination_table = db_tables$assay, results_table = db_tables$raw_assay)
@@ -136,7 +139,7 @@ add_new_plate_results <- function(con, protocol_name, genetic_method, laboratory
 
 
   if (results_valid) {
-    cli::cli_alert_success("all validation checks passed!")
+    logger::log_info("all validation checks passed!")
   }
 
   if (run_gen_id) {
