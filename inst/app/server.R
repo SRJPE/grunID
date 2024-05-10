@@ -503,14 +503,23 @@ ORDER BY gri.sample_id, gri.updated_at DESC;
 
   plate_data_top_stack <- reactive({
     selected_plate_run_id <- plate_run_stack()[1, ]$id
-    tbl(con, "assay_result") |> dplyr::filter(plate_run_id == selected_plate_run_id)
+    tbl(con, "assay_result") |> dplyr::filter(plate_run_id == selected_plate_run_id) |>
+      collect()
   })
 
-  # observe({
-  #   print("the total number of rows in the data are: ")
-  #   print(selected_flagged_table_row()$plate_run_id)
-  #   print(head(assay_results_needed_for_validation()))
-  # })
+  output$flagged_plate_run_comment <- renderUI({
+    plate_has_flags <- !is.na(plate_run_stack()[1, ]$flags)
+    if (!plate_has_flags) {
+      return(NULL)
+    } else {
+      HTML(paste0('<div class="alert alert-danger" role="alert">',
+                  'This plate contains flags, please choose action for resolving',
+                  '</div>'))
+    }
+  })
+
+
+
 
   output$flagged_plate_run_table_display <- DT::renderDataTable({
     data <- plate_data_top_stack() |>
