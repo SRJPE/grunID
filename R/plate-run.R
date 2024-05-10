@@ -447,7 +447,7 @@ remove_plate_run <- function(con, plate_run_id) {
                  call = NULL)
   }
 
-  dbBegin(con)
+  DBI::dbBegin(con)
 
   tryCatch({
     sql_stm <- glue::glue_sql("DELETE FROM genetic_run_identification
@@ -485,7 +485,7 @@ remove_plate_run <- function(con, plate_run_id) {
       stop("No rows were deleted from plate_run")
     }
 
-    dbCommit(con)
+    DBI::dbCommit(con)
 
     return(list(
       gen_id_rows_affected = gen_id_rows_affected,
@@ -496,7 +496,7 @@ remove_plate_run <- function(con, plate_run_id) {
     ))
   }, error = function(e) {
     # roll back the transaction if an error occurred
-    dbRollback(con)
+    DBI::dbRollback(con)
     stop(e)
   })
 }
