@@ -301,7 +301,7 @@ navbarPage(
 
              # tags$h4("Validate plate run data:"),
              htmlOutput("flagged_plate_run_comment"),
-             htmlOutput("ui_subplate_checkbox"),
+             shiny::uiOutput("ui_subplate_checkbox"),
              br(),
              DT::dataTableOutput("flagged_plate_run_table_display") |>
                shinycssloaders::withSpinner(),

@@ -35,7 +35,7 @@ get_genetic_run_results <- function(con, run = NULL, sample_id = NULL, year = NU
 update_genetic_run_id <- function(con, sample_id, run_type) {
   run_id <- dplyr::tbl(con, "run_type") |> dplyr::filter(code == run_type) |> dplyr::pull(id)
   if (length(run_id) == 0) {
-    stop('run_type submitted is not a valid run type, please only submit one of "FAL", "SPR", "WIN", "HET", "UNK"')
+    stop('run_type submitted is not a valid run type, please only submit one of "Fall", "Spring", "Winter", "Early/Late Heterozygous", "Spring/Winter Heterozygous", or "Unknown"')
   }
   update_statement <- glue::glue_sql("UPDATE genetic_run_identification SET
                                      run_type_id = {run_id},

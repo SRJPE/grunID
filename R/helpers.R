@@ -5,7 +5,7 @@
 extract_sherlock_protocol <- function(filepath) {
   raw_metadata <- readxl::read_excel(filepath,
                                      range = "A2:B27",
-                                     col_names = c("key", "value")) %>%
+                                     col_names = c("key", "value")) |>
     tidyr::fill(key)
 
   # parse metadata elements

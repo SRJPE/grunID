@@ -145,6 +145,22 @@ add_new_plate_results <- function(con, protocol_name, genetic_method, laboratory
   if (run_gen_id) {
     # for now just get the samples based on the plate runs
     samples_not_valid <- c(
+      "EBK-1-1",
+      "EBK-1-2",
+      "EBK-1-3",
+      "EBK-1-4",
+      "EBK-2-1",
+      "EBK-2-2",
+      "EBK-2-3",
+      "EBK-2-4",
+      "EBK-3-1",
+      "EBK-3-2",
+      "EBK-3-3",
+      "EBK-3-4",
+      "EBK-4-1",
+      "EBK-4-2",
+      "EBK-4-3",
+      "EBK-4-4",
       "POS-DNA-1",
       "POS-DNA-2",
       "POS-DNA-3",

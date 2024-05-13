@@ -501,9 +501,14 @@ ORDER BY gri.sample_id, gri.updated_at DESC;
                    dom = "ts")),
     server = FALSE)
 
+
+  assay_codes <- tbl(con, "assay") |>
+    select(id, assay_name)
+
   plate_data_top_stack <- reactive({
     selected_plate_run_id <- plate_run_stack()[1, ]$id
     tbl(con, "assay_result") |> dplyr::filter(plate_run_id == selected_plate_run_id) |>
+      left_join(assay_codes, by = c("assay_id" = "id")) |>
       collect()
   })
 
@@ -523,15 +528,25 @@ ORDER BY gri.sample_id, gri.updated_at DESC;
 
   output$flagged_plate_run_table_display <- DT::renderDataTable({
     data <- plate_data_top_stack() |>
-      select(plate_run_id, sample_id, raw_fluorescence, threshold, positive_detection, sub_plate) |>
+      select(plate_run_id, assay_name, sample_id, raw_fluorescence, threshold, positive_detection, sub_plate) |>
       collect() |>
       filter(str_detect(sample_id, "^EBK")) |>
       arrange(sample_id)
-    DT::datatable(data,
+    DT::datatable(data |> select(-plate_run_id, -sub_plate, -positive_detection),
                   rownames = FALSE,
                   selection = "none",
                   options = list(dom = 't', pageLength = 500, scrollX = TRUE, scrollY = "500px")
-    )
+    ) |>
+      formatStyle(columns = "raw_fluorescence", target = "row",
+                  backgroundColor = styleInterval(c(12000), c("white", "#ebb5b5")))
+  })
+
+  subplate_choices <- reactive({
+    get_all_subplates_for_run(con, plate_run_id = plate_run_stack()[1, ]$id)
+  })
+
+  output$ui_subplate_checkbox <- renderUI({
+    checkboxGroupInput("subplate_checkbox", "Subplate", choices = subplate_choices())
   })
 
   output$pv_all_plate_data_tbl <- DT::renderDataTable({
@@ -573,7 +588,8 @@ ORDER BY gri.sample_id, gri.updated_at DESC;
         removeModal()
         logger::log_info("Removing plate run: {plate_run_stack()[1, ]$id}")
         tryCatch(
-        remove_plate_run(con, plate_run_stack()[1, ]$id),
+        # remove_plate_run(con, plate_run_stack()[1, ]$id),
+        remove_subplates_from_run(con, plate_run_stack()[1, ]$id, input$subplate_checkbox),
         error = function(e) {
           showNotification(ui = tags$p(paste0(e$message)), type = "error")
         }

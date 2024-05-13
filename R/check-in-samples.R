@@ -19,7 +19,7 @@ check_in_jpe_field_samples <- function(con, filepath, season = year(today())) {
   samples_to_be_created <- samples_received$sample_id[which(!(samples_received$sample_id %in% samples_in_db_for_season_ids))]
 
   if (length(samples_to_be_created) > 0) {
-    temp_df <- tibble(sample_id = samples_to_be_created) %>%
+    temp_df <- tibble(sample_id = samples_to_be_created) |>
       mutate(
         matches = str_match(sample_id, "^([A-Z0-9]+)(\\d{2})_(\\d{1,2})_([A-Z])_(\\d{1,3})$"),
         location = matches[,2],
@@ -27,7 +27,7 @@ check_in_jpe_field_samples <- function(con, filepath, season = year(today())) {
         event = as.numeric(matches[,4]),
         bin = matches[,5],
         sample_no = as.numeric(matches[,6])
-      ) %>%
+      ) |>
       select(location, year, event, bin, sample_no) |>
       group_by(location, year, event, bin) |>
       summarise(
