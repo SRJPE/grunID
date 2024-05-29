@@ -82,16 +82,12 @@ flagged_plate_runs <- function() {
 
 plate_runs_used_for_genid <- function() {
   DBI::dbGetQuery(con,
-                  "select * from plate_run where id in (
-SELECT id FROM (
-    SELECT early_plate_id AS id FROM genetic_run_identification where early_plate_id is not null
-    UNION
-    SELECT late_plate_id AS id FROM genetic_run_identification where late_plate_id is not null
-    UNION
-    SELECT winter_plate_id AS id FROM genetic_run_identification where winter_plate_id is not null
-    UNION
-    SELECT spring_plate_id AS id FROM genetic_run_identification where spring_plate_id is not null
-) AS combined_ids) order by created_at;")
+                  "select distinct on (sample_status.plate_run_id) plate_run_id as id, status_code_id, created_at
+from sample_status
+where sample_status.status_code_id > 2
+  and plate_run_id is not NULL
+order by plate_run_id, created_at desc;
+")
 }
 
 # where pr.flags like 'EBK_FLAG%'

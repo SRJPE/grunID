@@ -55,6 +55,14 @@ generate_threshold <- function(con, plate_run, results_table, strategy = "twice 
                                 threshold = mean(as.numeric(raw_fluorescence)) * 2 #TODO redundant for now
                               ) |> ungroup() |>
                               dplyr::mutate(runtime = runtime)
+                          },
+                          "twice average across all" = {
+                            controls_for_threshold |>
+                              dplyr::group_by(plate_run_id, assay_id) |>
+                              dplyr::summarise(
+                                threshold = mean(as.numeric(raw_fluorescence)) * 2 #TODO redundant for now
+                              ) |> ungroup() |>
+                              dplyr::mutate(runtime = runtime)
                           }
     )
   }

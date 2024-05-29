@@ -15,6 +15,7 @@ add_new_plate_results <- function(con, protocol_name, genetic_method, laboratory
                                   lab_work_performed_by, description, date_run,
                                   filepath, sample_type, layout_type, plate_size = c(96, 384),
                                   .control_id = "EBK", selection_strategy = "recent priority",
+                                  threshold_strategy = "twice average",
                                   run_gen_id = FALSE, samples_type = c("jpe", "salvage"),
                                   custom_layout_filepath = NULL) {
 
@@ -129,7 +130,7 @@ add_new_plate_results <- function(con, protocol_name, genetic_method, laboratory
 
   logger::log_info("Generating thresholds for plate run")
 
-  thresholds_event <- generate_threshold(con, plate_run = plate_run, results_table = db_tables$raw_assay, .control_id = .control_id)
+  thresholds_event <- generate_threshold(con, plate_run = plate_run, results_table = db_tables$raw_assay, .control_id = .control_id, strategy = threshold_strategy)
 
   logger::log_info("Threshold done")
 

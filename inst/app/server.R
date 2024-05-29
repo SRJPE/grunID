@@ -133,6 +133,7 @@ function(input, output, session) {
             .control_id = input$control_blank,
             run_gen_id = input$perform_genetics_id,
             samples_type = input$sample_id_type,
+            threshold_strategy = input$threshold_strategy,
             custom_layout_filepath = input$custom_layout_file$datapath)
         } else {
           grunID::add_new_plate_results(
@@ -149,6 +150,7 @@ function(input, output, session) {
             plate_size = input$plate_size,
             selection_strategy = "recent priority",
             .control_id = input$control_blank,
+            threshold_strategy = input$threshold_strategy,
             samples_type = input$sample_id_type,
             run_gen_id = input$perform_genetics_id)
 
@@ -486,8 +488,11 @@ ORDER BY gri.sample_id, gri.updated_at DESC;
 
   plate_run_stack <- eventReactive(list(initial_load_qa_qc()), {
     logger::log_info("Fetching latest results from database for QA/QC tab")
-    data <- plate_runs_used_for_genid()
-    data |> arrange(desc(created_at))
+    plate_ids <- plate_runs_used_for_genid() |> pull(id)
+    tbl(con, "plate_run") |>
+      filter(id %in% plate_ids) |>
+      arrange(desc(created_at)) |>
+      collect()
   })
 
   # flagged table

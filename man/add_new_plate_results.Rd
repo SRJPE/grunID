@@ -18,6 +18,7 @@ add_new_plate_results(
   plate_size = c(96, 384),
   .control_id = "EBK",
   selection_strategy = "recent priority",
+  threshold_strategy = "twice average",
   run_gen_id = FALSE,
   samples_type = c("jpe", "salvage"),
   custom_layout_filepath = NULL
