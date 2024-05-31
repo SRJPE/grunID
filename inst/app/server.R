@@ -260,7 +260,8 @@ function(input, output, session) {
 
   selected_samples_by_season <- eventReactive(input$query_refresh, {
     if (input$dataset_type_filter == "runid") {
-      data <- DBI::dbGetQuery(con, "SELECT DISTINCT ON (gri.sample_id)
+      season_num <- stringr::str_sub(as.character(input$season_filter), 3, 4)
+      data <- DBI::dbGetQuery(con, glue::glue_sql("SELECT DISTINCT ON (gri.sample_id)
     gri.sample_id,
     rt.run_name,
     substring(gri.sample_id FROM '^[^_]+_((?:100|[1-9][0-9]?))_') AS sample_event,
@@ -276,9 +277,12 @@ ON
 JOIN
     public.sample st
 ON st.id = gri.sample_id
-ORDER BY gri.sample_id, gri.updated_at DESC;
-;
-;")
+WHERE
+    gri.sample_id LIKE '___24%'
+ORDER BY
+    gri.sample_id,
+    gri.created_at DESC;
+", .con = con))
 
     } else {
 
@@ -308,17 +312,25 @@ ORDER BY gri.sample_id, gri.updated_at DESC;
 
   observeEvent(input$runid_submit_edits, {
     d <- reactiveValuesToList(edit_data_submissions)
-    print(str(d))
     samples_to_update <- names(d)
     run_types <- c("Fall" = "FAL", "Spring" = "SPR", "Winter" = "WIN", "Unknown" = "UNK")
     for (sample in samples_to_update) {
       new_run_type = run_types[d[[sample]]]
-      print(new_run_type)
       tryCatch(
-      grunID::update_genetic_run_id(con, sample_id = sample, run_type = new_run_type),
-      error = function(e) {
-        showNotification(tags$p(print(e$message)), type = "error")
-      }
+        grunID::update_genetic_run_id(con, sample_id = sample, run_type = new_run_type),
+        error = function(e) {
+          showNotification(tags$p(print(e$message)), type = "error")
+        },
+        finally = DT::renderDT({
+          validate(need(nrow(selected_samples_by_season()) > 0, "Select a dataset and run query to view data"))
+          selected_samples_by_season()
+        },     extensions = "Buttons",
+        rownames = FALSE,
+        options = list(autoWidth = FALSE,
+                       dom = "Bfrtip",
+                       buttons = c("copy", "csv", "excel"),
+                       lengthChange = TRUE,
+                       pageLength = 20), server = FALSE, editable = list(target = "cell", disable = list(columns = c(0))), selection="none")
       )
     }
 
@@ -558,12 +570,13 @@ ORDER BY gri.sample_id, gri.updated_at DESC;
     plate_data_top_stack() |>
       select(plate_run_id, sample_id, raw_fluorescence, threshold, positive_detection, sub_plate, active) |>
       collect() |>
+      arrange(sub_plate) |>
       DT::datatable(options = list(scrollY="500px", pageLength = 500, dom = "t")) |>
-      formatStyle("active",
+      formatStyle("sub_plate",
                   target = "row",
                   backgroundColor = styleEqual(
-                    levels = c(FALSE),
-                    values = c("#a1a1a1")
+                    levels = c(1, 2, 3, 4),
+                    values = c("#ebdccc", "#d7ebcc", "#ccdaeb", "#dfcceb")
                   ))
   })
 
@@ -600,7 +613,7 @@ ORDER BY gri.sample_id, gri.updated_at DESC;
         }
 
         )
-
+        initial_load_qa_qc(!initial_load_qa_qc())
         } else if (input$no_delete_full_plate > 0) {
         removeModal()
         return(NULL)

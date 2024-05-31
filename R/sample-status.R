@@ -54,8 +54,8 @@ set_sample_status <- function(con, sample_ids, sample_status_code, comment = NUL
   } else {
     sample_status_query <- glue::glue_sql("INSERT INTO sample_status (sample_id, status_code_id)
                                         VALUES (
-                                          {sample_ids},
-                                          {status_codes_to_insert}
+                                          UNNEST(ARRAY[{sample_ids*}]),
+                                          UNNEST(ARRAY[{status_codes_to_insert*}])
                                         );",
                                         .con = con)
   }

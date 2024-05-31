@@ -16,7 +16,7 @@ con <- DBI::dbConnect(RPostgres::Postgres(),
                       user = cfg$username,
                       password = cfg$password)
 
-#con <- gr_db_connect()
+con <- gr_db_connect()
 
 
 # step 2: add sample plan and generate field sheets -------------------------------
