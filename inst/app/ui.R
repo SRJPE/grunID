@@ -118,7 +118,6 @@ navbarPage(
 
                         selectInput("plate_size", "Select Plate Size", choices = c(384, 96)),
                         selectInput("control_blank", "Select Control", choices = c("EBK", "NTC")),
-                        selectInput("threshold_strategy", "Select Threshod Calculation Strategy", choices = c("twice average", "twice average across all")),
                         checkboxInput("perform_genetics_id", label = "Run genetic calculations for samples after upload", value = TRUE),
                         actionButton("do_upload", "Upload Results", class = "btn-success", icon = icon("rocket")),
 
@@ -129,6 +128,7 @@ navbarPage(
                         tags$h4("JPE Status"),
                         uiOutput("ui_banner_for_failed_status"),
                         uiOutput("ui_banner_for_need_ots16_status"),
+                        uiOutput("ui_banner_for_flagged_plate_run"),
                         textOutput("console_logs")
                       )
                       # ,

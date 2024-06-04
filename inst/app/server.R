@@ -15,6 +15,7 @@ function(input, output, session) {
 
   samples_failing <- reactiveVal(nrow(check_for_status()$failed))
   samples_need_ots16 <- reactiveVal(nrow(check_for_status()$need_ots16))
+  active_flagged_plate_run <- reactiveVal(check_for_status()$plate_run_flag)
 
   # Render the banner based on the failed samples status
   output$ui_banner_for_failed_status <- renderUI({
@@ -35,6 +36,17 @@ function(input, output, session) {
       total_samples_failing <- nrow(samples_need_ots16())
       HTML(paste0('<div class="alert alert-warning" role="alert">',
                   samples_need_ots16(), ' samples were found that need OTS16, please seach "need ots16" in query tab for details',
+                  '</div>'))
+    }
+  })
+
+  output$ui_banner_for_flagged_plate_run <- renderUI({
+    if (!active_flagged_plate_run()) {
+      return(NULL)
+    } else {
+      total_samples_failing <- nrow(active_flagged_plate_run())
+      HTML(paste0('<div class="alert alert-danger" role="alert">',
+                  'the latest plate run upload contains a flag, please review in the Plate Validations tab',
                   '</div>'))
     }
   })
@@ -133,7 +145,7 @@ function(input, output, session) {
             .control_id = input$control_blank,
             run_gen_id = input$perform_genetics_id,
             samples_type = input$sample_id_type,
-            threshold_strategy = input$threshold_strategy,
+            threshold_strategy = "twice average",
             custom_layout_filepath = input$custom_layout_file$datapath)
         } else {
           grunID::add_new_plate_results(
@@ -150,7 +162,7 @@ function(input, output, session) {
             plate_size = input$plate_size,
             selection_strategy = "recent priority",
             .control_id = input$control_blank,
-            threshold_strategy = input$threshold_strategy,
+            threshold_strategy = "twice average",
             samples_type = input$sample_id_type,
             run_gen_id = input$perform_genetics_id)
 
@@ -185,6 +197,9 @@ function(input, output, session) {
       finally = {
         samples_failing(nrow(check_for_status()$failed))
         samples_need_ots16(nrow(check_for_status()$need_ots16))
+        active_flagged_plate_run(check_for_status()$plate_run_flag)
+        print(check_for_status()$plate_run_flag)
+
       }
       )
 
@@ -528,19 +543,6 @@ ORDER BY
       left_join(assay_codes, by = c("assay_id" = "id")) |>
       collect()
   })
-
-  output$flagged_plate_run_comment <- renderUI({
-    plate_has_flags <- !is.na(plate_run_stack()[1, ]$flags)
-    if (!plate_has_flags) {
-      return(NULL)
-    } else {
-      HTML(paste0('<div class="alert alert-danger" role="alert">',
-                  'This plate contains flags, please choose action for resolving',
-                  '</div>'))
-    }
-  })
-
-
 
 
   output$flagged_plate_run_table_display <- DT::renderDataTable({

@@ -201,8 +201,22 @@ WHERE rn = 1;")
   failed <- res |> filter(status_code_id %in% status_code_ids_for_failed_states, !str_detect(sample_id, "EBK|NTC|POS|NEG"))
   need16 <- res |> filter(status_code_id %in% status_code_ids_for_need_ots16, !str_detect(sample_id, "EBK|NTC|POS|NEG"))
 
+
+  flagged_plate_run_q <- DBI::dbGetQuery(con,
+                                         "
+ SELECT pr.id AS plate_run_id, pr.flags, pr.date_run, pr.updated_at, pr.created_at, pr.updated_by, pr.description, pr.lab_work_performed_by, gm.method_name,
+    pr.active AS active_plate_run, gm.method_name
+    FROM plate_run AS pr LEFT JOIN public.genetic_method AS gm ON gm.id = pr.genetic_method_id order by created_at desc limit 1;
+                                         "
+                                         )
+
+  plate_run_has_flag <- flagged_plate_run_q |> pull(flags) |> is.na()
+
   return(list(
     failed = failed,
-    need_ots16 = need16
+    need_ots16 = need16,
+    plate_run_flag = !plate_run_has_flag
   ))
 }
+
+
