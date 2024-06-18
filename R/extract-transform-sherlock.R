@@ -71,7 +71,7 @@ process_sherlock <- function(filepath,
       # read in the custom layout
       custom_assay_layout <- read_csv(custom_layout_filepath) |>
         pivot_longer(cols=-...1) |>
-        mutate(assay_id = case_when(value == "spring" ~ 1, value == "winter" ~ 2), idx = paste0(...1, name)) |>
+        mutate(assay_id = case_when(value == "early" ~ 1, value == "late" ~ 2, value == "spring" ~ 3, value=="winter" ~ 4), idx = paste0(...1, name)) |>
         select(idx, assay_id)
     }
   } else {
