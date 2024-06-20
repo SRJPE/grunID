@@ -210,7 +210,13 @@ WHERE rn = 1;")
                                          "
                                          )
 
-  plate_run_has_flag <- flagged_plate_run_q |> pull(flags) |> is.na()
+  if (length(flagged_plate_run_q) == 0) {
+    print("the length of the flagged plate run is 0")
+    plate_run_has_flag <- TRUE
+  } else {
+    plate_run_has_flag <- flagged_plate_run_q |> pull(flags) |> is.na()
+  }
+
 
   return(list(
     failed = failed,

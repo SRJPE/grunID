@@ -202,6 +202,7 @@ validate_results <- function(con, plate_run, results_table = c("assay_result", "
   assays_results_for_qaqc <- tbl(con, results_table) |>
     filter(plate_run_id == !!plate_run$plate_run_id)
 
+  all_assays_in_plate <- assays_results_for_qaqc |> collect() |> distinct(assay_id) |> pull()
   # for qa/qc error output
   error_messages <- list()
 
@@ -212,9 +213,11 @@ validate_results <- function(con, plate_run, results_table = c("assay_result", "
                             "NTC-1", "NTC-2", "NTC-3")) %>%
     collect()
 
+  ntc_ndna_are_above_12k_failing_assay_id <-
+    ntc_ndna_are_above_12k |> distinct(assay_id) |> pull()
 
   if (nrow(ntc_ndna_are_above_12k) > 0) {
-    error_messages <- c(error_messages, glue::glue("Qa/Qc Test Not Passed: Value above 12k for sample_id(s): {ntc_ndna_are_above_12k$sample_id}"))
+    error_messages <- c(error_messages, glue::glue("Qa/Qc Test Not Passed: Value above 12k for sample_id(s): {ntc_ndna_are_above_12k$sample_id} on assay: {ntc_ndna_are_above_12k_failing_assay_id}"))
   }
 
   # Check NTC/NDNA values against thresholds
@@ -223,6 +226,9 @@ validate_results <- function(con, plate_run, results_table = c("assay_result", "
            sample_id %in% c("NEG-DNA-1", "NEG-DNA-2", "NEG-DNA-3",
                             "NTC-1", "NTC-2", "NTC-3")) %>%
     collect()
+
+  ntc_ndna_are_above_thresholds_faling_assay_id <-
+    ntc_ndna_are_above_thresholds |> distinct(assay_id) |> pull()
 
   if (nrow(ntc_ndna_are_above_thresholds) > 0) {
     # remove the data that was added to db up to this point
@@ -237,21 +243,39 @@ validate_results <- function(con, plate_run, results_table = c("assay_result", "
     tally() %>%
     filter(n >= 2)
 
+  pos_dna_values_are_below_threshold_failing_assay_id <-
+    pos_dna_values_are_below_threshold |> distinct(assay_id) |> pull()
+
   if (nrow(pos_dna_values_are_below_threshold)) {
     purrr::walk(seq_along(pos_dna_values_are_below_threshold$assay_id), function(id) {
       error_messages <<- c(error_messages, glue::glue("Qa/Qc Test Not Passed: 2 of 3 Positive DNA were not above threshold for plate with id: '{plate_run$plate_run_id}' on assay: '{id}'"))
     })
   }
 
-  # Print all error messages together
-  if (length(error_messages) > 0) {
+  combined_failed_assays <- c(ntc_ndna_are_above_thresholds_faling_assay_id, ntc_ndna_are_above_12k_failing_assay_id,
+                              pos_dna_values_are_below_threshold_failing_assay_id)
+
+  all_assays_in_plate_failed <- all(all_assays_in_plate %in% combined_failed_assays)
+
+  if (all_assays_in_plate_failed) {
     del_raw_assay_sql_statement <- glue::glue_sql("DELETE FROM raw_assay_result where plate_run_id={as.integer(plate_run$plate_run_id)};", .con = con)
     del_assay_sql_statement <- glue::glue_sql("DELETE FROM assay_result where plate_run_id={plate_run$plate_run_id};", .con = con)
     deactivate_plate_statement <- glue::glue_sql("UPDATE plate_run SET active = false where id={plate_run$plate_run_id};", .con = con)
     DBI::dbExecute(con, del_raw_assay_sql_statement)
     DBI::dbExecute(con, del_assay_sql_statement)
     DBI::dbExecute(con, deactivate_plate_statement)
-    stop(unlist(error_messages), call. = FALSE)
+    stop(unlist(c("all assays in plate failed checks", error_messages)), call. = FALSE)
+  }
+
+  # Print all error messages together
+  if (length(error_messages) > 0) {
+    del_raw_assay_sql_statement <- glue::glue_sql("DELETE FROM raw_assay_result where plate_run_id={as.integer(plate_run$plate_run_id)} and assay_id IN ({combined_failed_assays*});", .con = con)
+    del_assay_sql_statement <- glue::glue_sql("DELETE FROM assay_result where plate_run_id={plate_run$plate_run_id} and assay_id IN ({combined_failed_assays*});", .con = con)
+    # deactivate_plate_statement <- glue::glue_sql("UPDATE plate_run SET active = false where id={plate_run$plate_run_id} and assay_id IN {combined_failed_assays};", .con = con)
+    DBI::dbExecute(con, del_raw_assay_sql_statement)
+    DBI::dbExecute(con, del_assay_sql_statement)
+    # DBI::dbExecute(con, deactivate_plate_statement)
+    warning(glue::glue("partial failed check, the following assays failed: {combined_failed_assays}, other assays uploaded"))
   }
 
   return(TRUE)
