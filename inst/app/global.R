@@ -204,16 +204,17 @@ WHERE rn = 1;")
 
   flagged_plate_run_q <- DBI::dbGetQuery(con,
                                          "
- SELECT pr.id AS plate_run_id, pr.flags, pr.date_run, pr.updated_at, pr.created_at, pr.updated_by, pr.description, pr.lab_work_performed_by, gm.method_name,
+ SELECT pr.id AS plate_run_id, pr.flags as flags, pr.date_run, pr.updated_at, pr.created_at, pr.updated_by, pr.description, pr.lab_work_performed_by, gm.method_name,
     pr.active AS active_plate_run, gm.method_name
     FROM plate_run AS pr LEFT JOIN public.genetic_method AS gm ON gm.id = pr.genetic_method_id order by created_at desc limit 1;
                                          "
                                          )
 
-  if (length(flagged_plate_run_q) == 0) {
+  if (nrow(flagged_plate_run_q) == 0) {
     print("the length of the flagged plate run is 0")
     plate_run_has_flag <- TRUE
   } else {
+    plate_run_has_flag <- is.na(flagged_plate_run_q$flags)
     plate_run_has_flag <- flagged_plate_run_q |> pull(flags) |> is.na()
   }
 
