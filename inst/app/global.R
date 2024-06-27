@@ -215,7 +215,6 @@ WHERE rn = 1;")
     plate_run_has_flag <- TRUE
   } else {
     plate_run_has_flag <- is.na(flagged_plate_run_q$flags)
-    plate_run_has_flag <- flagged_plate_run_q |> pull(flags) |> is.na()
   }
 
 
