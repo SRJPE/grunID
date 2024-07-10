@@ -114,7 +114,8 @@ navbarPage(
                         ),
 
                         shiny::conditionalPanel(condition = "input.layout_type == 'custom'",
-                                                fileInput("custom_layout_file", "Select Custom Layout File")),
+                                                fileInput("custom_layout_file", "Select Custom Layout File",
+                                                          accept = c(".csv", ".xlsx"))),
 
                         selectInput("plate_size", "Select Plate Size", choices = c(384, 96)),
                         selectInput("control_blank", "Select Control", choices = c("EBK", "NTC")),
