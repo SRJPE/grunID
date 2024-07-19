@@ -65,23 +65,24 @@ process_sherlock <- function(filepath,
   metadata <- parse_metadata(filepath)
 
   if (layout_type == "custom") {
-    if (is.null(custom_layout_filepath)) {
-      stop("selecting 'custom' layout requires a csv file passed in for 'custom_layout_filepath' argument")
-    } else {
-      file_extension <- tools::file_ext(custom_layout_filepath)
-
-      custom_assay_layout <- switch(file_extension,
-             "csv" = read_csv(custom_layout_filepath) |>
-               pivot_longer(cols=-...1) |>
-               mutate(assay_id = case_when(value == "early" ~ 1, value == "late" ~ 2, value == "spring" ~ 3, value=="winter" ~ 4), idx = paste0(...1, name)) |>
-               select(idx, assay_id),
-             "xlsx" = readxl::read_excel(custom_layout_filepath) |>
-               pivot_longer(cols=-...1) |>
-               mutate(assay_id = case_when(value == "early" ~ 1, value == "late" ~ 2, value == "spring" ~ 3, value=="winter" ~ 4), idx = paste0(...1, name)) |>
-               select(idx, assay_id)
-      )
-
+    sheets_in_input <- readxl::excel_sheets(filepath)
+    if (length(sheets_in_input) != 3) {
+      if (!("layout" %in% sheets_in_input)) {
+        stop("found three sheets, but unable to determine which is the layout, please name your custom layout sheet as 'layout'")
+      }
+      stop("selecting custom layout requires a third sheet, 'layout' in your input file", call. = FALSE)
     }
+
+    custom_assay_layout <- readxl::read_excel(filepath, sheet = "layout") |>
+      pivot_longer(cols=-...1) |>
+      mutate(assay_id = case_when(
+        tolower(value) == "early" ~ 1,
+        tolower(value) == "late" ~ 2,
+        tolower(value) == "spring" ~ 3,
+        tolower(value) == "winter" ~ 4), idx = paste0(...1, name)) |>
+      select(idx, assay_id)
+
+
   } else {
     custom_assay_layout = NULL
   }

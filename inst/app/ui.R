@@ -107,15 +107,14 @@ navbarPage(
                                                   "Single Assay OTS 16 Spring (v5 Mapping)"="single_assay_ots16_spring",
                                                   "Single Assay OTS 16 Winter (v5 Mapping)"="single_assay_ots16_winter",
                                                   "Triplicate"="triplicate",
-                                                  "Custom"="custom"
+                                                  "Custom (must include custom 'layout' sheet)"="custom"
                                       )
                           ),
                           actionButton("info_layout_type", label = NULL, icon = icon("question"), class = "round-btn icon-offset")
                         ),
 
                         shiny::conditionalPanel(condition = "input.layout_type == 'custom'",
-                                                fileInput("custom_layout_file", "Select Custom Layout File",
-                                                          accept = c(".csv", ".xlsx"))),
+                                                shiny::helpText("You selected custom layout, you must include a sheet named 'layout' in your sherlock results file")),
 
                         selectInput("plate_size", "Select Plate Size", choices = c(384, 96)),
                         selectInput("control_blank", "Select Control", choices = c("EBK", "NTC")),

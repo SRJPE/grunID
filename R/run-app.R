@@ -18,6 +18,3 @@ run_app <- function(config_path = NULL, ...)
   shiny::runApp(appDir = system.file("app", package = "grunID"),
                 ...)
 }
-
-
-
