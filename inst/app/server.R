@@ -273,6 +273,64 @@ function(input, output, session) {
 
   edit_data_submissions <- reactiveValues()
 
+  get_sql_statement <- function(table) {
+    statement <- switch (table,
+                         "Run Assignment" = {
+                           "
+                           WITH sample_data AS (
+                              SELECT
+                                  gri.sample_id,
+                                  rt.run_name as run_name,
+                                  rt2.run_name as field_run_name,
+                                  substring(gri.sample_id FROM '^[^_]+_((?:100|[1-9][0-9]?))_') AS sample_event,
+                                  st.datetime_collected,
+                                  st.fork_length_mm,
+                                  st.field_run_type_id,
+                                  gri.early_plate_id,
+                                  gri.late_plate_id,
+                                  gri.spring_plate_id,
+                                  gri.winter_plate_id
+                              FROM genetic_run_identification gri
+                              LEFT JOIN public.run_type rt ON rt.id = gri.run_type_id
+                              LEFT JOIN public.sample st ON st.id = gri.sample_id
+                              LEFT JOIN public.run_type rt2 ON rt2.id = st.field_run_type_id
+                          )
+                          SELECT DISTINCT ON (sample_id)
+                              sample_id,
+                              run_name,
+                              field_run_name,
+                              sample_event,
+                              datetime_collected,
+                              fork_length_mm,
+                              field_run_type_id,
+                              early_plate_id,
+                              late_plate_id,
+                              spring_plate_id,
+                              winter_plate_id
+                          FROM sample_data
+                          WHERE sample_id LIKE '___24%' AND run_name IN ({run_name_filters*}) AND ( field_run_name IN ({field_run_name_filters*}) OR field_run_name is NULL)
+                          AND sample_event IN ({sample_event_filters*}) OR sample_event IS NULL;
+                           "
+                         }
+    )
+
+    return(statement)
+  }
+
+  query_results <- eventReactive(input$query_refresh, {
+    sql_statement <- get_sql_statement(input$query_table_select)
+
+    if (input$query_table_select == "Run Assignment") local({
+      run_name_filters <- input$query_ra_select_run_type
+      field_run_name_filters <- input$query_ra_select_field_run_type
+      sample_event_filters <- input$query_ra_select_sample_event
+      stmt <- glue::glue_sql(sql_statement, .con = con)
+      data <- DBI::dbGetQuery(con, stmt)
+      return(data)
+    })
+
+  })
+
   selected_samples_by_season <- eventReactive(input$query_refresh, {
     if (input$dataset_type_filter == "runid") {
       season_num <- stringr::str_sub(as.character(input$season_filter), 3, 4)
@@ -309,8 +367,7 @@ ORDER BY
   })
 
   output$season_table <- DT::renderDT({
-    validate(need(nrow(selected_samples_by_season()) > 0, "Select a dataset and run query to view data"))
-    selected_samples_by_season()
+    query_results()
   },     extensions = "Buttons",
   rownames = FALSE,
   options = list(autoWidth = FALSE,
