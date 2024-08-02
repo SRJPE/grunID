@@ -311,6 +311,15 @@ function(input, output, session) {
                           WHERE sample_id LIKE '___24%' AND run_name IN ({run_name_filters*}) AND ( field_run_name IN ({field_run_name_filters*}) OR field_run_name is NULL)
                           AND sample_event IN ({sample_event_filters*}) OR sample_event IS NULL;
                            "
+                         },
+                         "Assay Results" = {
+                           "SELECT * FROM assay_result;"
+                         },
+                         "Raw Assay Results" = {
+                           "SELECT * FROM raw_assay_result;"
+                         },
+                         "Plate Runs" = {
+                           "SELECT * FROM plate_run;"
                          }
     )
 
@@ -318,12 +327,27 @@ function(input, output, session) {
   }
 
   query_results <- eventReactive(input$query_refresh, {
-    sql_statement <- get_sql_statement(input$query_table_select)
 
     if (input$query_table_select == "Run Assignment") local({
+      sql_statement <- get_sql_statement(input$query_table_select)
       run_name_filters <- input$query_ra_select_run_type
       field_run_name_filters <- input$query_ra_select_field_run_type
       sample_event_filters <- input$query_ra_select_sample_event
+      stmt <- glue::glue_sql(sql_statement, .con = con)
+      data <- DBI::dbGetQuery(con, stmt)
+      return(data)
+    }) else if (input$query_table_select == "Assay Results") local({
+      sql_statement <- get_sql_statement(input$query_table_select)
+      stmt <- glue::glue_sql(sql_statement, .con = con)
+      data <- DBI::dbGetQuery(con, stmt)
+      return(data)
+    }) else if (input$query_table_select == "Raw Assay Results") local({
+      sql_statement <- get_sql_statement(input$query_table_select)
+      stmt <- glue::glue_sql(sql_statement, .con = con)
+      data <- DBI::dbGetQuery(con, stmt)
+      return(data)
+    }) else if (input$query_table_select == "Plate Runs") local({
+      sql_statement <- get_sql_statement(input$query_table_select)
       stmt <- glue::glue_sql(sql_statement, .con = con)
       data <- DBI::dbGetQuery(con, stmt)
       return(data)

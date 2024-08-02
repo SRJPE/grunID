@@ -227,7 +227,7 @@ navbarPage(
                            choices = c("Run Assignment", "Assay Results", "Raw Assay Results",
                                        "Plate Runs")),
                conditionalPanel(condition = "input.query_table_select == 'Run Assignment'",
-                                tags$div(style="border: solid #d8e4ed;padding: 10px",
+                                tags$div(style="border: solid #d8e4ed;padding: 10px;margin:5px;",
                                          selectInput("query_ra_select_run_type", "Run Type",
                                                      choices = c("Spring",
                                                                  "Fall",
@@ -262,31 +262,10 @@ navbarPage(
                                                      multiple = TRUE,
                                                      selected = 1:10)
                                 )),
-               br(),
-               br(),
-               selectInput("dataset_sample_type", "Select Sample Source", choices = c("JPE", "Salvage")),
-               br(),
-               br(),
-               selectInput("dataset_type_filter", "Dataset Type",
-                           c("run assignments" = "runid","clean"="clean", "raw"="raw", "unprocessed"="unprocessed")),
-               actionButton("dataset_type_description",
-                            "What are the dataset types?",
-                            icon = icon("circle-info")),
-               br(),
-               br(),
-               checkboxInput("filter_to_heterozygotes",
-                             label = "Filter results to heterozygotes",
-                             value = FALSE),
-               checkboxInput("filter_to_failed",
-                             label = "Filter results to failed assays",
-                             value = FALSE),
                tags$div(
                  actionButton("query_refresh", "Run Query", class = "btn-success"),
                  style = "padding-bottom: 15px;"
                ),
-               # tags$h4("Quick plot"),
-               # actionButton("show_season_plot", "Show Season Plot",
-               #              icon = icon("chart-line"))
              ),
              mainPanel(
                DT::dataTableOutput("season_table") |>
