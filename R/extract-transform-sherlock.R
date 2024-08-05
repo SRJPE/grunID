@@ -73,7 +73,13 @@ process_sherlock <- function(filepath,
       stop("selecting custom layout requires a third sheet, 'layout' in your input file", call. = FALSE)
     }
 
-    custom_assay_layout <- readxl::read_excel(filepath, sheet = "layout") |>
+    raw_data <- readxl::read_excel(filepath, sheet = "layout")
+    if (nrow(raw_data) == 0) {
+      stop("empty layout sheet when custom layout selected, please make sure you have data in the layout sheet",
+           call. = FALSE)
+    }
+
+    custom_assay_layout <- raw_data |>
       pivot_longer(cols=-...1) |>
       mutate(assay_id = case_when(
         tolower(value) == "early" ~ 1,
