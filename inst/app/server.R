@@ -326,8 +326,8 @@ function(input, output, session) {
     return(statement)
   }
 
+  # TODO: refactor so that code is not repeated like this
   query_results <- eventReactive(input$query_refresh, {
-
     if (input$query_table_select == "Run Assignment") local({
       sql_statement <- get_sql_statement(input$query_table_select)
       run_name_filters <- input$query_ra_select_run_type
@@ -353,41 +353,6 @@ function(input, output, session) {
       return(data)
     })
 
-  })
-
-  selected_samples_by_season <- eventReactive(input$query_refresh, {
-    if (input$dataset_type_filter == "runid") {
-      season_num <- stringr::str_sub(as.character(input$season_filter), 3, 4)
-      data <- DBI::dbGetQuery(con, glue::glue_sql("SELECT DISTINCT ON (gri.sample_id)
-    gri.sample_id,
-    rt.run_name,
-    substring(gri.sample_id FROM '^[^_]+_((?:100|[1-9][0-9]?))_') AS sample_event,
-    st.datetime_collected,
-    st.fork_length_mm,
-    st.field_run_type_id
-FROM
-    genetic_run_identification gri
-JOIN
-    public.run_type rt
-ON
-    rt.id = gri.run_type_id
-JOIN
-    public.sample st
-ON st.id = gri.sample_id
-WHERE
-    gri.sample_id LIKE '___24%'
-ORDER BY
-    gri.sample_id,
-    gri.created_at DESC;
-", .con = con))
-
-    } else {
-
-      logger::log_info("Fetching latest results using grunID::get_samples_by_season()")
-      data <- grunID::get_samples_by_season(con, input$season_filter, input$dataset_type_filter,
-                                            input$filter_to_heterozygotes, input$filter_to_failed)
-    }
-    data
   })
 
   output$season_table <- DT::renderDT({

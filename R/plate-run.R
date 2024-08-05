@@ -86,14 +86,22 @@ add_new_plate_results <- function(con, protocol_name, genetic_method, laboratory
   logger::log_info("Plate run added to database with id = {plate_run$plate_run_id}")
 
   logger::log_info("Processing sherlock data")
-  sherlock_results_event <- suppressMessages(
-    process_sherlock(
-      filepath = filepath,
-      sample_type = sample_type,
-      layout_type = layout_type,
-      plate_run_id = plate_run,
-      plate_size = plate_size,
-      custom_layout_filepath = custom_layout_filepath)
+  sherlock_results_event <- tryCatch(
+    suppressMessages(
+      process_sherlock(
+        filepath = filepath,
+        sample_type = sample_type,
+        layout_type = layout_type,
+        plate_run_id = plate_run,
+        plate_size = plate_size,
+        custom_layout_filepath = custom_layout_filepath)
+    ),
+    error = function(e) {
+      pl_id_to_delete <- plate_run$plate_run_id
+      logger::log_info("Deleting plate_run_id = {pl_id_to_delete} due to errors trying to read sherlock file")
+      DBI::dbExecute(con, glue::glue("DELETE FROM plate_run where id = {pl_id_to_delete};"))
+      stop(glue::glue("Error trying to process sherlock output file, message from processing function\n: {e}"))
+    }
   )
   logger::log_info("Sherlock results processing complete")
 

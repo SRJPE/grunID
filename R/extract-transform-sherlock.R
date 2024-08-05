@@ -310,8 +310,13 @@ process_well_sample_details <- function(filepath,
   layout_type <- tolower(layout_type)
   sample_type_id <- ifelse(sample_type == "mucus", 1, 2)
 
-  layout_raw <- suppressMessages(readxl::read_excel(filepath,
-                                            sheet = "plate_map"))
+  layout_raw <- tryCatch(
+    suppressMessages(readxl::read_excel(filepath,
+                                        sheet = "plate_map")),
+    error = function(e) {
+      stop("error trying to read plate map layout, please make sure the sheet is named `plate_map`", call. = FALSE)
+    }
+  )
   # split plate
   if(layout_type %in% c("split_plate_early_late", "split_plate_late_early",
                         "split_plate_spring_winter", "split_plate_winter_spring")) {
