@@ -383,7 +383,7 @@ ots_winter_spring_detection <- function(con, sample_id, results_table,
 #' @export
 run_genetic_identification <- function(con, sample_id = NULL, location = NULL, year = NULL, selection_strategy = "positive priority", plate_run_id,
                                        plate_comment, destination_table, sample_table, results_table,
-                                       sample_status_table) {
+                                       sample_status_table, layout_type) {
 
   # check for valid inputs and data -------------------------
   if (is.null(year)) {
@@ -506,6 +506,7 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
   ots28_inprogress_to_insert <- early_late_resp_data |>
     dplyr::filter(status_code == "ots28 in progress")
 
+
   if (nrow(ots28_inprogress_to_insert) > 0) {
 
 
@@ -524,6 +525,10 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
   # TODO - what should we return in this case? For now just returning the dataframe with most info
   if (nrow(ots16_in_progress_to_insert) == 0) {
     return(early_late_resp_data)
+  }
+
+  if (layout_type %in% c("split_plate_early_late", "split_plate_late_early")) {
+    return (early_late_resp_data)
   }
 
   spring_winter_resp <- purrr::map(

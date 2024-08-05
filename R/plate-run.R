@@ -193,7 +193,8 @@ add_new_plate_results <- function(con, protocol_name, genetic_method, laboratory
                                destination_table = db_tables$run_id,
                                sample_table = db_tables$samples,
                                results_table = db_tables$assay,
-                               sample_status_table = db_tables$sample_status)
+                               sample_status_table = db_tables$sample_status,
+                               layout_type = layout_type)
   }
 
   return(thresholds_event)

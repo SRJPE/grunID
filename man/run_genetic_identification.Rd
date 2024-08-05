@@ -15,7 +15,8 @@ run_genetic_identification(
   destination_table,
   sample_table,
   results_table,
-  sample_status_table
+  sample_status_table,
+  layout_type
 )
 }
 \arguments{
