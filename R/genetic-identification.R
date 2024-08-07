@@ -526,10 +526,10 @@ where date_part('year', sample_event.first_sample_date) = {year} and sample_loca
   if (nrow(ots16_in_progress_to_insert) == 0) {
     return(early_late_resp_data)
   }
-
-  if (layout_type %in% c("split_plate_early_late", "split_plate_late_early")) {
-    return (early_late_resp_data)
-  }
+#
+#   if (layout_type %in% c("split_plate_early_late", "split_plate_late_early")) {
+#     return (early_late_resp_data)
+#   }
 
   spring_winter_resp <- purrr::map(
     ots16_in_progress_to_insert$sample_id , ~ots_winter_spring_detection(con, ., selection_strategy = selection_strategy, results_table = results_table),
