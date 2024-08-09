@@ -61,6 +61,11 @@ DB_get_sample_status <- function() {
   )
 }
 
+
+run_types <- tbl(con, "run_type")
+run_choices <- run_types |> pull(run_name)
+run_name_to_code <- run_types |> pull(code)
+names(run_name_to_code) <- run_choices
 # TODO update this query to pull from new db structure
 # pull from plate_run where FLAG like EBK-FLAG and active = TRUE (active depends on check mark)
 # store output from parse_EBK_flag() to produce the table with sub plates
@@ -187,7 +192,7 @@ status_code_ids_for_need_ots16 <- DBI::dbGetQuery(
 
 
 # check for failed sherlock
-check_for_status <- function() {
+ check_for_status <- function() {
   res <- DBI::dbGetQuery(con,
                   "
 SELECT sample_id, status_code_id
