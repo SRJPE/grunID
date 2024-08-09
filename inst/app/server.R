@@ -277,39 +277,44 @@ function(input, output, session) {
     statement <- switch (table,
                          "Run Assignment" = {
                            "
-                           WITH sample_data AS (
-                              SELECT
-                                  gri.sample_id,
-                                  rt.run_name as run_name,
-                                  rt2.run_name as field_run_name,
-                                  substring(gri.sample_id FROM '^[^_]+_((?:100|[1-9][0-9]?))_') AS sample_event,
-                                  st.datetime_collected,
-                                  st.fork_length_mm,
-                                  st.field_run_type_id,
-                                  gri.early_plate_id,
-                                  gri.late_plate_id,
-                                  gri.spring_plate_id,
-                                  gri.winter_plate_id
-                              FROM genetic_run_identification gri
-                              LEFT JOIN public.run_type rt ON rt.id = gri.run_type_id
-                              LEFT JOIN public.sample st ON st.id = gri.sample_id
-                              LEFT JOIN public.run_type rt2 ON rt2.id = st.field_run_type_id
-                          )
-                          SELECT DISTINCT ON (sample_id)
-                              sample_id,
-                              run_name,
-                              field_run_name,
-                              sample_event,
-                              datetime_collected,
-                              fork_length_mm,
-                              field_run_type_id,
-                              early_plate_id,
-                              late_plate_id,
-                              spring_plate_id,
-                              winter_plate_id
-                          FROM sample_data
-                          WHERE sample_id LIKE '___24%' AND run_name IN ({run_name_filters*}) AND ( field_run_name IN ({field_run_name_filters*}) OR field_run_name is NULL)
-                          AND sample_event IN ({sample_event_filters*}) OR sample_event IS NULL;
+                           SELECT
+    --- gri.id AS genetic_run_id,
+    gri.sample_id,
+    SUBSTRING(gri.sample_id FROM 7 FOR
+        CASE
+            WHEN SUBSTRING(gri.sample_id FROM 8 FOR 1) ~ '^[0-9]$' THEN 2
+            ELSE 1
+        END
+    ) AS event,
+    --- gri.run_type_id AS genetic_run_type_id,
+    rt_genetic.run_name AS genetic_run_name,
+    s.fork_length_mm,
+    s.datetime_collected,
+    rt_field.run_name AS field_run_name,
+    gri.early_plate_id,
+    gri.late_plate_id,
+    gri.winter_plate_id,
+    gri.spring_plate_id
+    --- gri.created_at AS genetic_run_created_at
+FROM (
+    SELECT *,
+           ROW_NUMBER() OVER (PARTITION BY sample_id ORDER BY created_at DESC) as rn
+    FROM genetic_run_identification
+    WHERE sample_id LIKE '___24%'
+) gri
+JOIN run_type rt_genetic ON gri.run_type_id = rt_genetic.id
+JOIN sample s ON gri.sample_id = s.id
+LEFT JOIN run_type rt_field ON s.field_run_type_id = rt_field.id
+WHERE gri.rn = 1
+  AND rt_genetic.run_name IN ({run_name_filters*})
+  AND (rt_field.run_name IN ({field_run_name_filters*}) or rt_field.run_name is NULL)
+  AND SUBSTRING(gri.sample_id FROM 7 FOR
+        CASE
+            WHEN SUBSTRING(gri.sample_id FROM 8 FOR 1) ~ '^[0-9]$' THEN 2
+            ELSE 1
+        END
+    )::integer IN ({sample_event_filters*})
+ORDER BY gri.sample_id;
                            "
                          },
                          "Assay Results" = {
@@ -363,39 +368,44 @@ function(input, output, session) {
                  dom = "Bfrtip",
                  buttons = c("copy", "csv", "excel"),
                  lengthChange = TRUE,
-                 pageLength = 20), server = FALSE, editable = list(target = "cell", disable = list(columns = c(0, 2:5))), selection="none")
+                 pageLength = 20),
+  server = FALSE,
+  editable = list(target = "cell", disable = list(columns = c(0, 1, 3:9))),
+  selection="none")
+
+  # editable = list(target = "cell", disable = list(columns = c(0, 2:5)))
 
 
   observeEvent(input$season_table_cell_edit, {
-    sample_id_to_update <- selected_samples_by_season()[input$season_table_cell_edit$row,]$sample_id
+    sample_id_to_update <- query_results()[input$season_table_cell_edit$row,]$sample_id
     edit_data_submissions[[sample_id_to_update]] <- input$season_table_cell_edit$value
     })
 
   observeEvent(input$runid_submit_edits, {
     d <- reactiveValuesToList(edit_data_submissions)
     samples_to_update <- names(d)
-    run_types <- c("Fall" = "FAL", "Spring" = "SPR", "Winter" = "WIN", "Unknown" = "UNK")
+
     for (sample in samples_to_update) {
-      new_run_type = run_types[d[[sample]]]
+      new_run_type = run_name_to_code[d[[sample]]]
       tryCatch(
         grunID::update_genetic_run_id(con, sample_id = sample, run_type = new_run_type),
         error = function(e) {
           showNotification(tags$p(print(e$message)), type = "error")
         },
         finally = DT::renderDT({
-          validate(need(nrow(selected_samples_by_season()) > 0, "Select a dataset and run query to view data"))
-          selected_samples_by_season()
+          validate(need(nrow(query_results()) > 0, "Select a dataset and run query to view data"))
+          query_results()
         },     extensions = "Buttons",
         rownames = FALSE,
         options = list(autoWidth = FALSE,
                        dom = "Bfrtip",
                        buttons = c("copy", "csv", "excel"),
                        lengthChange = TRUE,
-                       pageLength = 20), server = FALSE, editable = list(target = "cell", disable = list(columns = c(0))), selection="none")
+                       pageLength = 20), server = FALSE, editable = list(target = "cell", disable = list(columns = c(0, 1, 3:9))), selection="none")
       )
     }
 
-    selected_samples_by_season()
+    query_results()
 
     # Highlight the edited row
     proxy <- dataTableProxy("season_table")
@@ -405,8 +415,8 @@ function(input, output, session) {
   observeEvent(input$runid_cancel_edits, {
     edit_data_submissions <- reactiveValues()
     output$season_table <- DT::renderDT({
-      validate(need(nrow(selected_samples_by_season()) > 0, "Select a dataset and run query to view data"))
-      selected_samples_by_season()
+      validate(need(nrow(query_results()) > 0, "Select a dataset and run query to view data"))
+      query_results()
     },     extensions = "Buttons",
     rownames = FALSE,
     options = list(autoWidth = FALSE,

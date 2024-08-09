@@ -229,29 +229,9 @@ navbarPage(
                conditionalPanel(condition = "input.query_table_select == 'Run Assignment'",
                                 tags$div(style="border: solid #d8e4ed;padding: 10px;margin:5px;",
                                          selectInput("query_ra_select_run_type", "Run Type",
-                                                     choices = c("Spring",
-                                                                 "Fall",
-                                                                 "LateFall",
-                                                                 "Winter",
-                                                                 "Fall/LateFall",
-                                                                 "Spring/Winter",
-                                                                 "Unknown",
-                                                                 "Heterozygous",
-                                                                 "Early/Late Heterozygous",
-                                                                 "Spring/Winter Heterozygous"
-                                                     ),
+                                                     choices = run_choices,
                                                      multiple = TRUE,
-                                                     selected = c("Spring",
-                                                                  "Fall",
-                                                                  "LateFall",
-                                                                  "Winter",
-                                                                  "Fall/LateFall",
-                                                                  "Spring/Winter",
-                                                                  "Unknown",
-                                                                  "Heterozygous",
-                                                                  "Early/Late Heterozygous",
-                                                                  "Spring/Winter Heterozygous"
-                                                     )),
+                                                     selected = run_choices),
                                          selectInput("query_ra_select_field_run_type", "Field Run Type",
                                                      choices = c("Fall Run", "Spring Run", "Winter Run", "Heterozygote"),
                                                      multiple = TRUE,
@@ -274,9 +254,9 @@ navbarPage(
                tags$div(
                  style = "display: flex; align-items: center;",
 
-                 conditionalPanel(condition = "input.dataset_type_filter == 'runid'",
+                 conditionalPanel(condition = "input.query_table_select == 'Run Assignment'",
                                   actionButton("runid_submit_edits", "Submit Edits", class = "btn-info", style="margin: 10px")),
-                 conditionalPanel(condition = "input.dataset_type_filter == 'runid'",
+                 conditionalPanel(condition = "input.query_table_select == 'Run Assignment'",
                                   actionButton("runid_cancel_edits", "Cancel Edits", class = "btn-danger"))
                )
              )

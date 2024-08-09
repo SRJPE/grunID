@@ -143,6 +143,7 @@ add_new_plate_results <- function(con, protocol_name, genetic_method, laboratory
   logger::log_info("Threshold done")
 
 
+  # adds the assay_results data
   add_plate_thresholds(con, thresholds_event, destination_table = db_tables$assay, results_table = db_tables$raw_assay)
   results_valid <- validate_results(con, plate_run = plate_run, results_table = db_tables$assay)
 
@@ -187,14 +188,15 @@ add_new_plate_results <- function(con, protocol_name, genetic_method, laboratory
       dplyr::collect() |>
       dplyr::pull(sample_id)
 
-    run_genetic_identification(con, samples_to_use, selection_strategy = selection_strategy,
-                               plate_comment = unique(thresholds_event$plate_comment),
-                               plate_run_id = plate_run$plate_run_id,
-                               destination_table = db_tables$run_id,
-                               sample_table = db_tables$samples,
-                               results_table = db_tables$assay,
-                               sample_status_table = db_tables$sample_status,
-                               layout_type = layout_type)
+    # run_genetic_identification(con, samples_to_use, selection_strategy = selection_strategy,
+    #                            plate_comment = unique(thresholds_event$plate_comment),
+    #                            plate_run_id = plate_run$plate_run_id,
+    #                            destination_table = db_tables$run_id,
+    #                            sample_table = db_tables$samples,
+    #                            results_table = db_tables$assay,
+    #                            sample_status_table = db_tables$sample_status,
+    #                            layout_type = layout_type)
+    run_genetic_identification_v2(con, samples_to_use, plate_run_id = plate_run$plate_run_id)
   }
 
   return(thresholds_event)
