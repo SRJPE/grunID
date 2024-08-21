@@ -384,13 +384,14 @@ ots_winter_spring_detection <- function(con, sample_id, results_table,
 run_genetic_identification_v2 <- function(con, samples, plate_run_id) {
     res <- DBI::dbGetQuery(con,
                            glue::glue_sql("SELECT *
-FROM (
-  SELECT *,
-         ROW_NUMBER() OVER (PARTITION BY sample_id, assay_id ORDER BY created_at DESC) as rn
-  FROM assay_result
-  WHERE active = true
-) subquery
-WHERE rn = 1 and sample_id IN ({samples*});", .con = con)) |> as_tibble()
+                                          FROM (
+                                            SELECT *,
+                                                   ROW_NUMBER() OVER (PARTITION BY sample_id, assay_id ORDER BY created_at DESC) as rn
+                                            FROM assay_result
+                                            WHERE active = true
+                                          ) subquery
+                                          WHERE rn = 1 and sample_id IN ({samples*});",
+                                          .con = con)) |> as_tibble()
 
 
   sample_results <- res |>
