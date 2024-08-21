@@ -81,7 +81,8 @@ add_new_plate_results <- function(con, protocol_name, genetic_method, laboratory
                              genetic_method_id = genetic_method_id,
                              laboratory_id = lab_id,
                              lab_work_performed_by = lab_work_performed_by,
-                             description = description)
+                             description = description,
+                             filename = filepath$name)
 
   logger::log_info("Plate run added to database with id = {plate_run$plate_run_id}")
 
@@ -89,7 +90,7 @@ add_new_plate_results <- function(con, protocol_name, genetic_method, laboratory
   sherlock_results_event <- tryCatch(
     suppressMessages(
       process_sherlock(
-        filepath = filepath,
+        filepath = filepath$datapath,
         sample_type = sample_type,
         layout_type = layout_type,
         plate_run_id = plate_run,
@@ -350,7 +351,7 @@ as_plate_run <- function(x, ...) {
 #' `generate_threshold()`.
 #' @export
 add_plate_run <- function(con, protocol_id, genetic_method_id,
-                          laboratory_id, lab_work_performed_by, description, date_run) {
+                          laboratory_id, lab_work_performed_by, description, date_run, filename) {
   if (!DBI::dbIsValid(con)) {
     stop("Connection argument does not have a valid connection the run-id database.
          Please try reconnecting to the database using 'DBI::dbConnect'",
@@ -362,15 +363,16 @@ add_plate_run <- function(con, protocol_id, genetic_method_id,
                   genetic_method_id == !!genetic_method_id,
                   laboratory_id == !!laboratory_id,
                   lab_work_performed_by == !!lab_work_performed_by,
-                  date_run == !!date_run) |>
+                  date_run == !!date_run,
+                  filename == !!filename) |>
     dplyr::collect()
 
   proceed_inserting <- TRUE
 
 
   query <- glue::glue_sql("
-  INSERT INTO plate_run (protocol_id, genetic_method_id,  laboratory_id, lab_work_performed_by, description, date_run)
-  VALUES ({protocol_id}, {genetic_method_id}, {laboratory_id}, {lab_work_performed_by}, {description}, {date_run}) RETURNING id;",
+  INSERT INTO plate_run (protocol_id, genetic_method_id,  laboratory_id, lab_work_performed_by, description, date_run, filename)
+  VALUES ({protocol_id}, {genetic_method_id}, {laboratory_id}, {lab_work_performed_by}, {description}, {date_run}, {filename}) RETURNING id;",
                           .con = con)
 
   res <- DBI::dbSendQuery(con, query)
