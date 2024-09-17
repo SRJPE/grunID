@@ -196,6 +196,13 @@ navbarPage(
                shinycssloaders::withSpinner()
            ),
   ),
+  tabPanel(title = "Generate Plate",
+           tagList(
+             tags$h2("Generate Plate Maps"),
+             tags$p("Generate plate maps for events"),
+             selectInput("generate_plate_event", "Event", choices = 1:14, multiple = TRUE),
+             actionButton("generate_plate_map_submit", label = "Generate")
+           )),
   tabPanel(title = "Sample Status",
            sidebarLayout(
              sidebarPanel(

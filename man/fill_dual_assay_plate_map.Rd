@@ -4,7 +4,7 @@
 \alias{fill_dual_assay_plate_map}
 \title{fill_dual_assay_plate_map}
 \usage{
-fill_dual_assay_plate_map(sample_ids)
+fill_dual_assay_plate_map(sample_ids, control_blanks)
 }
 \arguments{
 \item{sample_ids}{list of sample IDs with which to populate a plate map}
