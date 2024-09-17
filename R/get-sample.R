@@ -179,7 +179,7 @@ get_clean_dataset <- function(con, filtered_samples,
 
   if(heterozygote_filter) {
     heterozygote_results <- clean_results |>
-      dplyr::filter(sherlock_run_assignment == "Heterozygous")
+      dplyr::filter(sherlock_run_assignment %in% c("Early/Late Heterozygous", "Spring/Winter Heterozygous"))
     return(heterozygote_results)
 
   } else if (failed_filter) {
