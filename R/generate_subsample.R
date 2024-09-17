@@ -163,7 +163,7 @@ generate_subsample_plate_map <- function(sample_ids, plate_assay_structure, out_
     # split sample ids into the number of necessary plate map lengths
     split_sample_ids_by_plate_map <- split(sample_ids, ceiling(seq_along(sample_ids)/available_wells_for_samples))
 
-    plate_maps <- purrr::map(split_sample_ids_by_plate_map, grunID::fill_dual_assay_plate_map)
+    plate_maps <- purrr::map(split_sample_ids_by_plate_map, \(x) fill_dual_assay_plate_map(x, control_blanks))
 
     for(i in 1:no_plate_maps) {
       new_filepath <- paste0(out_filepath, "_", i, ".csv")
@@ -202,7 +202,7 @@ generate_subsample_plate_map <- function(sample_ids, plate_assay_structure, out_
 #' @returns A list of plate map tables
 #' @export
 #' @md
-fill_dual_assay_plate_map <- function(sample_ids) {
+fill_dual_assay_plate_map <- function(sample_ids, control_blanks) {
 
   # split into the number of rows you have to fill out
   fill_rows <- split(sample_ids, ceiling(seq_along(sample_ids)/11))
