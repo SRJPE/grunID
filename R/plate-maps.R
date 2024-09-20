@@ -29,9 +29,10 @@ make_plate_map <- function(df) {
   purrr::map(df, \(x) make_plate_layout(x$id))
 }
 
-make_plate_maps_by_event <- function(con, events) {
+make_plate_maps_by_event <- function(con, events, season = lubridate::year(lubridate::today())) {
+  season_filter <- stringr::str_sub(season, -2)
   samples <- con |> tbl("sample") |>
-    filter(event_number %in% events) |>
+    filter(event_number %in% events, season == season_filter) |>
     collect()
 
   events_name <- paste(events, collapse="-")
