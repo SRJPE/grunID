@@ -34,13 +34,23 @@ make_plate_maps_by_event <- function(con, events) {
     filter(event_number %in% events) |>
     collect()
 
+  events_name <- paste(events, collapse="-")
+
   samples_parted <- partition_df_every_n(samples, n = 92)
   layouts_list <- map(samples_parted, \(x) make_plate_layout(x$id))
+  n_layout_groups <- ceiling(length(layouts_list) / 4) # 4 subplates per "packet"
+  group_ids <- rep(1:n_layout_groups, each = 4)
+
+  for (i in seq_len(length(layouts_list))) {
+    plate_no <- if((x <- i %% 4) == 0) 4 else x
+    write_layout_to_file(layouts_list[[i]], file_name = paste0(i, "_", plate_no, "-", events_name, ".xlsx"))
+
+  }
 }
 
-write_layouts_to_file <- function(plate_maps, file_name) {
+write_layout_to_file <- function(df, file_name) {
   # Create a new workbook
-  sheet_name <- "maps"
+  sheet_name <- "map"
   wb <- openxlsx::createWorkbook()
 
   # Add a worksheet
@@ -50,10 +60,7 @@ write_layouts_to_file <- function(plate_maps, file_name) {
   start_row <- 1
 
   # Write each dataframe to the worksheet
-  for (df in plate_maps) {
-    openxlsx::writeData(wb, sheet_name, df, startRow = start_row, startCol = 1)
-    start_row <- start_row + nrow(df) + 10
-  }
+  openxlsx::writeData(wb, sheet_name, df)
 
   # Save the workbook
   openxlsx::saveWorkbook(wb, file_name, overwrite = TRUE)
