@@ -17,11 +17,11 @@ partition_df_every_n <- function(df, n) {
 #' @keywords internal
 make_plate_layout <- function(samples, layout_size = 96) {
   pad_amount <- layout_size - length(samples)
-  d <- matrix(c(samples, rep(NA, pad_amount)), nrow = 8, ncol = 12, byrow = FALSE) |>
-    as_tibble()
-  colnames(d) <- 1:12
-  rownames(d) <- LETTERS[1:8]
-  return(d)
+  raw <- matrix(c(samples, rep(NA, pad_amount)), nrow = 8, ncol = 12, byrow = FALSE)
+  dat <- tibble::as_tibble(raw)
+  colnames(dat) <- 1:12
+  rownames(dat) <- LETTERS[1:8]
+  return(dat)
 }
 
 
@@ -29,6 +29,7 @@ make_plate_map <- function(df) {
   purrr::map(df, \(x) make_plate_layout(x$id))
 }
 
+#' @export
 make_plate_maps_by_event <- function(con, events, season = lubridate::year(lubridate::today())) {
   season_filter <- stringr::str_sub(season, -2)
   samples <- con |> tbl("sample") |>
@@ -38,16 +39,26 @@ make_plate_maps_by_event <- function(con, events, season = lubridate::year(lubri
   events_name <- paste(events, collapse="-")
 
   samples_parted <- partition_df_every_n(samples, n = 92)
-  layouts_list <- map(samples_parted, \(x) make_plate_layout(x$id))
+  layouts_list <- map(samples_parted, \(x) suppressWarnings(make_plate_layout(x$id)))
   n_layout_groups <- ceiling(length(layouts_list) / 4) # 4 subplates per "packet"
   group_ids <- rep(1:n_layout_groups, each = 4)
 
-  for (i in seq_len(length(layouts_list))) {
-    plate_no <- if((x <- i %% 4) == 0) 4 else x
-    write_layout_to_file(layouts_list[[i]], file_name = paste0(i, "_", plate_no, "-", events_name, ".xlsx"))
+  message(glue::glue("A total of {nrow(samples)} samples were arranged into {length(layouts_list)} plates"))
 
+  for (i in seq_along(layouts_list)) {
+    subplate_num <- if ((x <- i %% 4) == 0) 4 else x
+    if (i > 4) {
+      subplate_num <- paste0(subplate_num, "-1")
+    }
+    filename <- glue::glue("sherlock_{events_name}_p{subplate_num}.xlsx")
+    write_layout_to_file(layouts_list[[i]], filename)
+    message(paste(filename, "file created"))
   }
+
+
+  invisible(layouts_list)
 }
+
 
 write_layout_to_file <- function(df, file_name) {
   # Create a new workbook

@@ -11,7 +11,8 @@ add_plate_run(
   laboratory_id,
   lab_work_performed_by,
   description,
-  date_run
+  date_run,
+  filename
 )
 }
 \arguments{
