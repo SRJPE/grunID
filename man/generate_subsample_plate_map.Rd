@@ -4,7 +4,12 @@
 \alias{generate_subsample_plate_map}
 \title{generate_subsample_plate_map}
 \usage{
-generate_subsample_plate_map(sample_ids, plate_assay_structure, out_filepath)
+generate_subsample_plate_map(
+  sample_ids,
+  plate_assay_structure,
+  file_basename,
+  path
+)
 }
 \arguments{
 \item{sample_ids}{list of sample IDs with which to populate a plate map}
@@ -14,7 +19,7 @@ generate_subsample_plate_map(sample_ids, plate_assay_structure, out_filepath)
 \item{out_filepath}{Filename. Do not include ".csv" at the end of the filepath.}
 }
 \value{
-A .csv file with rows \code{A:P} and columns \code{1:24} populated with sample IDs and control blanks
+A list of filepath(s) to .csv file(s) with rows \code{A:P} and columns \code{1:24} populated with sample IDs and control blanks
 }
 \description{
 Generates a plate map from a list of sample IDs

@@ -488,7 +488,7 @@ ORDER BY gri.sample_id;
 
   # read in field data, if available
   clean_field_data <- reactive({
-      process_field_sheet_samples2(input$filled_field_sheets$datapath)
+    process_field_sheet_samples2(input$filled_field_sheets$datapath)
   })
 
   # if button pressed, upload field sheet data to database
@@ -521,10 +521,29 @@ ORDER BY gri.sample_id;
   # Subsample ---------------------------------------------------------------
 
   # subsample table
-  output$subsample_table <- DT::renderDataTable(DT::datatable({
 
-    grunID::generate_subsample(con, as.numeric(input$season_filter))$results
+  subsample_table <- reactive({
+    grunID::generate_subsample(con, as.numeric(input$subsample_sampling_event_filter),
+                               as.numeric(input$season_filter))
+  })
 
+  subsample_sample_event_choices <- reactive({
+    grunID::sample_filter_to_season(con, as.numeric(input$season_filter)) |>
+      dplyr::pull(sample_event_number)
+  })
+
+  observe({
+    updateSelectInput(session, "subsample_sampling_event_filter",
+                      choices = subsample_sample_event_choices()
+    )})
+
+
+  output$subsample_table <- shiny::bindCache(DT::renderDataTable({
+    shiny::validate(
+      need(subsample_table()$subsample_for_sherlock, "Selected sampling event has no samples set to 'Returned from Field'"
+      )
+    )
+    DT::datatable(subsample_table()$subsample_for_sherlock)
   },
   extensions = "Buttons",
   rownames = FALSE,
@@ -532,10 +551,55 @@ ORDER BY gri.sample_id;
                  dom = "Bfrtip",
                  buttons = c("copy", "csv", "excel"),
                  lengthChange = TRUE,
-                 pageLength = 20)),
-  server = FALSE
-  ) |>
-    shiny::bindCache(input$season_filter)
+                 pageLength = 20),
+  server = FALSE), input$season_filter, input$subsample_sampling_event_filter)
+
+
+
+  subsample_sample_ids <- reactive({
+    subsample_table()$subsample_for_sherlock |>
+      distinct(sample_id) |>
+      pull()
+  })
+
+
+  observeEvent(input$show_subsampling_plate_map_naming_conventions, {
+    showModal(modalDialog(
+      HTML(paste0("<strong> Only include the filename in this entry: do not include
+            `.csv` or a path (/data) </strong> </br> Subsampling plate map names by default are written directly to your downloads folder.
+            Plate map name entered here should follow the conventions set out for SHERLOCK samples below: ",
+            "<br>", "<br>")),
+      img(src = "assets/2024_JPE_Plating_Scheme_v6.png", width = "100%"),
+      size = "l"
+    ))
+  })
+
+  output$do_generate_subsample_plate_map <- downloadHandler(
+    filename = function() {
+      paste0("plate-maps-", format(Sys.time(), "%Y-%m-%d_%H-%M-%S"), ".zip")
+    },
+    content = function(file) {
+      csvs_created <- generate_subsample_plate_map(
+        sample_ids = subsample_sample_ids(),
+        plate_assay_structure = input$subsample_plate_map_type,
+        file_basename = input$subsample_plate_map_filepath
+      )
+
+      print("the csv's created")
+      print(csvs_created)
+
+      owd <- getwd()
+      tmp_dir <- tempdir()
+      csv_files <- basename(csvs_created)
+      file.copy(csvs_created, tmp_dir, overwrite = TRUE)
+      setwd(tmp_dir)
+      on.exit(setwd(owd))
+
+      # Create the zip file using zip() with relative file paths
+      zip::zip(file, files = csv_files, mode = "cherry-pick")
+    },
+    contentType = "application/zip"
+  )
 
   # subsample logic
   observeEvent(input$subsample_logic, {
@@ -558,8 +622,8 @@ ORDER BY gri.sample_id;
 
   # subsample summary table
   output$subsample_summary_table <- DT::renderDataTable(DT::datatable({
-
-    grunID::generate_subsample(con, as.numeric(input$season_filter))$summary
+    shiny::validate(need(!is.na(subsample_table()$subsample_summary), "selected sampling event contains no samples with status 'Returned from Field'"))
+    subsample_table()$subsample_summary
   },
   rownames = FALSE))
 

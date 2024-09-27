@@ -299,10 +299,28 @@ navbarPage(
              mainPanel(
                selectInput("subsample_season_filter", "Season Filter",
                            2024),
+               selectInput("subsample_sampling_event_filter", "Sampling Event",
+                           ""),
                tags$h4("Full result table"),
                DT::dataTableOutput("subsample_table") |>
-                 shinycssloaders::withSpinner()
-             )
+                 shinycssloaders::withSpinner(),
+               hr(),
+               column(
+                 width = 6,
+                 tags$div(
+                   selectInput("subsample_plate_map_type", "Plate Map Type", c("dual_assay", "single_assay"))
+                 ),
+                 tags$div(
+                   style = "display: flex; align-items: center;",
+                   textInput("subsample_plate_map_filepath", "Name of Plate Map for Download", placeholder = "e.g. JPE24_E1-2_P1_SH"),
+                   actionButton("show_subsampling_plate_map_naming_conventions", label = NULL, icon = icon("question"),
+                                class = "round-btn icon-offset")
+                 ),
+                 tags$div(
+                   downloadButton("do_generate_subsample_plate_map", "Generate Subsample Plate Map")
+                 )
+               )
+             ),
            )),
   tabPanel(title = "Plate Validations",
            mainPanel(

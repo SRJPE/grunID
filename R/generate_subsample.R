@@ -10,6 +10,9 @@
 #' * If the total number of samples in a bin is less than or equal to 5, process all of the samples for that bin.
 #' * If this rule contradicts the “less than 20” rule (above), this rule should be prioritized. For example, if we receive a sample set from a given site and event where Bins A, B, C, D, and E are each represented by five samples (total sample size = 25), process all of the samples for that site/event.
 #' * Subsampling should be random.
+#'
+#' This function uses `set.seed()`, so that the subsample will be the same for a given
+#' `sampling_event` and `season`.
 #' @param con connection to the database
 #' @param sampling_event A numeric value for the sampling event you are processing (i.e. 1:10)
 #' @param season The season for which you want to pull subsamples. A season consists of all sampling events
@@ -52,12 +55,19 @@
 #' @md
 generate_subsample <- function(con, sampling_event, season) {
 
+  set.seed(5674)
+
   if(!is.numeric(season)) {
-    cli::cli_abort("Season must be a numeric value.")
+    stop("Season must be a numeric value.", call. = FALSE)
   }
   if(nchar(season) != 4) {
-    cli::cli_abort("Season must be in the format YYYY (i.e. 2024).")
+    stop("Season must be in the format YYYY (i.e. 2024).", call. = FALSE)
   }
+
+  # get sample status IDs
+  sample_status_codes <- tbl(con, "status_code") |>
+    filter(status_code_name %in% c("returned from field", "need ots28")) |>
+    pull(id)
 
   # get samples from the right season
   samples <- grunID::sample_filter_to_season(con, season) |>
@@ -68,16 +78,15 @@ generate_subsample <- function(con, sampling_event, season) {
                        dplyr::collect() |>
                        dplyr::select(sample_id, status_code_id),
                      by = "sample_id") |>
-    dplyr::filter(status_code_id %in% c(4, 5)) |>
+    dplyr::filter(status_code_id %in% sample_status_codes) |>
     # now get totals for applying logic
     dplyr::add_count(location_code, sample_event_number, name = "total_samples_in_event") |>
     dplyr::add_count(location_code, sample_event_number, sample_bin_code, name = "no_samples_per_bin")
 
   if(nrow(samples) == 0) {
-    cli::cli_abort(paste0("There are no samples in the database from sampling event ", sampling_event,
-                          " and sampling season ", season, " that are marked as returned from field. Please
-                          make sure you have processed the field sheets using grunID::process_field_sheet_samples()
-                          and added field data to the database using grunID::update_field_sheet_samples()"))
+    return(list("subsample_for_sherlock" = NA,
+                "subsample_summary" = NA,
+                "remainders_for_gt_seq" =  NA))
   }
 
   # apply rules
@@ -141,10 +150,11 @@ generate_subsample <- function(con, sampling_event, season) {
 #' @param sample_ids list of sample IDs with which to populate a plate map
 #' @param plate_assay_structure Either `dual_assay` or `single_assay`
 #' @param out_filepath Filename. Do not include ".csv" at the end of the filepath.
-#' @returns A .csv file with rows `A:P` and columns `1:24` populated with sample IDs and control blanks
+#' @returns A list of filepath(s) to .csv file(s) with rows `A:P` and columns `1:24` populated with sample IDs and control blanks
 #' @export
 #' @md
-generate_subsample_plate_map <- function(sample_ids, plate_assay_structure, out_filepath) {
+generate_subsample_plate_map <- function(sample_ids, plate_assay_structure, file_basename, path) {
+  filepaths_created <- c()
 
   if(plate_assay_structure == "dual_assay") {
 
@@ -166,11 +176,11 @@ generate_subsample_plate_map <- function(sample_ids, plate_assay_structure, out_
     plate_maps <- purrr::map(split_sample_ids_by_plate_map, \(x) fill_dual_assay_plate_map(x, control_blanks))
 
     for(i in 1:no_plate_maps) {
-      new_filepath <- paste0(out_filepath, "_", i, ".csv")
+      new_filepath <- fs::file_temp(pattern = glue::glue("{file_basename}-{i}"), tmp_dir = ".", ext = ".csv")
       write.csv(plate_maps[[i]], new_filepath, row.names = TRUE)
+      filepaths_created <- append(filepaths_created, new_filepath)
       cli::cli_alert_success(paste0("Plate map generated - see ", new_filepath))
     }
-
   } else if(plate_assay_structure == "single_assay") {
 
     total_available_sample_blocks <- 92 # 4 96 well plates (384 total wells) - 16 control blanks
@@ -185,11 +195,13 @@ generate_subsample_plate_map <- function(sample_ids, plate_assay_structure, out_
     plate_maps <- purrr::map(split_sample_ids_by_plate_map, grunID::fill_single_assay_plate_map)
 
     for(i in 1:no_plate_maps) {
-      new_filepath <- paste0(out_filepath, "_", i, ".csv")
+      new_filepath <- fs::file_temp(pattern = glue::glue("{file_basename}-{i}"),tmp_dir = ".",  ext = ".csv")
       write.csv(plate_maps[[i]], new_filepath, row.names = TRUE)
+      filepaths_created <- append(filepaths_created, new_filepath)
       cli::cli_alert_success(paste0("Plate map generated - see ", new_filepath))
     }
   }
+  return(filepaths_created)
 }
 
 #' Generate Plate Map for Dual Assay layout
@@ -203,6 +215,10 @@ generate_subsample_plate_map <- function(sample_ids, plate_assay_structure, out_
 #' @export
 #' @md
 fill_dual_assay_plate_map <- function(sample_ids, control_blanks) {
+
+  control_blanks <- c("EBK-1-1", NA, "EBK-1-2", NA, "EBK-1-3", NA, "EBK-1-4",
+                      "POS-DNA-1", "POS_DNA-2", "POS-DNA-3", "NEG-DNA-1",
+                      "NEG-DNA-2", "NEG-DNA-3", "NTC-1", "NTC-2", "NTC-3")
 
   # split into the number of rows you have to fill out
   fill_rows <- split(sample_ids, ceiling(seq_along(sample_ids)/11))
@@ -254,10 +270,14 @@ fill_dual_assay_plate_map <- function(sample_ids, control_blanks) {
 fill_single_assay_plate_map <- function(sample_ids) {
 
   samples_to_match_to_blocks <- tibble("sample_id" = sample_ids) |>
-    mutate(id = row_number())
+    mutate(id = row_number()) |>
+    separate_wider_delim(cols = sample_id, delim = "_", names = c("loc", "event", "bin", "samp")) |>
+    mutate(event = as.numeric(event), samp = as.numeric(samp)) |>
+    arrange(loc, event, bin, samp) |>
+    transmute(sample_id = paste(loc, event, bin, samp, sep = "_"), id)
 
-  sample_mapping <- grunID::plate_v4_mapping |>
-    left_join(samples_to_match_to_blocks, by = c("sample_blocks" = "id")) |>
+  sample_mapping <- grunID::plate_v4_mapping |> mutate(id = row_number()) |>
+    left_join(samples_to_match_to_blocks, by = c("id" = "id")) |>
     mutate(row_number = match(rows, LETTERS),
            sample_id = ifelse(!is.na(control_blocks), control_blocks, sample_id)) |>
     select(row_number, cols, sample_blocks, sample_id) |>
