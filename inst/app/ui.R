@@ -197,24 +197,10 @@ navbarPage(
            ),
   ),
   tabPanel(title = "Generate Plate",
-           tagList(
-             tags$h2("Generate Plate Maps"),
-             tags$h4("Generate plate map by sample status"),
-             selectInput("generate_plate_event", "Event",
-                         choices = c("returned from field", "needs ots 16"),
-                         multiple = FALSE),
-             actionButton("generate_plate_map_submit", label = "Generate"),
-             tags$hr(),
-             tags$h4("Generate plate map by events"),
-             selectInput("generate_plate_event", "Event", choices = 1:14, multiple = TRUE),
-             actionButton("generate_plate_map_submit", label = "Generate"),
-             tags$hr(),
-             tags$h4("Generate plate map from file"),
-             fileInput("generate_plate_map_file", "Select File"),
-             actionButton("generate_plate_map_submit", label = "Generate"),
-             tags$hr(),
-             tags$p("Generate plate maps for events")
-           )),
+           tags$h3("Generate Archive Plate Layouts"),
+           selectInput("gen_arc_plate_events", "Events", multiple = TRUE, choices = 1:17),
+           downloadButton("gen_arc_submit", "Generate")
+           ),
   tabPanel(title = "Sample Status",
            sidebarLayout(
              sidebarPanel(

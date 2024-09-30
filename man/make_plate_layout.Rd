@@ -12,6 +12,6 @@ make_plate_layout(samples, layout_size = 96)
 \item{layout_size}{the size of the layout to create}
 }
 \description{
-Create Plate Layout
+creates a plate layout dataframe by a given layout size
 }
 \keyword{internal}

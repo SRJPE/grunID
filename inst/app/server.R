@@ -518,50 +518,20 @@ ORDER BY gri.sample_id;
   )
 
 
-  # Subsample ---------------------------------------------------------------
+  # Generate Plates ---------------------------------------------------------------
+  output$gen_arc_submit <- downloadHandler(
+    filename = function() {
+      paste0("plate_maps_", paste(input$gen_arc_plate_events, collapse = "-"), "_", Sys.Date(), ".zip")
+    },
+    content = function(file) {
+      files <- make_archive_plate_maps_by_event(con, events = input$gen_arc_plate_events, output_dir = tempdir())
+      insert_archive_plate_ids(con, files$archive_ids)
+      zip::zipr(file, files$files)
+    },
+    contentType = "application/zip"
 
-  # subsample table
-  output$subsample_table <- DT::renderDataTable(DT::datatable({
+  )
 
-    grunID::generate_subsample(con, as.numeric(input$season_filter))$results
-
-  },
-  extensions = "Buttons",
-  rownames = FALSE,
-  options = list(autoWidth = FALSE,
-                 dom = "Bfrtip",
-                 buttons = c("copy", "csv", "excel"),
-                 lengthChange = TRUE,
-                 pageLength = 20)),
-  server = FALSE
-  ) |>
-    shiny::bindCache(input$season_filter)
-
-  # subsample logic
-  observeEvent(input$subsample_logic, {
-    showModal(modalDialog(
-      HTML("<h3> Subsampling logic for 2024 season </h3> <br>
-           This function subsamples from all samples in the 2024 season according to the following logic: <br>
-           <ul>
-           <li>At least 50% of samples per site per event will be sampled.</li>
-           <li>If the number of samples is odd, divide that number by 2 and round the resulting number up to the nearest integer.</li>
-           <li>If the total number of samples for a given site in a given event is less than 20, process all samples for that site/event.</li>
-           <li>If multiple bins are represented in a set of samples for a given site and event, select 50% of the samples from each bin for processing.</li>
-           <li>If the total number of samples in a bin is less than or equal to 5, process all of the samples for that bin.</li>
-           <li>If this rule contradicts the “less than 20” rule (above), this rule should be prioritized. For example, if we receive a
-           sample set from a given site and event where Bins A, B, C, D, and E are each represented by five samples (total sample size = 25),
-           process all of the samples for that site/event.</li>
-           <li>Subsampling is random.</li>"),
-      size = "l"
-    ))
-  })
-
-  # subsample summary table
-  output$subsample_summary_table <- DT::renderDataTable(DT::datatable({
-
-    grunID::generate_subsample(con, as.numeric(input$season_filter))$summary
-  },
-  rownames = FALSE))
 
 
 

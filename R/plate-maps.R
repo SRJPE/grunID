@@ -34,7 +34,10 @@ make_plate_map <- function(df) {
 #' @param events a vector of events to generate plate maps for
 #' @param season a season to produce plates for, uses current year be default
 #' @export
-make_archive_plate_maps_by_event <- function(con, events, season = lubridate::year(lubridate::today())) {
+make_archive_plate_maps_by_event <- function(con, events, season = lubridate::year(lubridate::today()), output_dir=NULL) {
+
+  events <- sort(events)
+  output_dir <- if (is.null(output_dir)) "." else output_dir
   season_filter <- stringr::str_sub(season, -2)
   samples <- con |> tbl("sample") |>
     filter(event_number %in% events, season == season_filter) |>
@@ -55,7 +58,7 @@ make_archive_plate_maps_by_event <- function(con, events, season = lubridate::ye
 
   filenames <- glue::glue("JPE{season_filter}_E{events_name}_P{seq_along(layouts_list)}_ARC.xlsx")
   purrr::walk(seq_along(layouts_list), function(i) {
-    write_layout_to_file(layouts_list[[i]], filenames[i])
+    write_layout_to_file(layouts_list[[i]], paste0(output_dir, "/", filenames[i]))
     message(paste(filenames[i], "file created"))
 
   })
@@ -70,7 +73,10 @@ make_archive_plate_maps_by_event <- function(con, events, season = lubridate::ye
                  values_to = "sample_id") |>
     filter(!is.na(sample_id)) # remove intentional blanks
 
-  invisible(out)
+  return(list(
+    files = paste0(output_dir, "/", filenames),
+    archive_ids = out
+  ))
 }
 
 #' @export
