@@ -11,7 +11,9 @@ create_field_sheet(
   first_sample_date,
   sample_location,
   sample_location_code,
-  fl_summary
+  fl_summary,
+  n_extra_bins = 5,
+  bin_code_extra_bins = "X"
 )
 }
 \arguments{

@@ -29,7 +29,7 @@
 #' @md
 create_field_sheet <- function(wb, field_sheet_sample_plan, sample_event_number,
                                first_sample_date, sample_location,
-                               sample_location_code, fl_summary) {
+                               sample_location_code, fl_summary, n_extra_bins = 5, bin_code_extra_bins = "X") {
   # format fork length bin summary
   fl_summary <- fl_summary |>
     dplyr::arrange(sample_bin_code) |>
@@ -39,7 +39,7 @@ create_field_sheet <- function(wb, field_sheet_sample_plan, sample_event_number,
   # add 5 extra rows to the bottom of the table
   field_sheet_sample_plan_extra_rows <- field_sheet_sample_plan |>
     dplyr::mutate(Bin = as.character(Bin)) |>
-    tibble::add_row(Bin = rep(NA_character_, 5))
+    tibble::add_row(Bin = rep(bin_code_extra_bins, n_extra_bins))
 
   # set last sample date to the friday of that week
   last_sample_date <- lubridate::ceiling_date(first_sample_date, "week") - 2
