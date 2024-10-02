@@ -60,7 +60,8 @@ feather_61_sample_plan <- sample_plan_2022_final |>
 feather_61_IDs <- add_sample_plan(con, feather_61_sample_plan, verbose = TRUE)
 
 # create workbook containing multiple field sheets
-create_season_field_sheets(con, 2024, "data-raw/2024-use-case/2024_field_sheets_test.xlsx")
+create_season_field_sheets(con, 2024, "data-raw/2024-use-case/2024_field_sheets_test.xlsx",
+                           n_extra_bins = 5, bin_code_extra_bins = "X")
 
 # step 3: send field sheets out to monitoring crews to gather samples
 

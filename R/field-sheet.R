@@ -220,7 +220,8 @@ get_field_sheet_event_plan <- function(con, sample_event_id_arg) {
 #' @export
 #' @family field sheet helpers
 #' @md
-create_season_field_sheets <- function(con, season, field_sheet_filepath) {
+create_season_field_sheets <- function(con, season, field_sheet_filepath, n_extra_bins,
+                                       bin_code_extra_bins) {
   # create workbook to append each sampling event tab
   wb <- openxlsx::createWorkbook()
 
@@ -276,7 +277,9 @@ create_season_field_sheets <- function(con, season, field_sheet_filepath) {
                              first_sample_date = plan$first_sample_date,
                              sample_location = plan$location_name,
                              sample_location_code = plan$location_code,
-                             fl_summary = fl_summary_table)
+                             fl_summary = fl_summary_table,
+                             n_extra_bins = n_extra_bins,
+                             bin_code_extra_bins = bin_code_extra_bins)
   },
   .progress = list(
     type = "iterator",

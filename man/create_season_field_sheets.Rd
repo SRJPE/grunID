@@ -4,7 +4,13 @@
 \alias{create_season_field_sheets}
 \title{Create Season Field Sheets}
 \usage{
-create_season_field_sheets(con, season, field_sheet_filepath)
+create_season_field_sheets(
+  con,
+  season,
+  field_sheet_filepath,
+  n_extra_bins,
+  bin_code_extra_bins
+)
 }
 \arguments{
 \item{con}{A valid connection to the database}
