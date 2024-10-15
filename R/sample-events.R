@@ -32,7 +32,8 @@ add_sample_events <- function(con, sample_plan) {
   sample_event_insert <- sample_plan |>
     dplyr::left_join(sample_locations, by = c("location_code" = "code")) |>
     dplyr::distinct(sample_event_number, first_sample_date,
-                    sample_location_id = id)
+                    sample_location_id = id) |>
+    dplyr::arrange(sample_location_id, sample_event_number)
 
 
 
@@ -251,7 +252,7 @@ is_valid_sample_plan <- function(sample_plan) {
   }
 
   # validate sample_bin_code
-  if (any(!grepl("^[A-E]$", sample_plan$sample_bin_code))) {
+  if (any(!grepl("^[A-E]$|^X$", sample_plan$sample_bin_code))) {
     stop("sample_bin_code should be a single capital letter A-E", call. = FALSE)
   }
 
@@ -266,7 +267,7 @@ is_valid_sample_plan <- function(sample_plan) {
   }
 
   min_fl_range <- range(sample_plan$min_fork_length, na.rm = TRUE)
-  if (min_fl_range[1] < 0 | min_fl_range[2] > 300) {
+  if (min_fl_range[1] < 0 | min_fl_range[2] > 9999) {
     stop("value in min_fork_length is out of valid ranges (0 - 2000)", call. = TRUE)
   }
 
@@ -275,7 +276,7 @@ is_valid_sample_plan <- function(sample_plan) {
   }
 
   max_fl_range <- range(sample_plan$max_fork_length, na.rm = TRUE)
-  if (max_fl_range[1] < 0 | max_fl_range[2] > 300) {
+  if (max_fl_range[1] < 0 | max_fl_range[2] > 9999) {
     stop("value in min_fork_length is out of valid ranges (0 - 2000)", call. = TRUE)
   }
 
@@ -320,15 +321,18 @@ process_raw_sample_plan <- function(filepath, season) {
   clean_sample_plan <- raw_sample_plan |>
     dplyr::filter(`Bin FL ranges (mm)` != "Per-Event Total") |>
     tidyr::fill(Site) |>
-    tidyr::pivot_longer(cols = E1:E14,
+    tidyr::pivot_longer(cols = E1:E15,
                         names_to = "sample_event_number",
                         values_to = "expected_number_of_samples") |>
     dplyr::filter(!is.na(expected_number_of_samples)) |>
-    dplyr::mutate(fork_lengths = ifelse(stringr::str_detect(`Bin FL ranges (mm)`, "\\+"),
-                                        stringr::str_replace(`Bin FL ranges (mm)`, "\\+",
-                                                             paste0("-", fork_length_upper_limit)),
-                                        `Bin FL ranges (mm)`),
-                  sample_event_number = stringr::str_remove_all(sample_event_number, "E")) |>
+    dplyr::mutate(fork_lengths = case_when(
+      stringr::str_detect(`Bin FL ranges (mm)`, "\\+") ~ stringr::str_replace(`Bin FL ranges (mm)`, "\\+",
+                                                                              paste0("-", fork_length_upper_limit)),
+      Bin == "X" ~ "1-299",
+      TRUE ~`Bin FL ranges (mm)`
+    ),
+    sample_event_number = stringr::str_remove_all(sample_event_number, "E")
+    ) |>
     tidyr::separate_wider_delim(Site, delim = "(",
                                 names = c("Name", "location_code")) |>
     tidyr::separate_wider_delim(fork_lengths, delim = "-",

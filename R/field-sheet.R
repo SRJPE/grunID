@@ -29,24 +29,36 @@
 #' @md
 create_field_sheet <- function(wb, field_sheet_sample_plan, sample_event_number,
                                first_sample_date, sample_location,
-                               sample_location_code, fl_summary, n_extra_bins = 5, bin_code_extra_bins = "X") {
+                               sample_location_code, fl_summary) {
   # format fork length bin summary
-  fl_summary <- fl_summary |>
+  fl_summary_temp <- fl_summary |>
     dplyr::arrange(sample_bin_code) |>
-    dplyr::transmute(Bin = sample_bin_code,
-                     `Range (mm)` = paste0(min_fork_length, " - ", max_fork_length))
+    dplyr::mutate(Bin = sample_bin_code,
+                     `Range (mm)` = paste0(min_fork_length, " - ", max_fork_length)) |>
+    mutate(
+      `Range (mm)` = case_when(
+        Bin == "X" ~ "any",
+        TRUE ~ `Range (mm)`
+      )
+    )
+
+
+  fl_summary <- fl_summary_temp |>
+    add_row(Bin = "E", `Range (mm)` = paste0(max(fl_summary_temp[fl_summary_temp$Bin!="X",]$max_fork_length), "+")) |>
+    select(Bin, `Range (mm)`) |>
+    arrange(Bin)
 
   # add 5 extra rows to the bottom of the table
   field_sheet_sample_plan_extra_rows <- field_sheet_sample_plan |>
     dplyr::mutate(Bin = as.character(Bin)) |>
-    tibble::add_row(Bin = rep(bin_code_extra_bins, n_extra_bins))
+    tibble::add_row(Bin = rep(NA_character_, 5))
 
   # set last sample date to the friday of that week
   last_sample_date <- lubridate::ceiling_date(first_sample_date, "week") - 2
 
   sheet_name <- paste(sample_location_code, sample_event_number, sep = "-")
 
-  center_header_text <- glue::glue("{format(first_sample_date, '%Y')} SR JPE Genetic Sampling
+  center_header_text <- glue::glue("{2025} SR JPE Genetic Sampling
                                    {sample_location} ({sample_location_code})")
   right_header_text <- glue::glue("Sampling event {sample_event_number}
              Date range: {format(first_sample_date, '%b %d')} - {format(last_sample_date, '%b %d, %Y')}")
@@ -220,8 +232,7 @@ get_field_sheet_event_plan <- function(con, sample_event_id_arg) {
 #' @export
 #' @family field sheet helpers
 #' @md
-create_season_field_sheets <- function(con, season, field_sheet_filepath, n_extra_bins,
-                                       bin_code_extra_bins) {
+create_season_field_sheets <- function(con, season, field_sheet_filepath) {
   # create workbook to append each sampling event tab
   wb <- openxlsx::createWorkbook()
 
@@ -277,9 +288,7 @@ create_season_field_sheets <- function(con, season, field_sheet_filepath, n_extr
                              first_sample_date = plan$first_sample_date,
                              sample_location = plan$location_name,
                              sample_location_code = plan$location_code,
-                             fl_summary = fl_summary_table,
-                             n_extra_bins = n_extra_bins,
-                             bin_code_extra_bins = bin_code_extra_bins)
+                             fl_summary = fl_summary_table)
   },
   .progress = list(
     type = "iterator",
