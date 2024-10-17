@@ -19,6 +19,27 @@ con <- DBI::dbConnect(RPostgres::Postgres(),
 con <- gr_db_connect()
 
 
+# 2025 - season creation -------------
+sampling_dates_2025 <- readxl::read_xlsx("data-raw/2025-season/sampling-dates.xlsx") |>
+  mutate(first_sample_date = as_date(Start),
+         sample_event_number = Event) |>
+  select(sample_event_number, first_sample_date) |>
+  add_row(sample_event_number = 15, first_sample_date = as_date("2025-01-01"))
+
+
+# if starting with a raw sample plan similar to "data-raw/2024_raw_sample_plan.xlsx"
+# use process raw sample plan function:
+sample_plan_2025 <- process_raw_sample_plan("data-raw/2025-season/2025_JPE_Sample_Sizes_100224-with-x-bins.xlsx", 2025)
+sample_plan_2025_with_dates <- sample_plan_2025 |>
+  select(-first_sample_date) |>
+  left_join(sampling_dates_2025, by = "sample_event_number") |>
+  mutate(sample_event_number = as.integer(sample_event_number)) |>
+  relocate(first_sample_date, .before = sample_bin_code)
+sample_ids_2025 <- add_sample_plan(con, sample_plan_2025_with_dates, verbose = TRUE)
+
+# create workbook containing multiple field sheets
+create_season_field_sheets(con, 2025, "data-raw/2025-season/field-sheets-v1.xlsx")
+
 # step 2: add sample plan and generate field sheets -------------------------------
 
 # read in sampling dates
@@ -60,7 +81,7 @@ feather_61_sample_plan <- sample_plan_2022_final |>
 feather_61_IDs <- add_sample_plan(con, feather_61_sample_plan, verbose = TRUE)
 
 # create workbook containing multiple field sheets
-create_season_field_sheets(con, 2024, "data-raw/2024-use-case/2024_field_sheets_test.xlsx",
+create_season_field_sheets(con, 2024, "data-raw/2024-use-case/2024_field_sheets_test2.xlsx",
                            n_extra_bins = 5, bin_code_extra_bins = "X")
 
 # step 3: send field sheets out to monitoring crews to gather samples

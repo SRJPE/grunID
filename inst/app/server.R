@@ -223,8 +223,7 @@ function(input, output, session) {
 
   selected_all_sample_status <- reactive({
 
-    re <- ifelse(input$sample_status_season == 2023, "\\b\\w{3}23", "\\b\\w{3}24")
-    data <- latest_sample_status() |> filter(str_detect(sample_id, re))
+    data <- latest_sample_status() |> filter(season == (as.numeric(input$sample_status_season) - 2000))
 
     if(input$sample_status_filter != "All") {
       data <- data |>
@@ -259,9 +258,8 @@ function(input, output, session) {
   }, server = FALSE)
 
   output$season_summary <- renderTable({
-    re <- ifelse(input$sample_status_season == 2023, "\\b\\w{3}23", "\\b\\w{3}24")
 
-    latest_sample_status() |> filter(str_detect(sample_id, re)) |>
+    latest_sample_status() |> filter(season == (as.numeric(input$sample_status_season) - 2000)) |>
       group_by(status) |>
       summarise(
         total = n()
