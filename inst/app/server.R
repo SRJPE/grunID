@@ -522,7 +522,7 @@ ORDER BY gri.sample_id;
       paste0("plate_maps_", paste(input$gen_arc_plate_events, collapse = "-"), "_", Sys.Date(), ".zip")
     },
     content = function(file) {
-      files <- make_archive_plate_maps_by_event(con, events = input$gen_arc_plate_events, output_dir = tempdir())
+      files <- make_archive_plate_maps_by_event(con, events = input$gen_arc_plate_events, output_dir = tempdir(), season = 2025)
       insert_archive_plate_ids(con, files$archive_ids)
       zip::zipr(file, files$files)
     },
