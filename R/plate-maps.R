@@ -18,7 +18,7 @@ partition_df_every_n <- function(df, n) {
 make_plate_layout <- function(samples, layout_size = 96) {
   pad_amount <- layout_size - length(samples)
   raw <- matrix(c(samples, rep(NA, pad_amount)), nrow = 8, ncol = 12, byrow = FALSE)
-  dat <- tibble::as_tibble(raw)
+  dat <- as.data.frame(raw)
   colnames(dat) <- 1:12
   rownames(dat) <- LETTERS[1:8]
   return(dat)
@@ -103,7 +103,7 @@ write_layout_to_file <- function(df, file_name) {
   start_row <- 1
 
   # Write each dataframe to the worksheet
-  openxlsx::writeData(wb, sheet_name, df)
+  openxlsx::writeData(wb, sheet_name, df, rowNames = TRUE)
 
   # Save the workbook
   openxlsx::saveWorkbook(wb, file_name, overwrite = TRUE)
