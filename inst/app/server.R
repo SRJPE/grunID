@@ -278,12 +278,7 @@ function(input, output, session) {
                            SELECT
     --- gri.id AS genetic_run_id,
     gri.sample_id,
-    SUBSTRING(gri.sample_id FROM 7 FOR
-        CASE
-            WHEN SUBSTRING(gri.sample_id FROM 8 FOR 1) ~ '^[0-9]$' THEN 2
-            ELSE 1
-        END
-    ) AS event,
+    s.event_number AS event,
     --- gri.run_type_id AS genetic_run_type_id,
     rt_genetic.run_name AS genetic_run_name,
     s.fork_length_mm,
@@ -298,7 +293,6 @@ FROM (
     SELECT *,
            ROW_NUMBER() OVER (PARTITION BY sample_id ORDER BY created_at DESC) as rn
     FROM genetic_run_identification
-    WHERE sample_id LIKE '___24%'
 ) gri
 JOIN run_type rt_genetic ON gri.run_type_id = rt_genetic.id
 JOIN sample s ON gri.sample_id = s.id
@@ -306,12 +300,8 @@ LEFT JOIN run_type rt_field ON s.field_run_type_id = rt_field.id
 WHERE gri.rn = 1
   AND rt_genetic.run_name IN ({run_name_filters*})
   AND (rt_field.run_name IN ({field_run_name_filters*}) or rt_field.run_name is NULL)
-  AND SUBSTRING(gri.sample_id FROM 7 FOR
-        CASE
-            WHEN SUBSTRING(gri.sample_id FROM 8 FOR 1) ~ '^[0-9]$' THEN 2
-            ELSE 1
-        END
-    )::integer IN ({sample_event_filters*})
+  AND s.event_number IN ({sample_event_filters*})
+  AND s.season = {season_filter}
 ORDER BY gri.sample_id;
                            "
                          },
@@ -323,6 +313,9 @@ ORDER BY gri.sample_id;
                          },
                          "Plate Runs" = {
                            "SELECT * FROM plate_run;"
+                         },
+                         "Sample Archive Plates" = {
+                           "select sample_id, sample_archive_plates.arc_plate_id from sample_archive_plates join sample s on s.id = sample_archive_plates.sample_id where s.season = 25;"
                          }
     )
 
@@ -336,7 +329,9 @@ ORDER BY gri.sample_id;
       run_name_filters <- input$query_ra_select_run_type
       field_run_name_filters <- input$query_ra_select_field_run_type
       sample_event_filters <- input$query_ra_select_sample_event
+      season_filter <- as.numeric(input$season_filter) - 2000
       stmt <- glue::glue_sql(sql_statement, .con = con)
+      print(stmt)
       data <- DBI::dbGetQuery(con, stmt)
       return(data)
     }) else if (input$query_table_select == "Assay Results") local({
@@ -350,6 +345,11 @@ ORDER BY gri.sample_id;
       data <- DBI::dbGetQuery(con, stmt)
       return(data)
     }) else if (input$query_table_select == "Plate Runs") local({
+      sql_statement <- get_sql_statement(input$query_table_select)
+      stmt <- glue::glue_sql(sql_statement, .con = con)
+      data <- DBI::dbGetQuery(con, stmt)
+      return(data)
+    }) else if (input$query_table_select == "Sample Archive Plates") local({
       sql_statement <- get_sql_statement(input$query_table_select)
       stmt <- glue::glue_sql(sql_statement, .con = con)
       data <- DBI::dbGetQuery(con, stmt)

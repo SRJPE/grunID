@@ -195,13 +195,13 @@ status_code_ids_for_need_ots16 <- DBI::dbGetQuery(
  check_for_status <- function() {
   res <- DBI::dbGetQuery(con,
                   "
-SELECT sample_id, status_code_id
+SELECT sample_id, status_code_id, season
 FROM (
     SELECT sample_id, status_code_id,
            ROW_NUMBER() OVER (PARTITION BY sample_id ORDER BY updated_at DESC) AS rn
     FROM sample_status
-) sub
-WHERE rn = 1;")
+) sub join sample as s on sub.sample_id = s.id
+WHERE rn = 1 and season = 25;")
 
   failed <- res |> filter(status_code_id %in% status_code_ids_for_failed_states, !str_detect(sample_id, "EBK|NTC|POS|NEG"))
   need16 <- res |> filter(status_code_id %in% status_code_ids_for_need_ots16, !str_detect(sample_id, "EBK|NTC|POS|NEG"))
