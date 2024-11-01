@@ -4,12 +4,14 @@
 \alias{make_plate_layout}
 \title{Create Plate Layout}
 \usage{
-make_plate_layout(samples, layout_size = 96)
+make_plate_layout(samples, layout_size = 96, ebks = NULL)
 }
 \arguments{
 \item{samples}{vector of samples to create map for}
 
 \item{layout_size}{the size of the layout to create}
+
+\item{ebks}{character vector of EBK values to insert}
 }
 \description{
 creates a plate layout dataframe by a given layout size

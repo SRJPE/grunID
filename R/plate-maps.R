@@ -14,19 +14,52 @@ partition_df_every_n <- function(df, n) {
 #' @description creates a plate layout dataframe by a given layout size
 #' @param samples vector of samples to create map for
 #' @param layout_size the size of the layout to create
+#' @param ebks character vector of EBK values to insert
 #' @keywords internal
-make_plate_layout <- function(samples, layout_size = 96) {
+make_plate_layout <- function(samples, layout_size = 96, ebks = NULL) {
   pad_amount <- layout_size - length(samples)
   raw <- matrix(c(samples, rep(NA, pad_amount)), nrow = 8, ncol = 12, byrow = FALSE)
   dat <- as.data.frame(raw)
   colnames(dat) <- 1:12
   rownames(dat) <- LETTERS[1:8]
+
+  if (!is.null(ebks)) {
+    if (length(ebks) < 1 || length(ebks) > 4) {
+      stop("can only allocate between 0 and 4 extraction blanks", call. = FALSE)
+    }
+
+    for (i in seq_along(ebks)) {
+      dat[4 + i, 12] <- ebks[i]
+    }
+  }
   return(dat)
 }
 
 
 make_plate_map <- function(df) {
   purrr::map(df, \(x) make_plate_layout(x$id))
+}
+
+distribute_ebks_in_plate <- function() {
+  ebk_idx <- list()
+  ebks_to_insert <- c("EBK-1-1", "EBK-1-2", "EBK-1-3", "EBK-1-4")
+  if (length(samples_parted) == 1) {
+    ebk_idx[[1]] <- ebks_to_insert
+  } else if (length(samples_parted) == 2) {
+    ebk_idx[[1]] <- ebks_to_insert[1:2]
+    ebk_idx[[2]] <- ebks_to_insert[3:4]
+  } else if (length(samples_parted) == 3) {
+    ebk_idx[[1]] <- ebks_to_insert[1]
+    ebk_idx[[2]] <- ebks_to_insert[2]
+    ebk_idx[[3]] <- ebks_to_insert[3:4]
+  } else if (length(samples_parted) == 4) {
+    ebk_idx[[1]] <- ebks_to_insert[1]
+    ebk_idx[[2]] <- ebks_to_insert[2]
+    ebk_idx[[3]] <- ebks_to_insert[3]
+    ebk_idx[[4]] <- ebks_to_insert[4]
+  }
+
+  return(ebk_idx)
 }
 
 #' @title Create Plate Maps for Archive Plates
@@ -50,9 +83,49 @@ make_archive_plate_maps_by_event <- function(con, events, season = lubridate::ye
   events_name <- paste(events, collapse="-")
 
   samples_parted <- partition_df_every_n(samples, n = 92)
-  layouts_list <- map(samples_parted, \(x) suppressWarnings(make_plate_layout(x$id)))
+
+  # TODO: HACK!!!! lets not hard-code this, but for now this is fine
+  ebk_idx <- list()
+  ebks_to_insert <- c("EBK-1-1", "EBK-1-2", "EBK-1-3", "EBK-1-4")
+  if (length(samples_parted) == 1) {
+    ebk_idx[[1]] <- ebks_to_insert
+  } else if (length(samples_parted) == 2) {
+    ebk_idx[[1]] <- ebks_to_insert[1:2]
+    ebk_idx[[2]] <- ebks_to_insert[3:4]
+  } else if (length(samples_parted) == 3) {
+    ebk_idx[[1]] <- ebks_to_insert[1]
+    ebk_idx[[2]] <- ebks_to_insert[2]
+    ebk_idx[[3]] <- ebks_to_insert[3:4]
+  } else if (length(samples_parted) == 4) {
+    ebk_idx[[1]] <- ebks_to_insert[1]
+    ebk_idx[[2]] <- ebks_to_insert[2]
+    ebk_idx[[3]] <- ebks_to_insert[3]
+    ebk_idx[[4]] <- ebks_to_insert[4]
+  } else {
+    new_samples_parted <- samples_parted[-c(1:4)]
+    if (length(new_samples_parted) == 1) {
+      ebk_idx[[5]] <- ebks_to_insert
+    } else if (length(new_samples_parted) == 2) {
+      ebk_idx[[5]] <- ebks_to_insert[1:2]
+      ebk_idx[[6]] <- ebks_to_insert[3:4]
+    } else if (length(new_samples_parted) == 3) {
+      ebk_idx[[5]] <- ebks_to_insert[1]
+      ebk_idx[[6]] <- ebks_to_insert[2]
+      ebk_idx[[7]] <- ebks_to_insert[3:4]
+    } else if (length(new_samples_parted) == 4) {
+      ebk_idx[[5]] <- ebks_to_insert[1]
+      ebk_idx[[6]] <- ebks_to_insert[2]
+      ebk_idx[[7]] <- ebks_to_insert[3]
+      ebk_idx[[8]] <- ebks_to_insert[4]
+    }
+  }
+
+  layouts_list <- imap(samples_parted, \(x, i) suppressWarnings(make_plate_layout(x$id, ebks = ebk_idx[[i]])))
   n_layout_groups <- ceiling(length(layouts_list) / 4) # 4 subplates per "packet"
   group_ids <- rep(1:n_layout_groups, each = 4)
+
+
+
 
   message(glue::glue("A total of {nrow(samples)} samples were arranged into {length(layouts_list)} plates"))
 
@@ -79,6 +152,7 @@ make_archive_plate_maps_by_event <- function(con, events, season = lubridate::ye
   ))
 }
 
+
 #' @export
 insert_archive_plate_ids <- function(con, archive) {
   sql_statement <- glue::glue_sql("
@@ -91,6 +165,8 @@ insert_archive_plate_ids <- function(con, archive) {
   DBI::dbExecute(con, sql_statement)
 }
 
+#' @param df dataframe to write to file
+#' @param file_name the file name to use
 write_layout_to_file <- function(df, file_name) {
   # Create a new workbook
   sheet_name <- "map"

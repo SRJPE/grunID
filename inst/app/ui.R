@@ -3,7 +3,7 @@ navbarPage(
   title = paste0("grunID UI", " (", env_server, ")"),
   inverse = ifelse(env_server == "production", FALSE, TRUE),
   header = tags$head(
-    tags$style(HTML('
+    tags$style(HTML("
       .round-btn {
         border-radius: 50%;
       }
@@ -39,7 +39,7 @@ navbarPage(
       color: white;
 
     }
-    '))
+    "))
   ),
   # tabPanel(title = "About"),
   navbarMenu("Add Data",
@@ -98,16 +98,16 @@ navbarPage(
                         tags$div(
                           style = "display: flex; align-items: center;",
                           selectInput("layout_type", "Select Layout Type",
-                                      choices = c("Split Plate - Early + Late"="split_plate_early_late",
-                                                  "Split Plate - Late + Early"="split_plate_late_early",
-                                                  "Split Plate - Spring + Winter"="split_plate_spring_winter",
-                                                  "Split Plate - Winter + Spring"="split_plate_winter_spring",
-                                                  "Single Assay OTS 28 Early (v5 Mapping)"="single_assay_ots28_early",
-                                                  "Single Assay OTS 28 Late (v5 Mapping)"="single_assay_ots28_late",
-                                                  "Single Assay OTS 16 Spring (v5 Mapping)"="single_assay_ots16_spring",
-                                                  "Single Assay OTS 16 Winter (v5 Mapping)"="single_assay_ots16_winter",
-                                                  "Triplicate"="triplicate",
-                                                  "Custom (must include custom 'layout' sheet)"="custom"
+                                      choices = c("Split Plate - Early + Late" = "split_plate_early_late",
+                                                  "Split Plate - Late + Early" = "split_plate_late_early",
+                                                  "Split Plate - Spring + Winter" = "split_plate_spring_winter",
+                                                  "Split Plate - Winter + Spring" = "split_plate_winter_spring",
+                                                  "Single Assay OTS 28 Early (v5 Mapping)" = "single_assay_ots28_early",
+                                                  "Single Assay OTS 28 Late (v5 Mapping)" = "single_assay_ots28_late",
+                                                  "Single Assay OTS 16 Spring (v5 Mapping)" = "single_assay_ots16_spring",
+                                                  "Single Assay OTS 16 Winter (v5 Mapping)" = "single_assay_ots16_winter",
+                                                  "Triplicate" = "triplicate",
+                                                  "Custom (must include custom 'layout' sheet)" = "custom"
                                       )
                           ),
                           actionButton("info_layout_type", label = NULL, icon = icon("question"), class = "round-btn icon-offset")
@@ -131,12 +131,6 @@ navbarPage(
                         uiOutput("ui_banner_for_flagged_plate_run"),
                         textOutput("console_logs")
                       )
-                      # ,
-                      # column(
-                      #   width = 3,
-                      #   tags$h4("Salvage Status"),
-                      #   print("test")
-                      # )
              ),
 
              tabPanel("Check-in Samples",
@@ -214,7 +208,7 @@ navbarPage(
                            c("All", names(sample_status_options))),
                selectInput("location_filter", "Location",
                            c("All", all_locations)),
-               tags$hr(),... =
+               tags$hr(), ... =
                  tags$h3("Season Summary"),
                tableOutput("season_summary")
              ),
@@ -232,7 +226,7 @@ navbarPage(
                            choices = c("Run Assignment", "Assay Results", "Raw Assay Results",
                                        "Plate Runs", "Sample Archive Plates")),
                conditionalPanel(condition = "input.query_table_select == 'Run Assignment'",
-                                tags$div(style="border: solid #d8e4ed;padding: 10px;margin:5px;",
+                                tags$div(style = "border: solid #d8e4ed;padding: 10px;margin:5px;",
                                          selectInput("query_ra_select_run_type", "Run Type",
                                                      choices = run_choices,
                                                      multiple = TRUE,
@@ -274,9 +268,6 @@ navbarPage(
              DT::dataTableOutput("flagged_table") |>
                shinycssloaders::withSpinner(),
              hr(), br(),
-             # uiOutput("ui_subplate_selection"),
-
-             # tags$h4("Validate plate run data:"),
              htmlOutput("flagged_plate_run_comment"),
              shiny::uiOutput("ui_subplate_checkbox"),
              br(),
@@ -287,10 +278,6 @@ navbarPage(
              br(),
              actionButton("pv_view_plate_data_btn", "View Full Plate Data", class = "btn-default"),
              div(style = "display:inline-block; float:right",
-                 # actionButton("do_activate", "Accept Selected Subplates",
-                 #              class = "btn-success"),
-                 # actionButton("do_deactivate", "Reject Selected Subplates",
-                 #              class = "btn-warning"),
                  actionButton("delete_selected_plate", "Delete Plate",
                               class = "btn-danger")),
 
@@ -299,6 +286,3 @@ navbarPage(
   )
 )
 
-
-
-# grunID::add_new_plate_results()

@@ -108,6 +108,7 @@ flagged_sub_plates <- function(plate_run_id) {
     JOIN public.assay a on a.id = ar.assay_id;")
   )
 }
+
 # flagged_sample_status <- function() {
 #   DBI::dbGetQuery(
 #     con,
