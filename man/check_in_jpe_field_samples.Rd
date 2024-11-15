@@ -4,7 +4,7 @@
 \alias{check_in_jpe_field_samples}
 \title{Check-in Samples from field}
 \usage{
-check_in_jpe_field_samples(con, filepath, season = year(today()))
+check_in_jpe_field_samples(con, filepath, season = get_current_season())
 }
 \arguments{
 \item{con}{a connection to the database}
