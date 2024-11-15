@@ -184,3 +184,42 @@ write_layout_to_file <- function(df, file_name) {
   # Save the workbook
   openxlsx::saveWorkbook(wb, file_name, overwrite = TRUE)
 }
+
+#' @title Get Current Season
+get_current_season <- function() {
+  current_date <- lubridate::today()
+  lubridate::day(current_date) <- 1
+  start_date <- current_date
+  end_date <- current_date
+  if (lubridate::month(current_date) >= 10) {
+    lubridate::month(start_date) <- 10
+    lubridate::month(end_date) <- 8
+    lubridate::year(end_date) <- lubridate::year(end_date) + 1
+  } else if (lubridate::month(current_date) %in% 1:8) {
+    lubridate::month(start_date) <- 10
+    lubridate::year(start_date) <- lubridate::year(current_date) - 1
+    lubridate::month(end_date) <- 8
+  }
+
+  return(
+    list(
+      "start_date" = start_date,
+      "end_date" = end_date,
+      "year" = lubridate::year(end_date))
+    )
+}
+
+#' @title Hamilton Candidates
+#' @export
+get_hamilton_candidates <- function(con, season = get_current_season()) {
+  status_codes <- grunID::get_status_codes(con)
+  returned_from_field_id <- status_codes |>
+    filter(status_code_name == "returned from field") |>
+    pull(id)
+  season_year <- stringr::str_sub(as.character(season$year), start = 3, end = 4)
+
+  tbl(con, "sample_status") |>
+    filter(status_code_id == returned_from_field_id,
+           season == as.integer(season_year))
+
+}
