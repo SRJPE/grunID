@@ -151,6 +151,7 @@ sample_status_options <- c(
   # "other lab" = as.character(colors["purple"]),
   "created" = as.character(colors["yellow"]),
   "analysis complete" = as.character(colors["green"]),
+  "returned from field" = as.character(colors["purple"]),
   "need ots28" = as.character(colors["orange"]),
   "ots28 in progress" = as.character(colors["orange"]),
   "need ots16" = as.character(colors["orange"]),

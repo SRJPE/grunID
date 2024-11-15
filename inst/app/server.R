@@ -515,6 +515,18 @@ ORDER BY gri.sample_id;
   server = FALSE
   )
 
+  events_with_returned_from_field_samples <- reactive({
+    season_code <- stringr::str_sub(as.character(get_current_season()$year), 3,4)
+    tbl(con, "sample_status") |>
+      filter(season == season_code,
+             status_code_id == 4) |>
+      distinct(event_number) |>
+      pull()
+  })
+
+  output$gen_arc_plate_events_UI <- renderUI({
+    selectInput("gen_arc_plate_events", "Events", multiple = TRUE, choices = events_with_returned_from_field_samples())
+  })
 
   # Generate Plates ---------------------------------------------------------------
   output$gen_arc_submit <- downloadHandler(
@@ -522,7 +534,7 @@ ORDER BY gri.sample_id;
       paste0("plate_maps_", paste(input$gen_arc_plate_events, collapse = "-"), "_", Sys.Date(), ".zip")
     },
     content = function(file) {
-      files <- make_archive_plate_maps_by_event(con, events = input$gen_arc_plate_events, output_dir = tempdir(), season = 2025)
+      files <- make_archive_plate_maps_by_event(con, events = input$gen_arc_plate_events, output_dir = tempdir(), season = get_current_season()$year)
       insert_archive_plate_ids(con, files$archive_ids)
       zip::zipr(file, files$files)
     },

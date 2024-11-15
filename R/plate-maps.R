@@ -67,17 +67,20 @@ distribute_ebks_in_plate <- function() {
 #' @param events a vector of events to generate plate maps for
 #' @param season a season to produce plates for, uses current year be default
 #' @export
-make_archive_plate_maps_by_event <- function(con, events, season = lubridate::year(lubridate::today()), output_dir=NULL) {
+make_archive_plate_maps_by_event <- function(con, events, season = get_current_season()$year, output_dir=NULL) {
 
   events <- sort(events)
   output_dir <- if (is.null(output_dir)) "." else output_dir
   season_filter <- stringr::str_sub(season, -2)
-  samples <- con |> tbl("sample") |>
-    filter(event_number %in% events, season == season_filter) |>
-    collect()
+  samples <- get_archive_plates_candidates(con, events = events, season = season)
 
   if (nrow(samples) == 0) {
-    stop("no samples found that match events and season combination", call. = FALSE)
+    return(list(
+      success = FALSE,
+      message = "No samples 'returned' from field were found",
+      files = character(0),
+      archive_ids = tibble::tibble(archive_plate_id = character(0), sample_id = character(0))
+    ))
   }
 
   events_name <- paste(events, collapse="-")
@@ -147,6 +150,8 @@ make_archive_plate_maps_by_event <- function(con, events, season = lubridate::ye
     filter(!is.na(sample_id)) # remove intentional blanks
 
   return(list(
+    success = TRUE,
+    message = glue::glue("Created {length(layouts_list)} plate files for {nrow(samples)} samples"),
     files = paste0(output_dir, "/", filenames),
     archive_ids = out
   ))
@@ -186,6 +191,7 @@ write_layout_to_file <- function(df, file_name) {
 }
 
 #' @title Get Current Season
+#' @export
 get_current_season <- function() {
   current_date <- lubridate::today()
   lubridate::day(current_date) <- 1
@@ -209,17 +215,33 @@ get_current_season <- function() {
     )
 }
 
-#' @title Hamilton Candidates
+#' @title Archinve Plates Candidates
+#' @description
+#' Obtain dataframe of samples ready to be plated onto Archinve Plates
+#'
+#' @param con a database connection
+#' @param season season obtained from get_current_season()
+#'
 #' @export
-get_hamilton_candidates <- function(con, season = get_current_season()) {
+get_archive_plates_candidates <- function(con, events, season = get_current_season()$year) {
   status_codes <- grunID::get_status_codes(con)
   returned_from_field_id <- status_codes |>
     filter(status_code_name == "returned from field") |>
     pull(id)
-  season_year <- stringr::str_sub(as.character(season$year), start = 3, end = 4)
+  season_code <- stringr::str_sub(as.character(season), start = 3, end = 4)
 
-  tbl(con, "sample_status") |>
+  candidate_samples <- tbl(con, "sample_status") |>
     filter(status_code_id == returned_from_field_id,
-           season == as.integer(season_year))
+           season == as.integer(season_code),
+           event_number %in% events) |>
+    distinct(sample_id) |>
+    pull()
+
+  tbl(con, "sample") |>
+    filter(id %in% candidate_samples) |>
+    collect()
 
 }
+
+
+

@@ -182,17 +182,17 @@ navbarPage(
              fileInput("filled_field_sheets", "Process field sheets"),
              tags$h5("Press the upload button to upload the cleaned table
                      to the database."),
-             actionButton("do_upload_field_sheets", "Upload field sheets to database", class = "btn-success", icon = icon("rocket")),
              tags$hr(),
              tags$h4("Preview clean field sheet data"),
              tags$br(),
              DT::dataTableOutput("field_sheet_summary") |>
-               shinycssloaders::withSpinner()
+               shinycssloaders::withSpinner(),
+             actionButton("do_upload_field_sheets", "Upload field sheets to database", class = "btn-success", icon = icon("rocket"))
            ),
   ),
   tabPanel(title = "Generate Plate",
            tags$h3("Generate Archive Plate Layouts"),
-           selectInput("gen_arc_plate_events", "Events", multiple = TRUE, choices = 1:17),
+           uiOutput("gen_arc_plate_events_UI"),
            downloadButton("gen_arc_submit", "Generate")
            ),
   tabPanel(title = "Sample Status",

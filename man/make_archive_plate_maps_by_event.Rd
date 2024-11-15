@@ -7,7 +7,7 @@
 make_archive_plate_maps_by_event(
   con,
   events,
-  season = lubridate::year(lubridate::today()),
+  season = get_current_season()$year,
   output_dir = NULL
 )
 }
