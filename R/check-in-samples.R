@@ -3,7 +3,7 @@
 #' @param filepath filepath to check-in excel file
 #' @param season year for season
 #' @export
-check_in_jpe_field_samples <- function(con, filepath, season = year(today())) {
+check_in_jpe_field_samples <- function(con, filepath, season = get_current_season()) {
   raw_data <- readxl::read_excel(filepath,
                                  col_names = c("sample_id", "received_sample", "event", "entered_by", "verified_by", "alias", "comments"),
                                  skip = 1)
@@ -11,8 +11,8 @@ check_in_jpe_field_samples <- function(con, filepath, season = year(today())) {
   samples_received <- raw_data |>
     filter(!is.na(sample_id), received_sample == "Y")
 
-  season_regex <- paste0(".", season - 2000, ".")
-  samples_in_db_for_season <- tbl(con, "sample") |> filter(str_detect(id, season_regex))
+  season_code <- stringr::str_sub(as.character(season$year), 3, 4)
+  samples_in_db_for_season <- tbl(con, "sample") |> filter(season == season_code)
   samples_in_db_for_season_ids <- samples_in_db_for_season |> collect() |> pull(id)
 
 
