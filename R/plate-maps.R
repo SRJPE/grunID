@@ -147,7 +147,8 @@ make_archive_plate_maps_by_event <- function(con, events, season = get_current_s
     pivot_longer(cols = -archive_plate_id,
                  names_to = NULL,
                  values_to = "sample_id") |>
-    filter(!is.na(sample_id)) # remove intentional blanks
+    filter(!is.na(sample_id),
+           !stringr::str_detect(sample_id, "EBK")) # remove intentional blanks and EBK
 
   return(list(
     success = TRUE,
@@ -224,24 +225,41 @@ get_current_season <- function() {
 #'
 #' @export
 get_archive_plates_candidates <- function(con, events, season = get_current_season()$year) {
-  status_codes <- grunID::get_status_codes(con)
-  returned_from_field_id <- status_codes |>
-    filter(status_code_name == "returned from field") |>
-    pull(id)
-  season_code <- stringr::str_sub(as.character(season), start = 3, end = 4)
-
-  candidate_samples <- tbl(con, "sample_status") |>
-    filter(status_code_id == returned_from_field_id,
-           season == as.integer(season_code),
-           event_number %in% events) |>
-    distinct(sample_id) |>
-    pull()
+  candidate_samples <- get_sample_status(con, season = season) |>
+    filter(status_code_name == "returned from field") |> pull(sample_id)
 
   tbl(con, "sample") |>
     filter(id %in% candidate_samples) |>
     collect()
 
 }
+
+#' @title Create Plate Maps for Hamilton Machine
+#' @description
+#' Plate maps will be generated for input into the Hamilton cherry picking machine.
+#' Only samples that are in the "need ots 16" will be used for creating these plate maps
+#'
+make_hamilton_plate_maps <- function(con) {
+  # need to get the candiate samples
+  candidate_samples <- get_sample_status(con, season = season) |>
+    filter(status_code_name == "need ots16") |> pull(sample_id)
+
+  if (length(candidate_samples) == 0) {
+    stop("no samples were found that need ots 16", call. = FALSE)
+  }
+
+  # the names for the sw plates should be:
+  # JPE25_E1-2_SW_P1
+  # JPE25_E1-2_SW_P2
+
+  # the names for the gt seq should be
+  # PE25_E1-2_GT_P1
+  # JPE25_E1-2_GT_P2
+
+}
+
+
+
 
 
 
