@@ -91,9 +91,28 @@ set_sample_status <- function(con, sample_ids, sample_status_code, comment = NUL
 #' @family status code functions
 #' @export
 #' @md
-get_sample_status <- function(con, sample_ids, full_history = FALSE) {
+get_sample_status <- function(con, sample_ids = NULL, season = NULL, full_history = FALSE) {
 
   is_valid_connection(con)
+
+  if (!is.null(season)) {
+    if (!is.numeric(season)) {
+      stop("season must be a number like 2020 or 20 to represent the 2020 season", call. = FALSE)
+    }
+    if (!is.numeric(season)) {
+      stop("season must be a number like 2020 or 20 to represent the 2020 season", call. = FALSE)
+    }
+    if (!is.null(sample_ids)) {
+      message("both sample id's and season were provided will be using sample id's")
+    } else {
+      season <- as.character(season)
+      season_code <- ifelse(stringr::str_count(season) == 4, stringr::str_sub(season, 3, 4), season)
+      sample_ids <- tbl(con, "sample") |>
+        filter(season == season_code) |> pull(id)
+    }
+
+
+  }
 
   sample_names <- dplyr::tbl(con, "status_code") |>
     dplyr::collect() |>
