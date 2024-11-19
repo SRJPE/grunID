@@ -207,11 +207,14 @@ get_current_season <- function() {
     lubridate::month(end_date) <- 8
   }
 
+  year_val <- lubridate::year(end_date)
+
   return(
     list(
       "start_date" = start_date,
       "end_date" = end_date,
-      "year" = lubridate::year(end_date))
+      "year" = year_val,
+      "season_code" = as.numeric(stringr::str_sub(as.character(year_val), 3, 4)))
     )
 }
 
@@ -252,6 +255,7 @@ get_hamilton_plates_candidates <- function(con, events, season = get_current_sea
 make_hamilton_plate_maps <- function(con, events,
                                      destination = c("sherlock", "gtseq"),
                                      season = get_current_season(), output_dir = tempdir()) {
+
   destination <- match.arg(destination)
   # need to get the candiate samples
   candidate_samples <- get_hamilton_plates_candidates(con, events = events, season = season)
@@ -357,9 +361,4 @@ make_hamilton_plate_maps <- function(con, events,
     hamilton_ids = out
   ))
 }
-
-
-
-
-
 

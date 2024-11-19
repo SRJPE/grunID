@@ -521,18 +521,36 @@ ORDER BY gri.sample_id;
       filter(status_code_name == "returned from field")
   })
 
+  events_with_need_ots16_samples <- reactive({
+    get_sample_status(con, season = get_current_season()$season_code) |>
+      filter(status_code_name == "need ots16")
+  })
+
+  need_ots16_events <- reactive({
+    events_with_need_ots16_samples() |>
+      distinct(event_number) |>
+      pull()
+  })
+
   output$gen_arc_plate_events_UI <- renderUI({
     selectInput("gen_arc_plate_events", "Events", multiple = TRUE, choices = dplyr::distinct(events_with_returned_from_field_samples(), event_number)$event_number)
   })
 
   output$gen_ham_plate_events_UI <- renderUI({
-    selectInput("gen_ham_plate_events", "Events", multiple = TRUE, choices = 1:10)
+    selectInput("gen_ham_plate_events", "Events", multiple = TRUE, choices = need_ots16_events())
   })
 
   output$gen_arc_plate_samples_preview <- renderTable({
     validate(need(!is.null(input$gen_arc_plate_events), "select at least one event"))
     events_with_returned_from_field_samples() |> select(sample_id, status_code_name, comment)
   })
+
+
+  output$gen_ham_plate_samples_preview <- renderTable({
+    validate(need(!is.null(input$gen_ham_plate_events), "select at least one event"))
+    events_with_need_ots16_samples() |> select(sample_id, status_code_name, comment)
+  })
+
 
   # Generate Plates ---------------------------------------------------------------
   output$gen_arc_submit <- downloadHandler(

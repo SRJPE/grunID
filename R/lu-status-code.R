@@ -28,6 +28,7 @@ get_status_codes <- function(con, is_active=TRUE, all_results=FALSE, ...) {
       dplyr::collect()
   }
 
+
   return(status_codes)
 }
 
