@@ -41,7 +41,7 @@ add_plate_thresholds <- function(con, thresholds, destination_table, results_tab
     dplyr::collect() |>
     dplyr::left_join(thresholds, by = c("assay_id" = "assay_id", "plate_run_id" = "plate_run_id")) |>
     dplyr::mutate(positive_detection = raw_fluorescence > threshold) |>
-    dplyr::select(sample_id, assay_id, raw_fluorescence,
+    dplyr::select(sample_id, assay_id, raw_fluorescence, well_location,
                   threshold, positive_detection, plate_run_id, sub_plate)
 
   assay_results_added <- insert_detection_results(con, detection_results, table = destination_table)
@@ -56,7 +56,7 @@ insert_detection_results <- function(con, detection_results, table = c("assay_re
 
   query <- glue::glue_sql("
   INSERT INTO {`destination_table`} (sample_id, assay_id, raw_fluorescence, threshold,
-                            positive_detection, plate_run_id, sub_plate)
+                            positive_detection, plate_run_id, sub_plate, well_location)
   VALUES (
           {detection_results$sample_id},
           {detection_results$assay_id},
@@ -64,7 +64,8 @@ insert_detection_results <- function(con, detection_results, table = c("assay_re
           {detection_results$threshold},
           {detection_results$positive_detection},
           {detection_results$plate_run_id}::int,
-          {detection_results$sub_plate}::int
+          {detection_results$sub_plate}::int,
+          {detection_results$well_location}
   );", .con = con)
 
   assay_results_added <- purrr::map_dbl(query, function(q) {

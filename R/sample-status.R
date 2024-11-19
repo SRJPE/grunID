@@ -130,7 +130,7 @@ get_sample_status <- function(con, sample_ids = NULL, season = NULL, full_histor
 
   results <- sample_status |>
     dplyr::left_join(sample_names, by = "status_code_id") |>
-    dplyr::select(id, sample_id, status_code_id, status_code_name,
+    dplyr::select(id, sample_id, status_code_id, status_code_name, event_number,
                   comment, created_at, created_by)
 
   return(results)

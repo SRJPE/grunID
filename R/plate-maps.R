@@ -2,12 +2,11 @@
 #' @description partition a dataframe by every nth row
 #' @param df a dataframe
 #' @param n an integer
-#' @keywords internal
+#' @export
 partition_df_every_n <- function(df, n) {
   df |>
     mutate(part = ceiling(row_number() / n)) |>
     group_split(part)
-
 }
 
 #' @title Create Plate Layout
@@ -15,7 +14,7 @@ partition_df_every_n <- function(df, n) {
 #' @param samples vector of samples to create map for
 #' @param layout_size the size of the layout to create
 #' @param ebks character vector of EBK values to insert
-#' @keywords internal
+#' @export
 make_plate_layout <- function(samples, layout_size = 96, ebks = NULL) {
   pad_amount <- layout_size - length(samples)
   raw <- matrix(c(samples, rep(NA, pad_amount)), nrow = 8, ncol = 12, byrow = FALSE)
@@ -234,19 +233,89 @@ get_archive_plates_candidates <- function(con, events, season = get_current_seas
 
 }
 
+#' @title Hamilton Plate Candidates
+#' @export
+get_hamilton_plates_candidates <- function(con, events, season = get_current_season()$year) {
+  candidate_samples <- get_sample_status(con, season = season) |>
+    dplyr::filter(status_code_name == "need ots16") |>
+    dplyr::pull(sample_id)
+
+  return(candidate_samples)
+}
+
 #' @title Create Plate Maps for Hamilton Machine
 #' @description
 #' Plate maps will be generated for input into the Hamilton cherry picking machine.
 #' Only samples that are in the "need ots 16" will be used for creating these plate maps
 #'
-make_hamilton_plate_maps <- function(con) {
+#' @export
+make_hamilton_plate_maps <- function(con, events,
+                                     destination = c("sherlock", "gtseq"),
+                                     season = get_current_season(), output_dir = tempdir()) {
+  destination <- match.arg(destination)
   # need to get the candiate samples
-  candidate_samples <- get_sample_status(con, season = season) |>
-    filter(status_code_name == "need ots16") |> pull(sample_id)
+  candidate_samples <- get_hamilton_plates_candidates(con, events = events, season = season)
 
   if (length(candidate_samples) == 0) {
     stop("no samples were found that need ots 16", call. = FALSE)
   }
+
+  # get only the latest result per sample from the results table
+  hamilton_cherry_pick <- tbl(con, "assay_result") |>
+    filter(sample_id %in% candidate_samples) |>
+    group_by(sample_id, assay_id) |>
+    slice_max(order_by = updated_at, n = 1) |>
+    ungroup() |>
+    filter(assay_id == 2) |>
+    transmute(id = sample_id, well_id_source = as.character(well_location)) |>
+    collect()
+
+  samples_parted <- partition_df_every_n(hamilton_cherry_pick, 92)
+
+
+  events_name <- paste(events, collapse="-")
+
+
+  # TODO: HACK!!!! lets not hard-code this, but for now this is fine
+  ebk_idx <- list()
+  ebks_to_insert <- c("EBK-1-1", "EBK-1-2", "EBK-1-3", "EBK-1-4")
+  if (length(samples_parted) == 1) {
+    ebk_idx[[1]] <- ebks_to_insert
+  } else if (length(samples_parted) == 2) {
+    ebk_idx[[1]] <- ebks_to_insert[1:2]
+    ebk_idx[[2]] <- ebks_to_insert[3:4]
+  } else if (length(samples_parted) == 3) {
+    ebk_idx[[1]] <- ebks_to_insert[1]
+    ebk_idx[[2]] <- ebks_to_insert[2]
+    ebk_idx[[3]] <- ebks_to_insert[3:4]
+  } else if (length(samples_parted) == 4) {
+    ebk_idx[[1]] <- ebks_to_insert[1]
+    ebk_idx[[2]] <- ebks_to_insert[2]
+    ebk_idx[[3]] <- ebks_to_insert[3]
+    ebk_idx[[4]] <- ebks_to_insert[4]
+  } else {
+    new_samples_parted <- samples_parted[-c(1:4)]
+    if (length(new_samples_parted) == 1) {
+      ebk_idx[[5]] <- ebks_to_insert
+    } else if (length(new_samples_parted) == 2) {
+      ebk_idx[[5]] <- ebks_to_insert[1:2]
+      ebk_idx[[6]] <- ebks_to_insert[3:4]
+    } else if (length(new_samples_parted) == 3) {
+      ebk_idx[[5]] <- ebks_to_insert[1]
+      ebk_idx[[6]] <- ebks_to_insert[2]
+      ebk_idx[[7]] <- ebks_to_insert[3:4]
+    } else if (length(new_samples_parted) == 4) {
+      ebk_idx[[5]] <- ebks_to_insert[1]
+      ebk_idx[[6]] <- ebks_to_insert[2]
+      ebk_idx[[7]] <- ebks_to_insert[3]
+      ebk_idx[[8]] <- ebks_to_insert[4]
+    }
+  }
+
+  layouts_list <- purrr::imap(samples_parted, \(x, i) suppressWarnings(make_plate_layout(x$id, ebks = ebk_idx[[i]])))
+  n_layout_groups <- ceiling(length(layouts_list) / 4) # 4 subplates per "packet"
+  group_ids <- rep(1:n_layout_groups, each = 4)
+
 
   # the names for the sw plates should be:
   # JPE25_E1-2_SW_P1
@@ -256,6 +325,37 @@ make_hamilton_plate_maps <- function(con) {
   # PE25_E1-2_GT_P1
   # JPE25_E1-2_GT_P2
 
+  message(glue::glue("A total of {nrow(hamilton_cherry_pick)} samples were arranged into {length(layouts_list)} plates"))
+
+  destination_file_code <- if_else(destination == "sherlock", "SW", "GT")
+  filenames <- glue::glue("JPE{season}_E{events_name}_{destination_file_code}_P{seq_along(layouts_list)}.xlsx")
+  purrr::walk(seq_along(layouts_list), function(i) {
+    write_layout_to_file(layouts_list[[i]], paste0(output_dir, "/", filenames[i]))
+    message(paste(filenames[i], "file created"))
+
+  })
+
+  names(layouts_list) <- tools::file_path_sans_ext(filenames)
+
+  out <- layouts_list |>
+    enframe(name = "hamilton_plate_id") |>
+    unnest(cols = value) |>
+    mutate(letters = LETTERS[1:8]) |>
+    pivot_longer(cols = `1`:`12`,
+                 names_to = NULL,
+                 values_to = "sample_id") |>
+    mutate(num = rep(1:12, times = 8), destination_well = paste0(letters, num)) |>
+    filter(!is.na(sample_id),
+           !stringr::str_detect(sample_id, "EBK"))  |> # remove intentional blanks and EBK
+    left_join(hamilton_cherry_pick, by=c("sample_id" = "id")) |>
+    select(hamilton_plate_id, sample_id, source_well = well_id_source, destination_well)
+
+  return(list(
+    success = TRUE,
+    message = glue::glue("Created {length(layouts_list)} plate files for {nrow(hamilton_cherry_pick)} samples"),
+    files = paste0(output_dir, "/", filenames),
+    hamilton_ids = out
+  ))
 }
 
 
