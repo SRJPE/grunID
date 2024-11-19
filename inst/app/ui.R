@@ -191,10 +191,29 @@ navbarPage(
            ),
   ),
   tabPanel(title = "Generate Plate",
-           tags$h3("Generate Archive Plate Layouts"),
-           uiOutput("gen_arc_plate_events_UI"),
-           downloadButton("gen_arc_submit", "Generate")
-           ),
+           tabsetPanel(
+             tabPanel("Generate Archive Plate Layouts",
+                      tags$div(
+                        style = "padding: 10px;",
+                        tagList(
+                          tags$p("Only events with at least one sample set to 'Returned from file' are selectable. Generating a plate will associate the given sample to the archive name generated."),
+                          uiOutput("gen_arc_plate_events_UI"),
+                          downloadButton("gen_arc_submit", "Generate"),
+                          tableOutput("gen_arc_plate_samples_preview")
+                        )
+                      )),
+             tabPanel("Generate Hamilton Plate Layouts",
+                      tags$div(
+                        style = "padding: 10px;",
+                        tagList(
+                          tags$p("Only events with at least one sample set to 'Need Ots 16' are selectable. Generating a plate will associate the given sample to the hamilton plate name generated."),
+                          uiOutput("gen_ham_plate_events_UI"),
+                          downloadButton("gen_ham_submit", "Generate"),
+                          tableOutput("gen_ham_plate_samples_preview")
+                          )
+                      ))
+           )
+  ),
   tabPanel(title = "Sample Status",
            sidebarLayout(
              sidebarPanel(

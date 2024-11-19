@@ -517,15 +517,21 @@ ORDER BY gri.sample_id;
 
   events_with_returned_from_field_samples <- reactive({
     season_code <- stringr::str_sub(as.character(get_current_season()$year), 3,4)
-    tbl(con, "sample_status") |>
-      filter(season == season_code,
-             status_code_id == 4) |>
-      distinct(event_number) |>
-      pull()
+    get_sample_status(con, season = get_current_season()$year) |>
+      filter(status_code_name == "returned from field")
   })
 
   output$gen_arc_plate_events_UI <- renderUI({
-    selectInput("gen_arc_plate_events", "Events", multiple = TRUE, choices = events_with_returned_from_field_samples())
+    selectInput("gen_arc_plate_events", "Events", multiple = TRUE, choices = dplyr::distinct(events_with_returned_from_field_samples(), event_number)$event_number)
+  })
+
+  output$gen_ham_plate_events_UI <- renderUI({
+    selectInput("gen_ham_plate_events", "Events", multiple = TRUE, choices = 1:10)
+  })
+
+  output$gen_arc_plate_samples_preview <- renderTable({
+    validate(need(!is.null(input$gen_arc_plate_events), "select at least one event"))
+    events_with_returned_from_field_samples() |> select(sample_id, status_code_name, comment)
   })
 
   # Generate Plates ---------------------------------------------------------------
@@ -759,7 +765,7 @@ ORDER BY gri.sample_id;
     samples_created_from_checkin(samples_created)
 
     if (length(samples_created) == 0) {
-      showNotification("no new results found in the check-in file", closeButton = TRUE, type = "warning", duration = NULL)
+      showNotification("chek-in complete, no new samples were created from this check-in", closeButton = TRUE, type = "warning", duration = NULL)
     } else {
       showNotification(glue::glue("{length(samples_created_from_checkin())} additional sample(s) created from check-in file! You can view the list in Rstudio Output. You can view the list in Rstudio Output."),
                        closeButton = TRUE, type = "warning", duration = NULL)
