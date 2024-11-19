@@ -14,4 +14,3 @@ partition_df_every_n(df, n)
 \description{
 partition a dataframe by every nth row
 }
-\keyword{internal}

@@ -16,4 +16,3 @@ make_plate_layout(samples, layout_size = 96, ebks = NULL)
 \description{
 creates a plate layout dataframe by a given layout size
 }
-\keyword{internal}

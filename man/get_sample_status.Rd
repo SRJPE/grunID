@@ -4,7 +4,7 @@
 \alias{get_sample_status}
 \title{Get Sample Status}
 \usage{
-get_sample_status(con, sample_ids, full_history = FALSE)
+get_sample_status(con, sample_ids = NULL, season = NULL, full_history = FALSE)
 }
 \arguments{
 \item{con}{connection to the database}
