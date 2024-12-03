@@ -179,7 +179,13 @@ make_archive_plate_maps_by_event <- function(con, events, season = get_current_s
   events <- sort(events)
   output_dir <- if (is.null(output_dir)) "." else output_dir
   season_filter <- stringr::str_sub(season, -2)
-  samples <- get_archive_plates_candidates(con, events = events, season = season)
+  # TODO make the mutate happen at the function level
+  samples <- get_archive_plates_candidates(con, events = events, season = season) |>
+    mutate(
+      sample_num = str_extract(id, "_[0-9]$"),
+      sample_bin = str_extract(id, "_[A-Z]_")) |>
+    arrange(sample_location, event_number, sample_bin, sample_num) |>
+    select(-sample_bin, -sample_num)
 
   if (nrow(samples) == 0) {
     return(list(
@@ -534,7 +540,16 @@ pull_as_numeric <- function(x) {
 
 #' @export
 make_dual_ots28_plates_from_arc <- function(arc_df) {
-  d <- arc_df |> mutate(sub_plate = stringr::str_extract(archive_plate_id, "(?<=P)\\d+")) |> filter(!str_detect(sample_id, "EBK"))
+  d <- arc_df |> mutate(sub_plate = stringr::str_extract(archive_plate_id, "(?<=P)\\d+")) |>
+    filter(!str_detect(sample_id, "EBK")) |>
+    mutate(
+      sample_location = str_extract(sample_id, "[A-Z]{3}"),
+      event_number = str_extract(sample_id, "_[0-9]+_"),
+      sample_num = readr::parse_number(str_extract(sample_id, "_[0-9]+$")),
+      sample_bin = str_extract(sample_id, "_[A-Z]_")) |>
+    arrange(sample_location, event_number, sample_bin, sample_num) |>
+    select(-sample_bin, -sample_num, -event_number, -sample_location)
+
   max_cells_for_dual <- 88 * 2
   subplates_in_batch <- d |> distinct(sub_plate) |> pull_as_numeric()
   total_subplates_in_batch <- length(subplates_in_batch)
@@ -546,8 +561,8 @@ make_dual_ots28_plates_from_arc <- function(arc_df) {
     p1_ids <- p1$sample_id
     p1_dual_matrix_left <- matrix(NA, nrow = 16, ncol = 11)
 
-    p1_dual_matrix_left[seq(1, 16, 2), ] <- matrix(p1_ids[1:88], ncol = 11, byrow = TRUE)
-    p1_dual_matrix_left[seq(2, 16, 2), ] <- matrix(p1_ids[89:176], ncol = 11, byrow = TRUE)
+    p1_dual_matrix_left[seq(1, 16, 2), ] <- matrix(p1_ids[1:88], ncol = 11, byrow = FALSE)
+    p1_dual_matrix_left[seq(2, 16, 2), ] <- matrix(p1_ids[89:176], ncol = 11, byrow = FALSE)
     p1_dual_matrix_left <- cbind(p1_dual_matrix_left, c("EBK-1-1",
                                                           NA_character_,
                                                           "EBK-1-2",
