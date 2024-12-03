@@ -128,6 +128,7 @@ navbarPage(
                         tags$h4("JPE Status"),
                         uiOutput("ui_banner_for_failed_status"),
                         uiOutput("ui_banner_for_need_ots16_status"),
+                        uiOutput("ui_banner_for_need_gtseq_status"),
                         uiOutput("ui_banner_for_flagged_plate_run"),
                         textOutput("console_logs")
                       )
@@ -208,6 +209,7 @@ navbarPage(
                         tagList(
                           tags$p("Only events with at least one sample set to 'Need Ots 16' are selectable. Generating a plate will associate the given sample to the hamilton plate name generated."),
                           uiOutput("gen_ham_plate_events_UI"),
+                          selectInput("gen_ham_destination", "Destnation", choices = c("Sherlock"="sherlock", "GT-Seq" = "gtseq")),
                           downloadButton("gen_ham_submit", "Generate"),
                           tableOutput("gen_ham_plate_samples_preview")
                           )

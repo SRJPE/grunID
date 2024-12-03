@@ -4,7 +4,12 @@
 \alias{make_plate_layout}
 \title{Create Plate Layout}
 \usage{
-make_plate_layout(samples, layout_size = 96, ebks = NULL)
+make_plate_layout(
+  samples,
+  layout_size = 96,
+  ebks = NULL,
+  type = c("dual", "single")
+)
 }
 \arguments{
 \item{samples}{vector of samples to create map for}

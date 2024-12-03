@@ -4,7 +4,12 @@
 \alias{get_hamilton_plates_candidates}
 \title{Hamilton Plate Candidates}
 \usage{
-get_hamilton_plates_candidates(con, events, season = get_current_season()$year)
+get_hamilton_plates_candidates(
+  con,
+  destination,
+  events,
+  season = get_current_season()$year
+)
 }
 \description{
 Hamilton Plate Candidates

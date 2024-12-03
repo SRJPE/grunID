@@ -80,7 +80,35 @@ insert_detection_results <- function(con, detection_results, table = c("assay_re
   return(sum(assay_results_added))
 }
 
+insert_detection_results <- function(con, detection_results, table = c("assay_result", "external_assay_result")) {
 
+  destination_table <- match.arg(table)
+
+  query <- glue::glue_sql("
+  INSERT INTO {`destination_table`} (sample_id, assay_id, raw_fluorescence, threshold,
+                            positive_detection, plate_run_id, sub_plate, well_location)
+  VALUES (
+          {detection_results$sample_id},
+          {detection_results$assay_id},
+          {detection_results$raw_fluorescence},
+          {detection_results$threshold},
+          {detection_results$positive_detection},
+          {detection_results$plate_run_id}::int,
+          {detection_results$sub_plate}::int,
+          {detection_results$well_location}
+  );", .con = con)
+
+  assay_results_added <- purrr::map_dbl(query, function(q) {
+    DBI::dbExecute(con, q)
+  },
+  .progress = list(
+    type = "iterator",
+    clear = FALSE,
+    name = "inserting threshold result into database"
+  ))
+
+  return(sum(assay_results_added))
+}
 
 
 #' @title Determine Run identifcation after Early and Late Assays
@@ -405,15 +433,21 @@ run_genetic_identification_v2 <- function(con, samples, plate_run_id) {
     rename("early" = `1`, "late" = `2`, "spring" = `3`, "winter" = `4`) |>
     mutate(sample_state = case_when(
       !early & late & is.na(spring) & is.na(winter) ~ "FAL;analysis complete", # positive late and negative early = Fall
-      early & late & is.na(spring) & is.na(winter) ~ "EL-HET;analysis complete", # positive early and positive late = HET
+      early & late & is.na(spring) & is.na(winter) ~ "EL-HET;need gtseq", # positive early and positive late = HET
       early & !late & is.na(spring) & is.na(winter) ~ "SPW;need ots16", # positive early and negative late = SPW
       !early & !late & is.na(spring) & is.na(winter) ~ "UNK;EL-failed", # negative early and negative late = FAIL
-      spring & winter ~ "SW-HET;analysis complete",
+      spring & winter ~ "SW-HET;need gtseq",
       !spring & winter ~ "WIN;analysis complete",
       spring & !winter ~ "SPR;analysis complete",
       !spring & !winter ~ "UNK;SW-failed"
     )) |>
-    separate(sample_state, into=c("run", "sample_status"), sep = ";")
+    separate(sample_state, into=c("run", "sample_status"), sep = ";") |>
+    mutate(
+      sample_status = case_when(
+        sample_status == "need ots16" & str_detect(sample_id, "KNL|TIS|DEL") ~ "need gtseq",
+        TRUE ~ sample_status
+      )
+    )
 
 
   # update the sample status

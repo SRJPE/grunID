@@ -15,6 +15,7 @@ function(input, output, session) {
 
   samples_failing <- reactiveVal(nrow(check_for_status()$failed))
   samples_need_ots16 <- reactiveVal(nrow(check_for_status()$need_ots16))
+  samples_need_gtseq <- reactiveVal(nrow(check_for_status()$need_gtseq))
   active_flagged_plate_run <- reactiveVal(check_for_status()$plate_run_flag)
 
   # Render the banner based on the failed samples status
@@ -35,7 +36,18 @@ function(input, output, session) {
     } else {
       total_samples_failing <- nrow(samples_need_ots16())
       HTML(paste0('<div class="alert alert-warning" role="alert">',
-                  samples_need_ots16(), ' samples were found that need OTS16, please seach "need ots16" in query tab for details',
+                  samples_need_ots16(), ' samples were found that need OTS16, please seach "need ots16" in sample status tab for details',
+                  '</div>'))
+    }
+  })
+
+  output$ui_banner_for_need_gtseq_status <- renderUI({
+    if (samples_need_gtseq() == 0) {
+      return(NULL)
+    } else {
+      total_samples_failing <- nrow(samples_need_gtseq())
+      HTML(paste0('<div class="alert alert-warning" role="alert">',
+                  samples_need_gtseq(), ' samples were found that need GTSEQ, please seach "need gtseq" in sample status tab for details',
                   '</div>'))
     }
   })
@@ -518,16 +530,17 @@ ORDER BY gri.sample_id;
   events_with_returned_from_field_samples <- reactive({
     season_code <- stringr::str_sub(as.character(get_current_season()$year), 3,4)
     get_sample_status(con, season = get_current_season()$year) |>
-      filter(status_code_name == "returned from field")
+      filter(status_code_name == "returned from field") |>
+      ungroup()
   })
 
-  events_with_need_ots16_samples <- reactive({
+  events_with_need_ots16_or_gtseq_samples <- reactive({
     get_sample_status(con, season = get_current_season()$season_code) |>
-      filter(status_code_name == "need ots16")
+      filter(status_code_name %in% c("need ots16", "need gtseq"))
   })
 
-  need_ots16_events <- reactive({
-    events_with_need_ots16_samples() |>
+  need_ots16_or_gtseq_events <- reactive({
+    events_with_need_ots16_or_gtseq_samples() |>
       distinct(event_number) |>
       pull()
   })
@@ -537,18 +550,22 @@ ORDER BY gri.sample_id;
   })
 
   output$gen_ham_plate_events_UI <- renderUI({
-    selectInput("gen_ham_plate_events", "Events", multiple = TRUE, choices = need_ots16_events())
+    selectInput("gen_ham_plate_events", "Events", multiple = TRUE, choices = need_ots16_or_gtseq_events())
   })
 
   output$gen_arc_plate_samples_preview <- renderTable({
     validate(need(!is.null(input$gen_arc_plate_events), "select at least one event"))
-    events_with_returned_from_field_samples() |> select(sample_id, status_code_name, comment)
-  })
+    events_with_returned_from_field_samples() |>
+      filter(event_number %in% (input$gen_arc_plate_events)) |>
+      transmute(`#` = row_number(), sample_id, status_code_name, comment)
+    })
 
 
   output$gen_ham_plate_samples_preview <- renderTable({
     validate(need(!is.null(input$gen_ham_plate_events), "select at least one event"))
-    events_with_need_ots16_samples() |> select(sample_id, status_code_name, comment)
+    events_with_need_ots16_or_gtseq_samples() |>
+      filter(status_code_name == if_else(input$gen_ham_destination == "sherlock", "need ots16", "need gtseq")) |>
+      select(sample_id, status_code_name, comment)
   })
 
 
@@ -558,9 +575,31 @@ ORDER BY gri.sample_id;
       paste0("plate_maps_", paste(input$gen_arc_plate_events, collapse = "-"), "_", Sys.Date(), ".zip")
     },
     content = function(file) {
-      files <- make_archive_plate_maps_by_event(con, events = input$gen_arc_plate_events, output_dir = tempdir(), season = get_current_season()$year)
-      insert_archive_plate_ids(con, files$archive_ids)
-      zip::zipr(file, files$files)
+      res <- make_archive_plate_maps_by_event(con, events = input$gen_arc_plate_events, output_dir = tempdir(), season = get_current_season()$year)
+      if (length(res$single)) {
+        insert_archive_plate_ids(con, res$single$data)
+        zip::zip(file, c(res$single$sherlock_plate_names, res$single$arc_plate_names))
+      }
+      if (length(res$dual)) {
+        insert_archive_plate_ids(con, res$dual$data)
+        zip::zip(file, c(res$dual$sherlock_plate_names, res$dual$arc_plate_names))
+      }
+    },
+    contentType = "application/zip"
+  )
+
+  output$gen_ham_submit <- downloadHandler(
+    filename = function() {
+      paste0("plate_maps_", paste(input$gen_ham_plate_events, collapse = "-"), "_", Sys.Datete(), ".zip")
+    },
+    content = function(file) {
+      files <- make_hamilton_plate_maps(con, events = input$gen_ham_plate_events,
+                                        destination = input$gen_ham_destination,
+                                        output_dir = tempdir(), season = get_current_season()$year)
+      tmp <- tempfile(pattern = "hamilton-cherry-pick", fileext = ".csv")
+      write_csv(files$hamilton_ids, tmp)
+      insert_hamilton_plate_ids(con, files$hamilton_ids)
+      zip::zipr(file, c(files$files, tmp))
     },
     contentType = "application/zip"
 

@@ -155,6 +155,7 @@ sample_status_options <- c(
   "need ots28" = as.character(colors["orange"]),
   "ots28 in progress" = as.character(colors["orange"]),
   "need ots16" = as.character(colors["orange"]),
+  "need gtseq" = as.character(colors["orange"]),
   "ots16 inprogress" = as.character(colors["orange"]),
   "ots16 complete" = as.character(colors["green"]),
   "ots28 complete" = as.character(colors["green"])
@@ -192,6 +193,11 @@ status_code_ids_for_need_ots16 <- DBI::dbGetQuery(
   "select id from status_code where status_code_name = 'need ots16';"
 ) |> pull()
 
+status_code_ids_for_needgtseq <- DBI::dbGetQuery(
+  con,
+  "select id from status_code where status_code_name = 'need gtseq';"
+) |> pull()
+
 
 # check for failed sherlock
  check_for_status <- function() {
@@ -207,6 +213,7 @@ WHERE rn = 1 and season = 25;")
 
   failed <- res |> filter(status_code_id %in% status_code_ids_for_failed_states, !str_detect(sample_id, "EBK|NTC|POS|NEG"))
   need16 <- res |> filter(status_code_id %in% status_code_ids_for_need_ots16, !str_detect(sample_id, "EBK|NTC|POS|NEG"))
+  needgtseq <- res |> filter(status_code_id %in% status_code_ids_for_needgtseq, !str_detect(sample_id, "EBK|NTC|POS|NEG"))
 
 
   flagged_plate_run_q <- DBI::dbGetQuery(con,
@@ -228,8 +235,7 @@ WHERE rn = 1 and season = 25;")
   return(list(
     failed = failed,
     need_ots16 = need16,
+    need_gtseq = needgtseq,
     plate_run_flag = !plate_run_has_flag
   ))
 }
-
-
