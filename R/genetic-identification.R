@@ -433,6 +433,8 @@ run_genetic_identification_v2 <- function(con, samples, plate_run_id) {
     rename("early" = `1`, "late" = `2`, "spring" = `3`, "winter" = `4`) |>
     mutate(sample_state = case_when(
       !early & late & is.na(spring) & is.na(winter) ~ "FAL;analysis complete", # positive late and negative early = Fall
+      is.na(early) & !late & is.na(spring) & is.na(winter) ~ "UNK;ots28 in progress",
+      is.na(early) & late & is.na(spring) & is.na(winter) ~ "UNK;ots28 in progress",
       early & late & is.na(spring) & is.na(winter) ~ "EL-HET;need gtseq", # positive early and positive late = HET
       early & !late & is.na(spring) & is.na(winter) ~ "SPW;need ots16", # positive early and negative late = SPW
       !early & !late & is.na(spring) & is.na(winter) ~ "UNK;EL-failed", # negative early and negative late = FAIL
