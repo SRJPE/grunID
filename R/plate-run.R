@@ -219,8 +219,9 @@ validate_results <- function(con, plate_run, results_table = c("assay_result", "
   error_messages <- list()
 
   # Check if NTC/NDNA values are above 12k
+  rfu_threshold_check_value <- 18000 # 12k
   ntc_ndna_are_above_12k <- assays_results_for_qaqc %>%
-    filter(raw_fluorescence > 12000,
+    filter(raw_fluorescence > rfu_threshold_check_value,
            sample_id %in% c("NEG-DNA-1", "NEG-DNA-2", "NEG-DNA-3",
                             "NTC-1", "NTC-2", "NTC-3")) %>%
     collect()

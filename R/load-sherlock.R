@@ -34,9 +34,10 @@ generate_threshold <- function(con, plate_run, results_table, strategy = "twice 
            plate_run_id == !!plate_run_identifier) |>
     dplyr::collect()
 
-  controls_for_threshold <- control_blanks |> filter(raw_fluorescence < 12000) |>
+  rfu_threshold_check_value <- 18000 # change back to 12000
+  controls_for_threshold <- control_blanks |> filter(raw_fluorescence < rfu_threshold_check_value) |>
     mutate(sub_plate_from_id = (strsplit(sample_id, "-")[[1]][2]))
-  controls_for_flagging <- control_blanks |> filter(raw_fluorescence > 12000)
+  controls_for_flagging <- control_blanks |> filter(raw_fluorescence > rfu_threshold_check_value)
 
 
 
