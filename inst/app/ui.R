@@ -191,6 +191,8 @@ navbarPage(
              actionButton("do_upload_field_sheets", "Upload field sheets to database", class = "btn-success", icon = icon("rocket"))
            ),
   ),
+
+# Generate Plate Maps -----------------------------------------------------
   tabPanel(title = "Generate Plate",
            tabsetPanel(
              tabPanel("Generate Archive Plate Layouts",
@@ -213,6 +215,14 @@ navbarPage(
                           downloadButton("gen_ham_submit", "Generate"),
                           tableOutput("gen_ham_plate_samples_preview")
                           )
+                      )),
+             tabPanel("Register plates",
+                      tags$div(
+                        style = "padding: 10px;",
+                        tags$div(
+                          tags$p("Use this to register a manually created plate with the database. This will allow
+                                 the database to associate a given sample to an archinve plate.")
+                        )
                       ))
            )
   ),

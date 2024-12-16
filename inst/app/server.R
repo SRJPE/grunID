@@ -590,16 +590,14 @@ ORDER BY gri.sample_id;
 
   output$gen_ham_submit <- downloadHandler(
     filename = function() {
-      paste0("plate_maps_", paste(input$gen_ham_plate_events, collapse = "-"), "_", Sys.Datete(), ".zip")
+      paste0("plate_maps_", paste(input$gen_ham_plate_events, collapse = "-"), "_", Sys.Date(), ".zip")
     },
     content = function(file) {
-      files <- make_hamilton_plate_maps(con, events = input$gen_ham_plate_events,
+      files <- make_sw_plate_maps(con, events = input$gen_ham_plate_events,
                                         destination = input$gen_ham_destination,
-                                        output_dir = tempdir(), season = get_current_season()$year)
-      tmp <- tempfile(pattern = "hamilton-cherry-pick", fileext = ".csv")
-      write_csv(files$hamilton_ids, tmp)
-      insert_hamilton_plate_ids(con, files$hamilton_ids)
-      zip::zipr(file, c(files$files, tmp))
+                                        output_dir = tempdir(), season = get_current_season())
+      logger::log_info("also made it to here ----------------------")
+      zip::zip(file, files$files)
     },
     contentType = "application/zip"
 

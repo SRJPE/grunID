@@ -127,7 +127,7 @@ make_dual_assay_layout <- function(data, layout_size = 96, output_dir, season_fi
 
   filenames <- glue::glue("JPE{season_filter}_E{events_name}_P{seq_along(layouts_list)}_ARC.xlsx")
   purrr::walk(seq_along(layouts_list), function(i) {
-    write_layout_to_file(layouts_list[[i]], paste0(output_dir, "/", filenames[i]))
+    write_layout_to_file(layouts_list[[i]], paste0(filenames[i]))
     message(paste(filenames[i], "file created"))
 
   })
@@ -153,7 +153,7 @@ make_dual_assay_layout <- function(data, layout_size = 96, output_dir, season_fi
   sherlock_plates <- make_dual_ots28_plates_from_arc(arc_df = out)
   filenames_sherlock <- glue::glue("JPE{season_filter}_E{events_name}_EL{seq_along(sherlock_plates)}.xlsx")
   purrr::walk(seq_along(sherlock_plates), function(i) {
-    write_layout_to_file(sherlock_plates[[i]], paste0(output_dir, "/", filenames_sherlock[i]))
+    write_layout_to_file(sherlock_plates[[i]], paste0(filenames_sherlock[i]))
     message(paste(filenames_sherlock[i], "file created"))
   })
 
@@ -161,8 +161,8 @@ make_dual_assay_layout <- function(data, layout_size = 96, output_dir, season_fi
     list(
       type = "dual",
       data = out,
-      sherlock_plate_names = paste0(output_dir, "/", filenames_sherlock),
-      arc_plate_names = paste0(output_dir, "/", filenames)
+      sherlock_plate_names = paste0(filenames_sherlock),
+      arc_plate_names = paste0(filenames)
     )
   )
 
@@ -397,7 +397,7 @@ get_archive_plates_candidates <- function(con, events, season = get_current_seas
 
 #' @title Hamilton Plate Candidates
 #' @export
-get_hamilton_plates_candidates <- function(con, destination, events, season = get_current_season()$year) {
+get_sw_plates_candidates <- function(con, destination, events, season = get_current_season()$year) {
   candidate_samples <- get_sample_status(con, season = season) |>
     dplyr::filter(status_code_name %in% c("need ots16", "need gtseq"))
 
@@ -419,118 +419,68 @@ get_hamilton_plates_candidates <- function(con, destination, events, season = ge
 #' Only samples that are in the "need ots 16" will be used for creating these plate maps
 #'
 #' @export
-make_hamilton_plate_maps <- function(con, events,
+make_sw_plate_maps <- function(con, events,
                                      destination = c("sherlock", "gtseq"),
                                      season = get_current_season(), output_dir = tempdir()) {
 
+
   destination <- match.arg(destination)
   # need to get the candiate samples
-  candidate_samples <- get_hamilton_plates_candidates(con, destination = destination,
-                                                      events = events, season = season)
+  candidate_samples <- get_sw_plates_candidates(con, destination = destination,
+                                                      events = events, season = season$year)
+
+  events_candiate_code <- paste0("E", paste0(sort(events), collapse = "-"))
+
+  logger::log_info(glue::glue("the event code used: {events_candiate_code} -----------------"))
+  ebk_candidates <- tbl(con, "sample_archive_plates") |>
+    filter(str_detect(sample_id, "EBK"),
+           event_plate_code == events_candiate_code) |>
+    select(sample_id, arc_plate_id = arc_well_id) |>
+    collect()
 
   if (length(candidate_samples) == 0) {
     stop("no samples were found that need ots 16", call. = FALSE)
   }
 
+  hamilton_letters <- paste0(LETTERS[1:8], rep(1:10, each = 8))
+  hamilton_plate_nums <- paste0("Plate", rep(1:10, each = 20))
+
   # get only the latest result per sample from the results table
-  hamilton_cherry_pick <- tbl(con, "assay_result") |>
+  hamilton_cherry_pick <- tbl(con, "sample_archive_plates") |>
     filter(sample_id %in% candidate_samples) |>
-    left_join({
-      tbl(con, "sample_archive_plates") |>
-        select(sample_id, arc_well_id)
-    }, by = c("sample_id" = "sample_id")) |>
-    group_by(sample_id, assay_id) |>
-    slice_max(order_by = updated_at, n = 1) |>
-    ungroup() |>
-    filter(assay_id == 2) |>
-    transmute(id = sample_id, well_id_source = arc_well_id) |>
-    collect()
+    select(sample_id, arc_plate_id, arc_well_id) |>
+    collect() |>
+    mutate(plate = readr::parse_number(arc_well_id)) |>
+    arrange(plate) |>
+    tibble::add_row(sample_id = ebk_candidates$sample_id, arc_well_id = ebk_candidates$arc_plate_id) |>
+    mutate(destination_well_id = hamilton_letters[1:n()],
+           plate_id = hamilton_plate_nums[1:n()]) |>
+    transmute(
+      SampleID = sample_id,
+      PlateID = plate_id,
+      WellIDSource = arc_well_id,
+      WellIDDestination = destination_well_id,
+      arc_plate_id
+    )
 
-  samples_parted <- partition_df_every_n(hamilton_cherry_pick, 92)
+  plate_to_arc_plate_lookup <- hamilton_cherry_pick |> distinct(PlateID, arc_plate_id) |>
+    filter(!is.na(arc_plate_id))
 
+  hamilton_cherry_pick <- hamilton_cherry_pick |> select(-arc_plate_id)
 
-  events_name <- paste(events, collapse="-")
+  message(glue::glue("A total of {nrow(hamilton_cherry_pick)} will be processed in this file"))
 
-
-  # TODO: HACK!!!! lets not hard-code this, but for now this is fine
-  ebk_idx <- list()
-  ebks_to_insert <- c("EBK-1-1", "EBK-1-2", "EBK-1-3", "EBK-1-4")
-  if (length(samples_parted) == 1) {
-    ebk_idx[[1]] <- ebks_to_insert
-  } else if (length(samples_parted) == 2) {
-    ebk_idx[[1]] <- ebks_to_insert[1:2]
-    ebk_idx[[2]] <- ebks_to_insert[3:4]
-  } else if (length(samples_parted) == 3) {
-    ebk_idx[[1]] <- ebks_to_insert[1]
-    ebk_idx[[2]] <- ebks_to_insert[2]
-    ebk_idx[[3]] <- ebks_to_insert[3:4]
-  } else if (length(samples_parted) == 4) {
-    ebk_idx[[1]] <- ebks_to_insert[1]
-    ebk_idx[[2]] <- ebks_to_insert[2]
-    ebk_idx[[3]] <- ebks_to_insert[3]
-    ebk_idx[[4]] <- ebks_to_insert[4]
-  } else {
-    new_samples_parted <- samples_parted[-c(1:4)]
-    if (length(new_samples_parted) == 1) {
-      ebk_idx[[5]] <- ebks_to_insert
-    } else if (length(new_samples_parted) == 2) {
-      ebk_idx[[5]] <- ebks_to_insert[1:2]
-      ebk_idx[[6]] <- ebks_to_insert[3:4]
-    } else if (length(new_samples_parted) == 3) {
-      ebk_idx[[5]] <- ebks_to_insert[1]
-      ebk_idx[[6]] <- ebks_to_insert[2]
-      ebk_idx[[7]] <- ebks_to_insert[3:4]
-    } else if (length(new_samples_parted) == 4) {
-      ebk_idx[[5]] <- ebks_to_insert[1]
-      ebk_idx[[6]] <- ebks_to_insert[2]
-      ebk_idx[[7]] <- ebks_to_insert[3]
-      ebk_idx[[8]] <- ebks_to_insert[4]
-    }
-  }
-
-  layouts_list <- purrr::imap(samples_parted, \(x, i) suppressWarnings(make_plate_layout(x$id, ebks = ebk_idx[[i]])))
-  n_layout_groups <- ceiling(length(layouts_list) / 4) # 4 subplates per "packet"
-  group_ids <- rep(1:n_layout_groups, each = 4)
+  cp_input_filename <- glue::glue("{output_dir}/JPE{season$season_code}_{events_candiate_code}_SW_CP_inputfile.txt")
+  write_tsv(hamilton_cherry_pick, cp_input_filename)
 
 
-  # the names for the sw plates should be:
-  # JPE25_E1-2_SW_P1
-  # JPE25_E1-2_SW_P2
-
-  # the names for the gt seq should be
-  # PE25_E1-2_GT_P1
-  # JPE25_E1-2_GT_P2
-
-  message(glue::glue("A total of {nrow(hamilton_cherry_pick)} samples were arranged into {length(layouts_list)} plates"))
-
-  destination_file_code <- if_else(destination == "sherlock", "SW", "GT")
-  filenames <- glue::glue("JPE{season}_E{events_name}_{destination_file_code}_P{seq_along(layouts_list)}.xlsx")
-  purrr::walk(seq_along(layouts_list), function(i) {
-    write_layout_to_file(layouts_list[[i]], paste0(output_dir, "/", filenames[i]))
-    message(paste(filenames[i], "file created"))
-
-  })
-
-  names(layouts_list) <- tools::file_path_sans_ext(filenames)
-
-  out <- layouts_list |>
-    enframe(name = "hamilton_plate_id") |>
-    unnest(cols = value) |>
-    mutate(letters = LETTERS[1:8]) |>
-    pivot_longer(cols = `1`:`12`,
-                 names_to = NULL,
-                 values_to = "sample_id") |>
-    mutate(num = rep(1:12, times = 8), destination_well = paste0(letters, num)) |>
-    filter(!is.na(sample_id),
-           !stringr::str_detect(sample_id, "EBK"))  |> # remove intentional blanks and EBK
-    left_join(hamilton_cherry_pick, by=c("sample_id" = "id")) |>
-    select(hamilton_plate_id, sample_id, source_well = well_id_source, destination_well)
+  platekey_filename <- glue::glue("{output_dir}/JPE{season$season_code}_{events_candiate_code}_SW_CP_platekey.txt")
+  write_tsv(plate_to_arc_plate_lookup, platekey_filename)
 
   return(list(
     success = TRUE,
-    message = glue::glue("Created {length(layouts_list)} plate files for {nrow(hamilton_cherry_pick)} samples"),
-    files = paste0(output_dir, "/", filenames),
-    hamilton_ids = out
+    message = "process complete",
+    files = c(platekey_filename, cp_input_filename)
   ))
 }
 
