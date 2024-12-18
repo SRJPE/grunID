@@ -595,7 +595,7 @@ ORDER BY gri.sample_id;
     content = function(file) {
       files <- make_sw_plate_maps(con, events = input$gen_ham_plate_events,
                                         destination = input$gen_ham_destination,
-                                        output_dir = NULL, season = get_current_season())
+                                        output_dir = ".", season = get_current_season())
       logger::log_info("also made it to here ----------------------")
       zip::zip(file, files$files)
     },

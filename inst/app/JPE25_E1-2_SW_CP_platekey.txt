@@ -1,0 +1,2 @@
+PlateID	arc_plate_id
+Plate1	JPE25_E1-2_P1_ARC
