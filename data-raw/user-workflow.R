@@ -6,7 +6,11 @@ library(tidyverse)
 library(readxl)
 
 # connect to runID database
-con <- gr_db_connect() # this searches for a config file, starting at the working directory.
+library(grunID)
+library(dplyr)
+con <- gr_db_connect()
+tbl(con, "sample") |> filter(season == 25) |> collect()
+
 
 cfg <- config::get()
 con <- DBI::dbConnect(RPostgres::Postgres(),
