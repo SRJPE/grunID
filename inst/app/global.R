@@ -5,7 +5,6 @@ library(shinyBS)
 library(DT)
 library(shinyWidgets)
 
-
 renderTableWithScrollOnX <- function(...) {
   tags$div(
     style = 'overflow-x: scroll',

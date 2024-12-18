@@ -218,7 +218,7 @@ function(input, output, session) {
     } else if (input$no_upload > 0) {
       removeModal(session = session)
       print("Submission cancelled by user.")
-  }}, priority = 999)
+    }}, priority = 999)
 
 
   # Sample Status ---------------------------------------------------------------------
@@ -317,18 +317,18 @@ WHERE gri.rn = 1
 ORDER BY gri.sample_id;
                            "
                          },
-                         "Assay Results" = {
-                           "SELECT * FROM assay_result;"
-                         },
-                         "Raw Assay Results" = {
-                           "SELECT * FROM raw_assay_result;"
-                         },
-                         "Plate Runs" = {
-                           "SELECT * FROM plate_run;"
-                         },
-                         "Sample Archive Plates" = {
-                           "select sample_id, sample_archive_plates.arc_plate_id from sample_archive_plates join sample s on s.id = sample_archive_plates.sample_id where s.season = 25;"
-                         }
+"Assay Results" = {
+  "SELECT * FROM assay_result;"
+},
+"Raw Assay Results" = {
+  "SELECT * FROM raw_assay_result;"
+},
+"Plate Runs" = {
+  "SELECT * FROM plate_run;"
+},
+"Sample Archive Plates" = {
+  "select sample_id, sample_archive_plates.arc_plate_id from sample_archive_plates join sample s on s.id = sample_archive_plates.sample_id where s.season = 25;"
+}
     )
 
     return(statement)
@@ -389,7 +389,7 @@ ORDER BY gri.sample_id;
   observeEvent(input$season_table_cell_edit, {
     sample_id_to_update <- query_results()[input$season_table_cell_edit$row,]$sample_id
     edit_data_submissions[[sample_id_to_update]] <- input$season_table_cell_edit$value
-    })
+  })
 
   observeEvent(input$runid_submit_edits, {
     d <- reactiveValuesToList(edit_data_submissions)
@@ -492,13 +492,13 @@ ORDER BY gri.sample_id;
         size = "l")
     )
   })
-#
+  #
 
   # Upload Field Sheets -----------------------------------------------------
 
   # read in field data, if available
   clean_field_data <- reactive({
-      process_field_sheet_samples2(input$filled_field_sheets$datapath)
+    process_field_sheet_samples2(input$filled_field_sheets$datapath)
   })
 
   # if button pressed, upload field sheet data to database
@@ -558,7 +558,7 @@ ORDER BY gri.sample_id;
     events_with_returned_from_field_samples() |>
       filter(event_number %in% (input$gen_arc_plate_events)) |>
       transmute(`#` = row_number(), sample_id, status_code_name, comment)
-    })
+  })
 
 
   output$gen_ham_plate_samples_preview <- renderTable({
@@ -707,15 +707,15 @@ ORDER BY gri.sample_id;
         removeModal()
         logger::log_info("Removing plate run: {plate_run_stack()[1, ]$id}")
         tryCatch(
-        # remove_plate_run(con, plate_run_stack()[1, ]$id),
-        remove_subplates_from_run(con, plate_run_stack()[1, ]$id, input$subplate_checkbox),
-        error = function(e) {
-          showNotification(ui = tags$p(paste0(e$message)), type = "error")
-        }
+          # remove_plate_run(con, plate_run_stack()[1, ]$id),
+          remove_subplates_from_run(con, plate_run_stack()[1, ]$id, input$subplate_checkbox),
+          error = function(e) {
+            showNotification(ui = tags$p(paste0(e$message)), type = "error")
+          }
 
         )
         initial_load_qa_qc(!initial_load_qa_qc())
-        } else if (input$no_delete_full_plate > 0) {
+      } else if (input$no_delete_full_plate > 0) {
         removeModal()
         return(NULL)
       }
@@ -814,6 +814,30 @@ ORDER BY gri.sample_id;
 
   # Samples Check-in --------------------------------------------------
 
+  output$check_in_preview <- renderTable({
+    # This table shows a preview of the loaded file
+    if(is.null(input$check_in_samples_file$datapath)){
+      loaded_file <- data.frame()
+    } else {
+      loaded_file <- readxl::read_excel(input$check_in_samples_file$datapath,
+                                        col_names = c("sample_id", "received_sample", "event", "entered_by", "verified_by", "alias", "comments"),
+                                        skip = 1)
+    }
+
+    return(loaded_file)
+  })
+
+  output$check_in_file_submission <- renderTable({
+    # This table shows if new samples are created in check in process
+    if(is.null(input$check_in_samples_file$datapath)){
+      samples_created <- data.frame()
+    } else {
+      samples_created <- grunID::check_in_jpe_field_samples(con, input$check_in_samples_file$datapath)
+    }
+
+    return(samples_created)
+  })
+
   samples_created_from_checkin <- reactiveVal(c())
 
 
@@ -822,7 +846,7 @@ ORDER BY gri.sample_id;
     samples_created_from_checkin(samples_created)
 
     if (length(samples_created) == 0) {
-      showNotification("chek-in complete, no new samples were created from this check-in", closeButton = TRUE, type = "warning", duration = NULL)
+      showNotification("check-in complete, no new samples were created from this check-in", closeButton = TRUE, type = "warning", duration = NULL)
     } else {
       showNotification(glue::glue("{length(samples_created_from_checkin())} additional sample(s) created from check-in file! You can view the list in Rstudio Output. You can view the list in Rstudio Output."),
                        closeButton = TRUE, type = "warning", duration = NULL)
