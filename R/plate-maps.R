@@ -431,7 +431,7 @@ make_sw_plate_maps <- function(con, events,
 
   events_candiate_code <- paste0("E", paste0(sort(events), collapse = "-"))
 
-  logger::log_info(glue::glue("the event code used: {events_candiate_code} -----------------"))
+  logger::log_info(glue::glue("Event code for EBK selection: {events_candiate_code} -----------------"))
   ebk_candidates <- tbl(con, "sample_archive_plates") |>
     filter(str_detect(sample_id, "EBK"),
            event_plate_code == events_candiate_code) |>
@@ -476,6 +476,10 @@ make_sw_plate_maps <- function(con, events,
 
   platekey_filename <- glue::glue("{output_dir}/JPE{season$season_code}_{events_candiate_code}_SW_CP_platekey.txt")
   write_tsv(plate_to_arc_plate_lookup, platekey_filename)
+
+
+  message(glue::glue("Saving map file to: {platekey_filename}"))
+  message(glue::glue("Saving lookup file to: {cp_input_filename}"))
 
   return(list(
     success = TRUE,
@@ -600,7 +604,3 @@ make_dual_ots28_plates_from_arc <- function(arc_df) {
     return(list())
   }
 }
-
-
-
-
