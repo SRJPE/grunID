@@ -470,11 +470,13 @@ make_sw_plate_maps <- function(con, events,
 
   message(glue::glue("A total of {nrow(hamilton_cherry_pick)} will be processed in this file"))
 
-  cp_input_filename <- glue::glue("{output_dir}/JPE{season$season_code}_{events_candiate_code}_SW_CP_inputfile.txt")
+  label <- if (destination == "sherlock") "SW" else "GT"
+
+  cp_input_filename <- glue::glue("{output_dir}/JPE{season$season_code}_{events_candiate_code}_{label}_CP_inputfile.txt")
   write_tsv(hamilton_cherry_pick, cp_input_filename)
 
 
-  platekey_filename <- glue::glue("{output_dir}/JPE{season$season_code}_{events_candiate_code}_SW_CP_platekey.txt")
+  platekey_filename <- glue::glue("{output_dir}/JPE{season$season_code}_{events_candiate_code}_{label}_CP_platekey.txt")
   write_tsv(plate_to_arc_plate_lookup, platekey_filename)
 
 
