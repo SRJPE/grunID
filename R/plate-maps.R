@@ -423,6 +423,9 @@ make_sw_plate_maps <- function(con, events,
                                      destination = c("sherlock", "gtseq"),
                                      season = get_current_season(), output_dir = tempdir()) {
 
+  if (output_dir == ".") {
+    output_dir <- getwd()
+  }
 
   destination <- match.arg(destination)
   # need to get the candiate samples
@@ -432,6 +435,8 @@ make_sw_plate_maps <- function(con, events,
   events_candiate_code <- paste0("E", paste0(sort(events), collapse = "-"))
 
   logger::log_info(glue::glue("Event code for EBK selection: {events_candiate_code} -----------------"))
+  # TODO when more than 4 ebks are candidate only select 4 from arc plate 1 or lowest
+  # TODO when the destination is gtseq then remove all ebks from the input file
   ebk_candidates <- tbl(con, "sample_archive_plates") |>
     filter(str_detect(sample_id, "EBK"),
            event_plate_code == events_candiate_code) |>
@@ -443,7 +448,8 @@ make_sw_plate_maps <- function(con, events,
   }
 
   hamilton_letters <- paste0(LETTERS[1:8], rep(1:10, each = 8))
-  hamilton_plate_nums <- paste0("Plate", rep(1:10, each = 20))
+  # TODO MAP directly to the source platee
+  hamilton_plate_nums <- paste0("Plate", rep(1:10, each = 24))
 
   # get only the latest result per sample from the results table
   hamilton_cherry_pick <- tbl(con, "sample_archive_plates") |>

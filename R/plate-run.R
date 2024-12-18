@@ -218,6 +218,8 @@ validate_results <- function(con, plate_run, results_table = c("assay_result", "
   # for qa/qc error output
   error_messages <- list()
 
+  # TODO: neg-dna does not get RFU check instead compare it to 2x threshold of EBK
+
   # Check if NTC/NDNA values are above 12k
   rfu_threshold_check_value <- 18000 # 12k
   ntc_ndna_are_above_12k <- assays_results_for_qaqc %>%
