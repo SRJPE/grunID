@@ -232,7 +232,7 @@ validate_results <- function(con, plate_run, results_table = c("assay_result", "
     ntc_ndna_are_above_12k |> distinct(assay_id) |> pull()
 
   if (nrow(ntc_ndna_are_above_12k) > 0) {
-    error_messages <- c(error_messages, glue::glue("Qa/Qc Test Not Passed: Value above 12k for sample_id(s): {ntc_ndna_are_above_12k$sample_id} on assay: {ntc_ndna_are_above_12k_failing_assay_id}"))
+    error_messages <- c(error_messages, glue::glue("Qa/Qc Test Not Passed: Value above 18k for sample_id(s): {ntc_ndna_are_above_12k$sample_id} on assay: {ntc_ndna_are_above_12k_failing_assay_id}"))
   }
 
   # Check NTC/NDNA values against thresholds

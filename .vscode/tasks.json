@@ -1,0 +1,47 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "R",
+            "code": [
+                "devtools::install(pkg = '.', args = c('--preclean', '--no-multiarch', '--with-keep.source'))"
+            ],
+            "group": "build",
+            "problemMatcher": [],
+            "label": "R: Install Package (devtools)"
+        },
+        {
+            "label": "R: Install Package (R CMD)",
+            "type": "shell",
+            "command": "bash",
+            "args": [
+                "-c",
+                "Rscript -e \"devtools::document(roclets = c(\\\"rd\\\", \\\"collate\\\", \\\"namespace\\\"))\" && R CMD INSTALL --preclean --no-multiarch --with-keep.source ${workspaceFolder}"
+            ],
+            "group": "build",
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "R: Run Shiny App",
+            "type": "shell",
+            "command": "Rscript",
+            "args": [
+                "-e",
+                "\"shiny::runApp(dirname('${file}'), launch.browser = TRUE)\""
+            ],
+            "group": "build",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "when": "resourceFilename =~ /^(global|ui|server)\\.R$/"
+        }
+    ]
+}
