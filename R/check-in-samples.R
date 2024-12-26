@@ -11,6 +11,43 @@ check_in_jpe_field_samples <- function(con, filepath, season = get_current_seaso
   samples_received <- raw_data |>
     filter(!is.na(sample_id), received_sample == "Y")
 
+  samples_requested_to_be_removed <- raw_data |>
+    filter(!is.na(sample_id), received_sample == "N") |> pull(sample_id)
+
+  # for samples that need to be removed, they must be in a returned for field status,
+  # otherwise we will not remove them
+  if (length(samples_requested_to_be_removed) > 0) {
+    logger::log_info("Sample deletion requested for {length(samples_requested_to_be_removed)} samples")
+    rff_id <- get_status_codes(con, is_active=T, all_results=F, status_code_name == "returned from field") |>
+      pull(id)
+    sample_to_be_removed <- tbl(con, "sample_status") |>
+      filter(sample_id %in% samples_requested_to_be_removed,
+             status_code_id == rff_id) |>
+      pull(sample_id)
+    if (length(sample_to_be_removed) > 0) {
+      sql_delete_arc_plate <- glue::glue_sql(
+        "DELETE FROM sample_archive_plates where sample_id IN ({paste(sample_to_be_removed, collapse=',')})",
+        .con = con
+      )
+      DBI::dbExecute(con, sql_delete_arc_plate)
+
+      sql_delete_sample_status <- glue::glue_sql(
+        "DELETE FROM sample_status where sample_id IN ({paste(sample_to_be_removed, collapse=',')})",
+        .con = con
+      )
+      logger::log_info(sql_delete_sample_status)
+      DBI::dbExecute(con, sql_delete_sample_status)
+
+      sql_delete_sample <- glue::glue_sql(
+        "DELETE FROM sample where id IN ({paste(sample_to_be_removed, collapse=',')})",
+        .con = con)
+      DBI::dbExecute(con, sql_delete_sample)
+      logger::log_info("samples deleted")
+    } else {
+      logger::log_info("no samples found on database that needed deletion")
+    }
+  }
+
   season_code <- stringr::str_sub(as.character(season$year), 3, 4)
   samples_in_db_for_season <- tbl(con, "sample") |> filter(season == season_code)
   samples_in_db_for_season_ids <- samples_in_db_for_season |> collect() |> pull(id)
@@ -60,7 +97,7 @@ check_in_jpe_field_samples <- function(con, filepath, season = get_current_seaso
 
   # set sample status to returned from field to all of these that currently have status of "created"
   samples_current_status_is_created <- DBI::dbGetQuery(con,
-                                                   "
+                                                       "
 SELECT sample_id, status_code_id
 FROM (
     SELECT sample_id, status_code_id,
