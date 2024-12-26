@@ -216,7 +216,11 @@ make_archive_plate_maps_by_event <- function(con, events, season = get_current_s
   single_assay_samples <- samples[single_assay_idx, ]
   dual_assay_samples <- samples[dual_assay_idx, ]
 
-  single_assay_layouts <- make_single_assay_layout(single_assay_samples)
+  single_assay_layouts <- make_single_assay_layout(single_assay_samples,
+                                                   output_dir = output_dir,
+                                                   season_filter = season_filter,
+                                                   events_name = events_name)
+
   dual_assay_layouts <- make_dual_assay_layout(dual_assay_samples,
                                                output_dir = output_dir,
                                                season_filter = season_filter,
