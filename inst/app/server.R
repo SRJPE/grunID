@@ -581,10 +581,14 @@ ORDER BY gri.sample_id;
                                               season = get_current_season()$year)
       if (length(res$single)) {
         insert_archive_plate_ids(con, res$single$data)
+        logger::log_info(glue::glue("adding file: {res$single$sherlock_plate_names}"))
+        logger::log_info(glue::glue("adding file: {res$single$arc_plate_names}"))
         zip::zip(file, c(res$single$sherlock_plate_names, res$single$arc_plate_names))
       }
       if (length(res$dual)) {
         insert_archive_plate_ids(con, res$dual$data)
+        logger::log_info(glue::glue("adding file: {res$dual$sherlock_plate_names}"))
+        logger::log_info(glue::glue("adding file: {res$dual$arc_plate_names}"))
         zip::zip(file, c(res$dual$sherlock_plate_names, res$dual$arc_plate_names))
       }
     },
