@@ -218,7 +218,7 @@ function(input, output, session) {
     } else if (input$no_upload > 0) {
       removeModal(session = session)
       print("Submission cancelled by user.")
-  }}, priority = 999)
+    }}, priority = 999)
 
 
   # Sample Status ---------------------------------------------------------------------
@@ -389,7 +389,7 @@ ORDER BY gri.sample_id;
   observeEvent(input$season_table_cell_edit, {
     sample_id_to_update <- query_results()[input$season_table_cell_edit$row,]$sample_id
     edit_data_submissions[[sample_id_to_update]] <- input$season_table_cell_edit$value
-    })
+  })
 
   observeEvent(input$runid_submit_edits, {
     d <- reactiveValuesToList(edit_data_submissions)
@@ -492,13 +492,13 @@ ORDER BY gri.sample_id;
         size = "l")
     )
   })
-#
+  #
 
   # Upload Field Sheets -----------------------------------------------------
 
   # read in field data, if available
   clean_field_data <- reactive({
-      process_field_sheet_samples2(input$filled_field_sheets$datapath)
+    process_field_sheet_samples2(input$filled_field_sheets$datapath)
   })
 
   # if button pressed, upload field sheet data to database
@@ -558,7 +558,7 @@ ORDER BY gri.sample_id;
     events_with_returned_from_field_samples() |>
       filter(event_number %in% (input$gen_arc_plate_events)) |>
       transmute(`#` = row_number(), sample_id, status_code_name, comment)
-    })
+  })
 
 
   output$gen_ham_plate_samples_preview <- renderTable({
@@ -575,7 +575,10 @@ ORDER BY gri.sample_id;
       paste0("plate_maps_", paste(input$gen_arc_plate_events, collapse = "-"), "_", Sys.Date(), ".zip")
     },
     content = function(file) {
-      res <- make_archive_plate_maps_by_event(con, events = input$gen_arc_plate_events, output_dir = NULL, season = get_current_season()$year)
+      res <- make_archive_plate_maps_by_event(con,
+                                              events = input$gen_arc_plate_events,
+                                              output_dir = if (HOST_OS == "windows") Sys.getenv("HOMEPATH") else Sys.getenv("HOME"),
+                                              season = get_current_season()$year)
       if (length(res$single)) {
         insert_archive_plate_ids(con, res$single$data)
         zip::zip(file, c(res$single$sherlock_plate_names, res$single$arc_plate_names))
@@ -593,9 +596,11 @@ ORDER BY gri.sample_id;
       paste0("plate_maps_", paste(input$gen_ham_plate_events, collapse = "-"), "_", Sys.Date(), ".zip")
     },
     content = function(file) {
-      files <- make_sw_plate_maps(con, events = input$gen_ham_plate_events,
-                                        destination = input$gen_ham_destination,
-                                        output_dir = ".", season = get_current_season())
+      files <- make_sw_plate_maps(con,
+                                  events = input$gen_ham_plate_events,
+                                  destination = input$gen_ham_destination,
+                                  output_dir = if (HOST_OS == "windows") Sys.getenv("HOMEPATH") else Sys.getenv("HOME"),
+                                  season = get_current_season())
       logger::log_info("also made it to here ----------------------")
       zip::zip(file, files$files)
     },
@@ -705,15 +710,15 @@ ORDER BY gri.sample_id;
         removeModal()
         logger::log_info("Removing plate run: {plate_run_stack()[1, ]$id}")
         tryCatch(
-        # remove_plate_run(con, plate_run_stack()[1, ]$id),
-        remove_subplates_from_run(con, plate_run_stack()[1, ]$id, input$subplate_checkbox),
-        error = function(e) {
-          showNotification(ui = tags$p(paste0(e$message)), type = "error")
-        }
+          # remove_plate_run(con, plate_run_stack()[1, ]$id),
+          remove_subplates_from_run(con, plate_run_stack()[1, ]$id, input$subplate_checkbox),
+          error = function(e) {
+            showNotification(ui = tags$p(paste0(e$message)), type = "error")
+          }
 
         )
         initial_load_qa_qc(!initial_load_qa_qc())
-        } else if (input$no_delete_full_plate > 0) {
+      } else if (input$no_delete_full_plate > 0) {
         removeModal()
         return(NULL)
       }

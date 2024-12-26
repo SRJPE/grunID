@@ -6,6 +6,8 @@ library(DT)
 library(shinyWidgets)
 
 
+HOST_OS <- .Platform$OS.type
+
 renderTableWithScrollOnX <- function(...) {
   tags$div(
     style = 'overflow-x: scroll',

@@ -125,9 +125,9 @@ make_dual_assay_layout <- function(data, layout_size = 96, output_dir, season_fi
 
   message(glue::glue("A total of {nrow(data)} samples were arranged into {length(layouts_list)} plates"))
 
-  filenames <- glue::glue("JPE{season_filter}_E{events_name}_P{seq_along(layouts_list)}_ARC.xlsx")
+  filenames <- glue::glue("{output_dir}/JPE{season_filter}_E{events_name}_P{seq_along(layouts_list)}_ARC.xlsx")
   purrr::walk(seq_along(layouts_list), function(i) {
-    write_layout_to_file(layouts_list[[i]], paste0(filenames[i]))
+    write_layout_to_file(layouts_list[[i]], filenames[i])
     message(paste(filenames[i], "file created"))
 
   })
@@ -151,9 +151,9 @@ make_dual_assay_layout <- function(data, layout_size = 96, output_dir, season_fi
     select(-num_val)
 
   sherlock_plates <- make_dual_ots28_plates_from_arc(arc_df = out)
-  filenames_sherlock <- glue::glue("JPE{season_filter}_E{events_name}_EL{seq_along(sherlock_plates)}.xlsx")
+  filenames_sherlock <- glue::glue("{output_dir}/JPE{season_filter}_E{events_name}_EL{seq_along(sherlock_plates)}.xlsx")
   purrr::walk(seq_along(sherlock_plates), function(i) {
-    write_layout_to_file(sherlock_plates[[i]], paste0(filenames_sherlock[i]))
+    write_layout_to_file(sherlock_plates[[i]], filenames_sherlock[i])
     message(paste(filenames_sherlock[i], "file created"))
   })
 
@@ -452,7 +452,7 @@ make_sw_plate_maps <- function(con, events,
   hamilton_plate_nums <- paste0("Plate", rep(1:10, each = 24))
 
   # get only the latest result per sample from the results table
-  hamilton_cherry_pick <- tbl(con, "sample_archive_plates") |>
+hamilton_cherry_pick <- tbl(con, "sample_archive_plates") |>
     filter(sample_id %in% candidate_samples) |>
     select(sample_id, arc_plate_id, arc_well_id) |>
     collect() |>
