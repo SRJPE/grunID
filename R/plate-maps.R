@@ -560,10 +560,10 @@ make_dual_ots28_plates_from_arc <- function(arc_df) {
                                                          "NEG-DNA-1", "NEG-DNA-2", "NEG-DNA-3",
                                                          "NTC-1", "NTC-2", "NTC-3"))
 
+    p12_full <- cbind(p12_dual_matrix_left, p12_dual_matrix_left)
     rownames(p12_full) <- LETTERS[1:16]
     colnames(p12_full) <- 1:24
 
-    p12_full <- cbind(p12_dual_matrix_left, p12_dual_matrix_left)
     return(list(p12_full))
   } else if (total_subplates_in_batch == 3) {
     p12 <- d |> filter(sub_plate %in% 1:2)
