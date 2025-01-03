@@ -377,12 +377,10 @@ process_field_sheet_samples <- function(filepath){
 #' @export
 process_field_sheet_samples2 <- function(filepath) {
   raw_field_data <- readxl::read_excel(filepath, skip = 1,
-                                       col_names = c("site", "site_abbrev", "event", "bin", "sample_number", "sample_id",
-                                                     "date", "time", "fl", "field_run_id", "entered_by",
-                                                     "verified_by", "alias", "biosample_id", "comments"),
-                                       col_types = c("text", "text", "numeric", "text", "numeric", "text",
-                                                     "date", "date", "numeric", "text", "text", "text",
-                                                     "text", "text", "text")) |>
+                                       col_names = c("sample_id", "date", "time", "fl", "field_run_id", "entered_by",
+                                                     "verified_by", "alias", "usfws_biosample_id", "comments"),
+                                       col_types = c("text", "date", "date", "numeric", "text", "text",
+                                                     "text", "text", "text", "text")) |>
     select(sample_id, date, time, fl, field_run_id, comments)
 
 
