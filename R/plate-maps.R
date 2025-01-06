@@ -125,6 +125,7 @@ make_dual_assay_layout <- function(data, layout_size = 96, output_dir, season_fi
 
   message(glue::glue("A total of {nrow(data)} samples were arranged into {length(layouts_list)} plates"))
 
+
   filenames <- glue::glue("{output_dir}/JPE{season_filter}_E{events_name}_P{seq_along(layouts_list)}_ARC.xlsx")
   purrr::walk(seq_along(layouts_list), function(i) {
     write_layout_to_file(layouts_list[[i]], filenames[i])
@@ -150,8 +151,12 @@ make_dual_assay_layout <- function(data, layout_size = 96, output_dir, season_fi
     filter(!is.na(sample_id)) |> # remove intentional blanks and EBK
     select(-num_val)
 
+  # JPE25_E1-3-4_EL_P1-2_SH
+  # Where P1-2 indicates which EL DNA plates are represented on the SHERLOCK run?
+
   sherlock_plates <- make_dual_ots28_plates_from_arc(arc_df = out)
-  filenames_sherlock <- glue::glue("{output_dir}/JPE{season_filter}_E{events_name}_EL{seq_along(sherlock_plates)}.xlsx")
+  filename_arc_plate_reference <- paste(seq_along(layouts_list), collapse = "-")
+  filenames_sherlock <- glue::glue("{output_dir}/JPE{season_filter}_E{events_name}_EL_P{filename_arc_plate_reference}_SH.xlsx")
   purrr::walk(seq_along(sherlock_plates), function(i) {
     write_layout_to_file(sherlock_plates[[i]], filenames_sherlock[i])
     message(paste(filenames_sherlock[i], "file created"))
@@ -223,76 +228,6 @@ make_archive_plate_maps_by_event <- function(con, events, season = get_current_s
                                                season_filter = season_filter,
                                                events_name = events_name)
 
-  #
-  #   # TODO: HACK!!!! lets not hard-code this, but for now this is fine
-  #   ebk_idx <- list()
-  #   ebks_to_insert <- c("EBK-1-1", "EBK-1-2", "EBK-1-3", "EBK-1-4")
-  #   if (length(samples_parted) == 1) {
-  #     ebk_idx[[1]] <- ebks_to_insert
-  #   } else if (length(samples_parted) == 2) {
-  #     ebk_idx[[1]] <- ebks_to_insert[1:2]
-  #     ebk_idx[[2]] <- ebks_to_insert[3:4]
-  #   } else if (length(samples_parted) == 3) {
-  #     ebk_idx[[1]] <- ebks_to_insert[1]
-  #     ebk_idx[[2]] <- ebks_to_insert[2]
-  #     ebk_idx[[3]] <- ebks_to_insert[3:4]
-  #   } else if (length(samples_parted) == 4) {
-  #     ebk_idx[[1]] <- ebks_to_insert[1]
-  #     ebk_idx[[2]] <- ebks_to_insert[2]
-  #     ebk_idx[[3]] <- ebks_to_insert[3]
-  #     ebk_idx[[4]] <- ebks_to_insert[4]
-  #   } else {
-  #     new_samples_parted <- samples_parted[-c(1:4)]
-  #     if (length(new_samples_parted) == 1) {
-  #       ebk_idx[[5]] <- ebks_to_insert
-  #     } else if (length(new_samples_parted) == 2) {
-  #       ebk_idx[[5]] <- ebks_to_insert[1:2]
-  #       ebk_idx[[6]] <- ebks_to_insert[3:4]
-  #     } else if (length(new_samples_parted) == 3) {
-  #       ebk_idx[[5]] <- ebks_to_insert[1]
-  #       ebk_idx[[6]] <- ebks_to_insert[2]
-  #       ebk_idx[[7]] <- ebks_to_insert[3:4]
-  #     } else if (length(new_samples_parted) == 4) {
-  #       ebk_idx[[5]] <- ebks_to_insert[1]
-  #       ebk_idx[[6]] <- ebks_to_insert[2]
-  #       ebk_idx[[7]] <- ebks_to_insert[3]
-  #       ebk_idx[[8]] <- ebks_to_insert[4]
-  #     }
-  #   }
-  #
-  #   layouts_list <- imap(samples_parted, \(x, i) suppressWarnings(make_plate_layout(x$id, ebks = ebk_idx[[i]])))
-  #   n_layout_groups <- ceiling(length(layouts_list) / 4) # 4 subplates per "packet"
-  #   group_ids <- rep(1:n_layout_groups, each = 4)
-  #
-  #
-  #
-  #
-  #   message(glue::glue("A total of {nrow(samples)} samples were arranged into {length(layouts_list)} plates"))
-  #
-  #   filenames <- glue::glue("JPE{season_filter}_E{events_name}_P{seq_along(layouts_list)}_ARC.xlsx")
-  #   purrr::walk(seq_along(layouts_list), function(i) {
-  #     write_layout_to_file(layouts_list[[i]], paste0(output_dir, "/", filenames[i]))
-  #     message(paste(filenames[i], "file created"))
-  #
-  #   })
-  #
-  #   names(layouts_list) <- tools::file_path_sans_ext(filenames)
-  #
-  #   out <- layouts_list |>
-  #     enframe(name = "archive_plate_id") |>
-  #     unnest(cols = value) |>
-  #     mutate(letter_val = rep(LETTERS[1:8], length(filenames))) |>
-  #     pivot_longer(cols = `1`:`12`,
-  #                  names_to = NULL,
-  #                  values_to = "sample_id") |>
-  #     transmute(
-  #       archive_plate_id,
-  #       sample_id,
-  #       num_val = rep(1:12, 8 * length(filenames)),
-  #       well_id = paste0(letter_val, num_val)) |>
-  #     filter(!is.na(sample_id),
-  #            !stringr::str_detect(sample_id, "EBK")) |> # remove intentional blanks and EBK
-  #     select(-num_val)
 
   return(list(
     dual = dual_assay_layouts,
