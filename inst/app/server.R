@@ -565,6 +565,7 @@ ORDER BY gri.sample_id;
     validate(need(!is.null(input$gen_ham_plate_events), "select at least one event"))
     events_with_need_ots16_or_gtseq_samples() |>
       filter(status_code_name == if_else(input$gen_ham_destination == "sherlock", "need ots16", "need gtseq")) |>
+      filter(event_number %in% input$gen_ham_plate_events) |>
       select(sample_id, status_code_name, comment)
   })
 
@@ -601,7 +602,6 @@ ORDER BY gri.sample_id;
                                   destination = input$gen_ham_destination,
                                   output_dir = if (HOST_OS == "windows") Sys.getenv("HOMEPATH") else Sys.getenv("HOME"),
                                   season = get_current_season())
-      logger::log_info("also made it to here ----------------------")
       zip::zip(file, files$files)
     },
     contentType = "application/zip"

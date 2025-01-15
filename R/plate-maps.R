@@ -335,7 +335,8 @@ get_archive_plates_candidates <- function(con, events, season = get_current_seas
 #' @export
 get_sw_plates_candidates <- function(con, destination, events, season = get_current_season()$year) {
   candidate_samples <- get_sample_status(con, season = season) |>
-    dplyr::filter(status_code_name %in% c("need ots16", "need gtseq"))
+    dplyr::filter(status_code_name %in% c("need ots16", "need gtseq"),
+                  event_number %in% events)
 
   if (destination == "gtseq") {
     # first filter by location
@@ -365,8 +366,9 @@ make_sw_plate_maps <- function(con, events,
 
   destination <- match.arg(destination)
   # need to get the candiate samples
+  logger::log_info("getting data for events {events}")
   candidate_samples <- get_sw_plates_candidates(con, destination = destination,
-                                                events = events, season = season$year)
+                                                events = as.numeric(events), season = season$year)
 
   events_candiate_code <- paste0("E", paste0(sort(events), collapse = "-"))
 
