@@ -222,7 +222,9 @@ navbarPage(
                         tags$div(
                           tags$p("Use this to register a manually created plate with the database. This will allow
                                  the database to associate a given sample to an archinve plate.")
-                        )
+                        ),
+                        fileInput("register_plate_files", "Select ARC Map File", multiple = TRUE),
+                        actionButton("register_plate_submit", "Register")
                       ))
            )
   ),

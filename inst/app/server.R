@@ -609,6 +609,16 @@ ORDER BY gri.sample_id;
   )
 
 
+  observeEvent(input$register_plate_submit, {
+    print(input$register_plate_files)
+    purrr::walk(1:nrow(input$register_plate_files), function(i) {
+      this_file <- input$register_plate_files[i, ]
+      logger::log_info(this_file$datapath)
+      register_arc_plate(con, this_file$datapath, this_file$name)
+    })
+  })
+
+
 
 
   # Plate Validations -------------------------------------------------------------------

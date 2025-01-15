@@ -248,7 +248,9 @@ insert_archive_plate_ids <- function(con, archive) {
   ) ON CONFLICT (sample_id, arc_plate_id)
   DO UPDATE SET
     arc_plate_id = EXCLUDED.arc_plate_id,
-    arc_well_id = EXCLUDED.arc_well_id;", .con = con)
+    arc_well_id = EXCLUDED.arc_well_id,
+    updated_at = now(),
+    updated_by = current_user;", .con = con)
 
   DBI::dbExecute(con, sql_statement)
 }
@@ -551,4 +553,17 @@ make_dual_ots28_plates_from_arc <- function(arc_df) {
   } else if (total_subplates_in_batch == 4) {
     return(list())
   }
+}
+
+#' @title Register Archive Plate
+#' @export
+register_arc_plate <- function(con, datapath, filename) {
+  d <- readxl::read_excel(datapath) |>
+    pivot_longer(-...1, names_to = "row", values_to = "sample_id") |>
+    transmute(well_id = paste0(...1, row),
+              sample_id,
+              archive_plate_id = tools::file_path_sans_ext(basename(filename))) |>
+    filter(!is.na(sample_id))
+
+  insert_archive_plate_ids(con, d)
 }
