@@ -567,3 +567,15 @@ register_arc_plate <- function(con, datapath, filename) {
 
   insert_archive_plate_ids(con, d)
 }
+
+
+#' @title Upload Blob to Azure
+#' @export
+upload_to_azure_storage <- function(container, datapath, filename) {
+  if (!is.null(container)) {
+    AzureStor::storage_upload(container, datapath, filename)
+  }
+}
+
+
+

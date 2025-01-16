@@ -15,6 +15,24 @@ az_refresh_token <- function() {
   return(jsonlite::parse_json(res))
 }
 
+#' @title Get access token for container
+#' @export
+az_container_token <- function(storage_account) {
+  res <- tryCatch({
+    cli::cli_process_start("refreshing Azure Storage token")
+    system2("az",
+            args = c("storage", "account", "keys", "list",
+                     "--account-name", storage_account,
+                     "--query", "[0].value",
+                     "--output", "tsv"),
+            stdout = TRUE)
+  },
+  error = function(e) {stop("could not find `az` please make sure you have Azure CLI installed", call. = FALSE)}
+  )
+  cli::cli_process_done("done")
+  return(res)
+}
+
 db_get_config <- function() {
   cfg <- tryCatch(config::get(),
                   error = function(e) {return(NULL)})
@@ -77,3 +95,14 @@ gr_db_connect <- function(username = NULL, host = NULL, dbname = NULL) {
 
 
 }
+
+
+#' @title Create Connection to AZ Container
+#' @export
+az_container_connect <- function(account_name, container_name) {
+  store_access_key <- grunID::az_container_token(account_name)
+  store <- AzureStor::storage_endpoint("https://geneticsedidata.blob.core.windows.net", store_access_key)
+  container <- AzureStor::storage_container(store, container_name)
+  return(container)
+}
+

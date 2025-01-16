@@ -24,6 +24,7 @@ if (!is.na(in_dev_mode) && in_dev_mode == 1) {
   env_server <- "development"
   cfg <- config::get(file = config_path)
   config_file_log_message <- glue::glue("using config file found at: {config_path}")
+  container <- NULL
   con <- DBI::dbConnect(RPostgres::Postgres(),
                         dbname = cfg$dbname,
                         host = cfg$host,
@@ -36,6 +37,7 @@ if (!is.na(in_dev_mode) && in_dev_mode == 1) {
   config_file_log_message <- glue::glue("using config file found at: {config_path}")
   cfg <- config::get(file = config_path)
   con <- grunID::gr_db_connect(username = cfg$username, host = cfg$host, dbname = cfg$dbname)
+  container <- grunID::az_container_connect("geneticsedidata", "grunid-file-uploads")
   env_server <- ifelse(str_detect(cfg$dbname, "prod"), "production", "staging")
 }
 
