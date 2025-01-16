@@ -311,7 +311,7 @@ JOIN sample s ON gri.sample_id = s.id
 LEFT JOIN run_type rt_field ON s.field_run_type_id = rt_field.id
 WHERE gri.rn = 1
   AND rt_genetic.run_name IN ({run_name_filters*})
-  AND (rt_field.run_name IN ({field_run_name_filters*}) or rt_field.run_name is NULL)
+  AND (rt_field.run_name is NULL or rt_field.run_name IN ({field_run_name_filters*}))
   AND s.event_number IN ({sample_event_filters*})
   AND s.season = {season_filter}
 ORDER BY gri.sample_id;
@@ -578,19 +578,26 @@ ORDER BY gri.sample_id;
     content = function(file) {
       res <- make_archive_plate_maps_by_event(con,
                                               events = input$gen_arc_plate_events,
-                                              output_dir = if (HOST_OS == "windows") Sys.getenv("HOMEPATH") else Sys.getenv("HOME"),
+                                              output_dir = cfg$data_output,
                                               season = get_current_season()$year)
-      if (length(res$single)) {
-        insert_archive_plate_ids(con, res$single$data)
-        zip::zip(file, c(res$single$sherlock_plate_names, res$single$arc_plate_names), mode = "cherry-pick")
-      }
-      if (length(res$dual)) {
-        insert_archive_plate_ids(con, res$dual$data)
-        zip::zip(file, c(res$dual$sherlock_plate_names, res$dual$arc_plate_names), mode = "cherry-pick")
-      }
+      # if (length(res$single)) {
+      #   insert_archive_plate_ids(con, res$single$data)
+      #   zip::zip(file, c(res$single$sherlock_plate_names, res$single$arc_plate_names), mode = "cherry-pick")
+      # }
+      # if (length(res$dual)) {
+      #   insert_archive_plate_ids(con, res$dual$data)
+      #   zip::zip(file, c(res$dual$sherlock_plate_names, res$dual$arc_plate_names), mode = "cherry-pick")
+      # }
     },
     contentType = "application/zip"
   )
+
+  observeEvent(input$save_arc_plates, {
+    make_archive_plate_maps_by_event(con,
+                                     events = input$gen_arc_plate_events,
+                                     output_dir = cfg$data_output,
+                                     season = get_current_season()$year)
+  })
 
   output$gen_ham_submit <- downloadHandler(
     filename = function() {

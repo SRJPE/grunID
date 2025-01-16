@@ -202,6 +202,7 @@ navbarPage(
                           tags$p("Only events with at least one sample set to 'Returned from file' are selectable. Generating a plate will associate the given sample to the archive name generated."),
                           uiOutput("gen_arc_plate_events_UI"),
                           downloadButton("gen_arc_submit", "Generate"),
+                          actionButton("save_arc_plates", "Generate Archive Plates"),
                           tableOutput("gen_arc_plate_samples_preview")
                         )
                       )),
@@ -265,9 +266,9 @@ navbarPage(
                                                      multiple = TRUE,
                                                      selected = run_choices),
                                          selectInput("query_ra_select_field_run_type", "Field Run Type",
-                                                     choices = c("Fall Run", "Spring Run", "Winter Run", "Heterozygote"),
+                                                     choices = c("Fall", "Spring", "Winter", "Heterozygote"),
                                                      multiple = TRUE,
-                                                     selected = c("Fall Run", "Spring Run", "Winter Run", "Heterozygote")),
+                                                     selected = c("Fall", "Spring", "Winter", "Heterozygote")),
 
                                          selectInput("query_ra_select_sample_event", "Event",
                                                      choices = c(1:10),
