@@ -16,30 +16,40 @@ renderTableWithScrollOnX <- function(...) {
 }
 
 config_path <- Sys.getenv("CONFIG_PATH")
-in_dev_mode <- Sys.getenv("GRUNID_IS_DEV")
+cfg <- config::get(file = config_path)
 
-if (!is.na(in_dev_mode) && in_dev_mode == 1) {
-  # logger::log_threshold(level = logger::INFO) # Just always capture all the input?
-  run_mode_log_message <- "app started in development mode"
-  env_server <- "development"
-  cfg <- config::get(file = config_path)
-  config_file_log_message <- glue::glue("using config file found at: {config_path}")
-  container <- NULL
-  con <- DBI::dbConnect(RPostgres::Postgres(),
-                        dbname = cfg$dbname,
-                        host = cfg$host,
-                        port = 5432,
-                        user = cfg$username,
-                        password = cfg$password)
-
+# Determine environment from database config
+run_mode <- if (cfg$host == "localhost") {
+  "development"
+} else if (str_detect(cfg$dbname, "staging")) {
+  "staging"
+} else if (str_detect(cfg$dbname, "prod")) {
+  "production"
 } else {
-  run_mode_log_message <- "app started in production mode"
-  config_file_log_message <- glue::glue("using config file found at: {config_path}")
-  cfg <- config::get(file = config_path)
-  con <- grunID::gr_db_connect(username = cfg$username, host = cfg$host, dbname = cfg$dbname)
-  container <- grunID::az_container_connect("geneticsedidata", "grunid-file-uploads")
-  env_server <- ifelse(str_detect(cfg$dbname, "prod"), "production", "staging")
+  stop("Unable to determine environment from database configuration")
 }
+
+run_mode_log_message <- glue::glue("app started in {run_mode} mode")
+config_file_log_message <- glue::glue("using config file found at: {config_path}")
+
+container <- NULL
+con <- if (run_mode == "development") {
+  DBI::dbConnect(RPostgres::Postgres(),
+                 dbname = cfg$dbname,
+                 host = cfg$host,
+                 port = 5432,
+                 user = cfg$username,
+                 password = cfg$password)
+} else {
+  container <<- grunID::az_container_connect("geneticsedidata", "grunid-file-uploads")
+  grunID::gr_db_connect(
+    username = cfg$username,
+    host = cfg$host,
+    dbname = cfg$dbname
+  )
+}
+
+env_server <- run_mode
 
 logger::log_appender(logger::appender_console, index = 1)
 logger::log_appender(function(lines) {
