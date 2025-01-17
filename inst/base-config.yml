@@ -1,0 +1,14 @@
+# this file defines all of the confugration for the grunid app
+default:
+  # the database name
+  dbname:
+  # the database host
+  host: 
+  # database port
+  port:
+  # database server username
+  username:
+
+  # directory where all data from the app is saved. Cnoose a location that is 
+  # convinient for you to retrieve all the data
+  data_output: ~/Downloads

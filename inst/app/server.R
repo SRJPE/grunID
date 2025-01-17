@@ -571,32 +571,23 @@ ORDER BY gri.sample_id;
 
 
   # Generate Plates ---------------------------------------------------------------
-  output$gen_arc_submit <- downloadHandler(
-    filename = function() {
-      paste0("plate_maps_", paste(input$gen_arc_plate_events, collapse = "-"), "_", Sys.Date(), ".zip")
-    },
-    content = function(file) {
-      res <- make_archive_plate_maps_by_event(con,
-                                              events = input$gen_arc_plate_events,
-                                              output_dir = cfg$data_output,
-                                              season = get_current_season()$year)
-      # if (length(res$single)) {
-      #   insert_archive_plate_ids(con, res$single$data)
-      #   zip::zip(file, c(res$single$sherlock_plate_names, res$single$arc_plate_names), mode = "cherry-pick")
-      # }
-      # if (length(res$dual)) {
-      #   insert_archive_plate_ids(con, res$dual$data)
-      #   zip::zip(file, c(res$dual$sherlock_plate_names, res$dual$arc_plate_names), mode = "cherry-pick")
-      # }
-    },
-    contentType = "application/zip"
-  )
-
   observeEvent(input$save_arc_plates, {
-    make_archive_plate_maps_by_event(con,
+    if (length(input$gen_arc_plate_events) == 0) {
+      shiny::showNotification("you must select at least one event to generate a plate",
+                              type = "warning")
+      return(NULL)
+    }
+
+
+    res <- make_archive_plate_maps_by_event(con,
                                      events = input$gen_arc_plate_events,
                                      output_dir = cfg$data_output,
                                      season = get_current_season()$year)
+
+    if (res$success) {
+      shiny::showNotification(glue::glue("file created and saved to: {cfg$data_output} see RStudio Console for details and full paths"),
+                              type = "message")
+    }
   })
 
   output$gen_ham_submit <- downloadHandler(

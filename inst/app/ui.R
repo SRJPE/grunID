@@ -201,7 +201,6 @@ navbarPage(
                         tagList(
                           tags$p("Only events with at least one sample set to 'Returned from file' are selectable. Generating a plate will associate the given sample to the archive name generated."),
                           uiOutput("gen_arc_plate_events_UI"),
-                          downloadButton("gen_arc_submit", "Generate"),
                           actionButton("save_arc_plates", "Generate Archive Plates"),
                           tableOutput("gen_arc_plate_samples_preview")
                         )
