@@ -440,6 +440,7 @@ run_genetic_identification_v2 <- function(con, samples, plate_run_id) {
       early & late & is.na(spring) & is.na(winter) ~ "EL-HET;need gtseq", # positive early and positive late = HET
       early & !late & is.na(spring) & is.na(winter) ~ "SPW;need ots16", # positive early and negative late = SPW
       !early & !late & is.na(spring) & is.na(winter) ~ "UNK;EL-failed", # negative early and negative late = FAIL
+      early & !late & spring & is.na(winter) ~ "SPW;need ots16",
       is.na(early) & is.na(late) & spring & is.na(winter) ~ "SPW;need ots16",
       spring & winter ~ "SW-HET;need gtseq",
       !spring & winter ~ "WIN;analysis complete",
