@@ -590,21 +590,25 @@ ORDER BY gri.sample_id;
     }
   })
 
-  output$gen_ham_submit <- downloadHandler(
-    filename = function() {
-      paste0("plate_maps_", paste(input$gen_ham_plate_events, collapse = "-"), "_", Sys.Date(), ".zip")
-    },
-    content = function(file) {
-      files <- make_sw_plate_maps(con,
-                                  events = input$gen_ham_plate_events,
-                                  destination = input$gen_ham_destination,
-                                  output_dir = if (HOST_OS == "windows") Sys.getenv("HOMEPATH") else Sys.getenv("HOME"),
-                                  season = get_current_season())
-      zip::zip(file, files$files)
-    },
-    contentType = "application/zip"
+  observeEvent(input$save_ham_plates, {
+    if (length(input$gen_ham_plate_events) == 0) {
+      shiny::showNotification("you must select at least one event to generate a plate",
+                              type = "warning")
+      return(NULL)
+    }
 
-  )
+
+    res <- make_sw_plate_maps(con,
+                              events = input$gen_ham_plate_events,
+                              destination = input$gen_ham_destination,
+                              output_dir = cfg$data_output,
+                              season = get_current_season())
+
+    if (res$success) {
+      shiny::showNotification(glue::glue("file created and saved to: {cfg$data_output} see RStudio Console for details and full paths"),
+                              type = "message")
+    }
+  })
 
 
   observeEvent(input$register_plate_submit, {

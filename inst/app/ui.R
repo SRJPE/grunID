@@ -212,7 +212,7 @@ navbarPage(
                           tags$p("Only events with at least one sample set to 'Need Ots 16' are selectable. Generating a plate will associate the given sample to the hamilton plate name generated."),
                           uiOutput("gen_ham_plate_events_UI"),
                           selectInput("gen_ham_destination", "Destnation", choices = c("Sherlock"="sherlock", "GT-Seq" = "gtseq")),
-                          downloadButton("gen_ham_submit", "Generate"),
+                          actionButton("save_ham_plates", "Generate Cherry Pick Files"),
                           tableOutput("gen_ham_plate_samples_preview")
                           )
                       )),
