@@ -813,30 +813,32 @@ ORDER BY gri.sample_id;
 
 
   # Samples Check-in --------------------------------------------------
-
   output$check_in_preview <- renderTable({
-    # This table shows a preview of the loaded file
-    if(is.null(input$check_in_samples_file$datapath)){
-      loaded_file <- data.frame()
-    } else {
-      loaded_file <- readxl::read_excel(input$check_in_samples_file$datapath,
-                                        col_names = c("sample_id", "received_sample", "event", "entered_by", "verified_by", "alias", "comments"),
-                                        skip = 1)
-    }
+    validate(
+      need(input$check_in_samples_file, "Please upload a file to see the preview.")
+    )
 
-    return(loaded_file)
+    loaded_file <- readxl::read_excel(
+      input$check_in_samples_file$datapath,
+      col_names = c("sample_id", "received_sample", "event", "entered_by", "verified_by", "alias", "comments"),
+      skip = 1
+    )
+
+    loaded_file
   })
 
+
   output$check_in_file_submission <- renderTable({
-    # This table shows if new samples are created in check in process
-    if(is.null(input$check_in_samples_file$datapath)){
-      samples_created <- data.frame()
-    } else {
-      samples_created <- grunID::check_in_jpe_field_samples(con, input$check_in_samples_file$datapath)
-    }
+    validate(
+      need(input$check_in_samples_file, "Please upload and submit a file to view new samples.")
+    )
+
+    samples_created <- samples_created_from_checkin()
+    print(samples_created)
 
     return(samples_created)
   })
+
 
   samples_created_from_checkin <- reactiveVal(c())
 
@@ -848,7 +850,7 @@ ORDER BY gri.sample_id;
     if (length(samples_created) == 0) {
       showNotification("check-in complete, no new samples were created from this check-in", closeButton = TRUE, type = "warning", duration = NULL)
     } else {
-      showNotification(glue::glue("{length(samples_created_from_checkin())} additional sample(s) created from check-in file! You can view the list in Rstudio Output. You can view the list in Rstudio Output."),
+      showNotification(glue::glue("{length(samples_created_from_checkin())} additional sample(s) created from check-in file!"),
                        closeButton = TRUE, type = "warning", duration = NULL)
     }
   })
