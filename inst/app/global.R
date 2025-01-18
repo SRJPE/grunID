@@ -194,7 +194,8 @@ available_years <- dplyr::tbl(con, "sample_event") |>
   dplyr::mutate(year = lubridate::year(first_sample_date)) |>
   dplyr::distinct(year) |>
   dplyr::collect() |>
-  dplyr::pull(year)
+  dplyr::pull(year) |>
+  dplyr::arrange(year)
 
 
 status_code_ids_for_failed_states <- DBI::dbGetQuery(

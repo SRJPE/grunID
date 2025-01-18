@@ -90,14 +90,17 @@ function(input, output, session) {
 
   observeEvent(input$run_description_use_filename, {
     if (input$run_description_use_filename == TRUE) {
-      updateTextInput(session, "run_description", value = "USING FILENAME")
+      if (!is.null(input$sherlock_results)) {
+        updateTextInput(session, "run_description", value = tools::file_path_sans_ext(input$sherlock_results[1,1]))
+      } else {
+        updateTextInput(session, "run_description", value = "USING FILENAME")
+      }
     } else {
       updateTextInput(session, "run_description", value = "")
     }
   })
 
   observeEvent(input$sherlock_results, {
-    cat(unlist(input$sherlock_results[1,]))
     if (!is.null(input$sherlock_results) && input$run_description_use_filename) {
       updateTextInput(session, "run_description", value = tools::file_path_sans_ext(input$sherlock_results[1,1]))
     }
