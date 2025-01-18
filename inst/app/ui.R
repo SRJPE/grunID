@@ -75,10 +75,20 @@ navbarPage(
 
                         tags$div(
                           style = "display: flex; align-items: center;",
-                          textInput("performed_by", "Lab work performed by:"),
+                          selectInput("performed_by", "Lab work performed by:",
+                                      choices = c('Emma Freedman',
+                                                  'Sarah Stinson',
+                                                  'Sean Canfield',
+                                                  'Pachia Lee',
+                                                  'Scott Meyer',
+                                                  'Ross Harper',
+                                                  'Aviva Fiske')),
                           actionButton("info_performed_by", label = NULL, icon = icon("question"), class = "round-btn icon-offset")
 
                         ),
+
+
+                        checkboxInput("run_description_use_filename", "Use Filename as Description", value = FALSE),
 
                         tags$div(
                           style = "display: flex; align-items: center;",
