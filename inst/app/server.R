@@ -651,7 +651,7 @@ ORDER BY gri.sample_id;
     plate_ids <- plate_runs_used_for_genid() |> pull(id)
     tbl(con, "plate_run") |>
       filter(id %in% plate_ids) |>
-      arrange(desc(created_at)) |>
+      dplyr::arrange(desc(created_at)) |>
       collect()
   })
 
@@ -683,7 +683,7 @@ ORDER BY gri.sample_id;
       select(plate_run_id, assay_name, sample_id, raw_fluorescence, threshold, positive_detection, sub_plate) |>
       collect() |>
       filter(str_detect(sample_id, "^EBK")) |>
-      arrange(sample_id)
+      dplyr::arrange(sample_id)
     DT::datatable(data |> select(-plate_run_id, -sub_plate, -positive_detection),
                   rownames = FALSE,
                   selection = "none",
@@ -705,7 +705,7 @@ ORDER BY gri.sample_id;
     plate_data_top_stack() |>
       select(plate_run_id, sample_id, raw_fluorescence, threshold, positive_detection, sub_plate, active) |>
       collect() |>
-      arrange(sub_plate) |>
+      dplyr::arrange(sub_plate) |>
       DT::datatable(options = list(scrollY="500px", pageLength = 500, dom = "t")) |>
       formatStyle("sub_plate",
                   target = "row",

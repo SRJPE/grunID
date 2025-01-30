@@ -15,7 +15,7 @@ renderTableWithScrollOnX <- function(...) {
   )
 }
 
-config_path <- Sys.getenv("CONFIG_PATH")
+config_path <- Sys.getenv("CONFIG_PATH", paste0(getwd(), "/config.yml"))
 cfg <- config::get(file = config_path)
 
 # Determine environment from database config
@@ -194,9 +194,8 @@ available_years <- dplyr::tbl(con, "sample_event") |>
   dplyr::mutate(year = lubridate::year(first_sample_date)) |>
   dplyr::distinct(year) |>
   dplyr::collect() |>
-  dplyr::pull(year) |>
-  dplyr::arrange(year)
-
+  dplyr::arrange(year) |>
+  dplyr::pull(year)
 
 status_code_ids_for_failed_states <- DBI::dbGetQuery(
   con,
