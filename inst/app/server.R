@@ -635,7 +635,7 @@ ORDER BY gri.sample_id;
       this_file <- input$register_plate_files[i, ]
       logger::log_info(this_file$datapath)
       register_arc_plate(con, this_file$datapath, this_file$name)
-      upload_to_azure_storage(container, this_file$datapath, paste0("arc-plates/",this_file$name))
+      # upload_to_azure_storage(container, this_file$datapath, paste0("arc-plates/",this_file$name))
     }, .progress = TRUE)
   })
 
