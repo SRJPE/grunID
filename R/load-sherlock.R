@@ -10,8 +10,9 @@
 #' assay on a plate will have its own control blanks and threshold value.
 #' @returns a table containing thresholds for an event, to be passed to `update_assay_detections()`
 #' @export
-generate_threshold <- function(con, plate_run, results_table, strategy = "twice average", .control_id="EBK") {
+generate_threshold <- function(con, plate_run, results_table, strategy = "twice max", .control_id=c("EBK", "NEG-DNA", "NTC")) {
 
+  .control_id <- match.arg(.control)
   if (!DBI::dbIsValid(con)) {
     stop("Connection argument does not have a valid connection the run-id database.
          Please try reconnecting to the database using 'DBI::dbConnect'",
@@ -40,6 +41,7 @@ generate_threshold <- function(con, plate_run, results_table, strategy = "twice 
   controls_for_flagging <- control_blanks |> filter(raw_fluorescence > rfu_threshold_check_value)
 
 
+  # TODO MAKE SURE TO KEEP EBK flagging after switch to neg-dna for thresholds --------------------
 
   if (nrow(controls_for_threshold) == 0) {
     stop(paste0("no control variables found in plate run with id: '", plate_run_identifier, "'"), call. = FALSE)
@@ -48,6 +50,15 @@ generate_threshold <- function(con, plate_run, results_table, strategy = "twice 
   if (is.character(strategy)) {
 
     thresholds <- switch (strategy,
+                          "twice max" = {
+                            controls_for_threshold |>
+                              dplyr::group_by(plate_run_id, assay_id) |>
+                              dplyr::slice_max(order_by = raw_fluorescence, n = 1) |>
+                              dplyr::summarise(
+                                threshold = as.numeric(raw_fluorescence) * 2
+                              ) |> ungroup() |>
+                              dplyr::mutate(runtime = runtime)
+                          },
                           "twice average" = {
                             controls_for_threshold |>
                               dplyr::group_by(plate_run_id, assay_id) |>
