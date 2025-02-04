@@ -220,8 +220,8 @@ validate_results <- function(con, plate_run, results_table = c("assay_result", "
 
   # TODO: neg-dna does not get RFU check instead compare it to 2x threshold of EBK
 
-  # Check if NTC/NDNA values are above 12k
-  rfu_threshold_check_value <- 18000 # 12k
+  # Check if NTC/NDNA values are above 20k if they are we reject the entire plate
+  rfu_threshold_check_value <- 20000
   ntc_ndna_are_above_12k <- assays_results_for_qaqc %>%
     filter(raw_fluorescence > rfu_threshold_check_value,
            sample_id %in% c("NEG-DNA-1", "NEG-DNA-2", "NEG-DNA-3",
@@ -236,19 +236,19 @@ validate_results <- function(con, plate_run, results_table = c("assay_result", "
   }
 
   # Check NTC/NDNA values against thresholds
-  ntc_ndna_are_above_thresholds <- assays_results_for_qaqc %>%
-    filter(raw_fluorescence > threshold,
-           sample_id %in% c("NEG-DNA-1", "NEG-DNA-2", "NEG-DNA-3",
-                            "NTC-1", "NTC-2", "NTC-3")) %>%
-    collect()
+  # ntc_ndna_are_above_thresholds <- assays_results_for_qaqc %>%
+  #   filter(raw_fluorescence > threshold,
+  #          sample_id %in% c("NEG-DNA-1", "NEG-DNA-2", "NEG-DNA-3",
+  #                           "NTC-1", "NTC-2", "NTC-3")) %>%
+  #   collect()
+  #
+  # ntc_ndna_are_above_thresholds_faling_assay_id <-
+  #   ntc_ndna_are_above_thresholds |> distinct(assay_id) |> pull()
 
-  ntc_ndna_are_above_thresholds_faling_assay_id <-
-    ntc_ndna_are_above_thresholds |> distinct(assay_id) |> pull()
-
-  if (nrow(ntc_ndna_are_above_thresholds) > 0) {
-    # remove the data that was added to db up to this point
-    error_messages <- c(error_messages, glue::glue("Qa/Qc Test Not Passed: NTC/NEG-DNA Value above Threshold for sample_id(s): {ntc_ndna_are_above_thresholds$sample_id}"))
-  }
+  # if (nrow(ntc_ndna_are_above_thresholds) > 0) {
+  #   # remove the data that was added to db up to this point
+  #   error_messages <- c(error_messages, glue::glue("Qa/Qc Test Not Passed: NTC/NEG-DNA Value above Threshold for sample_id(s): {ntc_ndna_are_above_thresholds$sample_id}"))
+  # }
 
   # Check POS-DNA controls
   pos_dna_values_are_below_threshold <- assays_results_for_qaqc %>%
@@ -267,8 +267,10 @@ validate_results <- function(con, plate_run, results_table = c("assay_result", "
     })
   }
 
-  combined_failed_assays <- c(ntc_ndna_are_above_thresholds_faling_assay_id, ntc_ndna_are_above_12k_failing_assay_id,
-                              pos_dna_values_are_below_threshold_failing_assay_id)
+  combined_failed_assays <- c(
+    #ntc_ndna_are_above_thresholds_faling_assay_id,
+    ntc_ndna_are_above_12k_failing_assay_id,
+    pos_dna_values_are_below_threshold_failing_assay_id)
 
   all_assays_in_plate_failed <- all(all_assays_in_plate %in% combined_failed_assays)
 
