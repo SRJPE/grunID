@@ -14,8 +14,8 @@
 add_new_plate_results <- function(con, protocol_name, genetic_method, laboratory,
                                   lab_work_performed_by, description, date_run,
                                   filepath, sample_type, layout_type, plate_size = c(96, 384),
-                                  .control_id = "EBK", selection_strategy = "recent priority",
-                                  threshold_strategy = "twice average",
+                                  .control_id = "NEG-DNA", selection_strategy = "recent priority",
+                                  threshold_strategy = "twice max",
                                   run_gen_id = FALSE, samples_type = c("jpe", "salvage"),
                                   custom_layout_filepath = NULL) {
 
