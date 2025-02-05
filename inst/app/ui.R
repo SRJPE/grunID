@@ -127,7 +127,7 @@ navbarPage(
                                                 shiny::helpText("You selected custom layout, you must include a sheet named 'layout' in your sherlock results file")),
 
                         selectInput("plate_size", "Select Plate Size", choices = c(384, 96)),
-                        selectInput("control_blank", "Select Control", choices = c("EBK", "NTC")),
+                        selectInput("control_blank", "Select Control", choices = c("NEG-DNA", "EBK", "NTC"), selected = "NEG-DNA"),
                         checkboxInput("perform_genetics_id", label = "Run genetic calculations for samples after upload", value = TRUE),
                         actionButton("do_upload", "Upload Results", class = "btn-success", icon = icon("rocket")),
 
