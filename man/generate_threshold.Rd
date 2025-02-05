@@ -8,8 +8,8 @@ generate_threshold(
   con,
   plate_run,
   results_table,
-  strategy = "twice average",
-  .control_id = "EBK"
+  strategy = "twice max",
+  .control_id = c("NEG-DNA", "EBK", "NTC")
 )
 }
 \arguments{

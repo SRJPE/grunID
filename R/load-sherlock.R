@@ -10,9 +10,9 @@
 #' assay on a plate will have its own control blanks and threshold value.
 #' @returns a table containing thresholds for an event, to be passed to `update_assay_detections()`
 #' @export
-generate_threshold <- function(con, plate_run, results_table, strategy = "twice max", .control_id=c("EBK", "NEG-DNA", "NTC")) {
+generate_threshold <- function(con, plate_run, results_table, strategy = "twice max", .control_id=c("NEG-DNA", "EBK", "NTC")) {
 
-  .control_id <- match.arg(.control)
+  .control_id <- match.arg(.control_id)
   if (!DBI::dbIsValid(con)) {
     stop("Connection argument does not have a valid connection the run-id database.
          Please try reconnecting to the database using 'DBI::dbConnect'",
@@ -29,19 +29,18 @@ generate_threshold <- function(con, plate_run, results_table, strategy = "twice 
     dplyr::filter(id == !!protocol_id) |>
     dplyr::pull(runtime)
 
-  control_blanks <- dplyr::tbl(con, results_table) |>
+  final_runtime_values_in_plate <-
+    dplyr::tbl(con, results_table) |>
     dplyr::filter(time == runtime,
-                  stringr::str_detect(sample_id, .control_id),
-           plate_run_id == !!plate_run_identifier) |>
+                  plate_run_id == !!plate_run_identifier) |>
     dplyr::collect()
 
-  rfu_threshold_check_value <- 18000 # change back to 12000
-  controls_for_threshold <- control_blanks |> filter(raw_fluorescence < rfu_threshold_check_value) |>
+  control_blanks <- final_runtime_values_in_plate |>
+    dplyr::filter(stringr::str_detect(sample_id, .control_id))
+
+  controls_for_threshold <-
+    control_blanks |>
     mutate(sub_plate_from_id = (strsplit(sample_id, "-")[[1]][2]))
-  controls_for_flagging <- control_blanks |> filter(raw_fluorescence > rfu_threshold_check_value)
-
-
-  # TODO MAKE SURE TO KEEP EBK flagging after switch to neg-dna for thresholds --------------------
 
   if (nrow(controls_for_threshold) == 0) {
     stop(paste0("no control variables found in plate run with id: '", plate_run_identifier, "'"), call. = FALSE)
@@ -79,21 +78,35 @@ generate_threshold <- function(con, plate_run, results_table, strategy = "twice 
     )
   }
 
-  if (nrow(controls_for_flagging) > 0) {
 
-    # Replace '_' with ':' using gsub()
-    flag_id <- gsub("-", ":", controls_for_flagging$sample_id)
-    flag_vals <- controls_for_flagging$raw_fluorescence
-    plate_flag <- paste(flag_id, flag_vals, sep=":")
+  # TODO MAKE SURE TO KEEP EBK flagging after switch to neg-dna for thresholds --------------------
+  ebks_in_plate <- final_runtime_values_in_plate |>
+    filter(stringr::str_detect(sample_id, "EBK"))
 
-    sql_statement <- glue::glue_sql("UPDATE plate_run SET flags = {plate_flag} WHERE id = {plate_run_identifier}", .con = con)
-    DBI::dbExecute(con, sql_statement)
-    comment <- "MANUAL EBK VALUE CHECK"
+  if (nrow(ebks_in_plate) > 0) {
+
+    flag_results <- map2(thresholds$assay_id, thresholds$threshold, function(x, y) {
+      ebks_in_plate |>
+        filter(assay_id == x, raw_fluorescence > y)
+    })
+
+    flag_results <- dplyr::bind_rows(flag_results)
+
+    if (nrow(flag_results) > 0) {
+      # Replace '_' with ':' using gsub()
+      flag_id <- gsub("-", ":", flag_results$sample_id)
+      flag_vals <- flag_results$raw_fluorescence
+      plate_flag <- paste(flag_id, flag_vals, sep=":")
+
+      sql_statement <- glue::glue_sql("UPDATE plate_run SET flags = {plate_flag} WHERE id = {plate_run_identifier}", .con = con)
+      DBI::dbExecute(con, sql_statement)
+      comment <- "MANUAL EBK VALUE CHECK"
 
 
-    thresholds$plate_comment <- comment
-  } else {
-    thresholds$plate_comment <- ""
+      thresholds$plate_comment <- comment
+    } else {
+      thresholds$plate_comment <- ""
+    }
   }
 
   return(thresholds)

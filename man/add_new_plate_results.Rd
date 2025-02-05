@@ -16,9 +16,9 @@ add_new_plate_results(
   sample_type,
   layout_type,
   plate_size = c(96, 384),
-  .control_id = "EBK",
+  .control_id = "NEG-DNA",
   selection_strategy = "recent priority",
-  threshold_strategy = "twice average",
+  threshold_strategy = "twice max",
   run_gen_id = FALSE,
   samples_type = c("jpe", "salvage"),
   custom_layout_filepath = NULL
