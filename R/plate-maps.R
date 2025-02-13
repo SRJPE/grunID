@@ -371,52 +371,41 @@ make_sw_plate_maps <- function(con, events,
   logger::log_info("getting data for events {events}")
   candidate_samples <- get_sw_plates_candidates(con, destination = destination,
                                                 events = as.numeric(events), season = season$year)
+  archive_plate_for_candidates <- tbl(con, "sample_archive_plates") |>
+    filter(sample_id %in% candidate_samples) |> collect()
 
-  events_candiate_code <- paste0("E", paste0(sort(events), collapse = "-"))
-
-  logger::log_info(glue::glue("Event code for EBK selection: {events_candiate_code} -----------------"))
-  # TODO when more than 4 ebks are candidate only select 4 from arc plate 1 or lowest
-  ebk_candidates <- tbl(con, "sample_archive_plates") |>
-    filter(str_detect(sample_id, "EBK"),
-           event_plate_code == events_candiate_code) |>
-    select(sample_id, arc_plate_id = arc_well_id) |>
-    collect()
-
-  if (length(candidate_samples) == 0) {
-    stop("no samples were found that need ots 16", call. = FALSE)
-  }
-
-  hamilton_letters <- paste0(LETTERS[1:8], rep(1:10, each = 8))
-  hamilton_plate_nums <- paste0("Plate", rep(1:10, each = 24))
-
-  # get only the latest result per sample from the results table
-  hamilton_cherry_pick <- tbl(con, "sample_archive_plates") |>
-    filter(sample_id %in% candidate_samples) |>
-    select(sample_id, arc_plate_id, arc_well_id) |>
-    collect() |>
-    mutate(plate = readr::parse_number(arc_well_id)) |>
-    arrange(plate) |>
-    tibble::add_row(sample_id = ebk_candidates$sample_id, arc_well_id = ebk_candidates$arc_plate_id) |>
-    mutate(destination_well_id = hamilton_letters[1:n()]) |>
+  plate_to_arc_plate_lookup <-
+    archive_plate_for_candidates |>
+    group_by(arc_plate_id) |>
+    summarise(min_event = min(event_number)) |>
+    ungroup() |>
+    mutate(plate_num = str_extract(arc_plate_id, "_P[0-9]_")) |>
+    arrange(min_event, plate_num) |>
     transmute(
-      SampleID = sample_id,
-      PlateID = str_extract(arc_plate_id, "(?<=P)\\d{1,2}"),
-      WellIDSource = arc_well_id,
-      WellIDDestination = destination_well_id,
+      PlateID=1:n(),
       arc_plate_id
     )
 
-  # FIXME: total hack, make better!
-  # when the destination is gtseq then remove all the ebks as they are not needed
-  if (destination == "gtseq") {
-    hamilton_cherry_pick <-
-      hamilton_cherry_pick |> filter(!stringr::str_starts(SampleID, "EBK"))
-  }
+  events_candiate_code <- glue::glue("E-{min(archive_plate_for_candidates$event_number)}-{max(archive_plate_for_candidates$event_number)}")
 
-  plate_to_arc_plate_lookup <- hamilton_cherry_pick |> distinct(PlateID, arc_plate_id) |>
-    filter(!is.na(arc_plate_id))
+  hamilton_letters <- paste0(LETTERS[1:8], rep(1:12, each = 8))
 
-  hamilton_cherry_pick <- hamilton_cherry_pick |> select(-arc_plate_id)
+  # get only the latest result per sample from the results table
+  hamilton_cherry_pick <- archive_plate_for_candidates |>
+    select(sample_id, arc_plate_id, arc_well_id) |>
+    mutate(destination_well_id = hamilton_letters[1:n()]) |>
+    transmute(
+      SampleID = sample_id,
+      WellIDSource = arc_well_id,
+      WellIDDestination = destination_well_id,
+      arc_plate_id
+    ) |> left_join(plate_to_arc_plate_lookup, by=c("arc_plate_id"="arc_plate_id")) |>
+    transmute(
+      SampleID,
+      PlateID=paste0("Plate", PlateID),
+      WellIDSource,
+      WellIDDestination
+    )
 
   message(glue::glue("A total of {nrow(hamilton_cherry_pick)} will be processed in this file"))
 
