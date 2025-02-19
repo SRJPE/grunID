@@ -371,6 +371,7 @@ make_sw_plate_maps <- function(con, events,
   logger::log_info("getting data for events {events}")
   candidate_samples <- get_sw_plates_candidates(con, destination = destination,
                                                 events = as.numeric(events), season = season$year)
+
   archive_plate_for_candidates <- tbl(con, "sample_archive_plates") |>
     filter(sample_id %in% candidate_samples) |> collect()
 
@@ -393,38 +394,52 @@ make_sw_plate_maps <- function(con, events,
   # get only the latest result per sample from the results table
   hamilton_cherry_pick <- archive_plate_for_candidates |>
     select(sample_id, arc_plate_id, arc_well_id) |>
-    mutate(destination_well_id = hamilton_letters[1:n()]) |>
+    mutate(grp = ceiling(row_number() / 88)) |>
+    group_by(grp) |>
+    mutate(
+      destination_well_id = hamilton_letters[1:n()]
+    ) |>
     transmute(
       SampleID = sample_id,
       WellIDSource = arc_well_id,
       WellIDDestination = destination_well_id,
-      arc_plate_id
+      arc_plate_id,
+      grp
     ) |> left_join(plate_to_arc_plate_lookup, by=c("arc_plate_id"="arc_plate_id")) |>
     transmute(
       SampleID,
       PlateID=paste0("Plate", PlateID),
       WellIDSource,
-      WellIDDestination
-    )
+      WellIDDestination,
+      grp
+    ) |>
+    group_split(grp) |>
+    map(function(d) {
+      d |> select(-grp)
+    })
+
 
   message(glue::glue("A total of {nrow(hamilton_cherry_pick)} will be processed in this file"))
 
   destination_label <- if (destination == "sherlock") "SW" else "GT"
 
-  cp_input_filename <- glue::glue("{output_dir}/JPE{season$season_code}_{events_candiate_code}_{destination_label}_CP_inputfile.txt")
-  write_csv(hamilton_cherry_pick, cp_input_filename)
+  input_files_created <- c()
+  iwalk(hamilton_cherry_pick, function(d, i) {
+    cp_input_filename <- glue::glue("{output_dir}/JPE{season$season_code}_{events_candiate_code}_{destination_label}_CP{i}_inputfile.txt")
+    write_csv(d, cp_input_filename)
+    input_files_created <<- append(input_files_created, cp_input_filename)
+  })
 
   platekey_filename <- glue::glue("{output_dir}/JPE{season$season_code}_{events_candiate_code}_{destination_label}_CP_platekey.txt")
   write_csv(plate_to_arc_plate_lookup, platekey_filename)
 
 
   message(glue::glue("Saving map file to: {platekey_filename}"))
-  message(glue::glue("Saving lookup file to: {cp_input_filename}"))
+  message(glue::glue("Saving lookup file to: {input_files_created}"))
 
   return(list(
     success = TRUE,
-    message = "process complete",
-    files = c(platekey_filename, cp_input_filename)
+    message = "process complete"
   ))
 }
 
@@ -542,6 +557,14 @@ make_dual_ots28_plates_from_arc <- function(arc_df) {
   } else if (total_subplates_in_batch == 4) {
     return(list())
   }
+}
+
+
+make_dual_ots_16_from_cherry_pick <- function(d) {
+  d |> separate(WellIDDestination, into = c("letter_row", "num_col"), sep = 1) |>
+    select(SampleID, letter_row, num_col) |>
+    pivot_wider(num_col) |>
+    arrange(letter_row)
 }
 
 #' @title Register Archive Plate
