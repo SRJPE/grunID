@@ -9,7 +9,8 @@ make_dual_assay_layout(
   layout_size = 96,
   output_dir,
   season_filter,
-  events_name
+  events_name,
+  plate_name_offset = 0
 )
 }
 \description{

@@ -72,12 +72,64 @@ distribute_ebks_in_plate <- function() {
 #' @title Make Single Assay Layout
 #' @export
 make_single_assay_layout <- function(data) {
-  return(list())
+  samples_parted <- partition_df_every_n(data, 92)
+  ebk_idx <- list()
+  ebks_to_insert <- c("EBK-1-1", "EBK-1-2", "EBK-1-3", "EBK-1-4")
+  ebk_idx[[1]] <- ebks_to_insert[1]
+  ebk_idx[[2]] <- ebks_to_insert[2]
+  ebk_idx[[3]] <- ebks_to_insert[3]
+  ebk_idx[[4]] <- ebks_to_insert[4]
+
+  layouts_list <- imap(samples_parted, \(x, i) suppressWarnings(make_plate_layout(x$id, ebks = ebk_idx[[i]], type="single")))
+  n_layout_groups <- ceiling(length(layouts_list) / 4) # 4 subplates per "packet"
+  group_ids <- rep(1:n_layout_groups, each = 4)
+
+
+
+  message(glue::glue("A total of {nrow(data)} samples were arranged into {length(layouts_list)} plates with single assay destination"))
+
+  filenames <- glue::glue("{output_dir}/JPE{season_filter}_{events_name}_P{seq_along(layouts_list)}_ARC.xlsx")
+  purrr::walk(seq_along(layouts_list), function(i) {
+    write_layout_to_file(layouts_list[[i]], filenames[i])
+    message(paste(filenames[i], "file created"))
+
+  })
+
+  single_assay <- matrix(NA, nrow = 16, ncol = 24)
+  single_assay[seq(1, 16, by = 2), seq(1, 24, by = 2)] <- as.matrix(layouts_list[[1]])
+  single_assay[seq(1, 16, by = 2), seq(2, 24, by = 2)] <- as.matrix(layouts_list[[2]])
+  single_assay[seq(2, 16, by = 2), seq(1, 24, by = 2)] <- as.matrix(layouts_list[[3]])
+  single_assay[seq(2, 16, by = 2), seq(2, 24, by = 2)] <- as.matrix(layouts_list[[4]])
+  single_assay[11:13, 23] <- c("NEG-DNA-1", "NEG-DNA-2", "NEG-DNA-3")
+  single_assay[11:13, 24] <- c("POS-DNA-1", "POS-DNA-2", "POS-DNA-3")
+  single_assay[14:16, 24] <- c("NTC-1", "NTC-2", "NTC-3")
+  colnames(single_assay) <- 1:24
+  rownames(single_assay) <- LETTERS[1:16]
+
+  # add the P{start}-{end}_SH
+  sherlock_filenames <- c(
+    glue::glue("{output_dir}/JPE{season_filter}_{events_name}_E_P{1}-{length(layouts_list)}_SH.xlsx"),
+    glue::glue("{output_dir}/JPE{season_filter}_{events_name}_L_P{1}-{length(layouts_list)}_SH.xlsx"))
+
+
+  purrr::walk(seq_along(sherlock_filenames), function(i) {
+    write_layout_to_file(single_assay, sherlock_filenames[i])
+    message(paste(sherlock_filenames[i], "file created"))
+  })
+
+  return(
+    list(
+      type = "single",
+      data = NA,
+      sherlock_plate_names = paste0(sherlock_filenames),
+      arc_plate_names = paste0(filenames)
+    )
+  )
 }
 
 #' @title Make Dual Assay Layout
 #' @export
-make_dual_assay_layout <- function(data, layout_size = 96, output_dir, season_filter, events_name) {
+make_dual_assay_layout <- function(data, layout_size = 96, output_dir, season_filter, events_name, plate_name_offset = 0) {
 
   samples_parted <- partition_df_every_n(data, 88)
 
@@ -126,7 +178,8 @@ make_dual_assay_layout <- function(data, layout_size = 96, output_dir, season_fi
   message(glue::glue("A total of {nrow(data)} samples were arranged into {length(layouts_list)} plates"))
 
 
-  filenames <- glue::glue("{output_dir}/JPE{season_filter}_E{events_name}_P{seq_along(layouts_list)}_ARC.xlsx")
+  plate_name_sequence <- plate_name_offset + seq_along(layouts_list)
+  filenames <- glue::glue("{output_dir}/JPE{season_filter}_E{events_name}_P{plate_name_sequence}_ARC.xlsx")
   purrr::walk(seq_along(layouts_list), function(i) {
     write_layout_to_file(layouts_list[[i]], filenames[i])
     message(paste(filenames[i], "file created"))
@@ -154,8 +207,8 @@ make_dual_assay_layout <- function(data, layout_size = 96, output_dir, season_fi
   # JPE25_E1-3-4_EL_P1-2_SH
   # Where P1-2 indicates which EL DNA plates are represented on the SHERLOCK run?
 
-  sherlock_plates <- make_dual_ots28_plates_from_arc(arc_df = out)
-  filename_arc_plate_reference <- paste(seq_along(layouts_list), collapse = "-")
+  sherlock_plates <- make_dual_ots28_plates_from_arc(arc_df = out, subplate_offset = plate_name_offset)
+  filename_arc_plate_reference <- paste(seq_along(layouts_list) + plate_name_offset, collapse = "-")
   filenames_sherlock <- glue::glue("{output_dir}/JPE{season_filter}_E{events_name}_EL_P{filename_arc_plate_reference}_SH.xlsx")
   purrr::walk(seq_along(sherlock_plates), function(i) {
     write_layout_to_file(sherlock_plates[[i]], filenames_sherlock[i])
@@ -215,18 +268,24 @@ make_archive_plate_maps_by_event <- function(con, events, season = get_current_s
   samples_parted <- partition_df_every_n(samples, n = 92)
 
   single_assay_idx <- seq_len(sample_cap_for_single_assay * single_assay_fits)
-  single_assay_idx <- ifelse(length(single_assay_idx) == 1, single_assay_idx, 0)
-  dual_assay_idx <- (single_assay_idx + 1):nrow(samples)
+  single_assay_idx <- if (length(single_assay_idx) == 1) 0 else single_assay_idx
+  dual_assay_idx <- (max(single_assay_idx) + 1):nrow(samples)
 
   single_assay_samples <- samples[single_assay_idx, ]
   dual_assay_samples <- samples[dual_assay_idx, ]
 
-  single_assay_layouts <- make_single_assay_layout(single_assay_samples)
+  if (length(single_assay_idx) > 0) {
+    single_assay_layouts <- make_single_assay_layout(single_assay_samples)
+    plate_name_offset <- length(single_assay_layouts$arc_plate_names)
+  } else {
+    plate_name_offset <- 0
+  }
 
   dual_assay_layouts <- make_dual_assay_layout(dual_assay_samples,
                                                output_dir = output_dir,
                                                season_filter = season_filter,
-                                               events_name = events_name)
+                                               events_name = events_name,
+                                               plate_name_offset = plate_name_offset)
 
 
   return(list(
@@ -448,7 +507,7 @@ pull_as_numeric <- function(x) {
 }
 
 #' @export
-make_dual_ots28_plates_from_arc <- function(arc_df) {
+make_dual_ots28_plates_from_arc <- function(arc_df, subplate_offset = 0) {
   d <- arc_df |> mutate(sub_plate = stringr::str_extract(archive_plate_id, "(?<=P)\\d+")) |>
     filter(!str_detect(sample_id, "EBK")) |>
     mutate(
@@ -464,7 +523,7 @@ make_dual_ots28_plates_from_arc <- function(arc_df) {
   total_subplates_in_batch <- length(subplates_in_batch)
 
   if (total_subplates_in_batch == 1) {
-    p1 <- d |> filter(sub_plate == 1)
+    p1 <- d |> filter(sub_plate == 1 + subplate_offset)
 
     p1_ids <- p1$sample_id
     p1_dual_matrix_left <- matrix(NA, nrow = 16, ncol = 11)
@@ -488,7 +547,7 @@ make_dual_ots28_plates_from_arc <- function(arc_df) {
     return(list(p1_full))
 
   } else if (total_subplates_in_batch == 2) {
-    p12 <- d |> filter(sub_plate %in% 1:2)
+    p12 <- d |> filter(sub_plate %in% (1:2) + subplate_offset)
 
     p12_ids <- p12$sample_id
     p12_dual_matrix_left <- matrix(NA, nrow = 16, ncol = 11)
@@ -512,8 +571,8 @@ make_dual_ots28_plates_from_arc <- function(arc_df) {
 
     return(list(p12_full))
   } else if (total_subplates_in_batch == 3) {
-    p12 <- d |> filter(sub_plate %in% 1:2)
-    p3 <- d |> filter(sub_plate == 3)
+    p12 <- d |> filter(sub_plate %in% (1:2) + subplate_offset)
+    p3 <- d |> filter(sub_plate== 3 + subplate_offset)
 
     p12_ids <- p12$sample_id
     p12_dual_matrix_left <- matrix(NA, nrow = 16, ncol = 11)
