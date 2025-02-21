@@ -71,7 +71,7 @@ distribute_ebks_in_plate <- function() {
 
 #' @title Make Single Assay Layout
 #' @export
-make_single_assay_layout <- function(data) {
+make_single_assay_layout <- function(data, output_dir, season_filter, events_name) {
   samples_parted <- partition_df_every_n(data, 92)
   ebk_idx <- list()
   ebks_to_insert <- c("EBK-1-1", "EBK-1-2", "EBK-1-3", "EBK-1-4")
@@ -109,7 +109,8 @@ make_single_assay_layout <- function(data) {
   # add the P{start}-{end}_SH
   sherlock_filenames <- c(
     glue::glue("{output_dir}/JPE{season_filter}_{events_name}_E_P{1}-{length(layouts_list)}_SH.xlsx"),
-    glue::glue("{output_dir}/JPE{season_filter}_{events_name}_L_P{1}-{length(layouts_list)}_SH.xlsx"))
+    glue::glue("{output_dir}/JPE{season_filter}_{events_name}_L_P{1}-{length(layouts_list)}_SH.xlsx")
+  )
 
 
   purrr::walk(seq_along(sherlock_filenames), function(i) {
@@ -268,17 +269,21 @@ make_archive_plate_maps_by_event <- function(con, events, season = get_current_s
   samples_parted <- partition_df_every_n(samples, n = 92)
 
   single_assay_idx <- seq_len(sample_cap_for_single_assay * single_assay_fits)
-  single_assay_idx <- if (length(single_assay_idx) == 1) 0 else single_assay_idx
-  dual_assay_idx <- (max(single_assay_idx) + 1):nrow(samples)
+  total_single_assays <- length(single_assay_idx)
+  total_single_assays <- max(0, total_single_assays)
+  dual_assay_idx <- (total_single_assays + 1):nrow(samples)
 
   single_assay_samples <- samples[single_assay_idx, ]
   dual_assay_samples <- samples[dual_assay_idx, ]
 
-  if (length(single_assay_idx) > 0) {
-    single_assay_layouts <- make_single_assay_layout(single_assay_samples)
-    plate_name_offset <- length(single_assay_layouts$arc_plate_names)
-  } else {
+  if (total_single_assays == 0) {
     plate_name_offset <- 0
+  } else {
+    single_assay_layouts <- make_single_assay_layout(single_assay_samples,
+                                                     output_dir = output_dir,
+                                                     season_filter = season_filter,
+                                                     events_name = events_name)
+    plate_name_offset <- length(single_assay_layouts$arc_plate_names)
   }
 
   dual_assay_layouts <- make_dual_assay_layout(dual_assay_samples,
@@ -458,6 +463,7 @@ make_sw_plate_maps <- function(con, events,
     mutate(
       destination_well_id = hamilton_letters[1:n()]
     ) |>
+    ungroup() |>
     transmute(
       SampleID = sample_id,
       WellIDSource = arc_well_id,
@@ -472,10 +478,45 @@ make_sw_plate_maps <- function(con, events,
       WellIDDestination,
       grp
     ) |>
-    group_split(grp) |>
-    map(function(d) {
-      d |> select(-grp)
-    })
+    separate(WellIDSource, into = c("well_id_row", "well_id_col"),sep = 1, remove = FALSE) |>
+    arrange(PlateID, well_id_col, well_id_row) |>
+    ungroup() |>
+    select(-well_id_col, -well_id_row)
+
+  sample_cap_for_single_assay <- 368
+  sample_cap_for_dual_assay <- 176
+
+  single_assay_fits <- floor(nrow(hamilton_cherry_pick) / sample_cap_for_single_assay)
+  dual_assay_fits <- nrow(hamilton_cherry_pick) / sample_cap_for_dual_assay
+
+  events_name <- paste(events, collapse="-")
+
+  samples_parted <- partition_df_every_n(hamilton_cherry_pick, n = 92)
+
+  single_assay_idx <- seq_len(sample_cap_for_single_assay * single_assay_fits)
+  single_assay_idx <- max(0, single_assay_idx)
+  dual_assay_idx <- (max(single_assay_idx) + 1):nrow(hamilton_cherry_pick)
+
+  single_assay_samples <- hamilton_cherry_pick[single_assay_idx, ]
+  dual_assay_samples <- hamilton_cherry_pick[dual_assay_idx, ]
+
+  if (single_assay_idx == 0) {
+    plate_name_offset <- 0
+  } else {
+    single_assay_layouts <- make_single_assay_layout(single_assay_samples)
+    plate_name_offset <- length(single_assay_layouts$arc_plate_names)
+  }
+
+  dual_assay_layouts <- make_dual_assay_layout(dual_assay_samples,
+                                               output_dir = output_dir,
+                                               season_filter = season_filter,
+                                               events_name = events_name,
+                                               plate_name_offset = plate_name_offset)
+
+  # group_split(grp) |>
+  # map(function(d) {
+  #   d |> select(-grp)
+  # })
 
 
   message(glue::glue("A total of {nrow(hamilton_cherry_pick)} will be processed in this file"))

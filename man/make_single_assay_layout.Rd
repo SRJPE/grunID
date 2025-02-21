@@ -4,7 +4,7 @@
 \alias{make_single_assay_layout}
 \title{Make Single Assay Layout}
 \usage{
-make_single_assay_layout(data)
+make_single_assay_layout(data, output_dir, season_filter, events_name)
 }
 \description{
 Make Single Assay Layout
