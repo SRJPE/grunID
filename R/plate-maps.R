@@ -88,7 +88,7 @@ make_single_assay_layout <- function(data, output_dir, season_filter, events_nam
 
   message(glue::glue("A total of {nrow(data)} samples were arranged into {length(layouts_list)} plates with single assay destination"))
 
-  filenames <- glue::glue("{output_dir}/JPE{season_filter}_{events_name}_P{seq_along(layouts_list)}_ARC.xlsx")
+  filenames <- glue::glue("{output_dir}/JPE{season_filter}_E{events_name}_P{seq_along(layouts_list)}_ARC.xlsx")
   purrr::walk(seq_along(layouts_list), function(i) {
     write_layout_to_file(layouts_list[[i]], filenames[i])
     message(paste(filenames[i], "file created"))
@@ -108,8 +108,8 @@ make_single_assay_layout <- function(data, output_dir, season_filter, events_nam
 
   # add the P{start}-{end}_SH
   sherlock_filenames <- c(
-    glue::glue("{output_dir}/JPE{season_filter}_{events_name}_E_P{1}-{length(layouts_list)}_SH.xlsx"),
-    glue::glue("{output_dir}/JPE{season_filter}_{events_name}_L_P{1}-{length(layouts_list)}_SH.xlsx")
+    glue::glue("{output_dir}/JPE{season_filter}_E{events_name}_E_P{1}-{length(layouts_list)}_SH.xlsx"),
+    glue::glue("{output_dir}/JPE{season_filter}_E{events_name}_L_P{1}-{length(layouts_list)}_SH.xlsx")
   )
 
 
