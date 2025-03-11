@@ -128,6 +128,66 @@ make_single_assay_layout <- function(data, output_dir, season_filter, events_nam
   )
 }
 
+#' @title Make Single Assay Layout
+#' @export
+make_single_assay_layout_for_hamilton <- function(data, output_dir, season_filter, events_name) {
+  samples_parted <- partition_df_every_n(data, 92)
+  ebk_idx <- list()
+  ebks_to_insert <- c("EBK-1-1", "EBK-1-2", "EBK-1-3", "EBK-1-4")
+  ebk_idx[[1]] <- ebks_to_insert[1]
+  ebk_idx[[2]] <- ebks_to_insert[2]
+  ebk_idx[[3]] <- ebks_to_insert[3]
+  ebk_idx[[4]] <- ebks_to_insert[4]
+
+  layouts_list <- imap(samples_parted, \(x, i) suppressWarnings(make_plate_layout(x$id, ebks = ebk_idx[[i]], type="single")))
+  n_layout_groups <- ceiling(length(layouts_list) / 4) # 4 subplates per "packet"
+  group_ids <- rep(1:n_layout_groups, each = 4)
+
+
+
+  message(glue::glue("A total of {nrow(data)} samples were arranged into {length(layouts_list)} plates with single assay destination"))
+
+  filenames <- glue::glue("{output_dir}/JPE{season_filter}_E{events_name}_P{seq_along(layouts_list)}_ARC.xlsx")
+  purrr::walk(seq_along(layouts_list), function(i) {
+    write_layout_to_file(layouts_list[[i]], filenames[i])
+    message(paste(filenames[i], "file created"))
+
+  })
+
+  single_assay <- matrix(NA, nrow = 16, ncol = 24)
+  single_assay[seq(1, 16, by = 2), seq(1, 24, by = 2)] <- as.matrix(layouts_list[[1]])
+  single_assay[seq(1, 16, by = 2), seq(2, 24, by = 2)] <- as.matrix(layouts_list[[2]])
+  single_assay[seq(2, 16, by = 2), seq(1, 24, by = 2)] <- as.matrix(layouts_list[[3]])
+  single_assay[seq(2, 16, by = 2), seq(2, 24, by = 2)] <- as.matrix(layouts_list[[4]])
+  single_assay[11:13, 23] <- c("NEG-DNA-1", "NEG-DNA-2", "NEG-DNA-3")
+  single_assay[11:13, 24] <- c("POS-DNA-1", "POS-DNA-2", "POS-DNA-3")
+  single_assay[14:16, 24] <- c("NTC-1", "NTC-2", "NTC-3")
+  colnames(single_assay) <- 1:24
+  rownames(single_assay) <- LETTERS[1:16]
+
+  # add the P{start}-{end}_SH
+  sherlock_filenames <- c(
+    glue::glue("{output_dir}/JPE{season_filter}_E{events_name}_E_P{1}-{length(layouts_list)}_SH.xlsx"),
+    glue::glue("{output_dir}/JPE{season_filter}_E{events_name}_L_P{1}-{length(layouts_list)}_SH.xlsx")
+  )
+
+
+  purrr::walk(seq_along(sherlock_filenames), function(i) {
+    write_layout_to_file(single_assay, sherlock_filenames[i])
+    message(paste(sherlock_filenames[i], "file created"))
+  })
+
+  return(
+    list(
+      type = "single",
+      data = NA,
+      sherlock_plate_names = paste0(sherlock_filenames),
+      arc_plate_names = paste0(filenames)
+    )
+  )
+}
+
+
 #' @title Make Dual Assay Layout
 #' @export
 make_dual_assay_layout <- function(data, layout_size = 96, output_dir, season_filter, events_name, plate_name_offset = 0) {
@@ -226,6 +286,106 @@ make_dual_assay_layout <- function(data, layout_size = 96, output_dir, season_fi
   )
 
 }
+
+#' @title Make Dual Assay Layout
+#' @export
+make_dual_assay_layout_for_hamilton <- function(data, layout_size = 96, output_dir, season_filter, events_name, plate_name_offset = 0) {
+
+  samples_parted <- partition_df_every_n(data, 88)
+
+  # TODO: HACK!!!! lets not hard-code this, but for now this is fine
+  ebk_idx <- list()
+  ebks_to_insert <- c("EBK-1-1", "EBK-1-2", "EBK-1-3", "EBK-1-4")
+  if (length(samples_parted) == 1) {
+    ebk_idx[[1]] <- ebks_to_insert
+  } else if (length(samples_parted) == 2) {
+    ebk_idx[[1]] <- ebks_to_insert[1:2]
+    ebk_idx[[2]] <- ebks_to_insert[3:4]
+  } else if (length(samples_parted) == 3) {
+    ebk_idx[[1]] <- ebks_to_insert[1]
+    ebk_idx[[2]] <- ebks_to_insert[2]
+    ebk_idx[[3]] <- ebks_to_insert[3:4]
+  } else if (length(samples_parted) == 4) {
+    ebk_idx[[1]] <- ebks_to_insert[1]
+    ebk_idx[[2]] <- ebks_to_insert[2]
+    ebk_idx[[3]] <- ebks_to_insert[3]
+    ebk_idx[[4]] <- ebks_to_insert[4]
+  } else {
+    new_samples_parted <- samples_parted[-c(1:4)]
+    if (length(new_samples_parted) == 1) {
+      ebk_idx[[5]] <- ebks_to_insert
+    } else if (length(new_samples_parted) == 2) {
+      ebk_idx[[5]] <- ebks_to_insert[1:2]
+      ebk_idx[[6]] <- ebks_to_insert[3:4]
+    } else if (length(new_samples_parted) == 3) {
+      ebk_idx[[5]] <- ebks_to_insert[1]
+      ebk_idx[[6]] <- ebks_to_insert[2]
+      ebk_idx[[7]] <- ebks_to_insert[3:4]
+    } else if (length(new_samples_parted) == 4) {
+      ebk_idx[[5]] <- ebks_to_insert[1]
+      ebk_idx[[6]] <- ebks_to_insert[2]
+      ebk_idx[[7]] <- ebks_to_insert[3]
+      ebk_idx[[8]] <- ebks_to_insert[4]
+    }
+  }
+
+
+
+  layouts_list <- imap(samples_parted, \(x, i) suppressWarnings(make_plate_layout(x$SampleID, ebks = ebk_idx[[i]], type="dual")))
+  n_layout_groups <- ceiling(length(layouts_list) / 4) # 4 subplates per "packet"
+  group_ids <- rep(1:n_layout_groups, each = 4)
+
+  message(glue::glue("A total of {nrow(data)} samples were arranged into {length(layouts_list)} plates"))
+
+
+  plate_name_sequence <- plate_name_offset + seq_along(layouts_list)
+  filenames <- glue::glue("{output_dir}/JPE{season_filter}_E{events_name}_P{plate_name_sequence}_ARC.xlsx")
+  # purrr::walk(seq_along(layouts_list), function(i) {
+  #   write_layout_to_file(layouts_list[[i]], filenames[i])
+  #   message(paste(filenames[i], "file created"))
+  #
+  # })
+
+  names(layouts_list) <- tools::file_path_sans_ext(filenames)
+
+  out <- layouts_list |>
+    enframe(name = "archive_plate_id") |>
+    unnest(cols = value) |>
+    mutate(letter_val = rep(LETTERS[1:8], length(filenames))) |>
+    pivot_longer(cols = `1`:`12`,
+                 names_to = NULL,
+                 values_to = "sample_id") |>
+    transmute(
+      archive_plate_id,
+      sample_id,
+      num_val = rep(1:12, 8 * length(filenames)),
+      well_id = paste0(letter_val, num_val),
+      plate_type = "dual") |>
+    filter(!is.na(sample_id)) |> # remove intentional blanks and EBK
+    select(-num_val)
+
+  # JPE25_E1-3-4_EL_P1-2_SH
+  # Where P1-2 indicates which EL DNA plates are represented on the SHERLOCK run?
+
+  sherlock_plates <- make_dual_ots28_plates_from_arc(arc_df = out, subplate_offset = plate_name_offset)
+  filename_arc_plate_reference <- paste(seq_along(layouts_list) + plate_name_offset, collapse = "-")
+  filenames_sherlock <- glue::glue("{output_dir}/JPE{season_filter}_E{events_name}_EL_P{seq_along(sherlock_plates)}_SH.xlsx")
+  purrr::walk(seq_along(sherlock_plates), function(i) {
+    write_layout_to_file(sherlock_plates[[i]], filenames_sherlock[i])
+    message(paste(filenames_sherlock[i], "file created"))
+  })
+
+  return(
+    list(
+      type = "dual",
+      data = out,
+      sherlock_plate_names = paste0(filenames_sherlock),
+      arc_plate_names = paste0(filenames)
+    )
+  )
+
+}
+
 
 
 #' @title Create Plate Maps for Archive Plates
@@ -483,35 +643,40 @@ make_sw_plate_maps <- function(con, events,
     ungroup() |>
     select(-well_id_col, -well_id_row)
 
-  sample_cap_for_single_assay <- 368
-  sample_cap_for_dual_assay <- 176
-
-  single_assay_fits <- floor(nrow(hamilton_cherry_pick) / sample_cap_for_single_assay)
-  dual_assay_fits <- nrow(hamilton_cherry_pick) / sample_cap_for_dual_assay
-
+  # sample_cap_for_single_assay <- 368
+  # sample_cap_for_dual_assay <- 176
+  #
+  # single_assay_fits <- floor(nrow(hamilton_cherry_pick) / sample_cap_for_single_assay)
+  # dual_assay_fits <- nrow(hamilton_cherry_pick) / sample_cap_for_dual_assay
+  #
   events_name <- paste(events, collapse="-")
+  #
+  # samples_parted <- partition_df_every_n(hamilton_cherry_pick, n = 92)
+  #
+  # single_assay_idx <- seq_len(sample_cap_for_single_assay * single_assay_fits)
+  # end_of_single_assay_idx <- max(0, single_assay_idx)
+  # dual_assay_idx <- (max(end_of_single_assay_idx) + 1):nrow(hamilton_cherry_pick)
+  #
+  # single_assay_samples <- hamilton_cherry_pick[single_assay_idx, ]
+  # dual_assay_samples <- hamilton_cherry_pick[dual_assay_idx, ]
 
-  samples_parted <- partition_df_every_n(hamilton_cherry_pick, n = 92)
-
-  single_assay_idx <- seq_len(sample_cap_for_single_assay * single_assay_fits)
-  single_assay_idx <- max(0, single_assay_idx)
-  dual_assay_idx <- (max(single_assay_idx) + 1):nrow(hamilton_cherry_pick)
-
-  single_assay_samples <- hamilton_cherry_pick[single_assay_idx, ]
-  dual_assay_samples <- hamilton_cherry_pick[dual_assay_idx, ]
-
-  if (single_assay_idx == 0) {
-    plate_name_offset <- 0
-  } else {
-    single_assay_layouts <- make_single_assay_layout(single_assay_samples)
-    plate_name_offset <- length(single_assay_layouts$arc_plate_names)
-  }
-
-  dual_assay_layouts <- make_dual_assay_layout(dual_assay_samples,
-                                               output_dir = output_dir,
-                                               season_filter = season_filter,
-                                               events_name = events_name,
-                                               plate_name_offset = plate_name_offset)
+  # if (end_of_single_assay_idx == 0) {
+  #   plate_name_offset <- 0
+  # } else {
+  #   single_assay_layouts <- make_single_assay_layout_for_hamilton(
+  #     data = single_assay_samples,
+  #     output_dir = output_dir,
+  #     season_filter = season$season_code,
+  #     events_name = events_name
+  #   )
+  #   plate_name_offset <- length(single_assay_layouts$arc_plate_names)
+  # }
+  #
+  # dual_assay_layouts <- make_dual_assay_layout_for_hamilton(dual_assay_samples,
+  #                                              output_dir = output_dir,
+  #                                              season_filter = season$season_code,
+  #                                              events_name = events_name,
+  #                                              plate_name_offset = plate_name_offset)
 
   # group_split(grp) |>
   # map(function(d) {
@@ -523,11 +688,12 @@ make_sw_plate_maps <- function(con, events,
 
   destination_label <- if (destination == "sherlock") "SW" else "GT"
 
-  input_files_created <- c()
-  iwalk(hamilton_cherry_pick, function(d, i) {
+  groups_in_cherry_pick <- hamilton_cherry_pick |> distinct(grp) |> pull()
+  input_files_created <- numeric(length(groups_in_cherry_pick))
+  walk(groups_in_cherry_pick, function(i) {
     cp_input_filename <- glue::glue("{output_dir}/JPE{season$season_code}_{events_candiate_code}_{destination_label}_CP{i}_inputfile.txt")
-    write_csv(d, cp_input_filename)
-    input_files_created <<- append(input_files_created, cp_input_filename)
+    write_csv(hamilton_cherry_pick |> filter(grp == i) |> select(-grp), cp_input_filename)
+    input_files_created[i] <- cp_input_filename
   })
 
   platekey_filename <- glue::glue("{output_dir}/JPE{season$season_code}_{events_candiate_code}_{destination_label}_CP_platekey.txt")
@@ -536,6 +702,11 @@ make_sw_plate_maps <- function(con, events,
 
   message(glue::glue("Saving map file to: {platekey_filename}"))
   message(glue::glue("Saving lookup file to: {input_files_created}"))
+
+  make_dual_assay_layout_for_hamilton(data = hamilton_cherry_pick,
+                                      output_dir = output_dir,
+                                      season_filter = season$season_code,
+                                      events_name = events_name)
 
   return(list(
     success = TRUE,
@@ -655,7 +826,117 @@ make_dual_ots28_plates_from_arc <- function(arc_df, subplate_offset = 0) {
     colnames(p3_full) <- 1:24
     return(list(p12_full, p3_full))
   } else if (total_subplates_in_batch == 4) {
-    return(list())
+    p12 <- d |> filter(sub_plate %in% (1:2) + subplate_offset)
+    p34 <- d |> filter(sub_plate %in% (3:4) + subplate_offset)
+
+    p12_ids <- p12$sample_id
+    p12_dual_matrix_left <- matrix(NA, nrow = 16, ncol = 11)
+    p12_dual_matrix_right <- matrix(NA, nrow = 16, ncol = 11)
+
+    p12_dual_matrix_left[seq(1, 16, 2), ] <- matrix(p12_ids[1:88], ncol = 11, byrow = FALSE)
+    p12_dual_matrix_left[seq(2, 16, 2), ] <- matrix(p12_ids[89:176], ncol = 11, byrow = FALSE)
+    p12_dual_matrix_left <- cbind(p12_dual_matrix_left, c("EBK-1-1",
+                                                          NA_character_,
+                                                          "EBK-1-2",
+                                                          NA_character_,
+                                                          "EBK-2-1",
+                                                          NA_character_,
+                                                          "EBK-2-2",
+                                                          "POS-DNA-1", "POS-DNA-2", "POS-DNA-3",
+                                                          "NEG-DNA-1", "NEG-DNA-2", "NEG-DNA-3",
+                                                          "NTC-1", "NTC-2", "NTC-3"))
+
+    p12_full <- cbind(p12_dual_matrix_left, p12_dual_matrix_left)
+    rownames(p12_full) <- LETTERS[1:16]
+    colnames(p12_full) <- 1:24
+
+    p34_ids <- p34$sample_id
+    p34_dual_matrix_left <- matrix(NA, nrow = 16, ncol = 11)
+    p34_dual_matrix_right <- matrix(NA, nrow = 16, ncol = 11)
+
+    p34_dual_matrix_left[seq(1, 16, 2), ] <- matrix(p34_ids[1:88], ncol = 11, byrow = FALSE)
+    p34_dual_matrix_left[seq(2, 16, 2), ] <- matrix(p34_ids[89:176], ncol = 11, byrow = FALSE)
+    p34_dual_matrix_left <- cbind(p34_dual_matrix_left, c("EBK-1-1",
+                                                          NA_character_,
+                                                          "EBK-1-2",
+                                                          NA_character_,
+                                                          "EBK-2-1",
+                                                          NA_character_,
+                                                          "EBK-2-2",
+                                                          "POS-DNA-1", "POS-DNA-2", "POS-DNA-3",
+                                                          "NEG-DNA-1", "NEG-DNA-2", "NEG-DNA-3",
+                                                          "NTC-1", "NTC-2", "NTC-3"))
+
+    p34_full <- cbind(p34_dual_matrix_left, p34_dual_matrix_left)
+    rownames(p34_full) <- LETTERS[1:16]
+    colnames(p34_full) <- 1:24
+    return(list(p12_full, p34_full))
+  } else if (total_subplates_in_batch == 5) {
+    p12 <- d |> filter(sub_plate %in% ((1:2) + subplate_offset))
+    p34 <- d |> filter(sub_plate %in% ((3:4) + subplate_offset))
+    p5 <- d |> filter(sub_plate %in% (5 + subplate_offset))
+
+
+    p12_ids <- p12$sample_id
+    p12_dual_matrix_left <- matrix(NA, nrow = 16, ncol = 11)
+    p12_dual_matrix_right <- matrix(NA, nrow = 16, ncol = 11)
+
+    p12_dual_matrix_left[seq(1, 16, 2), ] <- matrix(p12_ids[1:88], ncol = 11, byrow = FALSE)
+    p12_dual_matrix_left[seq(2, 16, 2), ] <- matrix(p12_ids[89:176], ncol = 11, byrow = FALSE)
+    p12_dual_matrix_left <- cbind(p12_dual_matrix_left, c("EBK-1-1",
+                                                          NA_character_,
+                                                          "EBK-1-2",
+                                                          NA_character_,
+                                                          "EBK-2-1",
+                                                          NA_character_,
+                                                          "EBK-2-2",
+                                                          "POS-DNA-1", "POS-DNA-2", "POS-DNA-3",
+                                                          "NEG-DNA-1", "NEG-DNA-2", "NEG-DNA-3",
+                                                          "NTC-1", "NTC-2", "NTC-3"))
+
+    p12_full <- cbind(p12_dual_matrix_left, p12_dual_matrix_left)
+    rownames(p12_full) <- LETTERS[1:16]
+    colnames(p12_full) <- 1:24
+
+    p34_ids <- p34$sample_id
+    p34_dual_matrix_left <- matrix(NA, nrow = 16, ncol = 11)
+    p34_dual_matrix_right <- matrix(NA, nrow = 16, ncol = 11)
+
+    p34_dual_matrix_left[seq(1, 16, 2), ] <- matrix(p34_ids[1:88], ncol = 11, byrow = FALSE)
+    p34_dual_matrix_left[seq(2, 16, 2), ] <- matrix(p34_ids[89:176], ncol = 11, byrow = FALSE)
+    p34_dual_matrix_left <- cbind(p34_dual_matrix_left, c("EBK-1-1",
+                                                          NA_character_,
+                                                          "EBK-1-2",
+                                                          NA_character_,
+                                                          "EBK-2-1",
+                                                          NA_character_,
+                                                          "EBK-2-2",
+                                                          "POS-DNA-1", "POS-DNA-2", "POS-DNA-3",
+                                                          "NEG-DNA-1", "NEG-DNA-2", "NEG-DNA-3",
+                                                          "NTC-1", "NTC-2", "NTC-3"))
+
+    p34_full <- cbind(p34_dual_matrix_left, p34_dual_matrix_left)
+    rownames(p34_full) <- LETTERS[1:16]
+    colnames(p34_full) <- 1:24
+
+    p5_ids <- p5$sample_id
+    p5_dual_matrix_left <- matrix(NA, nrow = 16, ncol = 11)
+    p5_dual_matrix_left[seq(1, 16, 2), ] <- matrix(p5_ids[1:88], ncol = 11, byrow = TRUE)
+    p5_dual_matrix_left <- cbind(p5_dual_matrix_left, c("EBK-1-1",
+                                                        NA_character_,
+                                                        "EBK-1-2",
+                                                        NA_character_,
+                                                        "EBK-1-3",
+                                                        NA_character_,
+                                                        "EBK-1-4",
+                                                        "POS-DNA-1", "POS-DNA-2", "POS-DNA-3",
+                                                        "NEG-DNA-1", "NEG-DNA-2", "NEG-DNA-3",
+                                                        "NTC-1", "NTC-2", "NTC-3"))
+
+    p5_full <- cbind(p5_dual_matrix_left, p5_dual_matrix_left)
+    rownames(p5_full) <- LETTERS[1:16]
+    colnames(p5_full) <- 1:24
+    return(list(p12_full, p34_full, p5_full))
   }
 }
 
