@@ -599,6 +599,7 @@ make_sw_plate_maps <- function(con, events,
   archive_plate_for_candidates <- tbl(con, "sample_archive_plates") |>
     filter(sample_id %in% candidate_samples) |> collect()
 
+
   plate_to_arc_plate_lookup <-
     archive_plate_for_candidates |>
     group_by(arc_plate_id) |>
@@ -620,6 +621,7 @@ make_sw_plate_maps <- function(con, events,
     hamilton_cherry_pick <- archive_plate_for_candidates |>
       select(sample_id, arc_plate_id, arc_well_id) |>
       separate(arc_well_id, into = c("well_id_row", "well_id_col"),sep = 1, remove = FALSE) |>
+      mutate(well_id_col = as.numeric(well_id_col)) |>
       arrange(arc_plate_id, well_id_col, well_id_row) |>
       select(-well_id_col, -well_id_row) |>
       mutate(grp = ceiling(row_number() / 96)) |>
@@ -628,21 +630,30 @@ make_sw_plate_maps <- function(con, events,
         destination_well_id = hamilton_letters[1:n()]
       ) |>
       ungroup() |>
+      group_by(grp) |>
+      mutate(plate_id = dense_rank(arc_plate_id)) |>
+      ungroup() |>
       transmute(
         SampleID = sample_id,
         WellIDSource = arc_well_id,
         WellIDDestination = destination_well_id,
         arc_plate_id,
-        grp
-      ) |> left_join(plate_to_arc_plate_lookup, by=c("arc_plate_id"="arc_plate_id")) |>
+        grp,
+        plate_id
+      ) |> #left_join(plate_to_arc_plate_lookup, by=c("arc_plate_id"="arc_plate_id")) |>
       transmute(
         SampleID,
-        PlateID=paste0("Plate", PlateID),
+        PlateID=paste0("Plate", plate_id),
         WellIDSource,
-        WellIDDestination, grp
+        WellIDDestination, grp,
+        arc_plate_id
       )
 
-    samples_parted <- partition_df_every_n(hamilton_cherry_pick, n = 96)
+    plate_map_keys <- hamilton_cherry_pick |> distinct(arc_plate_id, PlateID, grp)
+    hamilton_cherry_pick_for_maps <- hamilton_cherry_pick |>
+      select(SampleID, PlateID, WellIDSource, WellIDDestination)
+
+    samples_parted <- partition_df_every_n(hamilton_cherry_pick_for_maps, n = 96)
 
     layouts_list <- imap(samples_parted, \(x, i) suppressWarnings(make_plate_layout(x$SampleID, ebks = NULL, type="single")))
     n_layout_groups <- ceiling(length(layouts_list) / 4) # 4 subplates per "packet"
@@ -666,17 +677,18 @@ make_sw_plate_maps <- function(con, events,
 
     groups_in_cherry_pick <- hamilton_cherry_pick |> distinct(grp) |> pull()
     input_files_created <- numeric(length(groups_in_cherry_pick))
+    plate_key_files_created <- numeric(length(groups_in_cherry_pick))
     walk(groups_in_cherry_pick, function(i) {
+      platekey_filename <- glue::glue("{output_dir}/JPE{season$season_code}_{events_candidate_code}_{destination_label}_P{i}_CP_platekey.txt")
       cp_input_filename <- glue::glue("{output_dir}/JPE{season$season_code}_{events_candidate_code}_{destination_label}_P{i}_CP_inputfile.txt")
-      write_csv(hamilton_cherry_pick |> filter(grp == i) |> select(-grp), cp_input_filename)
+      write_csv(hamilton_cherry_pick |> filter(grp == i) |> select(-grp, -arc_plate_id), cp_input_filename)
+      write_csv(plate_map_keys |> filter(grp == i) |> select(-grp), platekey_filename)
       input_files_created[i] <- cp_input_filename
+      plate_key_files_created[i] <- platekey_filename
     })
 
-    platekey_filename <- glue::glue("{output_dir}/JPE{season$season_code}_{events_candidate_code}_{destination_label}_CP_platekey.txt")
-    write_csv(plate_to_arc_plate_lookup, platekey_filename)
 
-
-    message(glue::glue("Saving map file to: {platekey_filename}"))
+    message(glue::glue("Saving map file to: {plate_key_files_created}"))
     message(glue::glue("Saving lookup file to: {input_files_created}"))
 
 
