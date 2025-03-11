@@ -611,37 +611,105 @@ make_sw_plate_maps <- function(con, events,
       arc_plate_id
     )
 
-  events_candiate_code <- glue::glue("E-{min(archive_plate_for_candidates$event_number)}-{max(archive_plate_for_candidates$event_number)}")
+  events_candidate_code <- glue::glue("E{min(archive_plate_for_candidates$event_number)}-{max(archive_plate_for_candidates$event_number)}")
 
   hamilton_letters <- paste0(LETTERS[1:8], rep(1:12, each = 8))
 
-  # get only the latest result per sample from the results table
-  hamilton_cherry_pick <- archive_plate_for_candidates |>
+  if (destination == "gtseq") {
+    # get only the latest result per sample from the results table
+    hamilton_cherry_pick <- archive_plate_for_candidates |>
+      select(sample_id, arc_plate_id, arc_well_id) |>
+      separate(arc_well_id, into = c("well_id_row", "well_id_col"),sep = 1, remove = FALSE) |>
+      arrange(arc_plate_id, well_id_col, well_id_row) |>
+      select(-well_id_col, -well_id_row) |>
+      mutate(grp = ceiling(row_number() / 96)) |>
+      group_by(grp) |>
+      mutate(
+        destination_well_id = hamilton_letters[1:n()]
+      ) |>
+      ungroup() |>
+      transmute(
+        SampleID = sample_id,
+        WellIDSource = arc_well_id,
+        WellIDDestination = destination_well_id,
+        arc_plate_id,
+        grp
+      ) |> left_join(plate_to_arc_plate_lookup, by=c("arc_plate_id"="arc_plate_id")) |>
+      transmute(
+        SampleID,
+        PlateID=paste0("Plate", PlateID),
+        WellIDSource,
+        WellIDDestination, grp
+      )
+
+    samples_parted <- partition_df_every_n(hamilton_cherry_pick, n = 96)
+
+    layouts_list <- imap(samples_parted, \(x, i) suppressWarnings(make_plate_layout(x$SampleID, ebks = NULL, type="single")))
+    n_layout_groups <- ceiling(length(layouts_list) / 4) # 4 subplates per "packet"
+    group_ids <- rep(1:n_layout_groups, each = 4)
+
+
+
+    message(glue::glue("A total of {nrow(data)} samples were arranged into {length(layouts_list)} plates with single assay destination"))
+
+    season_filter <- season$season_code
+    filenames <- glue::glue("{output_dir}/JPE{season_filter}_{events_candidate_code}_GT_P{seq_along(layouts_list)}.xlsx")
+    purrr::walk(seq_along(layouts_list), function(i) {
+      write_layout_to_file(layouts_list[[i]], filenames[i])
+      message(paste(filenames[i], "file created"))
+
+    })
+
+    message(glue::glue("A total of {nrow(hamilton_cherry_pick)} will be processed in this file"))
+
+    destination_label <- if (destination == "sherlock") "SW" else "GT"
+
+    groups_in_cherry_pick <- hamilton_cherry_pick |> distinct(grp) |> pull()
+    input_files_created <- numeric(length(groups_in_cherry_pick))
+    walk(groups_in_cherry_pick, function(i) {
+      cp_input_filename <- glue::glue("{output_dir}/JPE{season$season_code}_{events_candidate_code}_{destination_label}_P{i}_CP_inputfile.txt")
+      write_csv(hamilton_cherry_pick |> filter(grp == i) |> select(-grp), cp_input_filename)
+      input_files_created[i] <- cp_input_filename
+    })
+
+    platekey_filename <- glue::glue("{output_dir}/JPE{season$season_code}_{events_candidate_code}_{destination_label}_CP_platekey.txt")
+    write_csv(plate_to_arc_plate_lookup, platekey_filename)
+
+
+    message(glue::glue("Saving map file to: {platekey_filename}"))
+    message(glue::glue("Saving lookup file to: {input_files_created}"))
+
+
+  } else {
     select(sample_id, arc_plate_id, arc_well_id) |>
-    mutate(grp = ceiling(row_number() / 88)) |>
-    group_by(grp) |>
-    mutate(
-      destination_well_id = hamilton_letters[1:n()]
-    ) |>
-    ungroup() |>
-    transmute(
-      SampleID = sample_id,
-      WellIDSource = arc_well_id,
-      WellIDDestination = destination_well_id,
-      arc_plate_id,
-      grp
-    ) |> left_join(plate_to_arc_plate_lookup, by=c("arc_plate_id"="arc_plate_id")) |>
-    transmute(
-      SampleID,
-      PlateID=paste0("Plate", PlateID),
-      WellIDSource,
-      WellIDDestination,
-      grp
-    ) |>
-    separate(WellIDSource, into = c("well_id_row", "well_id_col"),sep = 1, remove = FALSE) |>
-    arrange(PlateID, well_id_col, well_id_row) |>
-    ungroup() |>
-    select(-well_id_col, -well_id_row)
+      separate(arc_well_id, into = c("well_id_row", "well_id_col"),sep = 1, remove = FALSE) |>
+      arrange(arc_plate_id, well_id_col, well_id_row) |>
+      select(-well_id_col, -well_id_row) |>
+      mutate(grp = ceiling(row_number() / 96)) |>
+      group_by(grp) |>
+      mutate(
+        destination_well_id = hamilton_letters[1:n()]
+      ) |>
+      ungroup() |>
+      transmute(
+        SampleID = sample_id,
+        WellIDSource = arc_well_id,
+        WellIDDestination = destination_well_id,
+        arc_plate_id,
+        grp
+      ) |> left_join(plate_to_arc_plate_lookup, by=c("arc_plate_id"="arc_plate_id")) |>
+      transmute(
+        SampleID,
+        PlateID=paste0("Plate", PlateID),
+        WellIDSource,
+        WellIDDestination
+      ) |>
+      separate(WellIDDestination, into = c("well_id_row", "well_id_col"),sep = 1, remove = FALSE) |>
+      arrange(PlateID, well_id_col, well_id_row) |>
+      ungroup() |>
+      select(-well_id_col, -well_id_row) |>
+      mutate(grp = ceiling(row_number() / 96))
+  }
 
   # sample_cap_for_single_assay <- 368
   # sample_cap_for_dual_assay <- 176
@@ -684,29 +752,7 @@ make_sw_plate_maps <- function(con, events,
   # })
 
 
-  message(glue::glue("A total of {nrow(hamilton_cherry_pick)} will be processed in this file"))
 
-  destination_label <- if (destination == "sherlock") "SW" else "GT"
-
-  groups_in_cherry_pick <- hamilton_cherry_pick |> distinct(grp) |> pull()
-  input_files_created <- numeric(length(groups_in_cherry_pick))
-  walk(groups_in_cherry_pick, function(i) {
-    cp_input_filename <- glue::glue("{output_dir}/JPE{season$season_code}_{events_candiate_code}_{destination_label}_CP{i}_inputfile.txt")
-    write_csv(hamilton_cherry_pick |> filter(grp == i) |> select(-grp), cp_input_filename)
-    input_files_created[i] <- cp_input_filename
-  })
-
-  platekey_filename <- glue::glue("{output_dir}/JPE{season$season_code}_{events_candiate_code}_{destination_label}_CP_platekey.txt")
-  write_csv(plate_to_arc_plate_lookup, platekey_filename)
-
-
-  message(glue::glue("Saving map file to: {platekey_filename}"))
-  message(glue::glue("Saving lookup file to: {input_files_created}"))
-
-  make_dual_assay_layout_for_hamilton(data = hamilton_cherry_pick,
-                                      output_dir = output_dir,
-                                      season_filter = season$season_code,
-                                      events_name = events_name)
 
   return(list(
     success = TRUE,
