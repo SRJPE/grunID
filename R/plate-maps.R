@@ -653,7 +653,7 @@ make_sw_plate_maps <- function(con, events,
     message(glue::glue("A total of {nrow(data)} samples were arranged into {length(layouts_list)} plates with single assay destination"))
 
     season_filter <- season$season_code
-    filenames <- glue::glue("{output_dir}/JPE{season_filter}_{events_candidate_code}_GT_P{seq_along(layouts_list)}.xlsx")
+    filenames <- glue::glue("{output_dir}/JPE{season_filter}_{events_candidate_code}_GT_P{seq_along(layouts_list)}_DNA.xlsx")
     purrr::walk(seq_along(layouts_list), function(i) {
       write_layout_to_file(layouts_list[[i]], filenames[i])
       message(paste(filenames[i], "file created"))
