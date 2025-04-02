@@ -272,17 +272,16 @@ navbarPage(
                                 tags$div(style = "border: solid #d8e4ed;padding: 10px;margin:5px;",
                                          selectInput("query_ra_select_run_type", "Run Type",
                                                      choices = run_choices,
-                                                     multiple = TRUE,
-                                                     selected = run_choices),
+                                                     multiple = TRUE),
                                          selectInput("query_ra_select_field_run_type", "Field Run Type",
                                                      choices = c("Fall", "Spring", "Winter", "Heterozygote"),
                                                      multiple = TRUE,
                                                      selected = c("Fall", "Spring", "Winter", "Heterozygote")),
 
                                          selectInput("query_ra_select_sample_event", "Event",
-                                                     choices = c(1:10),
+                                                     choices = c(1:12),
                                                      multiple = TRUE,
-                                                     selected = 1:10)
+                                                     selected = 1:12)
                                 )),
                tags$div(
                  actionButton("query_refresh", "Run Query", class = "btn-success"),
