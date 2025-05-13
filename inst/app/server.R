@@ -615,12 +615,13 @@ ORDER BY gri.sample_id;
       return(NULL)
     }
 
-
-    res <- make_sw_plate_maps(con,
-                              events = input$gen_ham_plate_events,
-                              destination = input$gen_ham_destination,
-                              output_dir = cfg$data_output,
-                              season = get_current_season())
+    res <- make_sw_plate_maps(
+      con,
+      events = input$gen_ham_plate_events,
+      destination = input$gen_ham_destination,
+      output_dir = cfg$data_output,
+      season = get_current_season()
+    )
 
     if (res$success) {
       shiny::showNotification(glue::glue("file created and saved to: {cfg$data_output} see RStudio Console for details and full paths"),
