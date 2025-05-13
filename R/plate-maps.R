@@ -857,7 +857,7 @@ make_dual_ots28_plates_from_arc <- function(arc_df, subplate_offset = 0) {
   total_subplates_in_batch <- length(subplates_in_batch)
 
   if (total_subplates_in_batch == 1) {
-    p1 <- d |> filter(sub_plate == 1 + subplate_offset)
+    p1 <- d |> filter(sub_plate == (1 + subplate_offset))
 
     p1_ids <- p1$sample_id
     p1_dual_matrix_left <- matrix(NA, nrow = 16, ncol = 11)
@@ -881,7 +881,7 @@ make_dual_ots28_plates_from_arc <- function(arc_df, subplate_offset = 0) {
     return(list(p1_full))
 
   } else if (total_subplates_in_batch == 2) {
-    p12 <- d |> filter(sub_plate %in% (1:2) + subplate_offset)
+    p12 <- d |> filter(sub_plate %in% ((1:2) + subplate_offset))
 
     p12_ids <- p12$sample_id
     p12_dual_matrix_left <- matrix(NA, nrow = 16, ncol = 11)
@@ -905,8 +905,8 @@ make_dual_ots28_plates_from_arc <- function(arc_df, subplate_offset = 0) {
 
     return(list(p12_full))
   } else if (total_subplates_in_batch == 3) {
-    p12 <- d |> filter(sub_plate %in% (1:2) + subplate_offset)
-    p3 <- d |> filter(sub_plate== 3 + subplate_offset)
+    p12 <- d |> filter(sub_plate %in% ((1:2) + subplate_offset))
+    p3 <- d |> filter(sub_plate== (3 + subplate_offset))
 
     p12_ids <- p12$sample_id
     p12_dual_matrix_left <- matrix(NA, nrow = 16, ncol = 11)
@@ -948,8 +948,8 @@ make_dual_ots28_plates_from_arc <- function(arc_df, subplate_offset = 0) {
     colnames(p3_full) <- 1:24
     return(list(p12_full, p3_full))
   } else if (total_subplates_in_batch == 4) {
-    p12 <- d |> filter(sub_plate %in% (1:2) + subplate_offset)
-    p34 <- d |> filter(sub_plate %in% (3:4) + subplate_offset)
+    p12 <- d |> filter(sub_plate %in% ((1:2) + subplate_offset))
+    p34 <- d |> filter(sub_plate %in% ((3:4) + subplate_offset))
 
     p12_ids <- p12$sample_id
     p12_dual_matrix_left <- matrix(NA, nrow = 16, ncol = 11)
