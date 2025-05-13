@@ -438,6 +438,7 @@ make_archive_plate_maps_by_event <- function(con, events, season = get_current_s
 
   if (total_single_assays == 0) {
     plate_name_offset <- 0
+    single_assay_layouts <- NA
   } else {
     single_assay_layouts <- make_single_assay_layout(single_assay_samples,
                                                      output_dir = output_dir,
@@ -549,7 +550,7 @@ get_current_season <- function() {
 #' @export
 get_archive_plates_candidates <- function(con, events, season = get_current_season()$year) {
   candidate_samples <- get_sample_status(con, season = season) |>
-    filter(status_code_name == "returned from field") |> pull(sample_id)
+    filter(status_code_name == "returned from field", event_number %in% (as.numeric(events))) |> pull(sample_id)
 
   tbl(con, "sample") |>
     filter(id %in% candidate_samples) |>
@@ -596,8 +597,15 @@ make_sw_plate_maps <- function(con, events,
   candidate_samples <- get_sw_plates_candidates(con, destination = destination,
                                                 events = as.numeric(events), season = season$year)
 
+
+  logger::log_info("found {length(candidate_samples)} candidate samples to process")
+
   archive_plate_for_candidates <- tbl(con, "sample_archive_plates") |>
     filter(sample_id %in% candidate_samples) |> collect()
+
+  if (nrow(archive_plate_for_candidates) == 0) {
+    stop(paste0("no archive plates for candidate samples were found, the candidate samples were: ", paste(candidate_samples, collapse = ", ")))
+  }
 
 
   plate_to_arc_plate_lookup <-
@@ -617,8 +625,12 @@ make_sw_plate_maps <- function(con, events,
   hamilton_letters <- paste0(LETTERS[1:8], rep(1:12, each = 8))
 
   if (destination == "gtseq") {
+    logger::log_info("performing cherry-picking plate generation for GT-Seq samples selected")
     # get only the latest result per sample from the results table
-    hamilton_cherry_pick <- archive_plate_for_candidates |>
+    hamilton_cherry_pick <-
+      # 1) first we take candidate samples and sort them in the correct position and
+      # group them based on 96 samples per plate
+      archive_plate_for_candidates |>
       select(sample_id, arc_plate_id, arc_well_id) |>
       separate(arc_well_id, into = c("well_id_row", "well_id_col"),sep = 1, remove = FALSE) |>
       mutate(well_id_col = as.numeric(well_id_col)) |>
@@ -630,6 +642,7 @@ make_sw_plate_maps <- function(con, events,
         destination_well_id = hamilton_letters[1:n()]
       ) |>
       ungroup() |>
+      # 2)
       group_by(grp) |>
       mutate(plate_id = dense_rank(arc_plate_id)) |>
       ungroup() |>
@@ -693,8 +706,15 @@ make_sw_plate_maps <- function(con, events,
 
 
   } else {
-    select(sample_id, arc_plate_id, arc_well_id) |>
+    logger::log_info("performing cherry-picking plate generation for OTS-16 samples selected")
+    # get only the latest result per sample from the results table
+    hamilton_cherry_pick <-
+      # 1) first we take candidate samples and sort them in the correct position and
+      # group them based on 96 samples per plate
+      archive_plate_for_candidates |>
+      select(sample_id, arc_plate_id, arc_well_id) |>
       separate(arc_well_id, into = c("well_id_row", "well_id_col"),sep = 1, remove = FALSE) |>
+      mutate(well_id_col = as.numeric(well_id_col)) |>
       arrange(arc_plate_id, well_id_col, well_id_row) |>
       select(-well_id_col, -well_id_row) |>
       mutate(grp = ceiling(row_number() / 96)) |>
@@ -703,24 +723,68 @@ make_sw_plate_maps <- function(con, events,
         destination_well_id = hamilton_letters[1:n()]
       ) |>
       ungroup() |>
+      # 2)
+      group_by(grp) |>
+      mutate(plate_id = dense_rank(arc_plate_id)) |>
+      ungroup() |>
       transmute(
         SampleID = sample_id,
         WellIDSource = arc_well_id,
         WellIDDestination = destination_well_id,
         arc_plate_id,
-        grp
-      ) |> left_join(plate_to_arc_plate_lookup, by=c("arc_plate_id"="arc_plate_id")) |>
+        grp,
+        plate_id
+      ) |>
       transmute(
         SampleID,
-        PlateID=paste0("Plate", PlateID),
+        PlateID=paste0("Plate", plate_id),
         WellIDSource,
-        WellIDDestination
-      ) |>
-      separate(WellIDDestination, into = c("well_id_row", "well_id_col"),sep = 1, remove = FALSE) |>
-      arrange(PlateID, well_id_col, well_id_row) |>
-      ungroup() |>
-      select(-well_id_col, -well_id_row) |>
-      mutate(grp = ceiling(row_number() / 96))
+        WellIDDestination, grp,
+        arc_plate_id
+      )
+
+    plate_map_keys <- hamilton_cherry_pick |> distinct(arc_plate_id, PlateID, grp)
+    hamilton_cherry_pick_for_maps <- hamilton_cherry_pick |>
+      select(SampleID, PlateID, WellIDSource, WellIDDestination)
+
+    samples_parted <- partition_df_every_n(hamilton_cherry_pick_for_maps, n = 96)
+
+    layouts_list <- imap(samples_parted, \(x, i) suppressWarnings(make_plate_layout(x$SampleID, ebks = NULL, type="single")))
+    n_layout_groups <- ceiling(length(layouts_list) / 4) # 4 subplates per "packet"
+    group_ids <- rep(1:n_layout_groups, each = 4)
+
+
+
+    message(glue::glue("A total of {nrow(data)} samples were arranged into {length(layouts_list)} plates with single assay destination"))
+
+    season_filter <- season$season_code
+    filenames <- glue::glue("{output_dir}/JPE{season_filter}_{events_candidate_code}_GT_P{seq_along(layouts_list)}_DNA.xlsx")
+    purrr::walk(seq_along(layouts_list), function(i) {
+      write_layout_to_file(layouts_list[[i]], filenames[i])
+      message(paste(filenames[i], "file created"))
+
+    })
+
+    message(glue::glue("A total of {nrow(hamilton_cherry_pick)} will be processed in this file"))
+
+    destination_label <- if (destination == "sherlock") "SW" else "GT"
+
+    groups_in_cherry_pick <- hamilton_cherry_pick |> distinct(grp) |> pull()
+    input_files_created <- numeric(length(groups_in_cherry_pick))
+    plate_key_files_created <- numeric(length(groups_in_cherry_pick))
+    walk(groups_in_cherry_pick, function(i) {
+      platekey_filename <- glue::glue("{output_dir}/JPE{season$season_code}_{events_candidate_code}_{destination_label}_P{i}_CP_platekey.txt")
+      cp_input_filename <- glue::glue("{output_dir}/JPE{season$season_code}_{events_candidate_code}_{destination_label}_P{i}_CP_inputfile.txt")
+      write_csv(hamilton_cherry_pick |> filter(grp == i) |> select(-grp, -arc_plate_id), cp_input_filename)
+      write_csv(plate_map_keys |> filter(grp == i) |> select(-grp), platekey_filename)
+      input_files_created[i] <- cp_input_filename
+      plate_key_files_created[i] <- platekey_filename
+    })
+
+
+    message(glue::glue("Saving map file to: {plate_key_files_created}"))
+    message(glue::glue("Saving lookup file to: {input_files_created}"))
+
   }
 
   # sample_cap_for_single_assay <- 368
