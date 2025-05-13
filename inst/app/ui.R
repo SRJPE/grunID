@@ -279,9 +279,9 @@ navbarPage(
                                                      selected = c("Fall", "Spring", "Winter", "Heterozygote")),
 
                                          selectInput("query_ra_select_sample_event", "Event",
-                                                     choices = c(1:12),
+                                                     choices = c(1:16),
                                                      multiple = TRUE,
-                                                     selected = 1:12)
+                                                     selected = 1:16)
                                 )),
                tags$div(
                  actionButton("query_refresh", "Run Query", class = "btn-success"),
