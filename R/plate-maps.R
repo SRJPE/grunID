@@ -758,7 +758,7 @@ make_sw_plate_maps <- function(con, events,
     message(glue::glue("A total of {nrow(data)} samples were arranged into {length(layouts_list)} plates with single assay destination"))
 
     season_filter <- season$season_code
-    filenames <- glue::glue("{output_dir}/JPE{season_filter}_{events_candidate_code}_GT_P{seq_along(layouts_list)}_DNA.xlsx")
+    filenames <- glue::glue("{output_dir}/JPE{season_filter}_{events_candidate_code}_SW_P{seq_along(layouts_list)}_DNA.xlsx")
     purrr::walk(seq_along(layouts_list), function(i) {
       write_layout_to_file(layouts_list[[i]], filenames[i])
       message(paste(filenames[i], "file created"))
@@ -784,6 +784,14 @@ make_sw_plate_maps <- function(con, events,
 
     message(glue::glue("Saving map file to: {plate_key_files_created}"))
     message(glue::glue("Saving lookup file to: {input_files_created}"))
+
+    # make the sherlock plate
+    ots16_sherlock_filename_template <- "{output_dir}/JPE{season$season_code}_{events_candidate_code}_{destination_label}_P{i}_SH.xlsx"
+    iwalk(samples_parted, function(x, i) {
+      this_filename <- glue::glue(ots16_sherlock_filename_template, i=i)
+      output <- make_dual_ots_16_from_cherry_pick(x)
+      write_layout_to_file(output, this_filename)
+    })
 
   }
 
@@ -1064,10 +1072,20 @@ make_dual_ots28_plates_from_arc <- function(arc_df, subplate_offset = 0) {
 
 
 make_dual_ots_16_from_cherry_pick <- function(d) {
-  d |> separate(WellIDDestination, into = c("letter_row", "num_col"), sep = 1) |>
+  out <- d |> separate(WellIDDestination, into = c("letter_row", "num_col"), sep = 1) |>
     select(SampleID, letter_row, num_col) |>
-    pivot_wider(num_col) |>
-    arrange(letter_row)
+    arrange(letter_row) |>
+    pivot_wider(names_from = num_col, values_from = SampleID) |>
+    select(-letter_row) |>
+    as.matrix()
+
+  out_dims <- dim(out)
+
+  full_matrix <- matrix(NA, nrow=8, ncol=12)
+  full_matrix[1:out_dims[1], 1:out_dims[2]] <- out
+
+  row.names(full_matrix) <- LETTERS[1:8]
+  return(full_matrix)
 }
 
 #' @title Register Archive Plate

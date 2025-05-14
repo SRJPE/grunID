@@ -27,7 +27,10 @@ Imports:
     shinycssloaders,
     shinyBS,
     logger,
-    AzureStor
+    AzureStor,
+    DT,
+    shinyWidgets,
+    spsComps
 Depends: 
     R (>= 2.10)
 RoxygenNote: 7.3.2
