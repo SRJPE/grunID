@@ -696,8 +696,8 @@ make_sw_plate_maps <- function(con, events,
       cp_input_filename <- glue::glue("{output_dir}/JPE{season$season_code}_{events_candidate_code}_{destination_label}_P{i}_CP_inputfile.txt")
       write_csv(hamilton_cherry_pick |> filter(grp == i) |> select(-grp, -arc_plate_id), cp_input_filename)
       write_csv(plate_map_keys |> filter(grp == i) |> select(-grp), platekey_filename)
-      input_files_created[i] <- cp_input_filename
-      plate_key_files_created[i] <- platekey_filename
+      input_files_created[i] <<- cp_input_filename
+      plate_key_files_created[i] <<- platekey_filename
     })
 
 
