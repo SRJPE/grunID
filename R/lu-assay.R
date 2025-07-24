@@ -14,16 +14,16 @@
 #' @family assay functions
 #' @export
 #' @md
-get_assays <- function(con, is_active=TRUE, all_results=FALSE) {
+get_assays <- function(con, is_active = TRUE, all_results = FALSE) {
   is_valid_connection(con)
 
-  if(all_results) {
+  if (all_results) {
     assays <- dplyr::tbl(con, "assay") |>
       dplyr::collect()
   } else {
-  assays <- dplyr::tbl(con, "assay") |>
-    dplyr::filter(active == is_active) |>
-    dplyr::collect()
+    assays <- dplyr::tbl(con, "assay") |>
+      dplyr::filter(active == is_active) |>
+      dplyr::collect()
   }
 
   return(assays)
@@ -50,8 +50,7 @@ get_assays <- function(con, is_active=TRUE, all_results=FALSE) {
 #'
 #' new_assay <- data.frame(code = "OTS28E1",
 #'                         assay_name = "Ots28_Early1",
-#'                         description = "Targets GREB1L region; 58 bp away from
-#'                                        OTS28L1 and targets a SNP")
+#'                         description = "Targets GREB1L region; 58 bp away from OTS28L1 and targets a SNP")
 #'
 #' add_assay(con, new_assay)
 #' @family assay functions
@@ -61,15 +60,13 @@ add_assay <- function(con, assay) {
   is_valid_connection(con)
   is_valid_assay(assay)
 
-  tryCatch(DBI::dbAppendTable(con, "assay", assay),
-           error = function(e) {
-             if (grepl("duplicate key value violates unique constraint", e)) {
-               stop("This assay already exists in the database", call. = FALSE)
-             } else {
-               stop(e)
-             }
-           })
-
+  tryCatch(DBI::dbAppendTable(con, "assay", assay), error = function(e) {
+    if (grepl("duplicate key value violates unique constraint", e)) {
+      stop("This assay already exists in the database", call. = FALSE)
+    } else {
+      stop(e)
+    }
+  })
 }
 
 #' Update Assay
@@ -105,13 +102,15 @@ update_assay <- function(con, assay_id, assay) {
   is_valid_connection(con)
   is_valid_assay(assay)
 
-  query <- glue::glue_sql("UPDATE assay
+  query <- glue::glue_sql(
+    "UPDATE assay
                            SET code = {assay$code},
                                assay_name = {assay$assay_name},
                                description = {assay$description}
                            WHERE id = {assay_id}
                            RETURNING id, updated_at;",
-                          .con = con)
+    .con = con
+  )
 
   res <- DBI::dbSendQuery(con, query)
   results <- DBI::dbFetch(res)
@@ -119,6 +118,7 @@ update_assay <- function(con, assay_id, assay) {
 
   return(results)
 }
+
 
 #' Update Assay Status
 #' @description `update_assay_status()` changes active flag on existing assay type in the assay lookup table
@@ -149,14 +149,16 @@ update_assay <- function(con, assay_id, assay) {
 #' @family assay functions
 #' @export
 #' @md
-update_assay_status <- function(con, assay_id, set_active=TRUE) {
+update_assay_status <- function(con, assay_id, set_active = TRUE) {
   is_valid_connection(con)
 
-  query <- glue::glue_sql("UPDATE assay
+  query <- glue::glue_sql(
+    "UPDATE assay
                            SET active = {set_active}
                            WHERE id = {assay_id}
                            RETURNING id, code, active, updated_at;",
-                          .con = con)
+    .con = con
+  )
 
   res <- DBI::dbSendQuery(con, query)
   results <- DBI::dbFetch(res)
@@ -195,8 +197,7 @@ update_assay_status <- function(con, assay_id, set_active=TRUE) {
 delete_assay <- function(con, assay_id) {
   is_valid_connection(con)
 
-  query <- glue::glue_sql("DELETE FROM assay where id = {assay_id};",
-                          .con = con)
+  query <- glue::glue_sql("DELETE FROM assay where id = {assay_id};", .con = con)
 
   result <- DBI::dbExecute(con, query)
 
@@ -204,16 +205,12 @@ delete_assay <- function(con, assay_id) {
 }
 
 is_valid_assay <- function(assay) {
-
   if (!is.data.frame(assay)) {
     stop("Please provide assay as a dataframe", call. = FALSE)
   }
 
-  column_reference <- c("code" = "character", "assay_name" = "character",
-                        "description" = "character")
+  column_reference <- c("code" = "character", "assay_name" = "character", "description" = "character")
   if (!identical(sapply(assay, class), column_reference)) {
     stop('The assay supplied is not valid, see `help("add_assay")` for correct format', call. = FALSE)
   }
-
 }
-

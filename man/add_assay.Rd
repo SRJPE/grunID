@@ -31,8 +31,7 @@ con <- DBI::dbConnect(RPostgres::Postgres(),
 
 new_assay <- data.frame(code = "OTS28E1",
                         assay_name = "Ots28_Early1",
-                        description = "Targets GREB1L region; 58 bp away from
-                                       OTS28L1 and targets a SNP")
+                        description = "Targets GREB1L region; 58 bp away from OTS28L1 and targets a SNP")
 
 add_assay(con, new_assay)
 }

@@ -43,7 +43,7 @@ navbarPage(
   ),
   # tabPanel(title = "About"),
   navbarMenu("Add Data",
-             tabPanel("Upload Results",
+             tabPanel("Upload Sherlock Results",
                       # sidebarPanel(
                       #   width = 3
                       # ),
@@ -143,6 +143,10 @@ navbarPage(
                         textOutput("console_logs")
                       )
              ),
+
+             tabPanel("Uploaer GT-Seq Results",
+                      fileInput("gtseq_upload_file", label="Uploda GT-Seq Results"),
+                      tableOutput("gtseq_results_preview")),
 
              tabPanel("Check-in Samples",
                       uiOutput("check_in_notification"),

@@ -2,13 +2,23 @@
 library(jsonlite)
 
 az_refresh_token <- function() {
-  res <- tryCatch({
-    cli::cli_process_start("refreshing Azure auth token")
-    system2("az",
-            args = c("account get-access-token --resource https://ossrdbms-aad.database.windows.net"),
-            stdout = TRUE)
-  },
-  error = function(e) {stop("could not find `az` please make sure you have Azure CLI installed", call. = FALSE)}
+  res <- tryCatch(
+    {
+      cli::cli_process_start("refreshing Azure auth token")
+      system2(
+        "az",
+        args = c(
+          "account get-access-token --resource https://ossrdbms-aad.database.windows.net"
+        ),
+        stdout = TRUE
+      )
+    },
+    error = function(e) {
+      stop(
+        "could not find `az` please make sure you have Azure CLI installed",
+        call. = FALSE
+      )
+    }
   )
 
   cli::cli_process_done("done")
@@ -18,26 +28,44 @@ az_refresh_token <- function() {
 #' @title Get access token for container
 #' @export
 az_container_token <- function(storage_account) {
-  res <- tryCatch({
-    cli::cli_process_start("refreshing Azure Storage token")
-    system2("az",
-            args = c("storage", "account", "keys", "list",
-                     "--account-name", storage_account,
-                     "--query", "[0].value",
-                     "--output", "tsv"),
-            stdout = TRUE)
-  },
-  error = function(e) {stop("could not find `az` please make sure you have Azure CLI installed", call. = FALSE)}
+  res <- tryCatch(
+    {
+      cli::cli_process_start("refreshing Azure Storage token")
+      system2(
+        "az",
+        args = c(
+          "storage",
+          "account",
+          "keys",
+          "list",
+          "--account-name",
+          storage_account,
+          "--query",
+          "[0].value",
+          "--output",
+          "tsv"
+        ),
+        stdout = TRUE
+      )
+    },
+    error = function(e) {
+      stop(
+        "could not find `az` please make sure you have Azure CLI installed",
+        call. = FALSE
+      )
+    }
   )
   cli::cli_process_done("done")
   return(res)
 }
 
 db_get_config <- function() {
-  cfg <- tryCatch(config::get(),
-                  error = function(e) {return(NULL)})
+  cfg <- tryCatch(config::get(), error = function(e) {
+    return(NULL)
+  })
   return(cfg)
 }
+
 
 #' Connect to Run ID Database
 #' @description create a connection object to the Run ID Database. By default function will
@@ -67,14 +95,15 @@ db_get_config <- function() {
 #' @md
 #' @export
 gr_db_connect <- function(username = NULL, host = NULL, dbname = NULL) {
-
   # no username, host or dbname passed, try to read config file
   if (all(is.null(username), is.null(host), is.null(dbname))) {
-
     config <- db_get_config()
 
     if (is.null(config)) {
-      stop("Could not find a config file within your working directory", call. = FALSE)
+      stop(
+        "Could not find a config file within your working directory",
+        call. = FALSE
+      )
     }
   } else {
     config <- list()
@@ -86,14 +115,14 @@ gr_db_connect <- function(username = NULL, host = NULL, dbname = NULL) {
   auth_token <- az_refresh_token()
 
   # at this point config has the creds
-  DBI::dbConnect(RPostgres::Postgres(),
-                 dbname = config$dbname,
-                 host = config$host,
-                 port = 5432,
-                 user = config$username,
-                 password = auth_token$accessToken)
-
-
+  DBI::dbConnect(
+    RPostgres::Postgres(),
+    dbname = config$dbname,
+    host = config$host,
+    port = 5432,
+    user = config$username,
+    password = auth_token$accessToken
+  )
 }
 
 
@@ -101,8 +130,10 @@ gr_db_connect <- function(username = NULL, host = NULL, dbname = NULL) {
 #' @export
 az_container_connect <- function(account_name, container_name) {
   store_access_key <- grunID::az_container_token(account_name)
-  store <- AzureStor::storage_endpoint("https://geneticsedidata.blob.core.windows.net", store_access_key)
+  store <- AzureStor::storage_endpoint(
+    "https://geneticsedidata.blob.core.windows.net",
+    store_access_key
+  )
   container <- AzureStor::storage_container(store, container_name)
   return(container)
 }
-

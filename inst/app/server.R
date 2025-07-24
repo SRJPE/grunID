@@ -238,6 +238,10 @@ function(input, output, session) {
       print("Submission cancelled by user.")
     }}, priority = 999)
 
+  observeEvent(input$gtseq_upload_file, {
+    req(input$gtseq_upload_file)
+    output$gtseq_results_preview <- renderTable(grunID::read_gtseq(input$gtseq_upload_file$datapath))
+  })
 
   # Sample Status ---------------------------------------------------------------------
 
