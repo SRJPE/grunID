@@ -25,28 +25,30 @@ run_ids_2023 <- parsed_data_2023 |>
 data_2023 |>
   distinct(Pop_Structure_ID)
 
-
+max(as.numeric(parsed_data_2023$sample_number), na.rm = T)
 to_upload <- parsed_data_2023 |>
+  filter(date == "23") |> # this is just a check
   group_by(location_code, date, sample_event_number, sample_bin_code) |>
-  tally() |>
+  summarise(n = max(as.numeric(sample_number))) |>
   ungroup() |>
+  filter(!is.na(n)) |> # TODO sample event number coded as "A"
   mutate(first_sample_date = as.Date(paste0("20", date, "-01-01")),
-         # TODO check this assumption
          min_fork_length = 1,
-         max_fork_length = 200)
+         max_fork_length = 200) |>
+  tail(-1)
 
 
 # 1. insert samples and all FK's
 # for each of the rows in the df above, do a function call with `add_sample`
-purrr::pmap(list(con = con,
-                 location_code = to_upload$location_code,
+purrr::pmap(list(location_code = to_upload$location_code,
                  sample_event_number = to_upload$sample_event_number,
                  sample_bin_code = to_upload$sample_bin_code,
                  first_sample_date = to_upload$first_sample_date,
                  min_fork_length = to_upload$min_fork_length,
                  max_fork_length = to_upload$max_fork_length,
                  expected_number_of_samples = to_upload$n),
-            grunID::add_sample)
+            grunID::add_sample,
+            con = con)
 
 # add_sample(con, "BTC", 10, "2023-01-01", "A", 1, 200, 2)
 
@@ -59,6 +61,7 @@ data_with_all_run_types <- parsed_data_2023 |>
   left_join(field_season_data_backfill |>
               select(sample_id, field_run_type_id),
             by = c("SampleID" = "sample_id"))
+
 # which ones don't align with a sample id?
 parsed_data_2023$SampleID[!parsed_data_2023$SampleID %in% field_season_data_backfill$sample_id]
 
@@ -66,14 +69,16 @@ parsed_data_2023$SampleID[!parsed_data_2023$SampleID %in% field_season_data_back
 # convert run id in spreadsheet to the id's we use in the database
 # do database insert using DBI package
 run_ids_2023_to_insert <- run_ids_2023 |>
-  filter(sample_id %in% c("BTC23_10_A_2",
-                          "BTC23_10_A_1"))
+  filter(!sample_id %in% c("BTC23_10_A_2",
+                           "BTC23_10_A_1",
+                           "MIL23_11_E_A"))
 
 insert_statement <- glue::glue_sql("INSERT INTO genetic_run_identification(sample_id, run_type_id)
                                    VALUES ({run_ids_2023_to_insert$sample_id}, {run_ids_2023_to_insert$run_type_id})",
                                    .con = con)
 
 for(i in 1:length(insert_statement)) {
+  print(paste0(i, " of ", length(insert_statement)))
   res <- DBI::dbSendQuery(con, insert_statement[i])
   DBI::dbClearResult(res)
 }
