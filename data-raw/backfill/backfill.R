@@ -84,7 +84,161 @@ for(i in 1:length(insert_statement)) {
 }
 
 
+# process the sherlock side of things
+sherlock_all_data <- readxl::read_excel("data-raw/backfill/JPE_2022-2024_Genetic_Data_FC_05-2025_v2.xlsx")
+sherlock_2023_samples_ids <- sherlock_all_data |> filter(lubridate::year(Date) == 2023) |> pull(SampleID)
+gtseq_2023_ids <- data_2023 |> pull(SampleID)
+
+dplyr::intersect(sherlock_2023_samples_ids, gtseq_2023_ids)
+length(sherlock_2023_samples_ids)
+length(gtseq_2023_ids)
+
+# ok so it looks like gtseq and the sherlock stuff pretty much 100  percent overlap
+dplyr::setdiff(sherlock_2023_samples_ids, gtseq_2023_ids)
+# i think the plan should be lets tackle the overlaps since they have all the data, then 
+# we can tackle the ids that exist in each of the two datesets only
+
+# 2023 -----------------------
+con <- grunID::gr_db_connect()
+gtseq_results_2023 <- data_2023 <- readxl::read_excel("data-raw/backfill/2023_JPE_GT_Summary_grunID 1.xlsx")
+sherlock_results_2023 <- sherlock_all_data |> filter(lubridate::year(Date) == 2023)
+
+samples_in_both <- dplyr::intersect(gtseq_results_2023$SampleID, sherlock_results_2023$SampleID)
+samples_only_in_gtseq <- dplyr::setdiff(gtseq_results_2023$SampleID, sherlock_results_2023$SampleID)
+samples_only_in_sherlock <- dplyr::setdiff(sherlock_results_2023$SampleID, gtseq_results_2023$SampleID)
 
 
+## insert samples that are in both gtseq and sherlock ----------------
+full_data_2023 <- sherlock_results_2023 |> 
+  inner_join(
+    gtseq_results_2023, 
+    by=c("SampleID" = "SampleID"), 
+    suffix = c("_sherlock", "_gtseq"))
+
+full_data_2023 |> glimpse()
+parsed_data_2023 <- full_data_2023 |> 
+  tidyr::separate(SampleID, sep = "_",
+                  into = c("location_and_date", "sample_event_number",
+                           "sample_bin_code", "sample_number"),
+                  remove = FALSE) |>
+  mutate(location_code = substr(location_and_date, 1, 3),
+         date = substr(location_and_date, 4, 5)) |>
+  relocate(location_code, .after = location_and_date) |>
+  relocate(date, .after = location_code) |>
+  select(-location_and_date)
+
+all_run_types <- grunID::get_run_types(con)
+all_run_types <- all_run_types |>
+  mutate(run_name_upper = toupper(run_name)) |>
+  select(id, run_name_upper)
+
+run_ids_2023 <- parsed_data_2023 |>
+  left_join(all_run_types,
+            by=c("Pop_Structure_ID" = "run_name_upper")) |>
+  select(sample_id = SampleID, run_type_id = id)
+
+to_upload <- parsed_data_2023 |>
+  filter(date == "23") |> # this is just a check
+  group_by(location_code, date, sample_event_number, sample_bin_code) |>
+  summarise(n = max(as.numeric(sample_number))) |>
+  ungroup() |>
+  filter(!is.na(n)) |> # TODO sample event number coded as "A"
+  mutate(first_sample_date = as.Date(paste0("20", date, "-01-01")),
+         min_fork_length = 1,
+         max_fork_length = 200) 
+
+# add samples to database
+purrr::pmap(list(location_code = to_upload$location_code,
+                 sample_event_number = to_upload$sample_event_number,
+                 sample_bin_code = to_upload$sample_bin_code,
+                 first_sample_date = to_upload$first_sample_date,
+                 min_fork_length = to_upload$min_fork_length,
+                 max_fork_length = to_upload$max_fork_length,
+                 expected_number_of_samples = to_upload$n),
+            grunID::add_sample,
+            con = con)
 
 
+insert_statement <- glue::glue_sql("INSERT INTO genetic_run_identification(sample_id, run_type_id)
+                                   VALUES ({run_ids_2023$sample_id}, {run_ids_2023$run_type_id})",
+                                   .con = con)
+
+walk(seq_len(insert_statement), function(i) {
+  print(paste0(i, " of ", length(insert_statement)))
+  res <- DBI::dbSendQuery(con, insert_statement[i])
+  DBI::dbClearResult(res)
+})
+
+# 2022 ----------------------------------
+
+con <- grunID::gr_db_connect()
+gtseq_results_2022 <- readxl::read_excel("data-raw/backfill/2022_JPE_GT_summary_grunID.xlsx")
+sherlock_results_2022 <- sherlock_all_data |> filter(lubridate::year(Date) == 2022)
+
+samples_in_both <- dplyr::intersect(gtseq_results_2022$SampleID, sherlock_results_2022$SampleID)
+samples_only_in_gtseq <- dplyr::setdiff(gtseq_results_2022$SampleID, sherlock_results_2022$SampleID)
+samples_only_in_sherlock <- dplyr::setdiff(sherlock_results_2022$SampleID, gtseq_results_2022$SampleID)
+
+
+## insert samples that are in both gtseq and sherlock ----------------
+full_data_2022 <- sherlock_results_2022 |> 
+  inner_join(
+    gtseq_results_2022, 
+    by=c("SampleID" = "SampleID"), 
+    suffix = c("_sherlock", "_gtseq"))
+
+full_data_2022 |> glimpse()
+parsed_data_2022 <- full_data_2022 |> 
+  tidyr::separate(SampleID, sep = "_",
+                  into = c("location_and_date", "sample_event_number",
+                           "sample_bin_code", "sample_number"),
+                  remove = FALSE) |>
+  mutate(location_code = substr(location_and_date, 1, 3),
+         date = substr(location_and_date, 4, 5)) |>
+  relocate(location_code, .after = location_and_date) |>
+  relocate(date, .after = location_code) |>
+  select(-location_and_date)
+
+all_run_types <- grunID::get_run_types(con)
+all_run_types <- all_run_types |>
+  mutate(run_name_upper = toupper(run_name)) |>
+  select(id, run_name_upper)
+
+run_ids_2022 <- parsed_data_2022 |>
+  left_join(all_run_types,
+            by=c("Pop_Structure_ID" = "run_name_upper")) |>
+  select(sample_id = SampleID, run_type_id = id)
+
+to_upload <- parsed_data_2023 |>
+  filter(date == "23") |> # this is just a check
+  group_by(location_code, date, sample_event_number, sample_bin_code) |>
+  summarise(n = max(as.numeric(sample_number))) |>
+  ungroup() |>
+  filter(!is.na(n)) |> # TODO sample event number coded as "A"
+  mutate(first_sample_date = as.Date(paste0("20", date, "-01-01")),
+         min_fork_length = 1,
+         max_fork_length = 200) 
+
+# add samples to database
+purrr::pmap(list(location_code = to_upload$location_code,
+                 sample_event_number = to_upload$sample_event_number,
+                 sample_bin_code = to_upload$sample_bin_code,
+                 first_sample_date = to_upload$first_sample_date,
+                 min_fork_length = to_upload$min_fork_length,
+                 max_fork_length = to_upload$max_fork_length,
+                 expected_number_of_samples = to_upload$n),
+            grunID::add_sample,
+            con = con)
+
+
+insert_statement <- glue::glue_sql("INSERT INTO genetic_run_identification(sample_id, run_type_id)
+                                   VALUES ({run_ids_2023$sample_id}, {run_ids_2023$run_type_id})",
+                                   .con = con)
+
+walk(seq_len(insert_statement), function(i) {
+  print(paste0(i, " of ", length(insert_statement)))
+  res <- DBI::dbSendQuery(con, insert_statement[i])
+  DBI::dbClearResult(res)
+})
+
+# 2024 ----------------------------------
