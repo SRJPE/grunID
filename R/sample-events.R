@@ -19,6 +19,9 @@ add_sample_plan <- function(con, sample_plan, verbose = FALSE, sample_status_cod
   sample_event_ids <- add_sample_events(con, sample_plan)
   sample_id_insert <- add_sample_bins(con, sample_plan, sample_event_ids)
   sample_ids <- add_samples(con, sample_plan, sample_id_insert, verbose = verbose)
+  if(length(sample_ids) == 0) {
+    cli::cli_abort("Cannot insert sample IDs as they are already exist in the database.")
+  }
   # TODO fix case when samples already exist -  sample IDs will be character(0) in this case
   number_of_samples_added <- set_sample_status(con, sample_ids, sample_status_code = sample_status_code)
 
