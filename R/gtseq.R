@@ -16,6 +16,9 @@ insert_gtseq_raw_results <- function(con, gtseq_data) {
   insert_data <- gtseq_data |>
     filter(SampleID %in% sherlock_sample_ids$id)
 
+  samples_not_inserted <- gtseq_data |>
+    filter(!SampleID %in% sherlock_sample_ids$id)
+
   values_clause <- paste(sprintf("('%s', %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
                                  insert_data$SampleID,
                                  insert_data$Gtseq_Chr28_Geno,
@@ -48,7 +51,12 @@ insert_gtseq_raw_results <- function(con, gtseq_data) {
     DBI::dbClearResult(res)
   },
   .progress = T)
-   #return(res)
+
+  cli::cli_bullets(paste0(nrow(insert_data), " samples inserted into database. ",
+                          nrow(samples_not_inserted), " samples not inserted; must be
+                          inserted into the sample table first."))
+
+   return("samples_not_inserted" = samples_not_inserted$SampleID)
 }
 
 
