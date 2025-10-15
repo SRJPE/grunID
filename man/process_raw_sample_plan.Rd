@@ -4,7 +4,7 @@
 \alias{process_raw_sample_plan}
 \title{Process Raw Sample Plan}
 \usage{
-process_raw_sample_plan(filepath, season)
+process_raw_sample_plan(filepath, season, n_event)
 }
 \arguments{
 \item{filepath}{the filepath of the raw sample plan to be processed}

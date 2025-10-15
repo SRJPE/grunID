@@ -19,6 +19,28 @@ con <- DBI::dbConnect(RPostgres::Postgres(),
 con <- gr_db_connect()
 
 
+# 2026 - season creation --------------------------------------------------
+
+sampling_dates_2026 <- readxl::read_xlsx("data-raw/2026-season/sampling-dates-2026.xlsx") |>
+  mutate(first_sample_date = as_date(Start),
+         sample_event_number = Event) |>
+  select(sample_event_number, first_sample_date)
+
+
+# if starting with a raw sample plan similar to "data-raw/2024_raw_sample_plan.xlsx"
+# use process raw sample plan function:
+sample_plan_2026 <- process_raw_sample_plan("data-raw/2026-season/2026_JPE_Sample_Sizes.xlsx", 2026, 14)
+sample_plan_2026_with_dates <- sample_plan_2026 |>
+  select(-first_sample_date) |>
+  left_join(sampling_dates_2026, by = "sample_event_number") |>
+  mutate(sample_event_number = as.integer(sample_event_number)) |>
+  relocate(first_sample_date, .before = sample_bin_code)
+sample_ids_2026 <- add_sample_plan(con, sample_plan_2026_with_dates, verbose = TRUE)
+
+# create workbook containing multiple field sheets
+create_season_field_sheets(con, 2026, "data-raw/2026-season/field-sheets-v1.xlsx")
+
+
 # 2025 - season creation -------------
 sampling_dates_2025 <- readxl::read_xlsx("data-raw/2025-season/sampling-dates.xlsx") |>
   mutate(first_sample_date = as_date(Start),
@@ -29,7 +51,8 @@ sampling_dates_2025 <- readxl::read_xlsx("data-raw/2025-season/sampling-dates.xl
 
 # if starting with a raw sample plan similar to "data-raw/2024_raw_sample_plan.xlsx"
 # use process raw sample plan function:
-sample_plan_2025 <- process_raw_sample_plan("data-raw/2025-season/2025_JPE_Sample_Sizes_100224-with-x-bins.xlsx", 2025)
+sample_plan_2025 <- process_raw_sample_plan("data-raw/2025-season/2025_JPE_Sample_Sizes_100224-with-x-bins.xlsx",
+                                            2025, 15)
 sample_plan_2025_with_dates <- sample_plan_2025 |>
   select(-first_sample_date) |>
   left_join(sampling_dates_2025, by = "sample_event_number") |>

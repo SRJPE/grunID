@@ -313,7 +313,7 @@ partition_df_to_size <- function(df, chunk_size) {
 #' process_raw_sample_plan(filepath = "data-raw/2024_raw_sample_plan.xlsx", season = 2024)
 #' @export
 #' @md
-process_raw_sample_plan <- function(filepath, season) {
+process_raw_sample_plan <- function(filepath, season, n_event) {
 
   # read in file and skip first row
   raw_sample_plan <- suppressMessages(readxl::read_xlsx(filepath, skip = 1))
@@ -325,7 +325,7 @@ process_raw_sample_plan <- function(filepath, season) {
   clean_sample_plan <- raw_sample_plan |>
     dplyr::filter(`Bin FL ranges (mm)` != "Per-Event Total") |>
     tidyr::fill(Site) |>
-    tidyr::pivot_longer(cols = E1:E15,
+    tidyr::pivot_longer(cols = num_range("E", 1:n_event), #E1:E15,
                         names_to = "sample_event_number",
                         values_to = "expected_number_of_samples") |>
     dplyr::filter(!is.na(expected_number_of_samples)) |>
