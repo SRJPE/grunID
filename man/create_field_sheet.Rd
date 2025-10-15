@@ -9,9 +9,11 @@ create_field_sheet(
   field_sheet_sample_plan,
   sample_event_number,
   first_sample_date,
+  last_sample_date,
   sample_location,
   sample_location_code,
-  fl_summary
+  fl_summary,
+  season
 )
 }
 \arguments{
@@ -39,11 +41,15 @@ the start of each monitoring season for each sampling location}
 \item{first_sample_date}{A date object YYYY-MM-DD representing the first day of
 sampling of a 2 day sampling event}
 
+\item{last_sample_date}{A date object YYYY-MM-DD representing the last day of sampling.}
+
 \item{sample_location}{The sampling location name (e.g., "Battle Creek")}
 
 \item{sample_location_code}{The sampling location short code (e.g., "BTC")}
 
 \item{fl_summary}{a summary of the fork length bins used for the sampling location with min and max fork lengths.}
+
+\item{season}{the season for which you are generating the field sheets (i.e. \code{2026})}
 }
 \value{
 A Workbook object from \code{\link[openxlsx]{createWorkbook}} with the new worksheet

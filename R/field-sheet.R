@@ -20,16 +20,19 @@
 #' the start of each monitoring season for each sampling location
 #' @param first_sample_date A date object YYYY-MM-DD representing the first day of
 #' sampling of a 2 day sampling event
+#' @param last_sample_date A date object YYYY-MM-DD representing the last day of sampling.
 #' @param sample_location The sampling location name (e.g., "Battle Creek")
 #' @param sample_location_code The sampling location short code (e.g., "BTC")
 #' @param fl_summary a summary of the fork length bins used for the sampling location with min and max fork lengths.
+#' @param season the season for which you are generating the field sheets (i.e. `2026`)
 #' @returns A Workbook object from \code{\link[openxlsx]{createWorkbook}} with the new worksheet
 #' @family field sheet helpers
 #' @keywords internal
 #' @md
 create_field_sheet <- function(wb, field_sheet_sample_plan, sample_event_number,
-                               first_sample_date, sample_location,
-                               sample_location_code, fl_summary) {
+                               first_sample_date, last_sample_date,
+                               sample_location,
+                               sample_location_code, fl_summary, season) {
   # format fork length bin summary
   fl_summary_temp <- fl_summary |>
     dplyr::arrange(sample_bin_code) |>
@@ -54,11 +57,11 @@ create_field_sheet <- function(wb, field_sheet_sample_plan, sample_event_number,
     tibble::add_row(Bin = rep(NA_character_, 5))
 
   # set last sample date to the friday of that week
-  last_sample_date <- lubridate::ceiling_date(first_sample_date, "week") - 2
+  # last_sample_date <- lubridate::ceiling_date(first_sample_date, "week") - 2
 
   sheet_name <- paste(sample_location_code, sample_event_number, sep = "-")
 
-  center_header_text <- glue::glue("{2025} SR JPE Genetic Sampling
+  center_header_text <- glue::glue("{season} SR JPE Genetic Sampling
                                    {sample_location} ({sample_location_code})")
   right_header_text <- glue::glue("Sampling event {sample_event_number}
              Date range: {format(first_sample_date, '%b %d')} - {format(last_sample_date, '%b %d, %Y')}")
@@ -80,6 +83,14 @@ create_field_sheet <- function(wb, field_sheet_sample_plan, sample_event_number,
   openxlsx::writeData(wb, sheet = sheet_name, fl_summary, borders = "all", borderColour = "#000000",
                       headerStyle = col_header, startRow = nrow(field_sheet_sample_plan_extra_rows) + 5,
                       startCol = 5)
+
+  # add signature line
+  openxlsx::addStyle(wb, sheet = sheet_name, style = openxlsx::createStyle(border = "bottom",
+                                                                           borderStyle = "thick"),
+                     rows = nrow(field_sheet_sample_plan_extra_rows) + 10,
+                     cols = 9)
+  openxlsx::writeData(wb, sheet = sheet_name, x = "Signature",
+                      startCol = 9, startRow = nrow(field_sheet_sample_plan_extra_rows) + 11)
   # center specific columns
   centered_rows_style <- openxlsx::createStyle(halign = "center")
   openxlsx::addStyle(wb, sheet = sheet_name, style = centered_rows_style, cols = 1:4,
@@ -233,6 +244,15 @@ get_field_sheet_event_plan <- function(con, sample_event_id_arg) {
 #' @family field sheet helpers
 #' @md
 create_season_field_sheets <- function(con, season, field_sheet_filepath) {
+
+  # last sample dates for season 2026 have no defineable ruleset, so read them in here
+  if(season == 2026) {
+    last_sample_date_2026 <- tibble("sample_event" = seq(1:14),
+                                    "last_sample_date" = c("2025-11-12", "2025-11-21", "2025-12-09", "2025-12-19", "2026-01-07",
+                                                           "2026-01-16", "2026-02-04", "2026-02-13", "2026-03-04", "2026-03-13",
+                                                           "2026-04-01", "2026-04-10", "2026-04-29", "2026-05-08"))
+  }
+
   # create workbook to append each sampling event tab
   wb <- openxlsx::createWorkbook()
 
@@ -272,6 +292,17 @@ create_season_field_sheets <- function(con, season, field_sheet_filepath) {
     # field sheets for sampling events
     plan <- get_field_sheet_event_plan(con, sample_event_id = i)
 
+    if(season != 2026) {
+      # set last sample date to the friday of that week
+      last_sample_date <- lubridate::ceiling_date(first_sample_date, "week") - 2
+    } else {
+      # as of 2026 season, the last sample date is the day before the next sample date
+      last_sample_date <- last_sample_date_2026 |>
+        filter(sample_event == plan$sample_event) |>
+        mutate(last_sample_date = as.Date(last_sample_date)) |>
+        pull(last_sample_date)
+    }
+
     # get fork length summary table for that location
     fl_summary_table <- fork_length_bins |>
       dplyr::filter(location_code == plan$location_code) |>
@@ -286,9 +317,11 @@ create_season_field_sheets <- function(con, season, field_sheet_filepath) {
                              field_sheet_sample_plan = plan$field_sheet_sample_plan,
                              sample_event_number = plan$sample_event_number,
                              first_sample_date = plan$first_sample_date,
+                             last_sample_date = last_sample_date,
                              sample_location = plan$location_name,
                              sample_location_code = plan$location_code,
-                             fl_summary = fl_summary_table)
+                             fl_summary = fl_summary_table,
+                             season = season)
   },
   .progress = list(
     type = "iterator",

@@ -38,7 +38,7 @@ sample_plan_2026_with_dates <- sample_plan_2026 |>
 sample_ids_2026 <- add_sample_plan(con, sample_plan_2026_with_dates, verbose = TRUE)
 
 # create workbook containing multiple field sheets
-create_season_field_sheets(con, 2026, "data-raw/2026-season/field-sheets-v1.xlsx")
+create_season_field_sheets(con, 2026, "data-raw/2026-season/field-sheets-v3.xlsx")
 
 
 # 2025 - season creation -------------
