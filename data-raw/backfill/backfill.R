@@ -10,6 +10,9 @@ all_run_types <- all_run_types |>
   mutate(run_name_upper = toupper(run_name)) |>
   select(id, run_name_upper)
 
+# fill this in with samples we need to confirm with Sean
+samples_to_confirm <- list()
+
 # 2023 -----------------------
 
 gt_seq_data_2023 <- readr::read_tsv("data-raw/backfill/2023/JPE_2023_Reanalysis_10-2025_summary.tsv")
@@ -25,7 +28,6 @@ dplyr::setdiff(sherlock_2023_samples_ids, gtseq_2023_ids)
 # i think the plan should be lets tackle the overlaps since they have all the data, then
 # we can tackle the ids that exist in each of the two datesets only
 
-# TODO: what to do with samples in gtseq and not in sherlock --- XTRA clr24_1_1a MILL_MAIN_EVENT
 gtseq_results_2023  <- readr::read_tsv("data-raw/backfill/2023/JPE_2023_Reanalysis_10-2025_summary.tsv")
 sherlock_results_2023 <- sherlock_all_data |> filter(Year == 2023) |> select(-`Gtseq Chr28 geno`)
 
@@ -33,6 +35,8 @@ samples_in_both_2023 <- dplyr::intersect(gtseq_results_2023$SampleID, sherlock_r
 samples_only_in_gtseq_2023 <- dplyr::setdiff(gtseq_results_2023$SampleID, sherlock_results_2023$SampleID)
 samples_only_in_sherlock_2023 <- dplyr::setdiff(sherlock_results_2023$SampleID, gtseq_results_2023$SampleID)
 
+# TODO: what to do with samples in gtseq and not in sherlock --- XTRA clr24_1_1a MILL_MAIN_EVENT
+samples_to_confirm$`2023` <- sort(samples_only_in_gtseq_2023[str_detect(samples_only_in_gtseq_2023, "a|b|c|Non|XTRA|Ext|NON")])
 
 ## insert samples that are in both gtseq and sherlock ----------------
 full_data_2023 <- sherlock_results_2023 |>
@@ -119,13 +123,15 @@ length(unique(gtseq_2022_ids))
 
 dplyr::setdiff(sherlock_2022_samples_ids, gtseq_2022_ids)
 
-# TODO: what to do with samples in gtseq and not in sherlock --- XTRA clr24_1_1a MILL_MAIN_EVENT
 gtseq_results_2022  <- readr::read_tsv("data-raw/backfill/2022/JPE_2022_Reanalysis_10-2025_summary.tsv")
 sherlock_results_2022 <- sherlock_all_data |> filter(Year == 2022) |> select(-`Gtseq Chr28 geno`)
 
 samples_in_both_2022 <- dplyr::intersect(gtseq_results_2022$SampleID, sherlock_results_2022$SampleID)
 samples_only_in_gtseq_2022 <- dplyr::setdiff(gtseq_results_2022$SampleID, sherlock_results_2022$SampleID)
 samples_only_in_sherlock_2022 <- dplyr::setdiff(sherlock_results_2022$SampleID, gtseq_results_2022$SampleID)
+
+# store anomalous samples
+samples_to_confirm$`2022` <- sort(samples_only_in_gtseq_2022[str_detect(samples_only_in_gtseq_2022, "a|b|c|Non|XTRA|Ext|NON|SB|WR")])
 
 full_data_2022 <- sherlock_results_2022 |>
   left_join(
@@ -219,13 +225,15 @@ length(unique(gtseq_2024_ids))
 
 dplyr::setdiff(sherlock_2024_samples_ids, gtseq_2024_ids)
 
-# TODO: what to do with samples in gtseq and not in sherlock --- XTRA clr24_1_1a MILL_MAIN_EVENT
 gtseq_results_2024  <- readr::read_tsv("data-raw/backfill/2024/JPE_2024_Reanalysis_10-2025_summary.tsv")
 sherlock_results_2024 <- sherlock_all_data |> filter(Year == 2024) |> select(-`Gtseq Chr28 geno`)
 
 samples_in_both_2024 <- dplyr::intersect(gtseq_results_2024$SampleID, sherlock_results_2024$SampleID)
 samples_only_in_gtseq_2024 <- dplyr::setdiff(gtseq_results_2024$SampleID, sherlock_results_2024$SampleID)
 samples_only_in_sherlock_2024 <- dplyr::setdiff(sherlock_results_2024$SampleID, gtseq_results_2024$SampleID)
+
+# store anomalous samples
+samples_to_confirm$`2024` <- sort(samples_only_in_gtseq_2024[str_detect(samples_only_in_gtseq_2024, "EBK|dupe|")])
 
 full_data_2024 <- sherlock_results_2024 |>
   left_join(
@@ -305,10 +313,10 @@ walk(1:length(insert_statement), function(i) {
 
 # identify erroneous sample ids -------------------------------------------
 
+samples_to_check <- stack(samples_to_confirm) |>
+  rename(sample_id = values, season = ind)
 
-
-
-
+write_csv(samples_to_check, "data-raw/backfill/erroneous_samples_2022-2024.csv")
 
 
 
