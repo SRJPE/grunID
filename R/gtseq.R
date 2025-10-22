@@ -8,16 +8,24 @@ read_gtseq <- function(filepath) {
 insert_gtseq_raw_results <- function(con, gtseq_data) {
 
   # TODO need a cleaner way to do this
-  sherlock_sample_ids <- tbl(con, "sample") |>
+  db_sample_ids <- tbl(con, "sample") |>
     select(id) |>
     collect()
 
-  # data filtered to those with sherlock results in db (in "sample" table)
+  # data filtered to those existing in db (in "sample" table)
   insert_data <- gtseq_data |>
-    filter(SampleID %in% sherlock_sample_ids$id)
+    filter(SampleID %in% db_sample_ids$id)
 
   samples_not_inserted <- gtseq_data |>
-    filter(!SampleID %in% sherlock_sample_ids$id)
+    filter(!SampleID %in% db_sample_ids$id)
+
+  if(nrow(samples_not_inserted) > 0) {
+    cli::cli_alert_danger("Some samples are not present in the database. Please add them to the database
+                          before continuing.")
+
+    return("samples_not_inserted" = samples_not_inserted$SampleID)
+
+  }
 
   values_clause <- paste(sprintf("('%s', %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
                                  insert_data$SampleID,
@@ -52,11 +60,7 @@ insert_gtseq_raw_results <- function(con, gtseq_data) {
   },
   .progress = T)
 
-  cli::cli_bullets(paste0(nrow(insert_data), " samples inserted into database. ",
-                          nrow(samples_not_inserted), " samples not inserted; must be
-                          inserted into the sample table first."))
-
-   return("samples_not_inserted" = samples_not_inserted$SampleID)
+  cli::cli_bullets(paste0(nrow(insert_data), " samples inserted into database."))
 }
 
 
