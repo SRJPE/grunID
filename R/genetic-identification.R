@@ -520,6 +520,7 @@ run_genetic_identification_gtseq <- function(con, samples) {
                                           FROM gtseq_results
                                           WHERE sample_id IN ({samples_to_update*});",
                           .con = con)
+
   runs_to_update_res <- DBI::dbGetQuery(con, runs_to_update_query) |>
     as_tibble() |>
     filter(!is.na(pop_structure_id)) |> # TODO do we want to set this to unknown in the run id table or ignore? ignoring for now
@@ -531,6 +532,25 @@ run_genetic_identification_gtseq <- function(con, samples) {
                   collect() |>
                   select(run_type_id = id, run_name),
               by = c("pop_structure_id" = "run_name"))
+
+  sherlock_heterozygotes <- tbl(con, "genetic_run_identification") |>
+    filter(sample_id %in% runs_to_update_res$sample_id,
+           # OTS28 heterozygote
+           run_type_id == 8) |>
+    collect() |>
+    glimpse()
+
+  # edge case
+  update_runs_final <- runs_to_update_res |>
+    # set edge cases where OTS28 heterozygote, no gt-seq ots28 result, and has gt-seq pop assignment
+    # to unknown (run_type_id = 7)
+    mutate(run_type_id = case_when(sample_id %in% sherlock_heterozygotes &
+                                     is.na(gtseq_chr28_geno) &
+                                     !is.na(pop_structure_id) ~ 7,
+                                   gtseq_chr28_geno == "HETEROZYGOTE" &
+                                     cv_fall < 0.8 &
+                                     cv_fall + cv_late_fall > 0.8 ~ 5,
+                                   TRUE ~ run_type_id))
 
   # update the sample ID in the run identification to be the gt seq run
   update_run_query <- glue::glue_sql("
