@@ -68,7 +68,7 @@ navbarPage(
 
                         tags$div(
                           style = "display: flex; align-items: center;",
-                          selectInput("genetic_method", "Select a Genetic Method", choices = all_gen_methods$code),
+                          selectInput("genetic_method", "Select a Genetic Method", choices = gen_methods_shlk$code),
                           actionButton("show_methods_details", label = NULL, icon = icon("question"), class = "round-btn icon-offset")
 
                         ),
@@ -144,9 +144,13 @@ navbarPage(
                       )
              ),
 
-             tabPanel("Uploaer GT-Seq Results",
-                      fileInput("gtseq_upload_file", label="Uploda GT-Seq Results"),
-                      tableOutput("gtseq_results_preview")),
+             tabPanel("Upload GT-Seq Results",
+                      fileInput("gtseq_upload_file", label="Preview/Upload GT-Seq Results"),
+                      # tableOutput("gtseq_results_preview"),
+                      DT::dataTableOutput("gtseq_results"),
+                      checkboxInput("perform_genetics_id_gtseq", label = "Run genetic calculations for samples after upload", value = TRUE),
+                      actionButton("do_upload_gtseq", "Upload Results", class = "btn-success", icon = icon("rocket"))
+                      ),
 
              tabPanel("Check-in Samples",
                       uiOutput("check_in_notification"),

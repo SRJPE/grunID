@@ -62,6 +62,8 @@ logger::log_info(config_file_log_message)
 all_protocols <- get_protocols(con) |> collect()
 all_labs <- get_laboratories(con) |> select(id, code, laboratory_name, description) |> collect()
 all_gen_methods <- get_genetic_methods(con) |> select(id, code, method_name, description) |> collect()
+gen_methods_shlk <- all_gen_methods |>
+  filter(code != "GTSQ")
 # the actual current status for a given sample is always the latest update
 DB_get_sample_status <- function() {
   DBI::dbGetQuery(
