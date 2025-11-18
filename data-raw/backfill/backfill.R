@@ -1,14 +1,17 @@
 library(tidyverse)
-
-
-# process the sherlock side of things
-sherlock_all_data <- readxl::read_excel("data-raw/backfill/JPE_2022-2024_Genetic_Data_FC_05-2025_v2.xlsx")
+library(readxl)
 
 con <- grunID::gr_db_connect()
 all_run_types <- grunID::get_run_types(con)
 all_run_types <- all_run_types |>
   mutate(run_name_upper = toupper(run_name)) |>
   select(id, run_name_upper)
+
+
+# sherlock ---------------------------------------------------------------
+
+# process the sherlock side of things
+sherlock_all_data <- read_excel("data-raw/backfill/JPE_2022-2024_Genetic_Data_FC_05-2025_v2.xlsx")
 
 # fill this in with samples we need to confirm with Sean
 samples_to_confirm <- list()
@@ -58,7 +61,10 @@ parsed_data_2023 <- full_data_2023 |>
   relocate(date, .after = location_code) |>
   select(-location_and_date)
 
-data_2023_final_designation <- parsed_data_2023 |> mutate(
+data_2023_final_designation <- parsed_data_2023 |>
+  # don't keep samples where both gt seq and shlk are NA
+  filter(!if_all(c(Pop_Structure_ID, `SHLCK Run Designation`), is.na)) |>
+  mutate(
   final_run_designation = case_when(
     !is.na(Pop_Structure_ID) ~ Pop_Structure_ID,
     !is.na(`SHLCK Run Designation`) ~ `SHLCK Run Designation`,
@@ -155,10 +161,16 @@ parsed_data_2022 <- full_data_2022 |>
   relocate(date, .after = location_code) |>
   select(-location_and_date)
 
-data_2022_final_designation <- parsed_data_2022 |> mutate(
+data_2022_final_designation <- parsed_data_2022  |>
+  # don't keep samples where both gt seq and shlk are NA
+  filter(!if_all(c(Pop_Structure_ID, `SHLCK Run Designation`), is.na)  | `SHERLOCK Chr28 geno` == "HETEROZYGOTE") |>
+  mutate(
   final_run_designation = case_when(
     !is.na(Pop_Structure_ID) ~ Pop_Structure_ID,
     !is.na(`SHLCK Run Designation`) ~ `SHLCK Run Designation`,
+    # some entries this year had OTS28 but no final run designation
+    is.na(Pop_Structure_ID) & `SHERLOCK Chr28 geno` == "LATE" ~ "FALL OR LATE FALL",
+    is.na(Pop_Structure_ID) & `SHERLOCK Chr28 geno` == "HETEROZYGOTE" ~ "UNKNOWN",
     TRUE ~ "UNKNOWN"
   ),
   final_run_designation = case_when(
@@ -233,7 +245,7 @@ samples_only_in_gtseq_2024 <- dplyr::setdiff(gtseq_results_2024$SampleID, sherlo
 samples_only_in_sherlock_2024 <- dplyr::setdiff(sherlock_results_2024$SampleID, gtseq_results_2024$SampleID)
 
 # store anomalous samples
-samples_to_confirm$`2024` <- sort(samples_only_in_gtseq_2024[str_detect(samples_only_in_gtseq_2024, "EBK|dupe|")])
+samples_to_confirm$`2024` <- sort(samples_only_in_gtseq_2024[str_detect(samples_only_in_gtseq_2024, "dupe")])
 
 full_data_2024 <- sherlock_results_2024 |>
   left_join(
@@ -254,7 +266,10 @@ parsed_data_2024 <- full_data_2024 |>
   relocate(date, .after = location_code) |>
   select(-location_and_date)
 
-data_2024_final_designation <- parsed_data_2024 |> mutate(
+data_2024_final_designation <- parsed_data_2024 |>
+  # don't keep samples where both gt seq and shlk are NA
+  filter(!if_all(c(Pop_Structure_ID, `SHLCK Run Designation`), is.na)) |>
+  mutate(
   final_run_designation = case_when(
     !is.na(Pop_Structure_ID) ~ Pop_Structure_ID,
     !is.na(`SHLCK Run Designation`) ~ `SHLCK Run Designation`,
@@ -310,6 +325,79 @@ walk(1:length(insert_statement), function(i) {
   DBI::dbClearResult(res)
 })
 
+# process field data ------------------------------------------------------
+# these were sent from Sean via teams on 11-5-2025
+field_data_2022_raw <- read_csv("data-raw/backfill/completed_field_sheets/2022_sample_data_v5_12-13-22.csv")
+field_data_2023_raw <- read_excel("data-raw/backfill/completed_field_sheets/2023_JPE_Sample_Data2_04-10-2023.xlsx")
+field_data_2024_raw <- read_excel("data-raw/backfill/completed_field_sheets/2024_JPE_Sample_Data.xlsx")
+field_data_2025_raw <- read_excel("data-raw/backfill/completed_field_sheets/2025 JPE Sample Data.xlsx")
+
+# clean and upload (see data-raw/user-workflow-preseason.R)
+# process_field_sheet_samples2() expects standard format; we will do our own here
+# in this script because it varies
+field_data_2022 <- field_data_2022_raw |>
+  mutate(clean_time = format(hm(Time), "%H:%M:%S"),
+         datetime_collected = lubridate::as_datetime(paste(as_date(Date, format = "%m/%d/%Y"), clean_time)),
+         fork_length_mm = as.numeric(`FL (mm)`),
+         field_run = case_when(`Field Run ID` %in% c("n/r", "?") ~ "UNKNOWN",
+                               `Field Run ID` %in% c("CHNS", "CNHS") ~ "SPRING",
+                               `Field Run ID` == "CHNF" ~ "FALL",
+                               `Field Run ID` == "Late Fall" ~ "LATEFALL",
+                               TRUE ~ toupper(`Field Run ID`)),
+         field_comment = NA_character_) |>
+  left_join(all_run_types, by = c("field_run" = "run_name_upper")) |>
+  select(sample_id = `Sample ID`, datetime_collected, fork_length_mm, field_run_type_id = id, field_comment) |>
+  glimpse()
+
+update_field_sheet_samples(con, field_data_2022)
+
+field_data_2023 <- field_data_2023_raw |>
+  mutate(Time = as.numeric(Time),
+         Date = as.Date(as.numeric(Date), origin = "1899-12-30"),
+         clean_time = format(as_datetime(Time * 86400, origin = "1970-01-01"), "%H:%M:%S"),
+         datetime_collected = lubridate::as_datetime(paste(Date, clean_time)),
+         fork_length_mm = as.numeric(`FL (mm)`),
+         field_run = case_when(`Field Run ID` %in% c("n/r", "?") ~ "UNKNOWN",
+                               `Field Run ID` == "S" ~ "SPRING",
+                               `Field Run ID` == "F" ~ "FALL",
+                               `Field Run ID` == "Late Fall" ~ "LATEFALL",
+                               TRUE ~ toupper(`Field Run ID`))) |>
+  left_join(all_run_types, by = c("field_run" = "run_name_upper")) |>
+  select(sample_id = `Sample ID`, datetime_collected, fork_length_mm, field_run_type_id = id, field_comment = Comments) |>
+  glimpse()
+
+update_field_sheet_samples(con, field_data_2023)
+
+field_data_2024 <- field_data_2024_raw |>
+  mutate(Time = as.numeric(Time),
+         Date = as.Date(as.numeric(Date), origin = "1899-12-30"),
+         clean_time = format(as_datetime(Time * 86400, origin = "1970-01-01"), "%H:%M:%S"),
+         datetime_collected = lubridate::as_datetime(paste(Date, clean_time)),
+         fork_length_mm = as.numeric(`FL (mm)`),
+         field_run = case_when(`Field Run ID` %in% c("n/r", "?", "NA") ~ "UNKNOWN",
+                               `Field Run ID` == "Late Fall" ~ "LATEFALL",
+                               TRUE ~ toupper(`Field Run ID`))) |>
+  left_join(all_run_types, by = c("field_run" = "run_name_upper")) |>
+  select(sample_id = `Sample ID`, datetime_collected, fork_length_mm, field_run_type_id = id, field_comment = Comments) |>
+  glimpse()
+
+update_field_sheet_samples(con, field_data_2024)
+
+field_data_2025 <- field_data_2025_raw |>
+  mutate(Time = as.numeric(Time),
+         Date = as.Date(as.numeric(Date), origin = "1899-12-30"),
+         clean_time = format(as_datetime(Time * 86400, origin = "1970-01-01"), "%H:%M:%S"),
+         datetime_collected = lubridate::as_datetime(paste(Date, clean_time)),
+         fork_length_mm = as.numeric(`FL (mm)`),
+         field_run = case_when(`Field Run ID` %in% c("n/r", "?", "NA") ~ "UNKNOWN",
+                               `Field Run ID` == "Late Fall" ~ "LATEFALL",
+                               TRUE ~ toupper(`Field Run ID`))) |>
+  left_join(all_run_types, by = c("field_run" = "run_name_upper")) |>
+  select(sample_id = `Sample ID`, datetime_collected, fork_length_mm, field_run_type_id = id, field_comment = Comments) |>
+  glimpse()
+
+update_field_sheet_samples(con, field_data_2025)
+
 
 # identify erroneous sample ids -------------------------------------------
 
@@ -324,7 +412,7 @@ write_csv(samples_to_check, "data-raw/backfill/erroneous_samples_2022-2024.csv")
 
 # old ---------------------------------------------------------------------
 #
-# data_2023 <- readxl::read_excel("data-raw/backfill/2023_JPE_GT_Summary_grunID 1.xlsx")
+# data_2023 <- read_excel("data-raw/backfill/2023_JPE_GT_Summary_grunID 1.xlsx")
 # parsed_data_2023 <- data_2023 |>
 #   tidyr::separate(SampleID, sep = "_",
 #                   into = c("location_and_date", "sample_event_number",
@@ -415,7 +503,7 @@ write_csv(samples_to_check, "data-raw/backfill/erroneous_samples_2022-2024.csv")
 #
 # # 2022 --------------------------------------------------------------------
 #
-# gtseq_results_2022 <- readxl::read_excel("data-raw/backfill/2022_JPE_GT_summary_grunID.xlsx")
+# gtseq_results_2022 <- read_excel("data-raw/backfill/2022_JPE_GT_summary_grunID.xlsx")
 # sherlock_results_2022 <- sherlock_all_data |> filter(lubridate::year(Date) == 2022)
 #
 # samples_in_both <- dplyr::intersect(gtseq_results_2022$SampleID, sherlock_results_2022$SampleID)
