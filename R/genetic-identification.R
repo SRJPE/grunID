@@ -581,13 +581,44 @@ run_genetic_identification_v3 <- function(con) {
 #' @export
 generate_final_run_assignment <- function(con) {
 
-  # TODO pull assay result to get shlk chr 28 genotype and shlk chr16 genotype
   res <- DBI::dbGetQuery(con,
                          glue::glue_sql("SELECT *
                                           FROM final_run_assignment;",
                                         .con = con)) |> as_tibble()
 
+  # get assay_result for ots28 and ots16 genotype columns
+  assay_results <- DBI::dbGetQuery(con,
+                                   glue::glue_sql("SELECT *
+                                          FROM (
+                                            SELECT *,
+                                                   ROW_NUMBER() OVER (PARTITION BY sample_id, assay_id ORDER BY created_at DESC) as rn
+                                            FROM assay_result
+                                            WHERE active = true
+                                          ) subquery
+                                          WHERE rn = 1 and sample_id IN ({res$sample_id*});",
+                                                  .con = con)) |>
+    as_tibble() |>
+    select(sample_id, assay_id, positive_detection) |>
+    complete(sample_id, assay_id = 1:4) |>  # fill in the missing id's when needed
+    pivot_wider(
+      names_from = assay_id,
+      values_from = positive_detection,
+    ) |>
+    rename("early" = `1`, "late" = `2`, "spring" = `3`, "winter" = `4`) |>
+    # TODO confirm logic
+    mutate(shlk_chr28_genotype = case_when(early & !late ~ "EARLY",
+                                           !early & late ~ "LATE",
+                                           early & late ~ "HETEROZYGOTE",
+                                           TRUE ~ "UNKNOWN"),
+           shlk_chr16_genotype = case_when(spring & !winter ~ "SPRING",
+                                           !spring & winter ~ "WINTER",
+                                           spring & winter ~ "HETEROZYGOTE",
+                                           TRUE ~ "UNKNOWN")) |>
+    select(sample_id, shlk_chr28_genotype, shlk_chr16_genotype)
+
+
   run_types <- tbl(con, "run_type") |> collect() |> select(id, run_name)
+
   # run assignment logic using sherlock and gt seq
   # default to gt seq
   # will only get one of 4 results: fall/late fall (sherlock ots28), spring, winter (from gt seq), unknown
@@ -614,7 +645,9 @@ generate_final_run_assignment <- function(con) {
            ) |>
     select(-c(run_name, run_type_id)) |>
     # clean up
-    mutate(final_run_designation = ifelse(final_run_designation %in% c("LATEFALL", "FALL", "FALL/LATEFALL"), "FALL OR LATE FALL", final_run_designation))
+    mutate(final_run_designation = ifelse(final_run_designation %in% c("LATEFALL", "FALL", "FALL/LATEFALL"), "FALL OR LATE FALL", final_run_designation)) |>
+    # add genotypes from sherlock
+    left_join(assay_results, by = "sample_id")
 
   # further edge cases
   rejects <- final_run_assignments |>
@@ -622,12 +655,12 @@ generate_final_run_assignment <- function(con) {
 
   keeps <- final_run_assignments |>
     filter(final_run_designation %in% c("FALL OR LATE FALL", "SPRING", "WINTER", "UNKNOWN")) |>
-    relocate(final_run_designation, .after = field_run_type_id) |>
-    relocate(shlk_run_designation, .after = final_run_designation) |>
     left_join(run_types, by = c("field_run_type_id" = "id")) |>
     mutate(field_run_type = toupper(run_name)) |>
-    relocate(field_run_type, .after = fork_length_mm) |>
-    select(-c(field_run_type_id, run_name))
+    select(-c(field_run_type_id, run_name)) |>
+    select(sample_id:fork_length_mm, field_run_type, final_run_designation,
+           shlk_chr28_genotype, shlk_chr16_genotype, shlk_run_designation,
+           gtseq_chr28_geno:sac_win)
 
   cli::cli_bullets(paste0(nrow(rejects), " sample IDs did not produce a conclusive result. See returned list element `diagnostic`."))
   cli::cli_bullets(paste0(nrow(keeps), " sample IDs produced a conclusive results. See retuned list element `results`."))
