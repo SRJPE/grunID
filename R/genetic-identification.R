@@ -503,7 +503,8 @@ run_genetic_identification_v2 <- function(con, samples, plate_run_id) {
 #' @export
 #'
 run_genetic_identification_gtseq <- function(con, samples) {
-  # compare them to samples in sample_status where status is 'need gt seq'
+
+  # pull any existing samples in the db in sample_status where status is 'need gt seq'
   query <- glue::glue_sql("SELECT *
                                   FROM sample_status
                                   WHERE sample_id IN ({samples*})
@@ -514,7 +515,7 @@ run_genetic_identification_gtseq <- function(con, samples) {
 
   # TODO do we want to stop here?
   if(nrow(res) == 0) {
-    stop("The samples provided do not have corresponding SHERLOCK results.")
+    stop("The samples provided have not been added to the database.")
   }
 
   samples_to_update <- res$sample_id

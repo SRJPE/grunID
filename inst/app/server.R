@@ -265,20 +265,19 @@ function(input, output, session) {
       )
     })
 
-    if(input$perform_genetics_id_gtseq) {
-      tryCatch({
-        grunID::run_genetic_identification_gtseq(con, gtseq_insert$SampleID)
-        spsComps::shinyCatch({message("Gen ID complete!")}, position = "top-center")
-      },
-      error = function(e) {
-        showNotification(
-          ui = tags$p(paste(e)),
-          closeButton = TRUE,
-          duration = 20,
-          type = "error"
-        )
-      })
-    }
+    # run gt seq logic
+    tryCatch({
+      grunID::run_genetic_identification_gtseq(con, gtseq_insert$SampleID)
+      spsComps::shinyCatch({message("Gen ID complete!")}, position = "top-center")
+    },
+    error = function(e) {
+      showNotification(
+        ui = tags$p(paste(e)),
+        closeButton = TRUE,
+        duration = 20,
+        type = "error"
+      )
+    })
   })
 
   # Sample Status ---------------------------------------------------------------------
@@ -558,6 +557,7 @@ ORDER BY gri.sample_id;
 
   # read in field data, if available
   clean_field_data <- reactive({
+    req(input$filled_field_sheets)
     process_field_sheet_samples2(input$filled_field_sheets$datapath)
   })
 
