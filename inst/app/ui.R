@@ -250,7 +250,7 @@ navbarPage(
                  actionButton("sample_status_refresh", "Refresh Data", class = "btn-success", icon = icon("refresh")),
                  style = "padding-bottom: 15px;"
                ),
-               selectInput("sample_status_season", "Season", choices = 2023:2025, selected = 2025),
+               selectInput("sample_status_season", "Season", choices = available_years),
                selectInput("sample_status_filter", "Sample Status",
                            c("All", names(sample_status_options))),
                selectInput("location_filter", "Location",
