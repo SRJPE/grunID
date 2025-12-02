@@ -36,7 +36,7 @@ function(input, output, session) {
     } else {
       total_samples_failing <- nrow(samples_need_ots16())
       HTML(paste0('<div class="alert alert-warning" role="alert">',
-                  samples_need_ots16(), ' samples were found that need OTS16, please seach "need ots16" in sample status tab for details',
+                  samples_need_ots16(), ' samples were found that need OTS16, please search "need ots16" in sample status tab for details',
                   '</div>'))
     }
   })
@@ -47,7 +47,7 @@ function(input, output, session) {
     } else {
       total_samples_failing <- nrow(samples_need_gtseq())
       HTML(paste0('<div class="alert alert-warning" role="alert">',
-                  samples_need_gtseq(), ' samples were found that need GTSEQ, please seach "need gtseq" in sample status tab for details',
+                  samples_need_gtseq(), ' samples were found that need GTSEQ, please search "need gtseq" in sample status tab for details',
                   '</div>'))
     }
   })
@@ -240,7 +240,45 @@ function(input, output, session) {
 
   observeEvent(input$gtseq_upload_file, {
     req(input$gtseq_upload_file)
-    output$gtseq_results_preview <- renderTable(grunID::read_gtseq(input$gtseq_upload_file$datapath))
+    gtseq_results <- grunID::read_gtseq(input$gtseq_upload_file$datapath)
+    output$gtseq_results <- DT::renderDataTable(gtseq_results,
+                                                        options = list(scrollY = "400px",
+                                                                       scrollX = TRUE,
+                                                                       pageLength = 20,
+                                                                       paging = FALSE))
+  })
+
+  observeEvent(input$do_upload_gtseq, {
+    req(input$gtseq_upload_file)
+    gtseq_insert <- grunID::read_gtseq(input$gtseq_upload_file$datapath)
+    # insert raw results
+    tryCatch({
+      grunID::insert_gtseq_raw_results(con, gtseq_insert)
+      spsComps::shinyCatch({message("Upload complete!")}, position = "top-center")
+    },
+    error = function(e) {
+      showNotification(
+        ui = tags$p(paste(e)),
+        closeButton = TRUE,
+        duration = 20,
+        type = "error"
+      )
+    })
+
+    if(input$perform_genetics_id_gtseq) {
+      tryCatch({
+        grunID::run_genetic_identification_gtseq(con, gtseq_insert$SampleID)
+        spsComps::shinyCatch({message("Gen ID complete!")}, position = "top-center")
+      },
+      error = function(e) {
+        showNotification(
+          ui = tags$p(paste(e)),
+          closeButton = TRUE,
+          duration = 20,
+          type = "error"
+        )
+      })
+    }
   })
 
   # Sample Status ---------------------------------------------------------------------

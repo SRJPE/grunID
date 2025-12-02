@@ -512,6 +512,11 @@ run_genetic_identification_gtseq <- function(con, samples) {
   res <- DBI::dbGetQuery(con, query) |>
          as_tibble()
 
+  # TODO do we want to stop here?
+  if(nrow(res) == 0) {
+    stop("The samples provided do not have corresponding SHERLOCK results.")
+  }
+
   samples_to_update <- res$sample_id
 
   # update run identification to gt seq run
@@ -556,13 +561,16 @@ run_genetic_identification_gtseq <- function(con, samples) {
   update_run_query <- glue::glue_sql("
                                       UPDATE genetic_run_identification
                                       SET run_type_id = CASE sample_id
-                                        {glue_sql_collapse(
-                                          glue_data(runs_to_update_res, 'WHEN {sample_id} THEN {run_type_id}'),
+                                        {glue::glue_collapse(
+                                          glue::glue_data_sql(runs_to_update_res,
+                                                              'WHEN {sample_id} THEN {run_type_id}',
+                                                              .con = con),
                                           sep = '\n    '
                                         )}
                                       END
-                                      WHERE sample_id IN ({runs_to_update_res$sample_id*});",
-                                     .con = con)
+                                      WHERE sample_id IN ({sample_id*});",
+                                     .con = con,
+                                     sample_id = runs_to_update_res$sample_id)
 
   DBI::dbExecute(con, update_run_query)
 
