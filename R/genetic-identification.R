@@ -499,26 +499,48 @@ run_genetic_identification_v2 <- function(con, samples, plate_run_id) {
   ))
 }
 
-#' @title GT-Seq run identification
+#' @title Run identification version 3 (includes GT SEQ)
 #' @export
 #'
-run_genetic_identification_gtseq <- function(con, samples) {
+run_genetic_identification_v3 <- function(con, samples, result_source = c("sherlock", "gtseq")) {
 
-  # pull any existing samples in the db in sample_status where status is 'need gt seq'
-  query <- glue::glue_sql("SELECT *
+  result_source <- match.arg(result_source)
+
+  if(result_source == "sherlock") {
+
+    # run genetic identification using assay result and only assign assigns ots 28 in progress, ots 28 complete, or needs gt seq
+    # mostly same code as run identification v2
+
+  } else {
+
+    # pull samples that need gt seq (have had sherlock run)
+    # TODO confirm status code is same in production
+    # TODO confirm sample id is unique in sample_status
+    query <- glue::glue_sql("SELECT *
                                   FROM sample_status
                                   WHERE sample_id IN ({samples*})
                                   AND status_code_id = 18;",
-                          .con = con)
-  res <- DBI::dbGetQuery(con, query) |>
-         as_tibble()
+                            .con = con)
+    res <- DBI::dbGetQuery(con, query) |>
+      as_tibble()
 
-  # TODO do we want to stop here?
-  if(nrow(res) == 0) {
-    stop("The samples provided have not been added to the database.")
+    samples_to_update <- res$sample_id
+
+    # full join genetic_run_assignment table with gt seq results table by sample_id
+    # TODO will this catch ots 28 early (from assay result), are these in genetic_run_assignment?
+
+    # query view table final_run_assignment
+    # apply ruleset from backfill.R
+    # return df w/ ruleset applied
+
+    # create a postgres view of the ruleset applied onto the genetic run assignment/gt seq joined table
+    # runs on the fly but is not a table
+
+    # return(view)
+
   }
 
-  samples_to_update <- res$sample_id
+
 
   # update run identification to gt seq run
   # compare them to samples in sample_status where status is 'need gt seq'
