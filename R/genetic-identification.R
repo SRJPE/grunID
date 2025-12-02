@@ -499,112 +499,116 @@ run_genetic_identification_v2 <- function(con, samples, plate_run_id) {
   ))
 }
 
-#' @title Run identification version 3 (includes GT SEQ)
+#' @title Run identification version 3
 #' @export
 #'
-run_genetic_identification_v3 <- function(con, samples, result_source = c("sherlock", "gtseq")) {
+run_genetic_identification_v3 <- function(con) {
 
-  result_source <- match.arg(result_source)
-
-  if(result_source == "sherlock") {
-
-    # run genetic identification using assay result and only assign assigns ots 28 in progress, ots 28 complete, or needs gt seq
-    # mostly same code as run identification v2
-
-  } else {
-
-    # pull samples that need gt seq (have had sherlock run)
-    # TODO confirm status code is same in production
-    # TODO confirm sample id is unique in sample_status
-    query <- glue::glue_sql("SELECT *
-                                  FROM sample_status
-                                  WHERE sample_id IN ({samples*})
-                                  AND status_code_id = 18;",
-                            .con = con)
-    res <- DBI::dbGetQuery(con, query) |>
-      as_tibble()
-
-    samples_to_update <- res$sample_id
-
-    # full join genetic_run_assignment table with gt seq results table by sample_id
-    # TODO will this catch ots 28 early (from assay result), are these in genetic_run_assignment?
-
-    # query view table final_run_assignment
-    # apply ruleset from backfill.R
-    # return df w/ ruleset applied
-
-    # create a postgres view of the ruleset applied onto the genetic run assignment/gt seq joined table
-    # runs on the fly but is not a table
-
-    # return(view)
-
-  }
+  res <- DBI::dbGetQuery(con,
+                         glue::glue_sql("SELECT *
+                                          FROM (
+                                            SELECT *,
+                                                   ROW_NUMBER() OVER (PARTITION BY sample_id, assay_id ORDER BY created_at DESC) as rn
+                                            FROM assay_result
+                                            WHERE active = true
+                                          ) subquery
+                                          WHERE rn = 1 and sample_id IN ({samples*});",
+                                        .con = con)) |> as_tibble()
 
 
+  sample_results <- res |>
+    select(sample_id, assay_id, positive_detection) |>
+    complete(sample_id, assay_id = 1:2) |>  # fill in the missing id's when needed
+    pivot_wider(
+      names_from = assay_id,
+      values_from = positive_detection,
+    ) |>
+    rename("early" = `1`, "late" = `2`) |>
+    mutate(sample_state = case_when(
+      is.na(early) & !late ~ "UNK;ots28 in progress",
+      is.na(early) & late ~ "UNK;ots28 in progress",
+      early & is.na(late) ~ "UNK;ots28 in progress",
+      !early & is.na(late) ~ "UNK;ots28 in progress",
+      !early & late ~ "FAL;analysis complete", # positive late and negative early = Fall
+      early & late ~ "EL-HET;need gtseq", # positive early and positive late = HET
+      early & !late ~ "SPW;need gtseq", # positive early and negative late = SPW
+      !early & !late ~ "UNK;EL-failed", # negative early and negative late = FAIL
+    )) |>
+    separate(sample_state, into=c("run", "sample_status"), sep = ";")
 
-  # update run identification to gt seq run
-  # compare them to samples in sample_status where status is 'need gt seq'
-  runs_to_update_query <- glue::glue_sql("SELECT *
-                                          FROM gtseq_results
-                                          WHERE sample_id IN ({samples_to_update*});",
-                          .con = con)
 
-  runs_to_update_res <- DBI::dbGetQuery(con, runs_to_update_query) |>
-    as_tibble() |>
-    filter(!is.na(pop_structure_id)) |> # TODO do we want to set this to unknown in the run id table or ignore? ignoring for now
-    mutate(pop_structure_id = case_when(pop_structure_id == "LATEFALL" ~ "LateFall",
-                                        # TODO will we get a Fall/LateFall, a Spring/Winter, or
-                                        # Early/Late Heterozygous and Spring/Winter Heterozygous? if so, need to build out this case_when
-                                        TRUE ~ str_to_title(pop_structure_id))) |>
-    left_join(tbl(con, "run_type") |>
-                  collect() |>
-                  select(run_type_id = id, run_name),
-              by = c("pop_structure_id" = "run_name"))
+  # update the sample status
+  status_codes <- tbl(con, "status_code") |> collect()
+  sample_results_for_status_inserts <-
+    sample_results |> left_join(select(status_codes, status_code_name, id), by=c("sample_status"= "status_code_name")) |>
+    mutate(plate_run_id = plate_run_id)
+  values_clause <- glue::glue_collapse(glue::glue("('{sample_results_for_status_inserts$sample_id}', '{sample_results_for_status_inserts$id}', '{sample_results_for_status_inserts$plate_run_id}')"), sep = ", ")
+  insert_statement <- glue::glue("INSERT INTO sample_status (sample_id, status_code_id, plate_run_id) values {values_clause}")
 
-  sherlock_heterozygotes <- tbl(con, "genetic_run_identification") |>
-    filter(sample_id %in% runs_to_update_res$sample_id,
-           # OTS28 heterozygote
-           run_type_id == 8) |>
-    collect() |>
-    glimpse()
+  status_codes_updated <- DBI::dbExecute(con, insert_statement)
 
-  # edge case
-  update_runs_final <- runs_to_update_res |>
-    # set edge cases where OTS28 heterozygote, no gt-seq ots28 result, and has gt-seq pop assignment
-    # to unknown (run_type_id = 7)
-    mutate(run_type_id = case_when(sample_id %in% sherlock_heterozygotes &
-                                     is.na(gtseq_chr28_geno) &
-                                     !is.na(pop_structure_id) ~ 7,
-                                   gtseq_chr28_geno == "HETEROZYGOTE" &
-                                     cv_fall < 0.8 &
-                                     cv_fall + cv_late_fall > 0.8 ~ 5,
-                                   TRUE ~ run_type_id))
 
-  # update the sample ID in the run identification to be the gt seq run
-  update_run_query <- glue::glue_sql("
-                                      UPDATE genetic_run_identification
-                                      SET run_type_id = CASE sample_id
-                                        {glue::glue_collapse(
-                                          glue::glue_data_sql(runs_to_update_res,
-                                                              'WHEN {sample_id} THEN {run_type_id}',
-                                                              .con = con),
-                                          sep = '\n    '
-                                        )}
-                                      END
-                                      WHERE sample_id IN ({sample_id*});",
-                                     .con = con,
-                                     sample_id = runs_to_update_res$sample_id)
+  # update the genetics identification table
+  run_types <- tbl(con, "run_type") |> collect()
+  samples_results_for_genid_inserts <- sample_results |>
+    left_join(select(run_types, id, code, run_name),
+              by=c("run"="code")) |>
+    mutate(
+      early_plate_id = ifelse(is.na(early), NA_integer_, res[res$sample_id == sample_id & res$assay_id == 1, ]$plate_run_id),
+      late_plate_id = ifelse(is.na(late), NA_integer_, res[res$sample_id == sample_id & res$assay_id == 2, ]$plate_run_id))
 
-  DBI::dbExecute(con, update_run_query)
+  insert_statement <- glue::glue_sql("INSERT INTO genetic_run_identification (sample_id, run_type_id, early_plate_id, late_plate_id)
+                                 values (
+                                 UNNEST(ARRAY[{samples_results_for_genid_inserts$sample_id*}]),
+                                 UNNEST(ARRAY[{samples_results_for_genid_inserts$id*}]),
+                                 UNNEST(ARRAY[{samples_results_for_genid_inserts$early_plate_id*}]),
+                                 UNNEST(ARRAY[{samples_results_for_genid_inserts$late_plate_id*}])
+                                 )
+                                 ", .con = con)
 
-  # update status to complete
-  update_status_query <- glue::glue_sql("UPDATE sample_status
-                                         SET status_code_id = '11'
-                                         WHERE sample_id IN ({runs_to_update_res$sample_id*});",
-                                         .con = con)
+  genetic_runs_assigned <- DBI::dbExecute(con, insert_statement)
 
-  DBI::dbExecute(con, update_status_query)
+  message(glue::glue("A total of {status_codes_updated} samples statuses were updated, and a total of {genetic_runs_assigned} genetic runs were assinged/updated"))
 
+  return(list(
+    n_status_codes_updated = status_codes_updated,
+    n_genetic_runs_assigned = genetic_runs_assigned
+  ))
+
+}
+
+#' @title Generate final run assignment table
+#' @export
+generate_final_run_assignment <- function(filepath) {
+
+  res <- DBI::dbGetQuery(con,
+                         glue::glue_sql("SELECT *
+                                          FROM final_run_assignment;",
+                                        .con = con)) |> as_tibble()
+
+  run_types <- tbl(con, "run_type") |> collect() |> select(id, run_name)
+  # run assignment logic using sherlock and gt seq
+  # default to gt seq
+  # will only get one of 4 results: fall/late fall (sherlock ots28), spring, winter (from gt seq), unknown
+  final_run_assignments <- res |>
+    left_join(run_types, by = c("run_type_id" = "id")) |>
+    mutate(shlk_run_designation = toupper(run_name),
+           # TODO set edge cases where OTS28 heterozygote, no gt-seq ots28 result, and has gt-seq pop assignment
+           # to unknown (run_type_id = 7)
+           final_run_designation = case_when(shlk_run_designation == "HETEROZYGOTE" &
+                                               is.na(gtseq_chr28_geno) &
+                                               !is.na(pop_structure_id) ~ "UNKNOWN",
+                                             gtseq_chr28_geno == "HETEROZYGOTE" &
+                                               cv_fall < 0.8 &
+                                               cv_fall + cv_late_fall > 0.8 ~ 5,
+                                             TRUE ~ run_type_id),
+           final_run_designation = case_when(!is.na(pop_structure_id) ~ pop_structure_id,
+                                             !is.na(shlk_run_designation) ~ shlk_run_designation,
+                                             # edge cases
+                                             is.na(pop_structure_id) & gtseq_chr28_geno == "LATE" ~ "FALL OR LATE FALL",
+                                             is.na(pop_structure_id) & gtseq_chr28_geno == "HETEROZYGOTE" ~ "UNKNOWN",
+                                             TRUE ~ "UNKNOWN"))
+  return(final_run_assignments)
 }
 
 

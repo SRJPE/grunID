@@ -267,7 +267,7 @@ function(input, output, session) {
 
     # run gt seq logic
     tryCatch({
-      grunID::run_genetic_identification_gtseq(con, gtseq_insert$SampleID)
+      grunID::run_genetic_identification_v3(con, gtseq_insert$SampleID)
       spsComps::shinyCatch({message("Gen ID complete!")}, position = "top-center")
     },
     error = function(e) {

@@ -23,8 +23,6 @@ insert_gtseq_raw_results <- function(con, gtseq_data) {
     cli::cli_alert_danger("Some samples are not present in the database. Please add them to the database
                           before continuing.")
 
-    return("samples_not_inserted" = samples_not_inserted$SampleID)
-
   }
 
   values_clause <- paste(sprintf("('%s', %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
@@ -60,7 +58,18 @@ insert_gtseq_raw_results <- function(con, gtseq_data) {
   },
   .progress = T)
 
+  # TODO update sample status
+  # update status to complete
+  # update_status_query <- glue::glue_sql("UPDATE sample_status
+  #                                        SET status_code_id = '11'
+  #                                        WHERE sample_id IN ({runs_to_update_res$sample_id*});",
+  #                                       .con = con)
+  #
+  # DBI::dbExecute(con, update_status_query)
+
   cli::cli_bullets(paste0(nrow(insert_data), " samples inserted into database."))
+  cli::cli_bullets(paste0(nrow(samples_not_inserted), " samples not inserted into database because they were not in database."))
+  return("samples_not_inserted" = samples_not_inserted$SampleID)
 }
 
 
