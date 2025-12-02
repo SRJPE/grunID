@@ -1,7 +1,7 @@
 #' @title Read GT-Seq
 #' @export
 read_gtseq <- function(filepath) {
-  gtseq_data <- readr::read_tsv(filepath)
+  gtseq_data <- readr::read_tsv(filepath, show_col_types = FALSE)
 }
 
 #' @export
@@ -58,22 +58,17 @@ insert_gtseq_raw_results <- function(con, gtseq_data) {
   },
   .progress = T)
 
-  # TODO update sample status
   # update status to complete
-  # update_status_query <- glue::glue_sql("UPDATE sample_status
-  #                                        SET status_code_id = '11'
-  #                                        WHERE sample_id IN ({runs_to_update_res$sample_id*});",
-  #                                       .con = con)
-  #
-  # DBI::dbExecute(con, update_status_query)
+  update_status_query <- glue::glue_sql("UPDATE sample_status
+                                         SET status_code_id = '11'
+                                         WHERE sample_id IN ({insert_data$SampleID*});",
+                                        .con = con)
+
+  DBI::dbExecute(con, update_status_query)
 
   cli::cli_bullets(paste0(nrow(insert_data), " samples inserted into database."))
-  cli::cli_bullets(paste0(nrow(samples_not_inserted), " samples not inserted into database because they were not in database."))
+  cli::cli_bullets(paste0(nrow(samples_not_inserted), " samples not inserted into database because they were not initialized in the database sample table."))
+
   return("samples_not_inserted" = samples_not_inserted$SampleID)
 }
 
-
-
-# TODO:
-# 1. store raw results
-# send sampleid and popstructu id to run_identification_V2 function for assignment

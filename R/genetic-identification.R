@@ -579,8 +579,9 @@ run_genetic_identification_v3 <- function(con) {
 
 #' @title Generate final run assignment table
 #' @export
-generate_final_run_assignment <- function(filepath) {
+generate_final_run_assignment <- function(con) {
 
+  # TODO pull assay result to get shlk chr 28 genotype and shlk chr16 genotype
   res <- DBI::dbGetQuery(con,
                          glue::glue_sql("SELECT *
                                           FROM final_run_assignment;",
@@ -593,22 +594,46 @@ generate_final_run_assignment <- function(filepath) {
   final_run_assignments <- res |>
     left_join(run_types, by = c("run_type_id" = "id")) |>
     mutate(shlk_run_designation = toupper(run_name),
-           # TODO set edge cases where OTS28 heterozygote, no gt-seq ots28 result, and has gt-seq pop assignment
-           # to unknown (run_type_id = 7)
-           final_run_designation = case_when(shlk_run_designation == "HETEROZYGOTE" &
-                                               is.na(gtseq_chr28_geno) &
-                                               !is.na(pop_structure_id) ~ "UNKNOWN",
-                                             gtseq_chr28_geno == "HETEROZYGOTE" &
-                                               cv_fall < 0.8 &
-                                               cv_fall + cv_late_fall > 0.8 ~ 5,
-                                             TRUE ~ run_type_id),
-           final_run_designation = case_when(!is.na(pop_structure_id) ~ pop_structure_id,
-                                             !is.na(shlk_run_designation) ~ shlk_run_designation,
-                                             # edge cases
-                                             is.na(pop_structure_id) & gtseq_chr28_geno == "LATE" ~ "FALL OR LATE FALL",
-                                             is.na(pop_structure_id) & gtseq_chr28_geno == "HETEROZYGOTE" ~ "UNKNOWN",
-                                             TRUE ~ "UNKNOWN"))
-  return(final_run_assignments)
+           final_run_designation = case_when(
+             # edge case 1
+             str_detect(shlk_run_designation, "HETEROZYGO") &
+               is.na(gtseq_chr28_geno) &
+               !is.na(pop_structure_id) ~ "UNKNOWN",
+             # edge case 2
+             gtseq_chr28_geno == "HETEROZYGOTE" &
+               cv_fall < 0.8 &
+               cv_fall + cv_late_fall > 0.8 ~ "FALL OR LATE FALL",
+             # implement standard logic
+             !is.na(pop_structure_id) ~ pop_structure_id,
+             !is.na(shlk_run_designation) ~ shlk_run_designation,
+             # edge case 3
+             is.na(pop_structure_id) & gtseq_chr28_geno == "LATE" ~ "FALL OR LATE FALL",
+             # edge case 4
+             is.na(pop_structure_id) & gtseq_chr28_geno == "HETEROZYGOTE" ~ "UNKNOWN",
+             TRUE ~ "UNKNOWN")
+           ) |>
+    select(-c(run_name, run_type_id)) |>
+    # clean up
+    mutate(final_run_designation = ifelse(final_run_designation %in% c("LATEFALL", "FALL", "FALL/LATEFALL"), "FALL OR LATE FALL", final_run_designation))
+
+  # further edge cases
+  rejects <- final_run_assignments |>
+    filter(!final_run_designation %in% c("FALL OR LATE FALL", "SPRING", "WINTER", "UNKNOWN"))
+
+  keeps <- final_run_assignments |>
+    filter(final_run_designation %in% c("FALL OR LATE FALL", "SPRING", "WINTER", "UNKNOWN")) |>
+    relocate(final_run_designation, .after = field_run_type_id) |>
+    relocate(shlk_run_designation, .after = final_run_designation) |>
+    left_join(run_types, by = c("field_run_type_id" = "id")) |>
+    mutate(field_run_type = toupper(run_name)) |>
+    relocate(field_run_type, .after = fork_length_mm) |>
+    select(-c(field_run_type_id, run_name))
+
+  cli::cli_bullets(paste0(nrow(rejects), " sample IDs did not produce a conclusive result. See returned list element `diagnostic`."))
+  cli::cli_bullets(paste0(nrow(keeps), " sample IDs produced a conclusive results. See retuned list element `results`."))
+
+  return(list("results" = keeps,
+              "diagnostic" = rejects))
 }
 
 
