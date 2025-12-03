@@ -330,7 +330,7 @@ function(input, output, session) {
 
   get_sql_statement <- function(table) {
     statement <- switch (table,
-                         "Run Assignment" = {
+                         "SHLK Run Assignment" = {
                            "
                            SELECT
     --- gri.id AS genetic_run_id,
@@ -355,7 +355,7 @@ JOIN run_type rt_genetic ON gri.run_type_id = rt_genetic.id
 JOIN sample s ON gri.sample_id = s.id
 LEFT JOIN run_type rt_field ON s.field_run_type_id = rt_field.id
 WHERE gri.rn = 1
-  AND rt_genetic.run_name IN ({run_name_filters*})
+  ---AND rt_genetic.run_name IN ({run_name_filters*})
   AND (rt_field.run_name is NULL or rt_field.run_name IN ({field_run_name_filters*}))
   AND s.event_number IN ({sample_event_filters*})
   AND s.season = {season_filter}
@@ -381,7 +381,7 @@ ORDER BY gri.sample_id;
 
   # TODO: refactor so that code is not repeated like this
   query_results <- eventReactive(input$query_refresh, {
-    if (input$query_table_select == "Run Assignment") local({
+    if (input$query_table_select == "SHLK Run Assignment") local({
       sql_statement <- get_sql_statement(input$query_table_select)
       run_name_filters <- input$query_ra_select_run_type
       field_run_name_filters <- input$query_ra_select_field_run_type
@@ -410,6 +410,13 @@ ORDER BY gri.sample_id;
       sql_statement <- get_sql_statement(input$query_table_select)
       stmt <- glue::glue_sql(sql_statement, .con = con)
       data <- DBI::dbGetQuery(con, stmt)
+      return(data)
+    }) else if(input$query_table_select == "Final Run Assignment") local ({
+      data <- generate_final_run_assignment(con)$results |>
+        mutate(event_number = substr(sample_id, 7, 7),
+               season = paste0("20", substr(sample_id, 4, 5))) |>
+        filter(season %in% input$season_filter) |>
+        select(-c(event_number, season))
       return(data)
     })
 
