@@ -499,24 +499,105 @@ run_genetic_identification_v2 <- function(con, samples, plate_run_id) {
   ))
 }
 
-
-#' @title Run genetic identification with gt seq
+#' @title Run identification version 3
 #' @export
-run_genetic_identification_v3 <- function(con, samples, plate_run_id) {
+#'
+run_genetic_identification_v3 <- function(con) {
 
-  # process sherlock results
-  shlk_res <- DBI::dbGetQuery(con,
-                              glue::glue_sql("SELECT *
-                                        FROM (
-                                          SELECT *,
-                                                 ROW_NUMBER() OVER (PARTITION BY sample_id, assay_id ORDER BY created_at DESC) as rn
-                                          FROM assay_result
-                                          WHERE active = true
-                                        ) subquery
-                                        WHERE rn = 1 and sample_id IN ({samples*});",
-                                             .con = con)) |> as_tibble()
-  # assign sherlock runs
-  shlk_sample_results <- shlk_res |>
+  res <- DBI::dbGetQuery(con,
+                         glue::glue_sql("SELECT *
+                                          FROM (
+                                            SELECT *,
+                                                   ROW_NUMBER() OVER (PARTITION BY sample_id, assay_id ORDER BY created_at DESC) as rn
+                                            FROM assay_result
+                                            WHERE active = true
+                                          ) subquery
+                                          WHERE rn = 1 and sample_id IN ({samples*});",
+                                        .con = con)) |> as_tibble()
+
+
+  sample_results <- res |>
+    select(sample_id, assay_id, positive_detection) |>
+    complete(sample_id, assay_id = 1:2) |>  # fill in the missing id's when needed
+    pivot_wider(
+      names_from = assay_id,
+      values_from = positive_detection,
+    ) |>
+    rename("early" = `1`, "late" = `2`) |>
+    mutate(sample_state = case_when(
+      is.na(early) & !late ~ "UNK;ots28 in progress",
+      is.na(early) & late ~ "UNK;ots28 in progress",
+      early & is.na(late) ~ "UNK;ots28 in progress",
+      !early & is.na(late) ~ "UNK;ots28 in progress",
+      !early & late ~ "FAL;analysis complete", # positive late and negative early = Fall
+      early & late ~ "EL-HET;need gtseq", # positive early and positive late = HET
+      early & !late ~ "SPW;need gtseq", # positive early and negative late = SPW
+      !early & !late ~ "UNK;EL-failed", # negative early and negative late = FAIL
+    )) |>
+    separate(sample_state, into=c("run", "sample_status"), sep = ";")
+
+
+  # update the sample status
+  status_codes <- tbl(con, "status_code") |> collect()
+  sample_results_for_status_inserts <-
+    sample_results |> left_join(select(status_codes, status_code_name, id), by=c("sample_status"= "status_code_name")) |>
+    mutate(plate_run_id = plate_run_id)
+  values_clause <- glue::glue_collapse(glue::glue("('{sample_results_for_status_inserts$sample_id}', '{sample_results_for_status_inserts$id}', '{sample_results_for_status_inserts$plate_run_id}')"), sep = ", ")
+  insert_statement <- glue::glue("INSERT INTO sample_status (sample_id, status_code_id, plate_run_id) values {values_clause}")
+
+  status_codes_updated <- DBI::dbExecute(con, insert_statement)
+
+
+  # update the genetics identification table
+  run_types <- tbl(con, "run_type") |> collect()
+  samples_results_for_genid_inserts <- sample_results |>
+    left_join(select(run_types, id, code, run_name),
+              by=c("run"="code")) |>
+    mutate(
+      early_plate_id = ifelse(is.na(early), NA_integer_, res[res$sample_id == sample_id & res$assay_id == 1, ]$plate_run_id),
+      late_plate_id = ifelse(is.na(late), NA_integer_, res[res$sample_id == sample_id & res$assay_id == 2, ]$plate_run_id))
+
+  insert_statement <- glue::glue_sql("INSERT INTO genetic_run_identification (sample_id, run_type_id, early_plate_id, late_plate_id)
+                                 values (
+                                 UNNEST(ARRAY[{samples_results_for_genid_inserts$sample_id*}]),
+                                 UNNEST(ARRAY[{samples_results_for_genid_inserts$id*}]),
+                                 UNNEST(ARRAY[{samples_results_for_genid_inserts$early_plate_id*}]),
+                                 UNNEST(ARRAY[{samples_results_for_genid_inserts$late_plate_id*}])
+                                 )
+                                 ", .con = con)
+
+  genetic_runs_assigned <- DBI::dbExecute(con, insert_statement)
+
+  message(glue::glue("A total of {status_codes_updated} samples statuses were updated, and a total of {genetic_runs_assigned} genetic runs were assinged/updated"))
+
+  return(list(
+    n_status_codes_updated = status_codes_updated,
+    n_genetic_runs_assigned = genetic_runs_assigned
+  ))
+
+}
+
+#' @title Generate final run assignment table
+#' @export
+generate_final_run_assignment <- function(con) {
+
+  res <- DBI::dbGetQuery(con,
+                         glue::glue_sql("SELECT *
+                                          FROM final_run_assignment;",
+                                        .con = con)) |> as_tibble()
+
+  # get assay_result for ots28 and ots16 genotype columns
+  assay_results <- DBI::dbGetQuery(con,
+                                   glue::glue_sql("SELECT *
+                                          FROM (
+                                            SELECT *,
+                                                   ROW_NUMBER() OVER (PARTITION BY sample_id, assay_id ORDER BY created_at DESC) as rn
+                                            FROM assay_result
+                                            WHERE active = true
+                                          ) subquery
+                                          WHERE rn = 1 and sample_id IN ({res$sample_id*});",
+                                                  .con = con)) |>
+    as_tibble() |>
     select(sample_id, assay_id, positive_detection) |>
     complete(sample_id, assay_id = 1:4) |>  # fill in the missing id's when needed
     pivot_wider(
@@ -524,110 +605,68 @@ run_genetic_identification_v3 <- function(con, samples, plate_run_id) {
       values_from = positive_detection,
     ) |>
     rename("early" = `1`, "late" = `2`, "spring" = `3`, "winter" = `4`) |>
-    mutate(sample_state = case_when(
-      is.na(early) & !late & is.na(spring) & is.na(winter) ~ "UNK;ots28 in progress",
-      is.na(early) & late & is.na(spring) & is.na(winter) ~ "UNK;ots28 in progress",
-      early & is.na(late) & is.na(spring) & is.na(winter) ~ "UNK;ots28 in progress",
-      !early & is.na(late) & is.na(spring) & is.na(winter) ~ "UNK;ots28 in progress",
-      !early & late & is.na(spring) & is.na(winter) ~ "FAL;analysis complete", # positive late and negative early = Fall
-      early & late & is.na(spring) & is.na(winter) ~ "EL-HET;need gtseq", # positive early and positive late = HET
-      early & !late & is.na(spring) & is.na(winter) ~ "SPW;need ots16", # positive early and negative late = SPW
-      !early & !late & is.na(spring) & is.na(winter) ~ "UNK;EL-failed", # negative early and negative late = FAIL
-      early & !late & spring & is.na(winter) ~ "SPW;need ots16", #TODO: ots16 in progress
-      is.na(early) & is.na(late) & spring & is.na(winter) ~ "SPW;need ots16",
-      spring & winter ~ "SW-HET;need gtseq",
-      !spring & winter ~ "WIN;analysis complete",
-      spring & !winter ~ "SPR;analysis complete",
-      !spring & !winter ~ "UNK;SW-failed"
-    )) |>
-    separate(sample_state, into=c("run", "sample_status"), sep = ";") |>
-    mutate(
-      sample_status = case_when(
-        sample_status == "need ots16" & str_detect(sample_id, "KNL|TIS|DEL") ~ "need gtseq",
-        TRUE ~ sample_status
-      )
-    )
+    # TODO confirm logic
+    mutate(shlk_chr28_genotype = case_when(early & !late ~ "EARLY",
+                                           !early & late ~ "LATE",
+                                           early & late ~ "HETEROZYGOTE",
+                                           TRUE ~ "UNKNOWN"),
+           shlk_chr16_genotype = case_when(spring & !winter ~ "SPRING",
+                                           !spring & winter ~ "WINTER",
+                                           spring & winter ~ "HETEROZYGOTE",
+                                           TRUE ~ "UNKNOWN")) |>
+    select(sample_id, shlk_chr28_genotype, shlk_chr16_genotype)
 
-  # pull gt seq results
-  gtseq_res <- DBI::dbGetQuery(con,
-                               glue::glue_sql("SELECT *
-                                              FROM gtseq_results
-                                              WHERE sample_id IN ({samples*});",
-                                              .con = con)) |>
-    as_tibble()
 
-  # assign gtseq runs
-  gtseq_res_sample_results <- gtseq_res |>
-    select(sample_id, pop_structure_id) |>
-    mutate(gtseq_status = "gtseq_complete")  # TODO this is not in status_code yet, but should be? or analysis complete?
+  run_types <- tbl(con, "run_type") |> collect() |> select(id, run_name)
 
-  # join all results
-  # TODO - there is no overlap between samples run through sherlock (assay_result) and gtseq_results
-  all_sample_results <- gtseq_res_sample_results |>
-    # do a full join here - some gt seq results may not have a shlk assay result
-    full_join(shlk_sample_results, by = "sample_id") |>
-    mutate(final_run_designation = case_when(is.na(run) & !is.na(pop_structure_id) ~ pop_structure_id,
-                                             !is.na(run) & is.na(pop_structure_id) ~ run,
-                                             is.na(run) & is.na(pop_structure_id) ~ "UNK",
-                                             # TODO does gt seq always trump SHLK?
-                                             !is.na(run) & !is.na(pop_structure_id) ~ pop_structure_id
-    ),
-    final_sample_status = case_when(is.na(run) & !is.na(pop_structure_id) ~ gtseq_status,
-                                    !is.na(run) & is.na(pop_structure_id) ~ sample_status,
-                                    # TODO is this right?
-                                    is.na(run) & is.na(pop_structure_id) ~ "need gtseq",
-                                    !is.na(run) & !is.na(pop_structure_id) ~ gtseq_status
-    )
-    ) |>
-    glimpse()
+  # run assignment logic using sherlock and gt seq
+  # default to gt seq
+  # will only get one of 4 results: fall/late fall (sherlock ots28), spring, winter (from gt seq), unknown
+  final_run_assignments <- res |>
+    left_join(run_types, by = c("run_type_id" = "id")) |>
+    mutate(shlk_run_designation = toupper(run_name),
+           final_run_designation = case_when(
+             # edge case 1
+             str_detect(shlk_run_designation, "HETEROZYGO") &
+               is.na(gtseq_chr28_geno) &
+               !is.na(pop_structure_id) ~ "UNKNOWN",
+             # edge case 2
+             gtseq_chr28_geno == "HETEROZYGOTE" &
+               cv_fall < 0.8 &
+               cv_fall + cv_late_fall > 0.8 ~ "FALL OR LATE FALL",
+             # implement standard logic
+             !is.na(pop_structure_id) ~ pop_structure_id,
+             !is.na(shlk_run_designation) ~ shlk_run_designation,
+             # edge case 3
+             is.na(pop_structure_id) & gtseq_chr28_geno == "LATE" ~ "FALL OR LATE FALL",
+             # edge case 4
+             is.na(pop_structure_id) & gtseq_chr28_geno == "HETEROZYGOTE" ~ "UNKNOWN",
+             TRUE ~ "UNKNOWN")
+           ) |>
+    select(-c(run_name, run_type_id)) |>
+    # clean up
+    mutate(final_run_designation = ifelse(final_run_designation %in% c("LATEFALL", "FALL", "FALL/LATEFALL"), "FALL OR LATE FALL", final_run_designation)) |>
+    # add genotypes from sherlock
+    left_join(assay_results, by = "sample_id")
 
-  # update the sample status
-  status_codes <- tbl(con, "status_code") |>
-    collect()
+  # further edge cases
+  rejects <- final_run_assignments |>
+    filter(!final_run_designation %in% c("FALL OR LATE FALL", "SPRING", "WINTER", "UNKNOWN"))
 
-  sample_results_for_status_inserts <- all_sample_results |>
-    left_join(select(status_codes, status_code_name, id),
-              by = c("final_sample_status"= "status_code_name")) |>
-    mutate(plate_run_id = plate_run_id)
+  keeps <- final_run_assignments |>
+    filter(final_run_designation %in% c("FALL OR LATE FALL", "SPRING", "WINTER", "UNKNOWN")) |>
+    left_join(run_types, by = c("field_run_type_id" = "id")) |>
+    mutate(field_run_type = toupper(run_name)) |>
+    select(-c(field_run_type_id, run_name)) |>
+    select(sample_id:fork_length_mm, field_run_type, final_run_designation,
+           shlk_chr28_genotype, shlk_chr16_genotype, shlk_run_designation,
+           gtseq_chr28_geno:sac_win)
 
-  values_clause <- glue::glue_collapse(glue::glue("('{sample_results_for_status_inserts$sample_id}', '{sample_results_for_status_inserts$id}', '{sample_results_for_status_inserts$plate_run_id}')"), sep = ", ")
-  insert_statement <- glue::glue("INSERT INTO sample_status (sample_id, status_code_id, plate_run_id) values {values_clause}")
+  cli::cli_bullets(paste0(nrow(rejects), " sample IDs did not produce a conclusive result. See returned list element `diagnostic`."))
+  cli::cli_bullets(paste0(nrow(keeps), " sample IDs produced a conclusive results. See retuned list element `results`."))
 
-  status_codes_updated <- DBI::dbExecute(con, insert_statement)
-
-  # update the genetics identification table
-  run_types <- tbl(con, "run_type") |>
-    collect()
-
-  samples_results_for_genid_inserts <-
-    all_sample_results |>
-    left_join(select(run_types, id, code, run_name),
-              by = c("final_run_designation"="code")) |>
-    mutate(
-      early_plate_id = ifelse(is.na(early), NA_integer_, res[res$sample_id == sample_id & res$assay_id == 1, ]$plate_run_id),
-      late_plate_id = ifelse(is.na(late), NA_integer_, res[res$sample_id == sample_id & res$assay_id == 2, ]$plate_run_id),
-      spring_plate_id = ifelse(is.na(spring), NA_integer_, res[res$sample_id == sample_id & res$assay_id == 3, ]$plate_run_id),
-      winter_plate_id = ifelse(is.na(winter), NA_integer_, res[res$sample_id == sample_id & res$assay_id == 4, ]$plate_run_id))
-
-  insert_statement <- glue::glue_sql("INSERT INTO genetic_run_identification (sample_id, run_type_id, early_plate_id, late_plate_id, winter_plate_id, spring_plate_id)
-                                 values (
-                                 UNNEST(ARRAY[{samples_results_for_genid_inserts$sample_id*}]),
-                                 UNNEST(ARRAY[{samples_results_for_genid_inserts$id*}]),
-                                 UNNEST(ARRAY[{samples_results_for_genid_inserts$early_plate_id*}]),
-                                 UNNEST(ARRAY[{samples_results_for_genid_inserts$late_plate_id*}]),
-                                 UNNEST(ARRAY[{samples_results_for_genid_inserts$winter_plate_id*}]),
-                                 UNNEST(ARRAY[{samples_results_for_genid_inserts$spring_plate_id*}])
-                                 )
-                                 ", .con = con)
-
-  genetic_runs_assigned <- DBI::dbExecute(con, insert_statement)
-
-  message(glue::glue("A total of {status_codes_updated} samples satus were updated, and a total of {genetic_runs_assigned} genetic runs were assinged/updated"))
-
-  return(list(
-    n_status_codes_updated = status_codes_updated,
-    n_genetic_runs_assigned = genetic_runs_assigned
-  ))
+  return(list("results" = keeps,
+              "diagnostic" = rejects))
 }
 
 

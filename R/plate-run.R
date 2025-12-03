@@ -197,7 +197,7 @@ add_new_plate_results <- function(con, protocol_name, genetic_method, laboratory
     #                            results_table = db_tables$assay,
     #                            sample_status_table = db_tables$sample_status,
     #                            layout_type = layout_type)
-    run_genetic_identification_v2(con, samples_to_use, plate_run_id = plate_run$plate_run_id)
+    run_genetic_identification_v3(con, samples_to_use, plate_run_id = plate_run$plate_run_id)
   }
 
   return(thresholds_event)

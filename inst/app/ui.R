@@ -68,7 +68,7 @@ navbarPage(
 
                         tags$div(
                           style = "display: flex; align-items: center;",
-                          selectInput("genetic_method", "Select a Genetic Method", choices = all_gen_methods$code),
+                          selectInput("genetic_method", "Select a Genetic Method", choices = gen_methods_shlk$code),
                           actionButton("show_methods_details", label = NULL, icon = icon("question"), class = "round-btn icon-offset")
 
                         ),
@@ -144,9 +144,11 @@ navbarPage(
                       )
              ),
 
-             tabPanel("Uploaer GT-Seq Results",
-                      fileInput("gtseq_upload_file", label="Uploda GT-Seq Results"),
-                      tableOutput("gtseq_results_preview")),
+             tabPanel("Upload GT-Seq Results",
+                      fileInput("gtseq_upload_file", label="Preview/Upload GT-Seq Results"),
+                      DT::dataTableOutput("gtseq_results"),
+                      actionButton("do_upload_gtseq", "Upload Results", class = "btn-success", icon = icon("rocket"))
+                      ),
 
              tabPanel("Check-in Samples",
                       uiOutput("check_in_notification"),
@@ -270,8 +272,8 @@ navbarPage(
                selectInput("season_filter", "Season",
                            available_years),
                selectInput("query_table_select", "Table",
-                           choices = c("Run Assignment", "Assay Results", "Raw Assay Results",
-                                       "Plate Runs", "Sample Archive Plates")),
+                           choices = c("SHLK Run Assignment", "Assay Results", "Raw Assay Results",
+                                       "Plate Runs", "Sample Archive Plates", "Final Run Assignment")),
                conditionalPanel(condition = "input.query_table_select == 'Run Assignment'",
                                 tags$div(style = "border: solid #d8e4ed;padding: 10px;margin:5px;",
                                          selectInput("query_ra_select_run_type", "Run Type",

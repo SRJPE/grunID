@@ -2,10 +2,10 @@
 % Please edit documentation in R/genetic-identification.R
 \name{run_genetic_identification_v3}
 \alias{run_genetic_identification_v3}
-\title{Run genetic identification with gt seq}
+\title{Run identification version 3}
 \usage{
-run_genetic_identification_v3(con, samples, plate_run_id)
+run_genetic_identification_v3(con)
 }
 \description{
-Run genetic identification with gt seq
+Run identification version 3
 }

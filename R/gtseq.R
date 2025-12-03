@@ -1,23 +1,29 @@
 #' @title Read GT-Seq
 #' @export
 read_gtseq <- function(filepath) {
-  gtseq_data <- readr::read_tsv(filepath)
+  gtseq_data <- readr::read_tsv(filepath, show_col_types = FALSE)
 }
 
 #' @export
 insert_gtseq_raw_results <- function(con, gtseq_data) {
 
   # TODO need a cleaner way to do this
-  sherlock_sample_ids <- tbl(con, "sample") |>
+  db_sample_ids <- tbl(con, "sample") |>
     select(id) |>
     collect()
 
-  # data filtered to those with sherlock results in db (in "sample" table)
+  # data filtered to those existing in db (in "sample" table)
   insert_data <- gtseq_data |>
-    filter(SampleID %in% sherlock_sample_ids$id)
+    filter(SampleID %in% db_sample_ids$id)
 
   samples_not_inserted <- gtseq_data |>
-    filter(!SampleID %in% sherlock_sample_ids$id)
+    filter(!SampleID %in% db_sample_ids$id)
+
+  if(nrow(samples_not_inserted) > 0) {
+    cli::cli_alert_danger("Some samples are not present in the database. Please add them to the database
+                          before continuing.")
+
+  }
 
   values_clause <- paste(sprintf("('%s', %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
                                  insert_data$SampleID,
@@ -52,15 +58,17 @@ insert_gtseq_raw_results <- function(con, gtseq_data) {
   },
   .progress = T)
 
-  cli::cli_bullets(paste0(nrow(insert_data), " samples inserted into database. ",
-                          nrow(samples_not_inserted), " samples not inserted; must be
-                          inserted into the sample table first."))
+  # update status to complete
+  update_status_query <- glue::glue_sql("UPDATE sample_status
+                                         SET status_code_id = '11'
+                                         WHERE sample_id IN ({insert_data$SampleID*});",
+                                        .con = con)
 
-   return("samples_not_inserted" = samples_not_inserted$SampleID)
+  DBI::dbExecute(con, update_status_query)
+
+  cli::cli_bullets(paste0(nrow(insert_data), " samples inserted into database."))
+  cli::cli_bullets(paste0(nrow(samples_not_inserted), " samples not inserted into database because they were not initialized in the database sample table."))
+
+  return("samples_not_inserted" = samples_not_inserted$SampleID)
 }
 
-
-
-# TODO:
-# 1. store raw results
-# send sampleid and popstructu id to run_identification_V2 function for assignment
