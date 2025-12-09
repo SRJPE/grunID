@@ -408,7 +408,29 @@ write_csv(samples_to_check, "data-raw/backfill/erroneous_samples_2022-2024.csv")
 
 
 
+# generate query backfill sherlock ----------------------------------------
 
+con <- gr_db_connect()
+query_for_dashboard_raw <- generate_final_run_assignment(con)$results
+query_for_dashboard_raw |>
+  glimpse()
+
+# we need to add in shlk_chr28_genotype and shlk_chr16_genotype cols where we have them
+# and where empty
+
+shlk_backfill_genotype <- sherlock_all_data |>
+  select(sample_id = SampleID,
+         `SHERLOCK Chr28 geno`, `SHERLOCK Chr16 geno`)
+
+query_for_dashboard <- query_for_dashboard_raw |>
+  left_join(shlk_backfill_genotype, by = "sample_id") |>
+  mutate(shlk_chr28_genotype = ifelse(is.na(shlk_chr28_genotype)  &
+                                        !is.na(`SHERLOCK Chr28 geno`), `SHERLOCK Chr28 geno`, shlk_chr28_genotype),
+         shlk_chr16_genotype = ifelse(is.na(shlk_chr16_genotype)  &
+                                        !is.na(`SHERLOCK Chr16 geno`), `SHERLOCK Chr16 geno`, shlk_chr16_genotype)) |>
+  select(-c(`SHERLOCK Chr28 geno`, `SHERLOCK Chr16 geno`))
+
+write_csv(query_for_dashboard, "~/Downloads/genetics_query_for_dashboard_12-9-2025.csv")
 
 # old ---------------------------------------------------------------------
 #

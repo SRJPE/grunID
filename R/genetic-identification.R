@@ -609,11 +609,11 @@ generate_final_run_assignment <- function(con) {
     mutate(shlk_chr28_genotype = case_when(early & !late ~ "EARLY",
                                            !early & late ~ "LATE",
                                            early & late ~ "HETEROZYGOTE",
-                                           TRUE ~ "UNKNOWN"),
+                                           TRUE ~ NA_character_),
            shlk_chr16_genotype = case_when(spring & !winter ~ "SPRING",
                                            !spring & winter ~ "WINTER",
                                            spring & winter ~ "HETEROZYGOTE",
-                                           TRUE ~ "UNKNOWN")) |>
+                                           TRUE ~ NA_character_)) |>
     select(sample_id, shlk_chr28_genotype, shlk_chr16_genotype)
 
 
