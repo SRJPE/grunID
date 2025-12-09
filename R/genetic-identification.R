@@ -502,7 +502,7 @@ run_genetic_identification_v2 <- function(con, samples, plate_run_id) {
 #' @title Run identification version 3
 #' @export
 #'
-run_genetic_identification_v3 <- function(con) {
+run_genetic_identification_v3 <- function(con, samples, plate_run_id) {
 
   res <- DBI::dbGetQuery(con,
                          glue::glue_sql("SELECT *

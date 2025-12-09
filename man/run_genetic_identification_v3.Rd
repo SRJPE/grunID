@@ -4,7 +4,7 @@
 \alias{run_genetic_identification_v3}
 \title{Run identification version 3}
 \usage{
-run_genetic_identification_v3(con)
+run_genetic_identification_v3(con, samples, plate_run_id)
 }
 \description{
 Run identification version 3
