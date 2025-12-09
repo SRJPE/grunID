@@ -403,6 +403,7 @@ make_dual_assay_layout_for_hamilton <- function(
 #' @export
 make_archive_plate_maps_by_event <- function(con, events, season = get_current_season()$year, output_dir = NULL) {
   events <- sort(events)
+  events_name <- paste(events, collapse = "-")
   output_dir <- if (is.null(output_dir)) "." else output_dir
   season_filter <- stringr::str_sub(season, -2)
   # TODO make the mutate happen at the function level
@@ -470,15 +471,27 @@ make_archive_plate_maps_by_event <- function(con, events, season = get_current_s
     # last we handle remaining number as dual assay
     start_index <- (total_full_single_layouts * sample_cap_for_single_assay) + 1
     end_index <- start_index + samples_remain_after_full_single_layout
+    dual_assay_samples <- samples[start_index:end_index, ]
     dual_assay_layouts <- make_dual_assay_layout(
       dual_assay_samples,
       output_dir = output_dir,
       season_filter = season_filter,
-      events_name = events_name,
-      plate_name_offset = plate_name_offset
+      events_name = events_name#,
+      #plate_name_offset = plate_name_offset
     )
 
     dual_assay_layouts <- 1
+  }
+
+  # TODO added a check here just for testing purposes - if creating
+  # plates for when we have too few samples
+  if(!exists("single_assay_layouts")) {
+    return(list(
+      dual = dual_assay_layouts,
+      #single = single_assay_layouts,
+      success = TRUE,
+      messages = "created files"
+    ))
   }
 
   return(list(
