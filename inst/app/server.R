@@ -372,54 +372,44 @@ ORDER BY gri.sample_id;
                            "SELECT * FROM plate_run;"
                          },
                          "Sample Archive Plates" = {
-                           "select sample_id, sample_archive_plates.arc_plate_id from sample_archive_plates join sample s on s.id = sample_archive_plates.sample_id where s.season = 25;"
+                           "select sample_id, sample_archive_plates.arc_plate_id from sample_archive_plates join sample s on s.id = sample_archive_plates.sample_id where s.season = {season_filter};"
                          }
     )
 
     return(statement)
   }
 
-  # TODO: refactor so that code is not repeated like this
+
   query_results <- eventReactive(input$query_refresh, {
-    if (input$query_table_select == "SHLK Run Assignment") local({
-      sql_statement <- get_sql_statement(input$query_table_select)
+    sql_statement <- get_sql_statement(input$query_table_select)
+
+    if (input$query_table_select == "SHLK Run Assignment") {
       run_name_filters <- input$query_ra_select_run_type
       field_run_name_filters <- input$query_ra_select_field_run_type
       sample_event_filters <- input$query_ra_select_sample_event
       season_filter <- as.numeric(input$season_filter) - 2000
       stmt <- glue::glue_sql(sql_statement, .con = con)
-      print(stmt)
       data <- DBI::dbGetQuery(con, stmt)
-      return(data)
-    }) else if (input$query_table_select == "Assay Results") local({
-      sql_statement <- get_sql_statement(input$query_table_select)
+
+    } else if (input$query_table_select == "Sample Archive Plates") {
+      season_filter <- as.numeric(input$season_filter) - 2000
       stmt <- glue::glue_sql(sql_statement, .con = con)
       data <- DBI::dbGetQuery(con, stmt)
-      return(data)
-    }) else if (input$query_table_select == "Raw Assay Results") local({
-      sql_statement <- get_sql_statement(input$query_table_select)
-      stmt <- glue::glue_sql(sql_statement, .con = con)
-      data <- DBI::dbGetQuery(con, stmt)
-      return(data)
-    }) else if (input$query_table_select == "Plate Runs") local({
-      sql_statement <- get_sql_statement(input$query_table_select)
-      stmt <- glue::glue_sql(sql_statement, .con = con)
-      data <- DBI::dbGetQuery(con, stmt)
-      return(data)
-    }) else if (input$query_table_select == "Sample Archive Plates") local({
-      sql_statement <- get_sql_statement(input$query_table_select)
-      stmt <- glue::glue_sql(sql_statement, .con = con)
-      data <- DBI::dbGetQuery(con, stmt)
-      return(data)
-    }) else if(input$query_table_select == "Final Run Assignment") local ({
+
+    } else if (input$query_table_select == "Final Run Assignment") {
       data <- generate_final_run_assignment(con)$results |>
         mutate(event_number = substr(sample_id, 7, 7),
                season = paste0("20", substr(sample_id, 4, 5))) |>
         filter(season %in% input$season_filter) |>
         select(-c(event_number, season))
-      return(data)
-    })
 
+    } else {
+      # For tables that don't need filters
+      stmt <- glue::glue_sql(sql_statement, .con = con)
+      data <- DBI::dbGetQuery(con, stmt)
+    }
+
+    return(data)
   })
 
   output$season_table <- DT::renderDT({
