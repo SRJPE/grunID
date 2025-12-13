@@ -375,18 +375,21 @@ remaining_2023_field_samples <- read_csv("data-raw/backfill/completed_field_shee
          fork_length_mm = `FL (mm)`,
          field_run_name = `Field Run ID`) |>
   mutate(datetime_collected = lubridate::mdy_hm(paste(date, time)),
-         run_name_upper = case_when(field_run_name == "n/r" ~ "UNKNOWN",
+         run_name_upper = case_when(field_run_name == "n/r" ~ NA_character_, # confirm that we don't want these to be "unknowns" ?
                                     field_run_name == "Late Fall" ~ "LATEFALL",
+                                    # hard code field run IDs, sent by Sean in Teams chat
+                                    field_run_name == "1" ~ "FALL",
+                                    field_run_name == "2" ~ "SPRING",
+                                    field_run_name == "3" ~ "WINTER",
+                                    field_run_name == "4" ~ "LATEFALL",
                                     TRUE ~ toupper(field_run_name)),
-         run_name_id = ifelse(run_name_upper %in% c("1", "2", "3"), as.numeric(run_name_upper), NA_integer_),
          fork_length_mm = as.numeric(fork_length_mm)) |>
   # we already have 2023 data through march
   filter(year(datetime_collected) == 2023,
          datetime_collected > max(field_data_2023$datetime_collected, na.rm = T)) |>
   # clean up for updating in db
   left_join(all_run_types, by = c("run_name_upper")) |>
-  mutate(field_run_type_id = ifelse(is.na(id), run_name_id, id)) |>
-  select(sample_id, datetime_collected, fork_length_mm, field_run_type_id) |>
+  select(sample_id, datetime_collected, fork_length_mm, field_run_type_id = id) |>
   glimpse()
 
 # TODO upload once we hear back from Sean that the run type IDs can be matched correctly
