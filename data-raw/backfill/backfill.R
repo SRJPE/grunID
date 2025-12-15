@@ -383,16 +383,18 @@ remaining_2023_field_samples <- read_csv("data-raw/backfill/completed_field_shee
                                     field_run_name == "3" ~ "WINTER",
                                     field_run_name == "4" ~ "LATEFALL",
                                     TRUE ~ toupper(field_run_name)),
-         fork_length_mm = as.numeric(fork_length_mm)) |>
+         fork_length_mm = as.numeric(fork_length_mm),
+         field_comment = NA_character_) |>
   # we already have 2023 data through march
   filter(year(datetime_collected) == 2023,
          datetime_collected > max(field_data_2023$datetime_collected, na.rm = T)) |>
   # clean up for updating in db
   left_join(all_run_types, by = c("run_name_upper")) |>
-  select(sample_id, datetime_collected, fork_length_mm, field_run_type_id = id) |>
-  glimpse()
+  select(sample_id, datetime_collected, fork_length_mm, field_run_type_id = id, field_comment) |>
+  # already in db
+  filter(sample_id != "DEL23_10_B_3")
 
-# TODO upload once we hear back from Sean that the run type IDs can be matched correctly
+update_field_sheet_samples(con, remaining_2023_field_samples)
 
 field_data_2024 <- field_data_2024_raw |>
   mutate(Time = as.numeric(Time),
@@ -454,9 +456,13 @@ query_for_dashboard <- query_for_dashboard_raw |>
                                         !is.na(`SHERLOCK Chr28 geno`), `SHERLOCK Chr28 geno`, shlk_chr28_genotype),
          shlk_chr16_genotype = ifelse(is.na(shlk_chr16_genotype)  &
                                         !is.na(`SHERLOCK Chr16 geno`), `SHERLOCK Chr16 geno`, shlk_chr16_genotype)) |>
-  select(-c(`SHERLOCK Chr28 geno`, `SHERLOCK Chr16 geno`))
+  select(-c(`SHERLOCK Chr28 geno`, `SHERLOCK Chr16 geno`)) |>
+  # TODO FIX 2025 RESULTS!
+  mutate(season = substr(sample_id, 4, 5)) |>
+  filter(season != "25") |>
+  select(-season)
 
-write_csv(query_for_dashboard, "~/Downloads/genetics_query_for_dashboard_12-9-2025.csv")
+write_csv(query_for_dashboard, paste("~/Downloads/genetics_query_for_dashboard_", Sys.Date(), ".csv"))
 
 # old ---------------------------------------------------------------------
 #
