@@ -476,27 +476,15 @@ make_archive_plate_maps_by_event <- function(con, events, season = get_current_s
       dual_assay_samples,
       output_dir = output_dir,
       season_filter = season_filter,
-      events_name = events_name#,
-      #plate_name_offset = plate_name_offset
+      events_name = events_name
     )
 
     dual_assay_layouts <- 1
   }
 
-  # TODO added a check here just for testing purposes - if creating
-  # plates for when we have too few samples
-  if(!exists("single_assay_layouts")) {
-    return(list(
-      dual = dual_assay_layouts,
-      #single = single_assay_layouts,
-      success = TRUE,
-      messages = "created files"
-    ))
-  }
-
   return(list(
     dual = dual_assay_layouts,
-    single = single_assay_layouts,
+    single = single_assays_created,
     success = TRUE,
     messages = "created files"
   ))
