@@ -457,12 +457,11 @@ query_for_dashboard <- query_for_dashboard_raw |>
          shlk_chr16_genotype = ifelse(is.na(shlk_chr16_genotype)  &
                                         !is.na(`SHERLOCK Chr16 geno`), `SHERLOCK Chr16 geno`, shlk_chr16_genotype)) |>
   select(-c(`SHERLOCK Chr28 geno`, `SHERLOCK Chr16 geno`)) |>
-  # TODO FIX 2025 RESULTS!
   mutate(season = substr(sample_id, 4, 5)) |>
-  filter(season != "25") |>
+  filter(season != 25) |>
   select(-season)
 
-write_csv(query_for_dashboard, paste("~/Downloads/genetics_query_for_dashboard_", Sys.Date(), ".csv"))
+write_csv(query_for_dashboard, paste0("data-raw/backfill/results/genetics_query_for_dashboard_2022-2024_", Sys.Date(), ".csv"))
 
 # old ---------------------------------------------------------------------
 #

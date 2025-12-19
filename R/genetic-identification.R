@@ -663,7 +663,7 @@ generate_final_run_assignment <- function(con) {
            gtseq_chr28_geno:sac_win)
 
   cli::cli_bullets(paste0(nrow(rejects), " sample IDs did not produce a conclusive result. See returned list element `diagnostic`."))
-  cli::cli_bullets(paste0(nrow(keeps), " sample IDs produced a conclusive results. See retuned list element `results`."))
+  cli::cli_bullets(paste0(nrow(keeps), " sample IDs produced a conclusive results. See returned list element `results`."))
 
   return(list("results" = keeps,
               "diagnostic" = rejects))
