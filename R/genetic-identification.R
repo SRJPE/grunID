@@ -605,7 +605,6 @@ generate_final_run_assignment <- function(con) {
       values_from = positive_detection,
     ) |>
     rename("early" = `1`, "late" = `2`, "spring" = `3`, "winter" = `4`) |>
-    # TODO confirm logic
     mutate(shlk_chr28_genotype = case_when(early & !late ~ "EARLY",
                                            !early & late ~ "LATE",
                                            early & late ~ "HETEROZYGOTE",
@@ -631,19 +630,25 @@ generate_final_run_assignment <- function(con) {
                is.na(gtseq_chr28_geno) &
                !is.na(pop_structure_id) ~ "UNKNOWN",
              # edge case 2
+             !is.na(shlk_chr28_genotype) &
+               is.na(gtseq_chr28_geno) &
+               !is.na(pop_structure_id)  ~ "FILTER OUT",
+             # edge case 3
              gtseq_chr28_geno == "HETEROZYGOTE" &
-               cv_fall < 0.8 &
                cv_fall + cv_late_fall > 0.8 ~ "FALL OR LATE FALL",
+             # edge case 4
+             is.na(pop_structure_id) & gtseq_chr28_geno == "LATE" ~ "FALL OR LATE FALL",
+             # edge case 5
+             is.na(pop_structure_id) & gtseq_chr28_geno == "HETEROZYGOTE" ~ "UNKNOWN",
              # implement standard logic
+             gtseq_chr28_geno = "LATE" ~ "FALL OR LATE FALL",
              !is.na(pop_structure_id) ~ pop_structure_id,
              !is.na(shlk_run_designation) ~ shlk_run_designation,
-             # edge case 3
-             is.na(pop_structure_id) & gtseq_chr28_geno == "LATE" ~ "FALL OR LATE FALL",
-             # edge case 4
-             is.na(pop_structure_id) & gtseq_chr28_geno == "HETEROZYGOTE" ~ "UNKNOWN",
-             TRUE ~ "UNKNOWN")
-           ) |>
+             TRUE ~ NA_character_ # TODO what should we designate these? identify for later debug?
+           )) |>
     select(-c(run_name, run_type_id)) |>
+    # filter out any rows
+    filter(final_run_designation !=  "FILTER OUT") |>
     # clean up
     mutate(final_run_designation = ifelse(final_run_designation %in% c("LATEFALL", "FALL", "FALL/LATEFALL"), "FALL OR LATE FALL", final_run_designation)) |>
     # add genotypes from sherlock
