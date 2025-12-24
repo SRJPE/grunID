@@ -65,17 +65,40 @@ data_2023_final_designation <- parsed_data_2023 |>
   # don't keep samples where both gt seq and shlk are NA
   filter(!if_all(c(Pop_Structure_ID, `SHLCK Run Designation`), is.na)) |>
   mutate(
-  final_run_designation = case_when(
-    !is.na(Pop_Structure_ID) ~ Pop_Structure_ID,
-    !is.na(`SHLCK Run Designation`) ~ `SHLCK Run Designation`,
-    TRUE ~ "UNKNOWN"
-  ),
+    final_run_designation = case_when(
+      # edge case 1
+      str_detect(`SHLCK Run Designation`, "HETEROZYGO") &
+        is.na(Gtseq_Chr28_Geno) &
+        !is.na(Pop_Structure_ID) ~ "UNKNOWN",
+      # edge case 2
+      !is.na(`SHERLOCK Chr28 geno`) &
+        is.na(Gtseq_Chr28_Geno) &
+        !is.na(Pop_Structure_ID)  ~ "FILTER OUT",
+      # edge case 3
+      Gtseq_Chr28_Geno == "HETEROZYGOTE" &
+        CV_Fall + CV_Late_Fall > 0.8 ~ "FALL OR LATE FALL",
+      # edge case 4
+      is.na(Pop_Structure_ID) & Gtseq_Chr28_Geno == "LATE" ~ "FALL OR LATE FALL",
+      # edge case 5
+      is.na(Pop_Structure_ID) & Gtseq_Chr28_Geno == "HETEROZYGOTE" ~ "UNKNOWN",
+      # implement standard logic
+      Gtseq_Chr28_Geno == "LATE" ~ "FALL OR LATE FALL",
+      !is.na(Pop_Structure_ID) ~ Pop_Structure_ID,
+      !is.na(`SHLCK Run Designation`) ~ `SHLCK Run Designation`,
+      TRUE ~ NA_character_ # TODO what should we designate these? identify for later debug?
+    ),
+  # final_run_designation = case_when(
+  #   !is.na(Pop_Structure_ID) ~ Pop_Structure_ID,
+  #   !is.na(`SHLCK Run Designation`) ~ `SHLCK Run Designation`,
+  #   TRUE ~ "UNKNOWN"
+  # ),
   final_run_designation = case_when(
     final_run_designation == "FALL OR LATE FALL" ~ "FALL/LATEFALL",
     final_run_designation == "SPRING OR WINTER" ~ "SPRING/WINTER",
     TRUE ~ final_run_designation
   )
-)
+) |>
+  filter(final_run_designation != "FILTER OUT")
 
 run_ids_2023 <- data_2023_final_designation |>
   left_join(all_run_types,
@@ -165,20 +188,47 @@ data_2022_final_designation <- parsed_data_2022  |>
   # don't keep samples where both gt seq and shlk are NA
   filter(!if_all(c(Pop_Structure_ID, `SHLCK Run Designation`), is.na)  | `SHERLOCK Chr28 geno` == "HETEROZYGOTE") |>
   mutate(
-  final_run_designation = case_when(
-    !is.na(Pop_Structure_ID) ~ Pop_Structure_ID,
-    !is.na(`SHLCK Run Designation`) ~ `SHLCK Run Designation`,
-    # some entries this year had OTS28 but no final run designation
-    is.na(Pop_Structure_ID) & `SHERLOCK Chr28 geno` == "LATE" ~ "FALL OR LATE FALL",
-    is.na(Pop_Structure_ID) & `SHERLOCK Chr28 geno` == "HETEROZYGOTE" ~ "UNKNOWN",
-    TRUE ~ "UNKNOWN"
-  ),
+    final_run_designation = case_when(
+      # edge case 1
+      str_detect(`SHLCK Run Designation`, "HETEROZYGO") &
+        is.na(Gtseq_Chr28_Geno) &
+        !is.na(Pop_Structure_ID) ~ "UNKNOWN",
+      # edge case 2
+      !is.na(`SHERLOCK Chr28 geno`) &
+        is.na(Gtseq_Chr28_Geno) &
+        !is.na(Pop_Structure_ID)  ~ "FILTER OUT",
+      # edge case 3
+      Gtseq_Chr28_Geno == "HETEROZYGOTE" &
+        CV_Fall + CV_Late_Fall > 0.8 ~ "FALL OR LATE FALL",
+      # edge case 4
+      is.na(Pop_Structure_ID) & Gtseq_Chr28_Geno == "LATE" ~ "FALL OR LATE FALL",
+      # edge case 5
+      is.na(Pop_Structure_ID) & Gtseq_Chr28_Geno == "HETEROZYGOTE" ~ "UNKNOWN",
+      # implement standard logic
+      Gtseq_Chr28_Geno == "LATE" ~ "FALL OR LATE FALL",
+      !is.na(Pop_Structure_ID) ~ Pop_Structure_ID,
+      !is.na(`SHLCK Run Designation`) ~ `SHLCK Run Designation`,
+      # some entries this year had OTS28 but no final run designation
+      is.na(Pop_Structure_ID) & `SHERLOCK Chr28 geno` == "LATE" ~ "FALL OR LATE FALL",
+      is.na(Pop_Structure_ID) & `SHERLOCK Chr28 geno` == "HETEROZYGOTE" ~ "UNKNOWN",
+      TRUE ~ NA_character_ # TODO what should we designate these? identify for later debug?
+    ),
+  # mutate(
+  # final_run_designation = case_when(
+  #   !is.na(Pop_Structure_ID) ~ Pop_Structure_ID,
+  #   !is.na(`SHLCK Run Designation`) ~ `SHLCK Run Designation`,
+  #   # some entries this year had OTS28 but no final run designation
+  #   is.na(Pop_Structure_ID) & `SHERLOCK Chr28 geno` == "LATE" ~ "FALL OR LATE FALL",
+  #   is.na(Pop_Structure_ID) & `SHERLOCK Chr28 geno` == "HETEROZYGOTE" ~ "UNKNOWN",
+  #   TRUE ~ "UNKNOWN"
+  # ),
   final_run_designation = case_when(
     final_run_designation == "FALL OR LATE FALL" ~ "FALL/LATEFALL",
     final_run_designation == "SPRING OR WINTER" ~ "SPRING/WINTER",
     TRUE ~ final_run_designation
   )
-)
+) |>
+  filter(final_run_designation != "FILTER OUT")
 
 run_ids_2022_raw <- data_2022_final_designation |>
   left_join(all_run_types,
@@ -270,17 +320,44 @@ data_2024_final_designation <- parsed_data_2024 |>
   # don't keep samples where both gt seq and shlk are NA
   filter(!if_all(c(Pop_Structure_ID, `SHLCK Run Designation`), is.na)) |>
   mutate(
-  final_run_designation = case_when(
-    !is.na(Pop_Structure_ID) ~ Pop_Structure_ID,
-    !is.na(`SHLCK Run Designation`) ~ `SHLCK Run Designation`,
-    TRUE ~ "UNKNOWN"
-  ),
+    final_run_designation = case_when(
+      # edge case 1
+      str_detect(`SHLCK Run Designation`, "HETEROZYGO") &
+        is.na(Gtseq_Chr28_Geno) &
+        !is.na(Pop_Structure_ID) ~ "UNKNOWN",
+      # edge case 2
+      !is.na(`SHERLOCK Chr28 geno`) &
+        is.na(Gtseq_Chr28_Geno) &
+        !is.na(Pop_Structure_ID)  ~ "FILTER OUT",
+      # edge case 3
+      Gtseq_Chr28_Geno == "HETEROZYGOTE" &
+        CV_Fall + CV_Late_Fall > 0.8 ~ "FALL OR LATE FALL",
+      # edge case 4
+      is.na(Pop_Structure_ID) & Gtseq_Chr28_Geno == "LATE" ~ "FALL OR LATE FALL",
+      # edge case 5
+      is.na(Pop_Structure_ID) & Gtseq_Chr28_Geno == "HETEROZYGOTE" ~ "UNKNOWN",
+      # implement standard logic
+      Gtseq_Chr28_Geno == "LATE" ~ "FALL OR LATE FALL",
+      !is.na(Pop_Structure_ID) ~ Pop_Structure_ID,
+      !is.na(`SHLCK Run Designation`) ~ `SHLCK Run Designation`,
+      # some entries this year had OTS28 but no final run designation
+      is.na(Pop_Structure_ID) & `SHERLOCK Chr28 geno` == "LATE" ~ "FALL OR LATE FALL",
+      is.na(Pop_Structure_ID) & `SHERLOCK Chr28 geno` == "HETEROZYGOTE" ~ "UNKNOWN",
+      TRUE ~ NA_character_ # TODO what should we designate these? identify for later debug?
+    ),
+  # mutate(
+  # final_run_designation = case_when(
+  #   !is.na(Pop_Structure_ID) ~ Pop_Structure_ID,
+  #   !is.na(`SHLCK Run Designation`) ~ `SHLCK Run Designation`,
+  #   TRUE ~ "UNKNOWN"
+  # ),
   final_run_designation = case_when(
     final_run_designation == "FALL OR LATE FALL" ~ "FALL/LATEFALL",
     final_run_designation == "SPRING OR WINTER" ~ "SPRING/WINTER",
     TRUE ~ final_run_designation
   )
-)
+) |>
+  filter(final_run_designation != "FILTER OUT")
 
 run_ids_2024_raw <- data_2024_final_designation |>
   left_join(all_run_types,
