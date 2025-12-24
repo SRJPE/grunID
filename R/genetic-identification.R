@@ -622,6 +622,8 @@ generate_final_run_assignment <- function(con) {
   # default to gt seq
   # will only get one of 4 results: fall/late fall (sherlock ots28), spring, winter (from gt seq), unknown
   final_run_assignments <- res |>
+    # add genotypes from sherlock
+    left_join(assay_results, by = "sample_id") |>
     left_join(run_types, by = c("run_type_id" = "id")) |>
     mutate(shlk_run_designation = toupper(run_name),
            final_run_designation = case_when(
@@ -641,7 +643,7 @@ generate_final_run_assignment <- function(con) {
              # edge case 5
              is.na(pop_structure_id) & gtseq_chr28_geno == "HETEROZYGOTE" ~ "UNKNOWN",
              # implement standard logic
-             gtseq_chr28_geno = "LATE" ~ "FALL OR LATE FALL",
+             gtseq_chr28_geno == "LATE" ~ "FALL OR LATE FALL",
              !is.na(pop_structure_id) ~ pop_structure_id,
              !is.na(shlk_run_designation) ~ shlk_run_designation,
              TRUE ~ NA_character_ # TODO what should we designate these? identify for later debug?
@@ -650,9 +652,7 @@ generate_final_run_assignment <- function(con) {
     # filter out any rows
     filter(final_run_designation !=  "FILTER OUT") |>
     # clean up
-    mutate(final_run_designation = ifelse(final_run_designation %in% c("LATEFALL", "FALL", "FALL/LATEFALL"), "FALL OR LATE FALL", final_run_designation)) |>
-    # add genotypes from sherlock
-    left_join(assay_results, by = "sample_id")
+    mutate(final_run_designation = ifelse(final_run_designation %in% c("LATEFALL", "FALL", "FALL/LATEFALL"), "FALL OR LATE FALL", final_run_designation))
 
   # further edge cases
   rejects <- final_run_assignments |>
