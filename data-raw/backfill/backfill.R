@@ -512,7 +512,11 @@ samples_to_check <- stack(samples_to_confirm) |>
 write_csv(samples_to_check, "data-raw/backfill/erroneous_samples_2022-2024.csv")
 
 
+# upload gt seq results to db ---------------------------------------------
 
+insert_gtseq_raw_results(con, gtseq_results_2022)
+insert_gtseq_raw_results(con, gtseq_results_2023)
+insert_gtseq_raw_results(con, gtseq_results_2024)
 # generate query backfill sherlock ----------------------------------------
 
 con <- gr_db_connect()
@@ -537,6 +541,9 @@ query_for_dashboard <- query_for_dashboard_raw |>
   mutate(season = substr(sample_id, 4, 5)) |>
   filter(season != 25) |>
   select(-season)
+
+# join in field data and gt seq raw results
+
 
 write_csv(query_for_dashboard, paste0("data-raw/backfill/results/genetics_query_for_dashboard_2022-2024_", Sys.Date(), ".csv"))
 

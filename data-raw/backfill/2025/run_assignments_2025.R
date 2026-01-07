@@ -80,10 +80,21 @@ tbl(con_prod, "sample") |>
 
 
 # create view for final run assignment ------------------------------------
-
+drop_query <- glue::glue_sql(
+  "DROP VIEW IF EXISTS final_run_assignment;"
+)
 create_view_query <- glue::glue_sql(
-  "-- DROP VIEW IF EXISTS final_run_assignment;
+  "--DROP VIEW IF EXISTS final_run_assignment;
 CREATE VIEW final_run_assignment AS
+WITH latest_gri AS (
+  SELECT *
+  FROM (
+    SELECT *,
+           ROW_NUMBER() OVER (PARTITION BY sample_id ORDER BY created_at DESC) AS rn
+    FROM genetic_run_identification
+  ) ranked
+  WHERE rn = 1
+)
 SELECT COALESCE(gri.sample_id, gr.sample_id) AS sample_id,
        s.datetime_collected, s.fork_length_mm, s.field_run_type_id,
        gri.run_type_id, gr.gtseq_chr28_geno, gr.pop_structure_id,
@@ -91,9 +102,8 @@ SELECT COALESCE(gri.sample_id, gr.sample_id) AS sample_id,
        gr.tributary, gr.buttefall, gr.frh_fall, gr.frh_sp,
        gr.mill_deer_fall, gr.san_joaquin_fall, gr.butte_sp,
        gr.mill_deer_sp, gr.coleman_f, gr.sac_win
-FROM genetic_run_identification gri
+FROM latest_gri gri
 FULL JOIN gtseq_results gr ON gri.sample_id = gr.sample_id
-LEFT JOIN sample s ON COALESCE(gri.sample_id, gr.sample_id) = s.id;"
-)
+LEFT JOIN sample s ON COALESCE(gri.sample_id, gr.sample_id) = s.id;")
 
 res <- DBI::dbExecute(con_prod, create_view_query)
