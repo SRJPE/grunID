@@ -627,30 +627,39 @@ generate_final_run_assignment <- function(con) {
     left_join(run_types, by = c("run_type_id" = "id")) |>
     mutate(shlk_run_designation = toupper(run_name),
            final_run_designation = case_when(
+             # HETEROZYGOTES
              # edge case 1
-             str_detect(shlk_run_designation, "HETEROZYGO") &
+             shlk_run_designation == "EARLY/LATE HETEROZYGOUS" &
                is.na(gtseq_chr28_geno) &
-               !is.na(pop_structure_id) ~ "UNKNOWN",
+               !is.na(pop_structure_id) ~ "REMOVE_CASE 1",
              # edge case 2
              !is.na(shlk_chr28_genotype) &
                is.na(gtseq_chr28_geno) &
-               !is.na(pop_structure_id)  ~ "FILTER OUT",
+               !is.na(pop_structure_id)  ~ "REMOVE_CASE 2",
              # edge case 3
+             shlk_run_designation == "EARLY/LATE HETEROZYGOUS" &
+               is.na(gtseq_chr28_geno) &
+               is.na(pop_structure_id) ~ "UNKNOWN",
+             # edge case 4
              gtseq_chr28_geno == "HETEROZYGOTE" &
                cv_fall + cv_late_fall > 0.8 ~ "FALL OR LATE FALL",
-             # edge case 4
-             is.na(pop_structure_id) & gtseq_chr28_geno == "LATE" ~ "FALL OR LATE FALL",
              # edge case 5
-             is.na(pop_structure_id) & gtseq_chr28_geno == "HETEROZYGOTE" ~ "UNKNOWN",
-             # implement standard logic
+             gtseq_chr28_geno == "HETEROZYGOTE" &
+               ((cv_fall + cv_late_fall < 0.8) |
+                  (cv_spring < 0.8) |
+                  (cv_winter < 0.8)) ~ "UNKNOWN",
+             # edge case 6
+             is.na(pop_structure_id) & gtseq_chr28_geno == "HETEROZYGOTE" & is.na(pop_structure_id) ~ "UNKNOWN",
+             # GT SEQ LATES
              gtseq_chr28_geno == "LATE" ~ "FALL OR LATE FALL",
+             # GT SEQ EARLY
              !is.na(pop_structure_id) ~ pop_structure_id,
+             # SHERLOCK - NO GT SEQ LEFT
              !is.na(shlk_run_designation) ~ shlk_run_designation,
-             TRUE ~ NA_character_ # TODO what should we designate these? identify for later debug?
+             TRUE ~ "REMOVE_NO CASE"
            )) |>
     select(-c(run_name, run_type_id)) |>
-    # filter out any rows
-    filter(final_run_designation !=  "FILTER OUT") |>
+    mutate(remove_case = str_split_i(final_run_designation, "\\_", i = 2)) |>
     # clean up
     mutate(final_run_designation = ifelse(final_run_designation %in% c("LATEFALL", "FALL", "FALL/LATEFALL"), "FALL OR LATE FALL", final_run_designation))
 
