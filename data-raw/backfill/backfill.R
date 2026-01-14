@@ -84,9 +84,9 @@ data_2023_final_designation <- parsed_data_2023 |>
         CV_Fall + CV_Late_Fall > 0.8 ~ "FALL OR LATE FALL",
       # edge case 5
       Gtseq_Chr28_Geno == "HETEROZYGOTE" &
-        ((CV_Fall + CV_Late_Fall < 0.8) |
-           (CV_Spring < 0.8) |
-           (CV_Winter < 0.8)) ~ "UNKNOWN",
+        (CV_Fall + CV_Late_Fall < 0.8) &
+        (CV_Spring < 0.8) &
+        (CV_Winter < 0.8) ~ "UNKNOWN",
       # edge case 6
       is.na(Pop_Structure_ID) & Gtseq_Chr28_Geno == "HETEROZYGOTE" ~ "UNKNOWN",
       # GT SEQ LATES
@@ -98,7 +98,7 @@ data_2023_final_designation <- parsed_data_2023 |>
       TRUE ~ "REMOVE_NO CASE"
     )) |>
   mutate(remove_case = str_split_i(final_run_designation, "\\_", i = 2),
-         final_run_designation = case_when(final_run_designation == "FALL OR LATE FALL" ~ "FALL/LATEFALL",
+         final_run_designation = case_when(final_run_designation %in% c("FALL", "FALL OR LATE FALL") ~ "FALL/LATEFALL",
                                            final_run_designation == "SPRING OR WINTER" ~ "SPRING/WINTER",
                                            TRUE ~ final_run_designation))
 
@@ -213,9 +213,9 @@ data_2022_final_designation <- parsed_data_2022  |>
         CV_Fall + CV_Late_Fall > 0.8 ~ "FALL OR LATE FALL",
       # edge case 5
       Gtseq_Chr28_Geno == "HETEROZYGOTE" &
-        ((CV_Fall + CV_Late_Fall < 0.8) |
-           (CV_Spring < 0.8) |
-           (CV_Winter < 0.8)) ~ "UNKNOWN",
+        (CV_Fall + CV_Late_Fall < 0.8) &
+        (CV_Spring < 0.8) &
+        (CV_Winter < 0.8) ~ "UNKNOWN",
       # edge case 6
       is.na(Pop_Structure_ID) & Gtseq_Chr28_Geno == "HETEROZYGOTE" ~ "UNKNOWN",
       # GT SEQ LATES
@@ -347,9 +347,9 @@ data_2024_final_designation <- parsed_data_2024 |>
         CV_Fall + CV_Late_Fall > 0.8 ~ "FALL OR LATE FALL",
       # edge case 5
       Gtseq_Chr28_Geno == "HETEROZYGOTE" &
-        ((CV_Fall + CV_Late_Fall < 0.8) |
-           (CV_Spring < 0.8) |
-           (CV_Winter < 0.8)) ~ "UNKNOWN",
+        (CV_Fall + CV_Late_Fall < 0.8) &
+        (CV_Spring < 0.8) &
+        (CV_Winter < 0.8) ~ "UNKNOWN",
       # edge case 6
       is.na(Pop_Structure_ID) & Gtseq_Chr28_Geno == "HETEROZYGOTE" ~ "UNKNOWN",
       # GT SEQ LATES

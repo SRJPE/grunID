@@ -3,7 +3,7 @@ library(grunID)
 
 # generate query for data dashboard, bind together 2022-2024
 # 2022-2024 are in staging as of Dec 2025; backfilled and query written in backfill.R
-early_seasons_result <- read_csv("data-raw/backfill/results/genetics_query_for_dashboard_2022-2024_2026-01-07.csv") |>
+early_seasons_result <- read_csv("data-raw/backfill/results/genetics_query_for_dashboard_2022-2024_2026-01-14.csv") |>
   glimpse()
 
 early_seasons_result |>
