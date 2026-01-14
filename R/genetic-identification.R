@@ -644,6 +644,7 @@ generate_final_run_assignment <- function(con) {
              gtseq_chr28_geno == "HETEROZYGOTE" &
                cv_fall + cv_late_fall > 0.8 ~ "FALL OR LATE FALL",
              # edge case 5
+             # TODO I think this should be "all of" are < 0.8; it's producing a lot of unknowns
              gtseq_chr28_geno == "HETEROZYGOTE" &
                ((cv_fall + cv_late_fall < 0.8) |
                   (cv_spring < 0.8) |
