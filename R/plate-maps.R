@@ -71,7 +71,8 @@ distribute_ebks_in_plate <- function() {
 
 #' @title Make Single Assay Layout
 #' @export
-make_single_assay_layout <- function(data, output_dir, season_filter, events_name) {
+make_single_assay_layout <- function(data, output_dir, season_filter, events_name,
+                                     start_index_name_at = 0) {
   samples_parted <- partition_df_every_n(data, 92)
   ebk_idx <- list()
   ebks_to_insert <- c("EBK-1-1", "EBK-1-2", "EBK-1-3", "EBK-1-4")
@@ -90,7 +91,7 @@ make_single_assay_layout <- function(data, output_dir, season_filter, events_nam
     "A total of {nrow(data)} samples were arranged into {length(layouts_list)} plates with single assay destination"
   ))
 
-  filenames <- glue::glue("{output_dir}/JPE{season_filter}_E{events_name}_P{seq_along(layouts_list)}_ARC.xlsx")
+  filenames <- glue::glue("{output_dir}/JPE{season_filter}_E{events_name}_P{seq_along(layouts_list) + (4 * start_index_name_at)}_ARC.xlsx")
   purrr::walk(seq_along(layouts_list), function(i) {
     write_layout_to_file(layouts_list[[i]], filenames[i])
     message(paste(filenames[i], "file created"))
@@ -109,8 +110,8 @@ make_single_assay_layout <- function(data, output_dir, season_filter, events_nam
 
   # add the P{start}-{end}_SH
   sherlock_filenames <- c(
-    glue::glue("{output_dir}/JPE{season_filter}_E{events_name}_E_P{1}-{length(layouts_list)}_SH.xlsx"),
-    glue::glue("{output_dir}/JPE{season_filter}_E{events_name}_L_P{1}-{length(layouts_list)}_SH.xlsx")
+    glue::glue("{output_dir}/JPE{season_filter}_E{events_name}_E_P{(4 * start_index_name_at) + 1}-{(4 * start_index_name_at) + length(layouts_list)}_SH.xlsx"),
+    glue::glue("{output_dir}/JPE{season_filter}_E{events_name}_L_P{(4 * start_index_name_at) + 1}-{(4 * start_index_name_at) + length(layouts_list)}_SH.xlsx")
   )
 
   purrr::walk(seq_along(sherlock_filenames), function(i) {
@@ -436,6 +437,7 @@ make_archive_plate_maps_by_event <- function(con, events, season = get_current_s
   samples_remain_after_full_single_layout <- samples_to_be_processed %% sample_cap_for_single_assay
 
   single_assays_created <- 0
+  dual_assay_layouts <- 0
   # first we handle filling in as many FULL single assays as possible
   if (total_full_single_layouts > 0) {
     for (i in seq_len(total_full_single_layouts)) {
@@ -457,20 +459,21 @@ make_archive_plate_maps_by_event <- function(con, events, season = get_current_s
   # then we try and fill out partial single assays with 176 being the cutoff here
   if (samples_remain_after_full_single_layout >= 176) {
     start_index <- (total_full_single_layouts * sample_cap_for_single_assay) + 1
-    end_index <- start_index + samples_remain_after_full_single_layout
+    end_index <- start_index + samples_remain_after_full_single_layout - 1
     this_sample_subset <- samples[start_index:end_index, ]
     single_assay_layouts <- make_single_assay_layout(
       this_sample_subset,
       output_dir = output_dir,
       season_filter = season_filter,
-      events_name = events_name
+      events_name = events_name,
+      start_index_name_at = single_assays_created
     )
 
     single_assays_created <- single_assays_created + 1
   } else {
     # last we handle remaining number as dual assay
     start_index <- (total_full_single_layouts * sample_cap_for_single_assay) + 1
-    end_index <- start_index + samples_remain_after_full_single_layout
+    end_index <- start_index + samples_remain_after_full_single_layout - 1
     dual_assay_samples <- samples[start_index:end_index, ]
     dual_assay_layouts <- make_dual_assay_layout(
       dual_assay_samples,
@@ -479,7 +482,7 @@ make_archive_plate_maps_by_event <- function(con, events, season = get_current_s
       events_name = events_name
     )
 
-    dual_assay_layouts <- 1
+    dual_assay_layouts <- dual_assay_layouts + 1
   }
 
   return(list(
