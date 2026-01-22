@@ -91,7 +91,8 @@ make_single_assay_layout <- function(data, output_dir, season_filter, events_nam
     "A total of {nrow(data)} samples were arranged into {length(layouts_list)} plates with single assay destination"
   ))
 
-  filenames <- glue::glue("{output_dir}/JPE{season_filter}_E{events_name}_P{seq_along(layouts_list) + (4 * start_index_name_at)}_ARC.xlsx")
+  filename_plate_numbers <- seq_along(layouts_list) + (4 * start_index_name_at)
+  filenames <- glue::glue("{output_dir}/JPE{season_filter}_E{events_name}_P{filename_plate_numbers}_ARC.xlsx")
   purrr::walk(seq_along(layouts_list), function(i) {
     write_layout_to_file(layouts_list[[i]], filenames[i])
     message(paste(filenames[i], "file created"))
@@ -109,9 +110,11 @@ make_single_assay_layout <- function(data, output_dir, season_filter, events_nam
   rownames(single_assay) <- LETTERS[1:16]
 
   # add the P{start}-{end}_SH
+  filename_sherlock_plate_numbers_start <- (4 * start_index_name_at) + 1
+  filename_sherlock_plate_numbers_end <- (4 * start_index_name_at) + length(layouts_list)
   sherlock_filenames <- c(
-    glue::glue("{output_dir}/JPE{season_filter}_E{events_name}_E_P{(4 * start_index_name_at) + 1}-{(4 * start_index_name_at) + length(layouts_list)}_SH.xlsx"),
-    glue::glue("{output_dir}/JPE{season_filter}_E{events_name}_L_P{(4 * start_index_name_at) + 1}-{(4 * start_index_name_at) + length(layouts_list)}_SH.xlsx")
+    glue::glue("{output_dir}/JPE{season_filter}_E{events_name}_E_P{filename_sherlock_plate_numbers_start}-{filename_sherlock_plate_numbers_end}_SH.xlsx"),
+    glue::glue("{output_dir}/JPE{season_filter}_E{events_name}_L_P{filename_sherlock_plate_numbers_start}-{filename_sherlock_plate_numbers_end}_SH.xlsx")
   )
 
   purrr::walk(seq_along(sherlock_filenames), function(i) {
