@@ -68,33 +68,44 @@ data_2023_final_designation <- parsed_data_2023 |>
     final_run_designation = case_when(
       # HETEROZYGOTES
       # edge case 1
-      `SHLCK Run Designation` == "E-L HETEROZYGOTE" &
-        is.na(Gtseq_Chr28_Geno) &
+      is.na(Gtseq_Chr28_Geno) &
         !is.na(Pop_Structure_ID) ~ "REMOVE_CASE 1",
       # edge case 2
-      !is.na(`SHERLOCK Chr28 geno`) &
+      `SHLCK Run Designation` == "EARLY/LATE HETEROZYGOUS" &
         is.na(Gtseq_Chr28_Geno) &
-        !is.na(Pop_Structure_ID)  ~ "REMOVE_CASE 2",
+        is.na(Pop_Structure_ID) ~ "REMOVE_CASE 2",
       # edge case 3
-      `SHLCK Run Designation` == "E-L HETEROZYGOTE" &
-        is.na(Gtseq_Chr28_Geno) &
+      `SHLCK Run Designation` == "EARLY/LATE HETEROZYGOUS" &
+        Gtseq_Chr28_Geno == "HETEROZYGOTE" &
         is.na(Pop_Structure_ID) ~ "UNKNOWN",
       # edge case 4
       Gtseq_Chr28_Geno == "HETEROZYGOTE" &
-        CV_Fall + CV_Late_Fall > 0.8 ~ "FALL OR LATE FALL",
+        CV_Fall  + CV_Late_Fall > 0.8 ~ "FALL OR LATE FALL",
       # edge case 5
+      Gtseq_Chr28_Geno == "HETEROZYGOTE" &
+        CV_Spring > 0.8 ~ "SPRING",
+      # edge case 6
+      Gtseq_Chr28_Geno == "HETEROZYGOTE" &
+        CV_Winter > 0.8 ~ "WINTER",
+      # edge case 7
       Gtseq_Chr28_Geno == "HETEROZYGOTE" &
         (CV_Fall + CV_Late_Fall < 0.8) &
         (CV_Spring < 0.8) &
         (CV_Winter < 0.8) ~ "UNKNOWN",
-      # edge case 6
-      is.na(Pop_Structure_ID) & Gtseq_Chr28_Geno == "HETEROZYGOTE" ~ "UNKNOWN",
+      # edge case 8
+      is.na(Pop_Structure_ID) &
+        Gtseq_Chr28_Geno == "HETEROZYGOTE" ~ "UNKNOWN",
       # GT SEQ LATES
       Gtseq_Chr28_Geno == "LATE" ~ "FALL OR LATE FALL",
       # GT SEQ EARLY
       !is.na(Pop_Structure_ID) ~ Pop_Structure_ID,
       # SHERLOCK - NO GT SEQ LEFT
       !is.na(`SHLCK Run Designation`) ~ `SHLCK Run Designation`,
+      # remove cases
+      if_all(c(SampleID, date, `FL (mm)`, `Field Run ID`), ~ !is.na(.)) &
+        if_all(`SHERLOCK Chr28 geno`:`SacWin`, is.na) ~ "REMOVE_MISSING DATA",
+      `SHLCK Run Designation`  %in% c("S-W HETEROZYGOTE", "SPRING OR WINTER") &
+        if_all(c(Gtseq_Chr28_Geno, Pop_Structure_ID), is.na) ~ "REMOVE_MISSING DATA",
       TRUE ~ "REMOVE_NO CASE"
     )) |>
   mutate(remove_case = str_split_i(final_run_designation, "\\_", i = 2),
@@ -197,33 +208,44 @@ data_2022_final_designation <- parsed_data_2022  |>
     final_run_designation = case_when(
       # HETEROZYGOTES
       # edge case 1
-      `SHLCK Run Designation` == "E-L HETEROZYGOTE" &
-        is.na(Gtseq_Chr28_Geno) &
+      is.na(Gtseq_Chr28_Geno) &
         !is.na(Pop_Structure_ID) ~ "REMOVE_CASE 1",
       # edge case 2
-      !is.na(`SHERLOCK Chr28 geno`) &
+      `SHLCK Run Designation` == "EARLY/LATE HETEROZYGOUS" &
         is.na(Gtseq_Chr28_Geno) &
-        !is.na(Pop_Structure_ID)  ~ "REMOVE_CASE 2",
+        is.na(Pop_Structure_ID) ~ "REMOVE_CASE 2",
       # edge case 3
-      `SHLCK Run Designation` == "E-L HETEROZYGOTE" &
-        is.na(Gtseq_Chr28_Geno) &
+      `SHLCK Run Designation` == "EARLY/LATE HETEROZYGOUS" &
+        Gtseq_Chr28_Geno == "HETEROZYGOTE" &
         is.na(Pop_Structure_ID) ~ "UNKNOWN",
       # edge case 4
       Gtseq_Chr28_Geno == "HETEROZYGOTE" &
-        CV_Fall + CV_Late_Fall > 0.8 ~ "FALL OR LATE FALL",
+        CV_Fall  + CV_Late_Fall > 0.8 ~ "FALL OR LATE FALL",
       # edge case 5
+      Gtseq_Chr28_Geno == "HETEROZYGOTE" &
+        CV_Spring > 0.8 ~ "SPRING",
+      # edge case 6
+      Gtseq_Chr28_Geno == "HETEROZYGOTE" &
+        CV_Winter > 0.8 ~ "WINTER",
+      # edge case 7
       Gtseq_Chr28_Geno == "HETEROZYGOTE" &
         (CV_Fall + CV_Late_Fall < 0.8) &
         (CV_Spring < 0.8) &
         (CV_Winter < 0.8) ~ "UNKNOWN",
-      # edge case 6
-      is.na(Pop_Structure_ID) & Gtseq_Chr28_Geno == "HETEROZYGOTE" ~ "UNKNOWN",
+      # edge case 8
+      is.na(Pop_Structure_ID) &
+        Gtseq_Chr28_Geno == "HETEROZYGOTE" ~ "UNKNOWN",
       # GT SEQ LATES
       Gtseq_Chr28_Geno == "LATE" ~ "FALL OR LATE FALL",
       # GT SEQ EARLY
       !is.na(Pop_Structure_ID) ~ Pop_Structure_ID,
       # SHERLOCK - NO GT SEQ LEFT
       !is.na(`SHLCK Run Designation`) ~ `SHLCK Run Designation`,
+      # remove cases
+      if_all(c(SampleID, date, `FL (mm)`, `Field Run ID`), ~ !is.na(.)) &
+        if_all(`SHERLOCK Chr28 geno`:`SacWin`, is.na) ~ "REMOVE_MISSING DATA",
+      `SHLCK Run Designation` %in% c("S-W HETEROZYGOTE", "SPRING OR WINTER") &
+        if_all(c(Gtseq_Chr28_Geno, Pop_Structure_ID), is.na) ~ "REMOVE_MISSING DATA",
       # some entries this year had OTS28 but no final run designation
       is.na(Pop_Structure_ID) & `SHERLOCK Chr28 geno` == "LATE" ~ "FALL OR LATE FALL",
       is.na(Pop_Structure_ID) & `SHERLOCK Chr28 geno` == "HETEROZYGOTE" ~ "UNKNOWN",
@@ -331,33 +353,44 @@ data_2024_final_designation <- parsed_data_2024 |>
     final_run_designation = case_when(
       # HETEROZYGOTES
       # edge case 1
-      `SHLCK Run Designation` == "E-L HETEROZYGOTE" &
-        is.na(Gtseq_Chr28_Geno) &
+      is.na(Gtseq_Chr28_Geno) &
         !is.na(Pop_Structure_ID) ~ "REMOVE_CASE 1",
       # edge case 2
-      !is.na(`SHERLOCK Chr28 geno`) &
+      `SHLCK Run Designation` == "EARLY/LATE HETEROZYGOUS" &
         is.na(Gtseq_Chr28_Geno) &
-        !is.na(Pop_Structure_ID)  ~ "REMOVE_CASE 2",
+        is.na(Pop_Structure_ID) ~ "REMOVE_CASE 2",
       # edge case 3
-      `SHLCK Run Designation` == "E-L HETEROZYGOTE" &
-        is.na(Gtseq_Chr28_Geno) &
+      `SHLCK Run Designation` == "EARLY/LATE HETEROZYGOUS" &
+        Gtseq_Chr28_Geno == "HETEROZYGOTE" &
         is.na(Pop_Structure_ID) ~ "UNKNOWN",
       # edge case 4
       Gtseq_Chr28_Geno == "HETEROZYGOTE" &
-        CV_Fall + CV_Late_Fall > 0.8 ~ "FALL OR LATE FALL",
+        CV_Fall  + CV_Late_Fall > 0.8 ~ "FALL OR LATE FALL",
       # edge case 5
+      Gtseq_Chr28_Geno == "HETEROZYGOTE" &
+        CV_Spring > 0.8 ~ "SPRING",
+      # edge case 6
+      Gtseq_Chr28_Geno == "HETEROZYGOTE" &
+        CV_Winter > 0.8 ~ "WINTER",
+      # edge case 7
       Gtseq_Chr28_Geno == "HETEROZYGOTE" &
         (CV_Fall + CV_Late_Fall < 0.8) &
         (CV_Spring < 0.8) &
         (CV_Winter < 0.8) ~ "UNKNOWN",
-      # edge case 6
-      is.na(Pop_Structure_ID) & Gtseq_Chr28_Geno == "HETEROZYGOTE" ~ "UNKNOWN",
+      # edge case 8
+      is.na(Pop_Structure_ID) &
+        Gtseq_Chr28_Geno == "HETEROZYGOTE" ~ "UNKNOWN",
       # GT SEQ LATES
       Gtseq_Chr28_Geno == "LATE" ~ "FALL OR LATE FALL",
       # GT SEQ EARLY
       !is.na(Pop_Structure_ID) ~ Pop_Structure_ID,
       # SHERLOCK - NO GT SEQ LEFT
       !is.na(`SHLCK Run Designation`) ~ `SHLCK Run Designation`,
+      # remove cases
+      if_all(c(SampleID, date, `FL (mm)`, `Field Run ID`), ~ !is.na(.)) &
+        if_all(`SHERLOCK Chr28 geno`:`SacWin`, is.na) ~ "REMOVE_MISSING DATA",
+      `SHLCK Run Designation` %in% c("S-W HETEROZYGOTE", "SPRING OR WINTER") &
+        if_all(c(Gtseq_Chr28_Geno, Pop_Structure_ID), is.na) ~ "REMOVE_MISSING DATA",
       # some entries this year had OTS28 but no final run designation
       is.na(Pop_Structure_ID) & `SHERLOCK Chr28 geno` == "LATE" ~ "FALL OR LATE FALL",
       is.na(Pop_Structure_ID) & `SHERLOCK Chr28 geno` == "HETEROZYGOTE" ~ "UNKNOWN",
