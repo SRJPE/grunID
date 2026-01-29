@@ -625,8 +625,11 @@ generate_final_run_assignment <- function(con) {
     # add genotypes from sherlock
     left_join(assay_results, by = "sample_id") |>
     left_join(run_types, by = c("run_type_id" = "id")) |>
-    mutate(shlk_run_designation = toupper(run_name),
-           final_run_designation = case_when(
+    mutate(shlk_run_designation = toupper(run_name)) |>
+    select(-c(run_name, run_type_id)) |>
+    # shlk run designations "UNKNOWN" refer to samples in progress; do not report these
+    filter(shlk_run_designation != "UNKNOWN") |>
+    mutate(final_run_designation = case_when(
              # edge case 1
              is.na(gtseq_chr28_geno) &
                !is.na(pop_structure_id) ~ "REMOVE_CASE 1",
@@ -655,20 +658,20 @@ generate_final_run_assignment <- function(con) {
              # edge case 8
              is.na(pop_structure_id) &
                gtseq_chr28_geno == "HETEROZYGOTE" ~ "UNKNOWN",
+             # remove cases
+             if_all(sample_id:field_run_type_id, ~ !is.na(.)) &
+               if_all(gtseq_chr28_geno:shlk_run_designation, is.na) ~ "REMOVE_MISSING DATA",
+             str_detect(shlk_run_designation, "SPRING/WINTER") &
+               is.na(gtseq_chr28_geno) &
+               is.na(pop_structure_id) ~ "REMOVE_MISSING DATA",
              # GT SEQ LATES
              gtseq_chr28_geno == "LATE" ~ "FALL OR LATE FALL",
              # GT SEQ EARLY
              !is.na(pop_structure_id) ~ pop_structure_id,
              # SHERLOCK - NO GT SEQ LEFT
              !is.na(shlk_run_designation) ~ shlk_run_designation,
-             # remove cases
-             if_all(sample_id:field_run_type_id, ~ !is.na(.)) &
-               if_all(gtseq_chr28_geno:shlk_run_designation, is.na) ~ "REMOVE_MISSING DATA",
-             shlk_run_designation == "SPRING/WINTER" &
-               if_all(c(gtseq_chr28_geno, pop_structure_id), is.na) ~ "REMOVE_MISSING DATA",
              TRUE ~ "REMOVE_NO CASE"
            )) |>
-    select(-c(run_name, run_type_id)) |>
     mutate(remove_case = str_split_i(final_run_designation, "\\_", i = 2)) |>
     # clean up
     mutate(final_run_designation = ifelse(final_run_designation %in% c("LATEFALL", "FALL", "FALL/LATEFALL"), "FALL OR LATE FALL", final_run_designation))

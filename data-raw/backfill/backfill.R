@@ -95,37 +95,38 @@ data_2023_final_designation <- parsed_data_2023 |>
       # edge case 8
       is.na(Pop_Structure_ID) &
         Gtseq_Chr28_Geno == "HETEROZYGOTE" ~ "UNKNOWN",
+      # remove cases
+      if_all(c(SampleID, date, `FL (mm)`, `Field Run ID`), ~ !is.na(.)) &
+        if_all(`SHERLOCK Chr28 geno`:`SacWin`, is.na) ~ "REMOVE_MISSING DATA",
+      `SHLCK Run Designation`  %in% c("S-W HETEROZYGOTE", "SPRING OR WINTER") &
+        if_all(c(Gtseq_Chr28_Geno, Pop_Structure_ID), is.na) ~ "REMOVE_MISSING DATA",
       # GT SEQ LATES
       Gtseq_Chr28_Geno == "LATE" ~ "FALL OR LATE FALL",
       # GT SEQ EARLY
       !is.na(Pop_Structure_ID) ~ Pop_Structure_ID,
       # SHERLOCK - NO GT SEQ LEFT
       !is.na(`SHLCK Run Designation`) ~ `SHLCK Run Designation`,
-      # remove cases
-      if_all(c(SampleID, date, `FL (mm)`, `Field Run ID`), ~ !is.na(.)) &
-        if_all(`SHERLOCK Chr28 geno`:`SacWin`, is.na) ~ "REMOVE_MISSING DATA",
-      `SHLCK Run Designation`  %in% c("S-W HETEROZYGOTE", "SPRING OR WINTER") &
-        if_all(c(Gtseq_Chr28_Geno, Pop_Structure_ID), is.na) ~ "REMOVE_MISSING DATA",
       TRUE ~ "REMOVE_NO CASE"
     )) |>
   mutate(remove_case = str_split_i(final_run_designation, "\\_", i = 2),
-         final_run_designation = case_when(final_run_designation %in% c("FALL", "FALL OR LATE FALL") ~ "FALL/LATEFALL",
-                                           final_run_designation == "SPRING OR WINTER" ~ "SPRING/WINTER",
-                                           TRUE ~ final_run_designation))
+         shlk_run_designation = case_when(`SHLCK Run Designation` %in% c("SPRING OR WINTER", "S-W HETEROZYGOTE") ~ "SPRING/WINTER HETEROZYGOUS",
+                                          `SHLCK Run Designation` == "FALL OR LATE FALL" ~ "FALL/LATEFALL",
+                                          `SHLCK Run Designation` == "E-L HETEROZYGOTE" ~ "EARLY/LATE HETEROZYGOUS",
+                                          TRUE ~ `SHLCK Run Designation`))
 
-keeps_2023 <- data_2023_final_designation |>
-  filter(!str_detect(final_run_designation, "REMOVE")) |>
-  select(-remove_case)
+# keeps_2023 <- data_2023_final_designation |>
+#   filter(!str_detect(final_run_designation, "REMOVE")) |>
+#   select(-remove_case)
 
-run_ids_2023 <- keeps_2023 |>
+run_ids_2023 <- data_2023_final_designation |>
   left_join(all_run_types,
-            by=c("final_run_designation" = "run_name_upper")) |>
+            by=c("shlk_run_designation" = "run_name_upper")) |>
   select(sample_id = SampleID, run_type_id = id)
 
 
 run_ids_2023 |> filter(is.na(run_type_id))
 
-to_upload <- keeps_2023 |>
+to_upload <- data_2023_final_designation |>
   filter(date == "23") |> # this is just a check
   group_by(location_code, date, sample_event_number, sample_bin_code) |>
   summarise(n = max(as.numeric(sample_number))) |>
@@ -235,34 +236,36 @@ data_2022_final_designation <- parsed_data_2022  |>
       # edge case 8
       is.na(Pop_Structure_ID) &
         Gtseq_Chr28_Geno == "HETEROZYGOTE" ~ "UNKNOWN",
+      # remove cases
+      if_all(c(SampleID, date, `FL (mm)`, `Field Run ID`), ~ !is.na(.)) &
+        if_all(`SHERLOCK Chr28 geno`:`SacWin`, is.na) ~ "REMOVE_MISSING DATA",
+      `SHLCK Run Designation`  %in% c("S-W HETEROZYGOTE", "SPRING OR WINTER") &
+        if_all(c(Gtseq_Chr28_Geno, Pop_Structure_ID), is.na) ~ "REMOVE_MISSING DATA",
       # GT SEQ LATES
       Gtseq_Chr28_Geno == "LATE" ~ "FALL OR LATE FALL",
       # GT SEQ EARLY
       !is.na(Pop_Structure_ID) ~ Pop_Structure_ID,
       # SHERLOCK - NO GT SEQ LEFT
       !is.na(`SHLCK Run Designation`) ~ `SHLCK Run Designation`,
-      # remove cases
-      if_all(c(SampleID, date, `FL (mm)`, `Field Run ID`), ~ !is.na(.)) &
-        if_all(`SHERLOCK Chr28 geno`:`SacWin`, is.na) ~ "REMOVE_MISSING DATA",
-      `SHLCK Run Designation` %in% c("S-W HETEROZYGOTE", "SPRING OR WINTER") &
-        if_all(c(Gtseq_Chr28_Geno, Pop_Structure_ID), is.na) ~ "REMOVE_MISSING DATA",
       # some entries this year had OTS28 but no final run designation
       is.na(Pop_Structure_ID) & `SHERLOCK Chr28 geno` == "LATE" ~ "FALL OR LATE FALL",
       is.na(Pop_Structure_ID) & `SHERLOCK Chr28 geno` == "HETEROZYGOTE" ~ "UNKNOWN",
       TRUE ~ "REMOVE_NO CASE"
     )) |>
   mutate(remove_case = str_split_i(final_run_designation, "\\_", i = 2),
-         final_run_designation = case_when(final_run_designation == "FALL OR LATE FALL" ~ "FALL/LATEFALL",
-                                           final_run_designation == "SPRING OR WINTER" ~ "SPRING/WINTER",
-                                           TRUE ~ final_run_designation))
+         shlk_run_designation = case_when(`SHLCK Run Designation` == "SPRING OR WINTER" ~ "SPRING/WINTER",
+                                          `SHLCK Run Designation` == "FALL OR LATE FALL" ~ "FALL/LATEFALL",
+                                          `SHLCK Run Designation` == "E-L HETEROZYGOTE" ~ "EARLY/LATE HETEROZYGOUS",
+                                          TRUE ~ `SHLCK Run Designation`))
 
-keeps_2022 <- data_2022_final_designation |>
-  filter(!str_detect(final_run_designation, "REMOVE")) |>
-  select(-remove_case)
+# as if 1-28-2026 insert all, then let function at the end generate the final run assignment
+# keeps_2022 <- data_2022_final_designation |>
+#   filter(!str_detect(final_run_designation, "REMOVE")) |>
+#   select(-remove_case)
 
-run_ids_2022_raw <- keeps_2022 |>
+run_ids_2022_raw <- data_2022_final_designation |>
   left_join(all_run_types,
-            by=c("final_run_designation" = "run_name_upper")) |>
+            by=c("shlk_run_designation" = "run_name_upper")) |>
   select(sample_id = SampleID, run_type_id = id)
 
 
@@ -270,7 +273,7 @@ to_check_run_ids <- run_ids_2022_raw |> filter(is.na(run_type_id))
 run_ids_2022 <- run_ids_2022_raw |>
   filter(!is.na(run_type_id))
 
-to_upload_2022 <- keeps_2022 |>
+to_upload_2022 <- data_2022_final_designation |>
   filter(date == "22", # just a check
          !SampleID %in% to_check_run_ids$sample_id) |> # these didn't match with a run_id in db
   group_by(location_code, date, sample_event_number, sample_bin_code) |>
@@ -380,34 +383,35 @@ data_2024_final_designation <- parsed_data_2024 |>
       # edge case 8
       is.na(Pop_Structure_ID) &
         Gtseq_Chr28_Geno == "HETEROZYGOTE" ~ "UNKNOWN",
+      # remove cases
+      if_all(c(SampleID, date, `FL (mm)`, `Field Run ID`), ~ !is.na(.)) &
+        if_all(`SHERLOCK Chr28 geno`:`SacWin`, is.na) ~ "REMOVE_MISSING DATA",
+      `SHLCK Run Designation`  %in% c("S-W HETEROZYGOTE", "SPRING OR WINTER") &
+        if_all(c(Gtseq_Chr28_Geno, Pop_Structure_ID), is.na) ~ "REMOVE_MISSING DATA",
       # GT SEQ LATES
       Gtseq_Chr28_Geno == "LATE" ~ "FALL OR LATE FALL",
       # GT SEQ EARLY
       !is.na(Pop_Structure_ID) ~ Pop_Structure_ID,
       # SHERLOCK - NO GT SEQ LEFT
       !is.na(`SHLCK Run Designation`) ~ `SHLCK Run Designation`,
-      # remove cases
-      if_all(c(SampleID, date, `FL (mm)`, `Field Run ID`), ~ !is.na(.)) &
-        if_all(`SHERLOCK Chr28 geno`:`SacWin`, is.na) ~ "REMOVE_MISSING DATA",
-      `SHLCK Run Designation` %in% c("S-W HETEROZYGOTE", "SPRING OR WINTER") &
-        if_all(c(Gtseq_Chr28_Geno, Pop_Structure_ID), is.na) ~ "REMOVE_MISSING DATA",
       # some entries this year had OTS28 but no final run designation
       is.na(Pop_Structure_ID) & `SHERLOCK Chr28 geno` == "LATE" ~ "FALL OR LATE FALL",
       is.na(Pop_Structure_ID) & `SHERLOCK Chr28 geno` == "HETEROZYGOTE" ~ "UNKNOWN",
       TRUE ~ "REMOVE_NO CASE"
     )) |>
   mutate(remove_case = str_split_i(final_run_designation, "\\_", i = 2),
-         final_run_designation = case_when(final_run_designation == "FALL OR LATE FALL" ~ "FALL/LATEFALL",
-                                           final_run_designation == "SPRING OR WINTER" ~ "SPRING/WINTER",
-                                           TRUE ~ final_run_designation))
+         shlk_run_designation = case_when(`SHLCK Run Designation` == "E-L HETEROZYGOTE" ~ "EARLY/LATE HETEROZYGOUS",
+                                          `SHLCK Run Designation` %in% c("S-W HETEROZYGOTE", "SPRING OR WINTER") ~ "SPRING/WINTER HETEROZYGOUS",
+                                          `SHLCK Run Designation` == "FALL OR LATE FALL" ~ "FALL/LATEFALL",
+                                          TRUE ~ `SHLCK Run Designation`))
 
-keeps_2024 <- data_2024_final_designation |>
-  filter(!str_detect(final_run_designation, "REMOVE")) |>
-  select(-remove_case)
+# keeps_2024 <- data_2024_final_designation |>
+#   filter(!str_detect(final_run_designation, "REMOVE")) |>
+#   select(-remove_case)
 
-run_ids_2024_raw <- keeps_2024 |>
+run_ids_2024_raw <- data_2024_final_designation |>
   left_join(all_run_types,
-            by=c("final_run_designation" = "run_name_upper")) |>
+            by=c("shlk_run_designation" = "run_name_upper")) |>
   select(sample_id = SampleID, run_type_id = id)
 
 
@@ -415,7 +419,7 @@ to_check_run_ids <- run_ids_2024_raw |> filter(is.na(run_type_id))
 run_ids_2024 <- run_ids_2024_raw |>
   filter(!is.na(run_type_id))
 
-to_upload_2024 <- keeps_2024 |>
+to_upload_2024 <- data_2024_final_designation |>
   filter(date == "24", # just a check
          !SampleID %in% to_check_run_ids$sample_id) |> # these didn't match with a run_id in db
   group_by(location_code, date, sample_event_number, sample_bin_code) |>
@@ -534,20 +538,20 @@ field_data_2024 <- field_data_2024_raw |>
 
 update_field_sheet_samples(con, field_data_2024)
 
-field_data_2025 <- field_data_2025_raw |>
-  mutate(Time = as.numeric(Time),
-         Date = as.Date(as.numeric(Date), origin = "1899-12-30"),
-         clean_time = format(as_datetime(Time * 86400, origin = "1970-01-01"), "%H:%M:%S"),
-         datetime_collected = lubridate::as_datetime(paste(Date, clean_time)),
-         fork_length_mm = as.numeric(`FL (mm)`),
-         field_run = case_when(`Field Run ID` %in% c("n/r", "?", "NA") ~ "UNKNOWN",
-                               `Field Run ID` == "Late Fall" ~ "LATEFALL",
-                               TRUE ~ toupper(`Field Run ID`))) |>
-  left_join(all_run_types, by = c("field_run" = "run_name_upper")) |>
-  select(sample_id = `Sample ID`, datetime_collected, fork_length_mm, field_run_type_id = id, field_comment = Comments) |>
-  glimpse()
-
-update_field_sheet_samples(con, field_data_2025)
+# field_data_2025 <- field_data_2025_raw |>
+#   mutate(Time = as.numeric(Time),
+#          Date = as.Date(as.numeric(Date), origin = "1899-12-30"),
+#          clean_time = format(as_datetime(Time * 86400, origin = "1970-01-01"), "%H:%M:%S"),
+#          datetime_collected = lubridate::as_datetime(paste(Date, clean_time)),
+#          fork_length_mm = as.numeric(`FL (mm)`),
+#          field_run = case_when(`Field Run ID` %in% c("n/r", "?", "NA") ~ "UNKNOWN",
+#                                `Field Run ID` == "Late Fall" ~ "LATEFALL",
+#                                TRUE ~ toupper(`Field Run ID`))) |>
+#   left_join(all_run_types, by = c("field_run" = "run_name_upper")) |>
+#   select(sample_id = `Sample ID`, datetime_collected, fork_length_mm, field_run_type_id = id, field_comment = Comments) |>
+#   glimpse()
+#
+# update_field_sheet_samples(con, field_data_2025)
 
 
 # identify erroneous sample ids -------------------------------------------

@@ -3,7 +3,7 @@ library(grunID)
 
 # generate query for data dashboard, bind together 2022-2024
 # 2022-2024 are in staging as of Dec 2025; backfilled and query written in backfill.R
-early_seasons_result <- read_csv("data-raw/backfill/results/genetics_query_for_dashboard_2022-2024_2026-01-27.csv") |>
+early_seasons_result <- read_csv("data-raw/backfill/results/genetics_query_for_dashboard_2022-2024_2026-01-28.csv") |>
   glimpse()
 
 early_seasons_result |>
@@ -26,7 +26,8 @@ final_runs_2025 |>
   distinct(season)
 
 final_query_all_seasons <- bind_rows(early_seasons_result,
-                                     final_runs_2025)
+                                     final_runs_2025) |>
+  mutate(final_run_designation = ifelse(final_run_designation == "UNKNOWN", "GREB1L HETEROZYGOTE", final_run_designation))
 
 final_query_all_seasons |>
   mutate(fake_year = ifelse(month(datetime_collected) %in% 10:12, 1970, 1971),
