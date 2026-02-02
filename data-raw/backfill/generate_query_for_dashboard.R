@@ -27,7 +27,11 @@ final_runs_2025 |>
 
 final_query_all_seasons <- bind_rows(early_seasons_result,
                                      final_runs_2025) |>
-  mutate(final_run_designation = ifelse(final_run_designation == "UNKNOWN", "GREB1L HETEROZYGOTE", final_run_designation))
+  mutate(final_run_designation = ifelse(final_run_designation == "UNKNOWN", "GREB1L HETEROZYGOTE", final_run_designation),
+         # used spring/winter for 22, 25 seasons, spring/winter heterozygous for 23 and 25. standardizing here
+         shlk_run_designation = case_when(shlk_run_designation == "FALL" ~ "FALL/LATEFALL",
+                                          shlk_run_designation == "SPRING/WINTER HETEROZYGOUS" ~ "SPRING/WINTER",
+                                          TRUE ~ shlk_run_designation))
 
 final_query_all_seasons |>
   mutate(fake_year = ifelse(month(datetime_collected) %in% 10:12, 1970, 1971),
