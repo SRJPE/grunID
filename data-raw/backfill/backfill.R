@@ -341,7 +341,6 @@ walk(1:length(insert_statement), function(i) {
 gt_seq_data_2024 <- gt_seq_data_2024_raw |>
   mutate(SampleID = ifelse(SampleID == "Mil24_13_D_3", "MIL24_13_D_3", SampleID))
 
-
 sherlock_2024_samples_ids <- sherlock_all_data |> filter(Year == 2024) |> pull(SampleID)
 gtseq_2024_ids <- gt_seq_data_2024 |> pull(SampleID)
 
@@ -481,102 +480,6 @@ walk(1:length(insert_statement), function(i) {
   DBI::dbClearResult(res)
 })
 
-# process field data ------------------------------------------------------
-
-# clean and upload (see data-raw/user-workflow-preseason.R)
-# process_field_sheet_samples2() expects standard format; we will do our own here
-# in this script because it varies
-field_data_2022 <- field_data_2022_raw |>
-  mutate(clean_time = format(hm(Time), "%H:%M:%S"),
-         datetime_collected = lubridate::as_datetime(paste(as_date(Date, format = "%m/%d/%Y"), clean_time)),
-         fork_length_mm = as.numeric(`FL (mm)`),
-         field_run = case_when(`Field Run ID` %in% c("n/r", "?") ~ "UNKNOWN",
-                               `Field Run ID` %in% c("CHNS", "CNHS") ~ "SPRING",
-                               `Field Run ID` == "CHNF" ~ "FALL",
-                               `Field Run ID` == "Late Fall" ~ "LATEFALL",
-                               TRUE ~ toupper(`Field Run ID`)),
-         field_comment = NA_character_) |>
-  left_join(all_run_types, by = c("field_run" = "run_name_upper")) |>
-  select(sample_id = `Sample ID`, datetime_collected, fork_length_mm, field_run_type_id = id, field_comment) |>
-  glimpse()
-
-update_field_sheet_samples(con, field_data_2022)
-
-field_data_2023 <- field_data_2023_raw |>
-  mutate(Time = as.numeric(Time),
-         Date = as.Date(as.numeric(Date), origin = "1899-12-30"),
-         clean_time = format(as_datetime(Time * 86400, origin = "1970-01-01"), "%H:%M:%S"),
-         datetime_collected = lubridate::as_datetime(paste(Date, clean_time)),
-         fork_length_mm = as.numeric(`FL (mm)`),
-         field_run = case_when(`Field Run ID` %in% c("n/r", "?") ~ "UNKNOWN",
-                               `Field Run ID` == "S" ~ "SPRING",
-                               `Field Run ID` == "F" ~ "FALL",
-                               `Field Run ID` == "Late Fall" ~ "LATEFALL",
-                               TRUE ~ toupper(`Field Run ID`))) |>
-  left_join(all_run_types, by = c("field_run" = "run_name_upper")) |>
-  select(sample_id = `Sample ID`, datetime_collected, fork_length_mm, field_run_type_id = id, field_comment = Comments) |>
-  glimpse()
-
-update_field_sheet_samples(con, field_data_2023)
-
-# 2023 data was partially complete, so filling in the rest here
-remaining_2023_field_samples <- read_csv("data-raw/backfill/completed_field_sheets/07252023_SHERLOCK_Results_For_Noble.csv") |>
-  select(sample_id = `Sample ID`,
-         date = Date, time = `Time`,
-         fork_length_mm = `FL (mm)`,
-         field_run_name = `Field Run ID`) |>
-  mutate(datetime_collected = lubridate::mdy_hm(paste(date, time)),
-         run_name_upper = case_when(field_run_name == "n/r" ~ NA_character_, # confirm that we don't want these to be "unknowns" ?
-                                    field_run_name == "Late Fall" ~ "LATEFALL",
-                                    # hard code field run IDs, sent by Sean in Teams chat
-                                    field_run_name == "1" ~ "FALL",
-                                    field_run_name == "2" ~ "SPRING",
-                                    field_run_name == "3" ~ "WINTER",
-                                    field_run_name == "4" ~ "LATEFALL",
-                                    TRUE ~ toupper(field_run_name)),
-         fork_length_mm = as.numeric(fork_length_mm),
-         field_comment = NA_character_) |>
-  # we already have 2023 data through march
-  filter(year(datetime_collected) == 2023,
-         datetime_collected > max(field_data_2023$datetime_collected, na.rm = T)) |>
-  # clean up for updating in db
-  left_join(all_run_types, by = c("run_name_upper")) |>
-  select(sample_id, datetime_collected, fork_length_mm, field_run_type_id = id, field_comment) |>
-  # already in db
-  filter(sample_id != "DEL23_10_B_3")
-
-update_field_sheet_samples(con, remaining_2023_field_samples)
-
-field_data_2024 <- field_data_2024_raw |>
-  mutate(Time = as.numeric(Time),
-         Date = as.Date(as.numeric(Date), origin = "1899-12-30"),
-         clean_time = format(as_datetime(Time * 86400, origin = "1970-01-01"), "%H:%M:%S"),
-         datetime_collected = lubridate::as_datetime(paste(Date, clean_time)),
-         fork_length_mm = as.numeric(`FL (mm)`),
-         field_run = case_when(`Field Run ID` %in% c("n/r", "?", "NA") ~ "UNKNOWN",
-                               `Field Run ID` == "Late Fall" ~ "LATEFALL",
-                               TRUE ~ toupper(`Field Run ID`))) |>
-  left_join(all_run_types, by = c("field_run" = "run_name_upper")) |>
-  select(sample_id = `Sample ID`, datetime_collected, fork_length_mm, field_run_type_id = id, field_comment = Comments) |>
-  glimpse()
-
-update_field_sheet_samples(con, field_data_2024)
-
-# field_data_2025 <- field_data_2025_raw |>
-#   mutate(Time = as.numeric(Time),
-#          Date = as.Date(as.numeric(Date), origin = "1899-12-30"),
-#          clean_time = format(as_datetime(Time * 86400, origin = "1970-01-01"), "%H:%M:%S"),
-#          datetime_collected = lubridate::as_datetime(paste(Date, clean_time)),
-#          fork_length_mm = as.numeric(`FL (mm)`),
-#          field_run = case_when(`Field Run ID` %in% c("n/r", "?", "NA") ~ "UNKNOWN",
-#                                `Field Run ID` == "Late Fall" ~ "LATEFALL",
-#                                TRUE ~ toupper(`Field Run ID`))) |>
-#   left_join(all_run_types, by = c("field_run" = "run_name_upper")) |>
-#   select(sample_id = `Sample ID`, datetime_collected, fork_length_mm, field_run_type_id = id, field_comment = Comments) |>
-#   glimpse()
-#
-# update_field_sheet_samples(con, field_data_2025)
-
 
 # identify erroneous sample ids -------------------------------------------
 
@@ -607,13 +510,10 @@ gtseq_only_2024 <- gt_seq_data_2024 |>
 # location_code, date, sample_event_number, sample_bin_code, n,
 # first_sample_date, min_fork_length, max_fork_length
 
-# these are samples with things like "XTRA", "dupe", etc.
-remove_erroneous_samples <- unlist(samples_to_confirm, use.names = F)
-
-gtseq_only <- bind_rows(gtseq_only_2022) |> #,
-                        #gtseq_only_2023,
-                        #gtseq_only_2024) |>
-  filter(!sample_id %in% remove_erroneous_samples,
+gtseq_only <- bind_rows(gtseq_only_2022,
+                        gtseq_only_2023,
+                        gtseq_only_2024) |>
+  filter(!sample_id %in% samples_to_check$sample_id,
          !str_detect(sample_id, "EBK"),
          !str_detect(sample_id, "SWP")) |>
   tidyr::separate(sample_id, sep = "_",
@@ -664,9 +564,109 @@ purrr::pmap(list(location_code = to_upload_gtseq$location_code,
 
 # upload gt seq results to db ---------------------------------------------
 
-insert_gtseq_raw_results(con, gt_seq_data_2022)
-insert_gtseq_raw_results(con, gt_seq_data_2023)
-insert_gtseq_raw_results(con, gt_seq_data_2024)
+gtseq_non_inserts_2022 <- insert_gtseq_raw_results(con, gt_seq_data_2022)
+gtseq_non_inserts_2023 <- insert_gtseq_raw_results(con, gt_seq_data_2023)
+gtseq_non_inserts_2024 <- insert_gtseq_raw_results(con, gt_seq_data_2024)
+
+# not inserted and not part of erroneous sample ids
+# TODO confirm these
+gtseq_non_inserts_2022[!gtseq_non_inserts_2022 %in% samples_to_check$sample_id]
+gtseq_non_inserts_2023[!gtseq_non_inserts_2023 %in% samples_to_check$sample_id]
+gtseq_non_inserts_2024[!gtseq_non_inserts_2024 %in% samples_to_check$sample_id]
+
+# process field data ------------------------------------------------------
+
+# clean and upload (see data-raw/user-workflow-preseason.R)
+# process_field_sheet_samples2() expects standard format; we will do our own here
+# in this script because it varies
+field_data_2022 <- field_data_2022_raw |>
+  mutate(clean_time = format(hm(Time), "%H:%M:%S"),
+         datetime_collected = lubridate::as_datetime(paste(as_date(Date, format = "%m/%d/%Y"), clean_time)),
+         fork_length_mm = as.numeric(`FL (mm)`),
+         field_run = case_when(`Field Run ID` %in% c("n/r", "?") ~ "UNKNOWN",
+                               `Field Run ID` %in% c("CHNS", "CNHS") ~ "SPRING",
+                               `Field Run ID` == "CHNF" ~ "FALL",
+                               `Field Run ID` == "Late Fall" ~ "LATEFALL",
+                               TRUE ~ toupper(`Field Run ID`)),
+         field_comment = NA_character_) |>
+  left_join(all_run_types, by = c("field_run" = "run_name_upper")) |>
+  select(sample_id = `Sample ID`, datetime_collected, fork_length_mm, field_run_type_id = id, field_comment) |>
+  glimpse()
+
+field_data_2023 <- field_data_2023_raw |>
+  mutate(Time = as.numeric(Time),
+         Date = as.Date(as.numeric(Date), origin = "1899-12-30"),
+         clean_time = format(as_datetime(Time * 86400, origin = "1970-01-01"), "%H:%M:%S"),
+         datetime_collected = lubridate::as_datetime(paste(Date, clean_time)),
+         fork_length_mm = as.numeric(`FL (mm)`),
+         field_run = case_when(`Field Run ID` %in% c("n/r", "?") ~ "UNKNOWN",
+                               `Field Run ID` == "S" ~ "SPRING",
+                               `Field Run ID` == "F" ~ "FALL",
+                               `Field Run ID` == "Late Fall" ~ "LATEFALL",
+                               TRUE ~ toupper(`Field Run ID`))) |>
+  left_join(all_run_types, by = c("field_run" = "run_name_upper")) |>
+  select(sample_id = `Sample ID`, datetime_collected, fork_length_mm, field_run_type_id = id, field_comment = Comments) |>
+  glimpse()
+
+
+# 2023 data was partially complete, so filling in the rest here
+remaining_2023_field_samples <- read_csv("data-raw/backfill/completed_field_sheets/07252023_SHERLOCK_Results_For_Noble.csv") |>
+  select(sample_id = `Sample ID`,
+         date = Date, time = `Time`,
+         fork_length_mm = `FL (mm)`,
+         field_run_name = `Field Run ID`) |>
+  mutate(datetime_collected = lubridate::mdy_hm(paste(date, time)),
+         run_name_upper = case_when(field_run_name == "n/r" ~ NA_character_, # confirm that we don't want these to be "unknowns" ?
+                                    field_run_name == "Late Fall" ~ "LATEFALL",
+                                    # hard code field run IDs, sent by Sean in Teams chat
+                                    field_run_name == "1" ~ "FALL",
+                                    field_run_name == "2" ~ "SPRING",
+                                    field_run_name == "3" ~ "WINTER",
+                                    field_run_name == "4" ~ "LATEFALL",
+                                    TRUE ~ toupper(field_run_name)),
+         fork_length_mm = as.numeric(fork_length_mm),
+         field_comment = NA_character_) |>
+  # we already have 2023 data through march
+  filter(year(datetime_collected) == 2023,
+         datetime_collected > max(field_data_2023$datetime_collected, na.rm = T)) |>
+  # clean up for updating in db
+  left_join(all_run_types, by = c("run_name_upper")) |>
+  select(sample_id, datetime_collected, fork_length_mm, field_run_type_id = id, field_comment) |>
+  # already in db
+  filter(sample_id != "DEL23_10_B_3")
+
+field_data_2024 <- field_data_2024_raw |>
+  mutate(Time = as.numeric(Time),
+         Date = as.Date(as.numeric(Date), origin = "1899-12-30"),
+         clean_time = format(as_datetime(Time * 86400, origin = "1970-01-01"), "%H:%M:%S"),
+         datetime_collected = lubridate::as_datetime(paste(Date, clean_time)),
+         fork_length_mm = as.numeric(`FL (mm)`),
+         field_run = case_when(`Field Run ID` %in% c("n/r", "?", "NA") ~ "UNKNOWN",
+                               `Field Run ID` == "Late Fall" ~ "LATEFALL",
+                               TRUE ~ toupper(`Field Run ID`))) |>
+  left_join(all_run_types, by = c("field_run" = "run_name_upper")) |>
+  select(sample_id = `Sample ID`, datetime_collected, fork_length_mm, field_run_type_id = id, field_comment = Comments) |>
+  glimpse()
+
+update_field_sheet_samples(con, field_data_2022)
+update_field_sheet_samples(con, field_data_2023)
+update_field_sheet_samples(con, remaining_2023_field_samples)
+update_field_sheet_samples(con, field_data_2024)
+
+# field_data_2025 <- field_data_2025_raw |>
+#   mutate(Time = as.numeric(Time),
+#          Date = as.Date(as.numeric(Date), origin = "1899-12-30"),
+#          clean_time = format(as_datetime(Time * 86400, origin = "1970-01-01"), "%H:%M:%S"),
+#          datetime_collected = lubridate::as_datetime(paste(Date, clean_time)),
+#          fork_length_mm = as.numeric(`FL (mm)`),
+#          field_run = case_when(`Field Run ID` %in% c("n/r", "?", "NA") ~ "UNKNOWN",
+#                                `Field Run ID` == "Late Fall" ~ "LATEFALL",
+#                                TRUE ~ toupper(`Field Run ID`))) |>
+#   left_join(all_run_types, by = c("field_run" = "run_name_upper")) |>
+#   select(sample_id = `Sample ID`, datetime_collected, fork_length_mm, field_run_type_id = id, field_comment = Comments) |>
+#   glimpse()
+#
+# update_field_sheet_samples(con, field_data_2025)
 
 # generate query backfill sherlock ----------------------------------------
 

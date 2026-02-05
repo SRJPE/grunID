@@ -3,11 +3,11 @@ library(grunID)
 
 # generate query for data dashboard, bind together 2022-2024
 # 2022-2024 are in staging as of Dec 2025; backfilled and query written in backfill.R
-early_seasons_result <- read_csv("data-raw/backfill/results/genetics_query_for_dashboard_2022-2024_2026-01-28.csv") |>
+early_seasons_result <- read_csv("data-raw/backfill/results/genetics_query_for_dashboard_2022-2024_2026-02-05.csv") |>
+  mutate(season = substr(sample_id, 4, 5)) |>
   glimpse()
 
 early_seasons_result |>
-  mutate(season = substr(sample_id, 4, 5)) |>
   distinct(season)
 
 # now 2025
@@ -27,6 +27,8 @@ final_runs_2025 |>
 
 final_query_all_seasons <- bind_rows(early_seasons_result,
                                      final_runs_2025) |>
+  # TODO move this to VIEW generation
+  distinct_all() |>
   mutate(final_run_designation = ifelse(final_run_designation == "UNKNOWN", "GREB1L HETEROZYGOTE", final_run_designation),
          # used spring/winter for 22, 25 seasons, spring/winter heterozygous for 23 and 25. standardizing here
          shlk_run_designation = case_when(shlk_run_designation == "FALL" ~ "FALL/LATEFALL",
@@ -34,6 +36,7 @@ final_query_all_seasons <- bind_rows(early_seasons_result,
                                           TRUE ~ shlk_run_designation))
 
 final_query_all_seasons |>
+  filter(!is.na(datetime_collected)) |>
   mutate(fake_year = ifelse(month(datetime_collected) %in% 10:12, 1970, 1971),
          fake_date = as.Date(paste0(fake_year, "-", month(datetime_collected), "-", day(datetime_collected))),
          season = as.factor(paste0("Season: 20", substr(sample_id, 4, 5)))) |>
