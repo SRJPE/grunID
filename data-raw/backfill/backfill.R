@@ -8,159 +8,48 @@ all_run_types <- all_run_types |>
   select(id, run_name_upper)
 
 
-# sherlock ---------------------------------------------------------------
 
-# process the sherlock side of things
+# read in raw data --------------------------------------------------------
+
+# sherlock
 sherlock_all_data <- read_excel("data-raw/backfill/JPE_2022-2024_Genetic_Data_FC_05-2025_v2.xlsx")
+
+# gtseq
+gt_seq_data_2022_raw <- readr::read_tsv("data-raw/backfill/2022/JPE_2022_Reanalysis_10-2025_summary.tsv")
+gt_seq_data_2023 <- readr::read_tsv("data-raw/backfill/2023/JPE_2023_Reanalysis_10-2025_summary.tsv")
+gt_seq_data_2024_raw <- readr::read_tsv("data-raw/backfill/2024/JPE_2024_Reanalysis_10-2025_summary.tsv")
 
 # fill this in with samples we need to confirm with Sean
 samples_to_confirm <- list()
 
-# 2023 -----------------------
-
-gt_seq_data_2023 <- readr::read_tsv("data-raw/backfill/2023/JPE_2023_Reanalysis_10-2025_summary.tsv")
-sherlock_2023_samples_ids <- sherlock_all_data |> filter(Year == 2023) |> pull(SampleID)
-gtseq_2023_ids <- gt_seq_data_2023 |> pull(SampleID)
-
-dplyr::intersect(sherlock_2023_samples_ids, gtseq_2023_ids) |> length()
-length(unique(sherlock_2023_samples_ids))
-length(unique(gtseq_2023_ids))
-
-# ok so it looks like gtseq and the sherlock stuff pretty much 100  percent overlap
-dplyr::setdiff(sherlock_2023_samples_ids, gtseq_2023_ids)
-# i think the plan should be lets tackle the overlaps since they have all the data, then
-# we can tackle the ids that exist in each of the two datesets only
-
-gtseq_results_2023  <- readr::read_tsv("data-raw/backfill/2023/JPE_2023_Reanalysis_10-2025_summary.tsv")
-sherlock_results_2023 <- sherlock_all_data |> filter(Year == 2023) |> select(-`Gtseq Chr28 geno`)
-
-samples_in_both_2023 <- dplyr::intersect(gtseq_results_2023$SampleID, sherlock_results_2023$SampleID)
-samples_only_in_gtseq_2023 <- dplyr::setdiff(gtseq_results_2023$SampleID, sherlock_results_2023$SampleID)
-samples_only_in_sherlock_2023 <- dplyr::setdiff(sherlock_results_2023$SampleID, gtseq_results_2023$SampleID)
-
-# TODO: what to do with samples in gtseq and not in sherlock --- XTRA clr24_1_1a MILL_MAIN_EVENT
-samples_to_confirm$`2023` <- sort(samples_only_in_gtseq_2023[str_detect(samples_only_in_gtseq_2023, "a|b|c|Non|XTRA|Ext|NON")])
-
-## insert samples that are in both gtseq and sherlock ----------------
-full_data_2023 <- sherlock_results_2023 |>
-  left_join(
-    gtseq_results_2023,
-    by=c("SampleID" = "SampleID"),
-    suffix = c("_sherlock", "_gtseq"))
+# these were sent from Sean via teams on 11-5-2025
+field_data_2022_raw <- read_csv("data-raw/backfill/completed_field_sheets/2022_sample_data_v5_12-13-22.csv")
+field_data_2023_raw <- read_excel("data-raw/backfill/completed_field_sheets/2023_JPE_Sample_Data2_04-10-2023.xlsx")
+field_data_2024_raw <- read_excel("data-raw/backfill/completed_field_sheets/2024_JPE_Sample_Data.xlsx")
+field_data_2025_raw <- read_excel("data-raw/backfill/completed_field_sheets/2025 JPE Sample Data.xlsx")
 
 
-full_data_2023 |> glimpse()
-parsed_data_2023 <- full_data_2023 |>
+# 2022 ----------------------------------
+# sample_id %in% no_date ~ paste0(substr(sample_id, 1, 3), "22", substr(sample_id, 4, nchar(sample_id))),
+# and this one: sample_id == "BUTT22_9_C_10" ~ "BUT22_9_C_10",
+# issues with not including season in sample_id
+problem_2022_gtseq_samples <- gt_seq_data_2022_raw |>
+  mutate(SampleID = ifelse(SampleID == "TISS22_9_D_5", "TIS22_9_D_5", SampleID)) |>
   tidyr::separate(SampleID, sep = "_",
                   into = c("location_and_date", "sample_event_number",
                            "sample_bin_code", "sample_number"),
                   remove = FALSE) |>
-  mutate(location_code = substr(location_and_date, 1, 3),
-         date = substr(location_and_date, 4, 5)) |>
-  relocate(location_code, .after = location_and_date) |>
-  relocate(date, .after = location_code) |>
-  select(-location_and_date)
+  mutate(issue = ifelse(location_and_date %in% c("BTC", "BUT", "CLR", "TIS"), "missing_date", NA_character_)) |>
+  filter(!is.na(issue)) |>
+  pull(SampleID)
 
-data_2023_final_designation <- parsed_data_2023 |>
-  # don't keep samples where both gt seq and shlk are NA
-  #filter(!if_all(c(Pop_Structure_ID, `SHLCK Run Designation`), is.na)) |>
-  mutate(
-    final_run_designation = case_when(
-      # HETEROZYGOTES
-      # edge case 1
-      is.na(Gtseq_Chr28_Geno) &
-        !is.na(Pop_Structure_ID) ~ "REMOVE_CASE 1",
-      # edge case 2
-      `SHLCK Run Designation` == "EARLY/LATE HETEROZYGOUS" &
-        is.na(Gtseq_Chr28_Geno) &
-        is.na(Pop_Structure_ID) ~ "REMOVE_CASE 2",
-      # edge case 3
-      `SHLCK Run Designation` == "EARLY/LATE HETEROZYGOUS" &
-        Gtseq_Chr28_Geno == "HETEROZYGOTE" &
-        is.na(Pop_Structure_ID) ~ "UNKNOWN",
-      # edge case 4
-      Gtseq_Chr28_Geno == "HETEROZYGOTE" &
-        CV_Fall  + CV_Late_Fall > 0.8 ~ "FALL OR LATE FALL",
-      # edge case 5
-      Gtseq_Chr28_Geno == "HETEROZYGOTE" &
-        CV_Spring > 0.8 ~ "SPRING",
-      # edge case 6
-      Gtseq_Chr28_Geno == "HETEROZYGOTE" &
-        CV_Winter > 0.8 ~ "WINTER",
-      # edge case 7
-      Gtseq_Chr28_Geno == "HETEROZYGOTE" &
-        (CV_Fall + CV_Late_Fall < 0.8) &
-        (CV_Spring < 0.8) &
-        (CV_Winter < 0.8) ~ "UNKNOWN",
-      # edge case 8
-      is.na(Pop_Structure_ID) &
-        Gtseq_Chr28_Geno == "HETEROZYGOTE" ~ "UNKNOWN",
-      # remove cases
-      if_all(c(SampleID, date, `FL (mm)`, `Field Run ID`), ~ !is.na(.)) &
-        if_all(`SHERLOCK Chr28 geno`:`SacWin`, is.na) ~ "REMOVE_MISSING DATA",
-      `SHLCK Run Designation`  %in% c("S-W HETEROZYGOTE", "SPRING OR WINTER") &
-        if_all(c(Gtseq_Chr28_Geno, Pop_Structure_ID), is.na) ~ "REMOVE_MISSING DATA",
-      # GT SEQ LATES
-      Gtseq_Chr28_Geno == "LATE" ~ "FALL OR LATE FALL",
-      # GT SEQ EARLY
-      !is.na(Pop_Structure_ID) ~ Pop_Structure_ID,
-      # SHERLOCK - NO GT SEQ LEFT
-      !is.na(`SHLCK Run Designation`) ~ `SHLCK Run Designation`,
-      TRUE ~ "REMOVE_NO CASE"
-    )) |>
-  mutate(remove_case = str_split_i(final_run_designation, "\\_", i = 2),
-         shlk_run_designation = case_when(`SHLCK Run Designation` %in% c("SPRING OR WINTER", "S-W HETEROZYGOTE") ~ "SPRING/WINTER HETEROZYGOUS",
-                                          `SHLCK Run Designation` == "FALL OR LATE FALL" ~ "FALL/LATEFALL",
-                                          `SHLCK Run Designation` == "E-L HETEROZYGOTE" ~ "EARLY/LATE HETEROZYGOUS",
-                                          TRUE ~ `SHLCK Run Designation`))
+gt_seq_data_2022 <- gt_seq_data_2022_raw |>
+  mutate(SampleID = case_when(SampleID %in%  problem_2022_gtseq_samples ~ paste0(substr(SampleID, 1, 3), "22", substr(SampleID, 4, nchar(SampleID))),
+                              SampleID == "TISS22_9_D_5" ~ "TIS22_9_D_5",
+                              SampleID == "BUTT22_9_C_10" ~ "BUT22_9_C_10",
+                              TRUE ~ SampleID)) |>
+  glimpse()
 
-# keeps_2023 <- data_2023_final_designation |>
-#   filter(!str_detect(final_run_designation, "REMOVE")) |>
-#   select(-remove_case)
-
-run_ids_2023 <- data_2023_final_designation |>
-  left_join(all_run_types,
-            by=c("shlk_run_designation" = "run_name_upper")) |>
-  select(sample_id = SampleID, run_type_id = id)
-
-
-run_ids_2023 |> filter(is.na(run_type_id))
-
-to_upload <- data_2023_final_designation |>
-  filter(date == "23") |> # this is just a check
-  group_by(location_code, date, sample_event_number, sample_bin_code) |>
-  summarise(n = max(as.numeric(sample_number))) |>
-  ungroup() |>
-  filter(!is.na(n)) |> # TODO sample event number coded as "A"
-  mutate(first_sample_date = as.Date(paste0("20", date, "-01-01")),
-         min_fork_length = 1,
-         max_fork_length = 200)
-
-# add samples to database
-purrr::pmap(list(location_code = to_upload$location_code,
-                 sample_event_number = to_upload$sample_event_number,
-                 sample_bin_code = to_upload$sample_bin_code,
-                 first_sample_date = to_upload$first_sample_date,
-                 min_fork_length = to_upload$min_fork_length,
-                 max_fork_length = to_upload$max_fork_length,
-                 expected_number_of_samples = to_upload$n),
-            grunID::add_sample,
-            con = con)
-
-
-insert_statement <- glue::glue_sql("INSERT INTO genetic_run_identification(sample_id, run_type_id)
-                                   VALUES ({run_ids_2023$sample_id}, {run_ids_2023$run_type_id})",
-                                   .con = con)
-
-walk(1:length(insert_statement), function(i) {
-  print(paste0(i, " of ", length(insert_statement)))
-  res <- DBI::dbSendQuery(con, insert_statement[i])
-  DBI::dbClearResult(res)
-})
-
-# 2022 ----------------------------------
-
-gt_seq_data_2022 <- readr::read_tsv("data-raw/backfill/2022/JPE_2022_Reanalysis_10-2025_summary.tsv")
 sherlock_2022_samples_ids <- sherlock_all_data |> filter(Year == 2022) |> pull(SampleID)
 gtseq_2022_ids <- gt_seq_data_2022 |> pull(SampleID)
 
@@ -170,24 +59,23 @@ length(unique(gtseq_2022_ids))
 
 dplyr::setdiff(sherlock_2022_samples_ids, gtseq_2022_ids)
 
-gtseq_results_2022  <- readr::read_tsv("data-raw/backfill/2022/JPE_2022_Reanalysis_10-2025_summary.tsv")
 sherlock_results_2022 <- sherlock_all_data |> filter(Year == 2022) |> select(-`Gtseq Chr28 geno`)
 
-samples_in_both_2022 <- dplyr::intersect(gtseq_results_2022$SampleID, sherlock_results_2022$SampleID)
-samples_only_in_gtseq_2022 <- dplyr::setdiff(gtseq_results_2022$SampleID, sherlock_results_2022$SampleID)
-samples_only_in_sherlock_2022 <- dplyr::setdiff(sherlock_results_2022$SampleID, gtseq_results_2022$SampleID)
+samples_in_both_2022 <- dplyr::intersect(gt_seq_data_2022$SampleID, sherlock_results_2022$SampleID)
+samples_only_in_gtseq_2022 <- dplyr::setdiff(gt_seq_data_2022$SampleID, sherlock_results_2022$SampleID)
+samples_only_in_sherlock_2022 <- dplyr::setdiff(sherlock_results_2022$SampleID, gt_seq_data_2022$SampleID)
 
 # store anomalous samples
 samples_to_confirm$`2022` <- sort(samples_only_in_gtseq_2022[str_detect(samples_only_in_gtseq_2022, "a|b|c|Non|XTRA|Ext|NON|SB|WR")])
 
+# upload shlk and corresponding gt seq; do gtseq only later
 full_data_2022 <- sherlock_results_2022 |>
   left_join(
-    gtseq_results_2022,
+    gt_seq_data_2022,
     by=c("SampleID" = "SampleID"),
-    suffix = c("_sherlock", "_gtseq"))
+    suffix = c("_sherlock", "_gtseq")) |>
+  glimpse()
 
-
-full_data_2022 |> glimpse()
 parsed_data_2022 <- full_data_2022 |>
   # correct weird Tisdale coded as TISS
   mutate(Site = ifelse(Site == "TISS", "TIS", Site),
@@ -274,8 +162,7 @@ run_ids_2022 <- run_ids_2022_raw |>
   filter(!is.na(run_type_id))
 
 to_upload_2022 <- data_2022_final_designation |>
-  filter(date == "22", # just a check
-         !SampleID %in% to_check_run_ids$sample_id) |> # these didn't match with a run_id in db
+  filter(date == "22") |> # just a check
   group_by(location_code, date, sample_event_number, sample_bin_code) |>
   summarise(n = max(as.numeric(sample_number))) |>
   ungroup() |>
@@ -306,11 +193,155 @@ walk(1:length(insert_statement), function(i) {
   DBI::dbClearResult(res)
 })
 
+# 2023 -----------------------
 
+sherlock_2023_samples_ids <- sherlock_all_data |> filter(Year == 2023) |> pull(SampleID)
+gtseq_2023_ids <- gt_seq_data_2023 |> pull(SampleID)
+
+dplyr::intersect(sherlock_2023_samples_ids, gtseq_2023_ids) |> length()
+length(unique(sherlock_2023_samples_ids))
+length(unique(gtseq_2023_ids))
+
+# ok so it looks like gtseq and the sherlock stuff pretty much 100  percent overlap
+dplyr::setdiff(sherlock_2023_samples_ids, gtseq_2023_ids)
+# i think the plan should be lets tackle the overlaps since they have all the data, then
+# we can tackle the ids that exist in each of the two datesets only
+
+sherlock_results_2023 <- sherlock_all_data |> filter(Year == 2023) |> select(-`Gtseq Chr28 geno`)
+
+samples_in_both_2023 <- dplyr::intersect(gt_seq_data_2023$SampleID, sherlock_results_2023$SampleID)
+samples_only_in_gtseq_2023 <- dplyr::setdiff(gt_seq_data_2023$SampleID, sherlock_results_2023$SampleID)
+samples_only_in_sherlock_2023 <- dplyr::setdiff(sherlock_results_2023$SampleID, gt_seq_data_2023$SampleID)
+
+# TODO: what to do with samples in gtseq and not in sherlock --- XTRA clr24_1_1a MILL_MAIN_EVENT
+samples_to_confirm$`2023` <- sort(samples_only_in_gtseq_2023[str_detect(samples_only_in_gtseq_2023, "a|b|c|Non|XTRA|Ext|NON")])
+
+# insert samples - full join, will have results with gt seq and no corresponding
+# sherlock, and vice versa
+
+full_data_2023 <- sherlock_results_2023 |>
+  left_join(
+    gt_seq_data_2023,
+    by=c("SampleID" = "SampleID"),
+    suffix = c("_sherlock", "_gtseq"))
+
+
+full_data_2023 |> glimpse()
+parsed_data_2023 <- full_data_2023 |>
+  tidyr::separate(SampleID, sep = "_",
+                  into = c("location_and_date", "sample_event_number",
+                           "sample_bin_code", "sample_number"),
+                  remove = FALSE) |>
+  mutate(location_code = substr(location_and_date, 1, 3),
+         date = substr(location_and_date, 4, 5)) |>
+  relocate(location_code, .after = location_and_date) |>
+  relocate(date, .after = location_code) |>
+  select(-location_and_date)
+
+data_2023_final_designation <- parsed_data_2023 |>
+  # don't keep samples where both gt seq and shlk are NA
+  #filter(!if_all(c(Pop_Structure_ID, `SHLCK Run Designation`), is.na)) |>
+  mutate(
+    final_run_designation = case_when(
+      # HETEROZYGOTES
+      # edge case 1
+      is.na(Gtseq_Chr28_Geno) &
+        !is.na(Pop_Structure_ID) ~ "REMOVE_CASE 1",
+      # edge case 2
+      `SHLCK Run Designation` == "EARLY/LATE HETEROZYGOUS" &
+        is.na(Gtseq_Chr28_Geno) &
+        is.na(Pop_Structure_ID) ~ "REMOVE_CASE 2",
+      # edge case 3
+      `SHLCK Run Designation` == "EARLY/LATE HETEROZYGOUS" &
+        Gtseq_Chr28_Geno == "HETEROZYGOTE" &
+        is.na(Pop_Structure_ID) ~ "UNKNOWN",
+      # edge case 4
+      Gtseq_Chr28_Geno == "HETEROZYGOTE" &
+        CV_Fall  + CV_Late_Fall > 0.8 ~ "FALL OR LATE FALL",
+      # edge case 5
+      Gtseq_Chr28_Geno == "HETEROZYGOTE" &
+        CV_Spring > 0.8 ~ "SPRING",
+      # edge case 6
+      Gtseq_Chr28_Geno == "HETEROZYGOTE" &
+        CV_Winter > 0.8 ~ "WINTER",
+      # edge case 7
+      Gtseq_Chr28_Geno == "HETEROZYGOTE" &
+        (CV_Fall + CV_Late_Fall < 0.8) &
+        (CV_Spring < 0.8) &
+        (CV_Winter < 0.8) ~ "UNKNOWN",
+      # edge case 8
+      is.na(Pop_Structure_ID) &
+        Gtseq_Chr28_Geno == "HETEROZYGOTE" ~ "UNKNOWN",
+      # remove cases
+      if_all(c(SampleID, date, `FL (mm)`, `Field Run ID`), ~ !is.na(.)) &
+        if_all(`SHERLOCK Chr28 geno`:`SacWin`, is.na) ~ "REMOVE_MISSING DATA",
+      `SHLCK Run Designation`  %in% c("S-W HETEROZYGOTE", "SPRING OR WINTER") &
+        if_all(c(Gtseq_Chr28_Geno, Pop_Structure_ID), is.na) ~ "REMOVE_MISSING DATA",
+      # GT SEQ LATES
+      Gtseq_Chr28_Geno == "LATE" ~ "FALL OR LATE FALL",
+      # GT SEQ EARLY
+      !is.na(Pop_Structure_ID) ~ Pop_Structure_ID,
+      # SHERLOCK - NO GT SEQ LEFT
+      !is.na(`SHLCK Run Designation`) ~ `SHLCK Run Designation`,
+      TRUE ~ "REMOVE_NO CASE"
+    )) |>
+  mutate(remove_case = str_split_i(final_run_designation, "\\_", i = 2),
+         shlk_run_designation = case_when(`SHLCK Run Designation` %in% c("SPRING OR WINTER", "S-W HETEROZYGOTE") ~ "SPRING/WINTER HETEROZYGOUS",
+                                          `SHLCK Run Designation` == "FALL OR LATE FALL" ~ "FALL/LATEFALL",
+                                          `SHLCK Run Designation` == "E-L HETEROZYGOTE" ~ "EARLY/LATE HETEROZYGOUS",
+                                          TRUE ~ `SHLCK Run Designation`))
+
+# keeps_2023 <- data_2023_final_designation |>
+#   filter(!str_detect(final_run_designation, "REMOVE")) |>
+#   select(-remove_case)
+
+run_ids_2023 <- data_2023_final_designation |>
+  left_join(all_run_types,
+            by=c("shlk_run_designation" = "run_name_upper")) |>
+  select(sample_id = SampleID, run_type_id = id) |>
+  filter(!is.na(run_type_id))
+
+
+run_ids_2023 |> filter(is.na(run_type_id))
+
+to_upload <- data_2023_final_designation |>
+  filter(date == "23") |> # this is just a check
+  group_by(location_code, date, sample_event_number, sample_bin_code) |>
+  summarise(n = max(as.numeric(sample_number))) |>
+  ungroup() |>
+  filter(!is.na(n)) |> # TODO sample event number coded as "A"
+  mutate(first_sample_date = as.Date(paste0("20", date, "-01-01")),
+         min_fork_length = 1,
+         max_fork_length = 200)
+
+# add samples to database
+purrr::pmap(list(location_code = to_upload$location_code,
+                 sample_event_number = to_upload$sample_event_number,
+                 sample_bin_code = to_upload$sample_bin_code,
+                 first_sample_date = to_upload$first_sample_date,
+                 min_fork_length = to_upload$min_fork_length,
+                 max_fork_length = to_upload$max_fork_length,
+                 expected_number_of_samples = to_upload$n),
+            grunID::add_sample,
+            con = con)
+
+
+insert_statement <- glue::glue_sql("INSERT INTO genetic_run_identification(sample_id, run_type_id)
+                                   VALUES ({run_ids_2023$sample_id}, {run_ids_2023$run_type_id})",
+                                   .con = con)
+
+walk(1:length(insert_statement), function(i) {
+  print(paste0(i, " of ", length(insert_statement)))
+  res <- DBI::dbSendQuery(con, insert_statement[i])
+  DBI::dbClearResult(res)
+})
 
 # 2024 ----------------------------------
+# fix issue before matching on sample id
+gt_seq_data_2024 <- gt_seq_data_2024_raw |>
+  mutate(SampleID = ifelse(SampleID == "Mil24_13_D_3", "MIL24_13_D_3", SampleID))
 
-gt_seq_data_2024 <- readr::read_tsv("data-raw/backfill/2024/JPE_2024_Reanalysis_10-2025_summary.tsv")
+
 sherlock_2024_samples_ids <- sherlock_all_data |> filter(Year == 2024) |> pull(SampleID)
 gtseq_2024_ids <- gt_seq_data_2024 |> pull(SampleID)
 
@@ -320,19 +351,18 @@ length(unique(gtseq_2024_ids))
 
 dplyr::setdiff(sherlock_2024_samples_ids, gtseq_2024_ids)
 
-gtseq_results_2024  <- readr::read_tsv("data-raw/backfill/2024/JPE_2024_Reanalysis_10-2025_summary.tsv")
 sherlock_results_2024 <- sherlock_all_data |> filter(Year == 2024) |> select(-`Gtseq Chr28 geno`)
 
-samples_in_both_2024 <- dplyr::intersect(gtseq_results_2024$SampleID, sherlock_results_2024$SampleID)
-samples_only_in_gtseq_2024 <- dplyr::setdiff(gtseq_results_2024$SampleID, sherlock_results_2024$SampleID)
-samples_only_in_sherlock_2024 <- dplyr::setdiff(sherlock_results_2024$SampleID, gtseq_results_2024$SampleID)
+samples_in_both_2024 <- dplyr::intersect(gt_seq_data_2024$SampleID, sherlock_results_2024$SampleID)
+samples_only_in_gtseq_2024 <- dplyr::setdiff(gt_seq_data_2024$SampleID, sherlock_results_2024$SampleID)
+samples_only_in_sherlock_2024 <- dplyr::setdiff(sherlock_results_2024$SampleID, gt_seq_data_2024$SampleID)
 
 # store anomalous samples
 samples_to_confirm$`2024` <- sort(samples_only_in_gtseq_2024[str_detect(samples_only_in_gtseq_2024, "dupe")])
 
 full_data_2024 <- sherlock_results_2024 |>
   left_join(
-    gtseq_results_2024,
+    gt_seq_data_2024,
     by=c("SampleID" = "SampleID"),
     suffix = c("_sherlock", "_gtseq"))
 
@@ -420,8 +450,7 @@ run_ids_2024 <- run_ids_2024_raw |>
   filter(!is.na(run_type_id))
 
 to_upload_2024 <- data_2024_final_designation |>
-  filter(date == "24", # just a check
-         !SampleID %in% to_check_run_ids$sample_id) |> # these didn't match with a run_id in db
+  filter(date == "24") |> # just a check
   group_by(location_code, date, sample_event_number, sample_bin_code) |>
   summarise(n = max(as.numeric(sample_number))) |>
   ungroup() |>
@@ -453,11 +482,6 @@ walk(1:length(insert_statement), function(i) {
 })
 
 # process field data ------------------------------------------------------
-# these were sent from Sean via teams on 11-5-2025
-field_data_2022_raw <- read_csv("data-raw/backfill/completed_field_sheets/2022_sample_data_v5_12-13-22.csv")
-field_data_2023_raw <- read_excel("data-raw/backfill/completed_field_sheets/2023_JPE_Sample_Data2_04-10-2023.xlsx")
-field_data_2024_raw <- read_excel("data-raw/backfill/completed_field_sheets/2024_JPE_Sample_Data.xlsx")
-field_data_2025_raw <- read_excel("data-raw/backfill/completed_field_sheets/2025 JPE Sample Data.xlsx")
 
 # clean and upload (see data-raw/user-workflow-preseason.R)
 # process_field_sheet_samples2() expects standard format; we will do our own here
@@ -561,12 +585,89 @@ samples_to_check <- stack(samples_to_confirm) |>
 
 write_csv(samples_to_check, "data-raw/backfill/erroneous_samples_2022-2024.csv")
 
+# fill in shlk/gtseq non-overlaps 2-4-2026 --------------------------------
+
+# add to sample plan
+# 22
+gtseq_only_2022 <- gt_seq_data_2022 |>
+  filter(SampleID %in% samples_only_in_gtseq_2022) |>
+  select(sample_id = SampleID)
+
+# 23
+gtseq_only_2023 <- gt_seq_data_2023 |>
+  filter(SampleID %in% samples_only_in_gtseq_2023) |>
+  select(sample_id = SampleID)
+
+# 24
+gtseq_only_2024 <- gt_seq_data_2024 |>
+  filter(SampleID %in% samples_only_in_gtseq_2024) |>
+  select(sample_id = SampleID)
+
+# add sample plan - seed in sample db
+# location_code, date, sample_event_number, sample_bin_code, n,
+# first_sample_date, min_fork_length, max_fork_length
+
+# these are samples with things like "XTRA", "dupe", etc.
+remove_erroneous_samples <- unlist(samples_to_confirm, use.names = F)
+
+gtseq_only <- bind_rows(gtseq_only_2022) |> #,
+                        #gtseq_only_2023,
+                        #gtseq_only_2024) |>
+  filter(!sample_id %in% remove_erroneous_samples,
+         !str_detect(sample_id, "EBK"),
+         !str_detect(sample_id, "SWP")) |>
+  tidyr::separate(sample_id, sep = "_",
+                  into = c("location_and_date", "sample_event_number",
+                           "sample_bin_code", "sample_number"),
+                  remove = FALSE)
+
+sample_ids_in_sample <- tbl(con, "sample") |>
+  collect() |>
+  glimpse()
+
+gtseq_only |>
+  filter(!sample_id %in% sample_ids_in_sample$id) |>
+  nrow()
+
+parsed_gtseq_data <- gtseq_only |>
+  filter(!sample_id %in% sample_ids_in_sample$id) |>
+  tidyr::separate(sample_id, sep = "_",
+                  into = c("location_and_date", "sample_event_number",
+                           "sample_bin_code", "sample_number"),
+                  remove = FALSE) |>
+  mutate(location_code = substr(location_and_date, 1, 3),
+         date = substr(location_and_date, 4, 5),
+         date = ifelse(date == "", NA_character_, date)) |>
+  relocate(location_code, .after = location_and_date) |>
+  relocate(date, .after = location_code) |>
+  select(-location_and_date)
+
+to_upload_gtseq <- parsed_gtseq_data |>
+  group_by(location_code, date, sample_event_number, sample_bin_code) |>
+  summarise(n = max(as.numeric(sample_number))) |>
+  ungroup() |>
+  filter(!is.na(n)) |>
+  mutate(first_sample_date = as.Date(paste0("20", date, "-01-01")),
+         min_fork_length = 1,
+         max_fork_length = 200)
+
+# add samples to database
+purrr::pmap(list(location_code = to_upload_gtseq$location_code,
+                 sample_event_number = to_upload_gtseq$sample_event_number,
+                 sample_bin_code = to_upload_gtseq$sample_bin_code,
+                 first_sample_date = to_upload_gtseq$first_sample_date,
+                 min_fork_length = to_upload_gtseq$min_fork_length,
+                 max_fork_length = to_upload_gtseq$max_fork_length,
+                 expected_number_of_samples = to_upload_gtseq$n),
+            grunID::add_sample,
+            con = con)
 
 # upload gt seq results to db ---------------------------------------------
 
-insert_gtseq_raw_results(con, gtseq_results_2022)
-insert_gtseq_raw_results(con, gtseq_results_2023)
-insert_gtseq_raw_results(con, gtseq_results_2024)
+insert_gtseq_raw_results(con, gt_seq_data_2022)
+insert_gtseq_raw_results(con, gt_seq_data_2023)
+insert_gtseq_raw_results(con, gt_seq_data_2024)
+
 # generate query backfill sherlock ----------------------------------------
 
 con <- gr_db_connect()
@@ -594,168 +695,6 @@ query_for_dashboard <- query_for_dashboard_raw |>
 
 # join in field data and gt seq raw results
 
-
 write_csv(query_for_dashboard, paste0("data-raw/backfill/results/genetics_query_for_dashboard_2022-2024_", Sys.Date(), ".csv"))
 
-# old ---------------------------------------------------------------------
-#
-# data_2023 <- read_excel("data-raw/backfill/2023_JPE_GT_Summary_grunID 1.xlsx")
-# parsed_data_2023 <- data_2023 |>
-#   tidyr::separate(SampleID, sep = "_",
-#                   into = c("location_and_date", "sample_event_number",
-#                            "sample_bin_code", "sample_number"),
-#                   remove = FALSE) |>
-#   mutate(location_code = substr(location_and_date, 1, 3),
-#          date = substr(location_and_date, 4, 5)) |>
-#   relocate(location_code, .after = location_and_date) |>
-#   relocate(date, .after = location_code) |>
-#   select(-location_and_date)
-#
-# all_run_types <- grunID::get_run_types(con)
-# all_run_types <- all_run_types |>
-#   mutate(run_name_upper = toupper(run_name)) |>
-#   select(id, run_name_upper)
-#
-# run_ids_2023 <- parsed_data_2023 |>
-#   left_join(all_run_types,
-#             by=c("Pop_Structure_ID" = "run_name_upper")) |>
-#   select(sample_id = SampleID, run_type_id = id)
-#
-# data_2023 |>
-#   distinct(Pop_Structure_ID)
-#
-# max(as.numeric(parsed_data_2023$sample_number), na.rm = T)
-# to_upload <- parsed_data_2023 |>
-#   filter(date == "23") |> # this is just a check
-#   group_by(location_code, date, sample_event_number, sample_bin_code) |>
-#   summarise(n = max(as.numeric(sample_number))) |>
-#   ungroup() |>
-#   filter(!is.na(n)) |> # TODO sample event number coded as "A"
-#   mutate(first_sample_date = as.Date(paste0("20", date, "-01-01")),
-#          min_fork_length = 1,
-#          max_fork_length = 200) |>
-#   tail(-1)
-#
-#
-# # 1. insert samples and all FK's
-# # for each of the rows in the df above, do a function call with `add_sample`
-# purrr::pmap(list(location_code = to_upload$location_code,
-#                  sample_event_number = to_upload$sample_event_number,
-#                  sample_bin_code = to_upload$sample_bin_code,
-#                  first_sample_date = to_upload$first_sample_date,
-#                  min_fork_length = to_upload$min_fork_length,
-#                  max_fork_length = to_upload$max_fork_length,
-#                  expected_number_of_samples = to_upload$n),
-#             grunID::add_sample,
-#             con = con)
-#
-# # add_sample(con, "BTC", 10, "2023-01-01", "A", 1, 200, 2)
-#
-# # 2. modify field spreadsheet to look like current format and upload uisng app
-# # use the function `process_field_sheet_samples2` and point it to the season field data
-#
-# field_season_data_backfill <- process_field_sheet_samples2(filepath = "data-raw/backfill/2023/2023_JPE_Sample_Data2_clean.xlsx")
-#
-# data_with_all_run_types <- parsed_data_2023 |>
-#   left_join(field_season_data_backfill |>
-#               select(sample_id, field_run_type_id),
-#             by = c("SampleID" = "sample_id"))
-#
-# # which ones don't align with a sample id?
-# parsed_data_2023$SampleID[!parsed_data_2023$SampleID %in% field_season_data_backfill$sample_id]
-#
-# # 3. insert into the run id table,
-# # convert run id in spreadsheet to the id's we use in the database
-# # do database insert using DBI package
-#
-# samples_seeded <- tbl(con, "sample") |>
-#   collect() |>
-#   pull(id)
-#
-# samples_not_seeded <- run_ids_2023$sample_id[!run_ids_2023$sample_id %in% samples_seeded]
-#
-# run_ids_2023_to_insert <- run_ids_2023 |>
-#   filter(!sample_id %in% samples_not_seeded)
-#
-# insert_statement <- glue::glue_sql("INSERT INTO genetic_run_identification(sample_id, run_type_id)
-#                                    VALUES ({run_ids_2023_to_insert$sample_id}, {run_ids_2023_to_insert$run_type_id})",
-#                                    .con = con)
-#
-# for(i in 1:length(insert_statement)) {
-#   print(paste0(i, " of ", length(insert_statement)))
-#   res <- DBI::dbSendQuery(con, insert_statement[i])
-#   DBI::dbClearResult(res)
-# }
-#
-#
-# # 2022 --------------------------------------------------------------------
-#
-# gtseq_results_2022 <- read_excel("data-raw/backfill/2022_JPE_GT_summary_grunID.xlsx")
-# sherlock_results_2022 <- sherlock_all_data |> filter(lubridate::year(Date) == 2022)
-#
-# samples_in_both <- dplyr::intersect(gtseq_results_2022$SampleID, sherlock_results_2022$SampleID)
-# samples_only_in_gtseq <- dplyr::setdiff(gtseq_results_2022$SampleID, sherlock_results_2022$SampleID)
-# samples_only_in_sherlock <- dplyr::setdiff(sherlock_results_2022$SampleID, gtseq_results_2022$SampleID)
-#
-# ## insert samples that are in both gtseq and sherlock ----------------
-#
-# full_data_2022 <- sherlock_results_2022 |>
-#   inner_join(
-#     gtseq_results_2022,
-#     by=c("SampleID" = "SampleID"),
-#     suffix = c("_sherlock", "_gtseq"))
-#
-# full_data_2022 |> glimpse()
-# parsed_data_2022 <- full_data_2022 |>
-#   tidyr::separate(SampleID, sep = "_",
-#                   into = c("location_and_date", "sample_event_number",
-#                            "sample_bin_code", "sample_number"),
-#                   remove = FALSE) |>
-#   mutate(location_code = substr(location_and_date, 1, 3),
-#          date = substr(location_and_date, 4, 5)) |>
-#   relocate(location_code, .after = location_and_date) |>
-#   relocate(date, .after = location_code) |>
-#   select(-location_and_date)
-#
-# all_run_types <- grunID::get_run_types(con)
-# all_run_types <- all_run_types |>
-#   mutate(run_name_upper = toupper(run_name)) |>
-#   select(id, run_name_upper)
-#
-# run_ids_2022 <- parsed_data_2022 |>
-#   left_join(all_run_types,
-#             by=c("Pop_Structure_ID" = "run_name_upper")) |>
-#   select(sample_id = SampleID, run_type_id = id)
-#
-# to_upload <- parsed_data_2022 |>
-#   filter(date == "22") |> # this is just a check
-#   group_by(location_code, date, sample_event_number, sample_bin_code) |>
-#   summarise(n = max(as.numeric(sample_number))) |>
-#   ungroup() |>
-#   filter(!is.na(n)) |> # TODO sample event number coded as "A"
-#   mutate(first_sample_date = as.Date(paste0("20", date, "-01-01")),
-#          min_fork_length = 1,
-#          max_fork_length = 200)
-#
-# # add samples to database
-# purrr::pmap(list(location_code = to_upload$location_code,
-#                  sample_event_number = to_upload$sample_event_number,
-#                  sample_bin_code = to_upload$sample_bin_code,
-#                  first_sample_date = to_upload$first_sample_date,
-#                  min_fork_length = to_upload$min_fork_length,
-#                  max_fork_length = to_upload$max_fork_length,
-#                  expected_number_of_samples = to_upload$n),
-#             grunID::add_sample,
-#             con = con)
-#
-#
-# insert_statement <- glue::glue_sql("INSERT INTO genetic_run_identification(sample_id, run_type_id)
-#                                    VALUES ({run_ids_2022$sample_id}, {run_ids_2022$run_type_id})",
-#                                    .con = con)
-#
-# walk(1:length(insert_statement), function(i) {
-#   print(paste0(i, " of ", length(insert_statement)))
-#   res <- DBI::dbSendQuery(con, insert_statement[i])
-#   DBI::dbClearResult(res)
-# })
-#
+
