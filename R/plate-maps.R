@@ -74,12 +74,23 @@ distribute_ebks_in_plate <- function() {
 make_single_assay_layout <- function(data, output_dir, season_filter, events_name,
                                      start_index_name_at = 0) {
   samples_parted <- partition_df_every_n(data, 92)
-  ebk_idx <- list()
   ebks_to_insert <- c("EBK-1-1", "EBK-1-2", "EBK-1-3", "EBK-1-4")
-  ebk_idx[[1]] <- ebks_to_insert[1]
-  ebk_idx[[2]] <- ebks_to_insert[2]
-  ebk_idx[[3]] <- ebks_to_insert[3]
-  ebk_idx[[4]] <- ebks_to_insert[4]
+  ebk_idx <- list()
+  if (length(samples_parted) == 1) {
+    ebk_idx[[1]] <- ebks_to_insert
+  } else if (length(samples_parted) == 2) {
+    ebk_idx[[1]] <- ebks_to_insert[1:2]
+    ebk_idx[[2]] <- ebks_to_insert[3:4]
+  } else if (length(samples_parted) == 3) {
+    ebk_idx[[1]] <- ebks_to_insert[1]
+    ebk_idx[[2]] <- ebks_to_insert[2]
+    ebk_idx[[3]] <- ebks_to_insert[3:4]
+  } else if (length(samples_parted) == 4) {
+    ebk_idx[[1]] <- ebks_to_insert[1]
+    ebk_idx[[2]] <- ebks_to_insert[2]
+    ebk_idx[[3]] <- ebks_to_insert[3]
+    ebk_idx[[4]] <- ebks_to_insert[4]
+  }
 
   layouts_list <- imap(samples_parted, \(x, i) {
     suppressWarnings(make_plate_layout(x$id, ebks = ebk_idx[[i]], type = "single"))
@@ -473,19 +484,19 @@ make_archive_plate_maps_by_event <- function(con, events, season = get_current_s
     )
 
     single_assays_created <- single_assays_created + 1
-  } else {
+  } else if (samples_remain_after_full_single_layout > 0) {
     # last we handle remaining number as dual assay
     start_index <- (total_full_single_layouts * sample_cap_for_single_assay) + 1
     end_index <- start_index + samples_remain_after_full_single_layout - 1
     dual_assay_samples <- samples[start_index:end_index, ]
+    plate_name_offset <- single_assays_created * 4
     dual_assay_layouts <- make_dual_assay_layout(
       dual_assay_samples,
       output_dir = output_dir,
       season_filter = season_filter,
-      events_name = events_name
+      events_name = events_name,
+      plate_name_offset = plate_name_offset
     )
-
-    dual_assay_layouts <- dual_assay_layouts + 1
   }
 
   return(list(
