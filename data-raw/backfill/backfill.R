@@ -646,6 +646,13 @@ field_data_2024 <- field_data_2024_raw |>
                                TRUE ~ toupper(`Field Run ID`))) |>
   left_join(all_run_types, by = c("field_run" = "run_name_upper")) |>
   select(sample_id = `Sample ID`, datetime_collected, fork_length_mm, field_run_type_id = id, field_comment = Comments) |>
+  # fix error in source data where samples in january 2024 season are marked as being from 2023
+  mutate(correct = ifelse(str_detect(sample_id, "TIS24") &
+                            month(datetime_collected) == 1 &
+                            year(datetime_collected) == 2023, TRUE, FALSE),
+         new_date = datetime_collected %m+% years(1),
+         datetime_collected = as_datetime(ifelse(correct, new_date, datetime_collected))) |>
+  select(-c(correct, new_date)) |>
   glimpse()
 
 update_field_sheet_samples(con, field_data_2022)
