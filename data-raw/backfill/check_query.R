@@ -1,6 +1,6 @@
 library(tidyverse)
 
-test <- read_csv("data-raw/backfill/results/genetics_query_for_dashboard_2022-2025_2026-02-03.csv") |>
+test <- read_csv("data-raw/backfill/results/genetics_query_for_dashboard_2022-2025_2026-03-02.csv") |>
   mutate(season = substr(sample_id, 4, 5))
 
 # only 4 run names should exist
@@ -20,7 +20,8 @@ test |>
   tally() |>
   ungroup()
 
-test |>
+test2 |>
+  filter(!is.na(datetime_collected)) |>
   mutate(fake_year = ifelse(month(datetime_collected) %in% 10:12, 1970, 1971),
          fake_date = as.Date(paste0(fake_year, "-", month(datetime_collected), "-", day(datetime_collected))),
          season = as.factor(paste0("Season: 20", substr(sample_id, 4, 5)))) |>
