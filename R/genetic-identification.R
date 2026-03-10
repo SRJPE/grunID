@@ -628,7 +628,7 @@ generate_final_run_assignment <- function(con) {
     mutate(shlk_run_designation = toupper(run_name)) |>
     select(-c(run_name, run_type_id)) |>
     # shlk run designations "UNKNOWN" refer to samples in progress; do not report these
-    filter(shlk_run_designation != "UNKNOWN") |>
+    filter(!shlk_run_designation %in% "UNKNOWN") |>
     mutate(final_run_designation = case_when(
              # edge case 1
              is.na(gtseq_chr28_geno) &
