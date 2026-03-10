@@ -1,6 +1,6 @@
 library(tidyverse)
 
-test <- read_csv("data-raw/backfill/results/genetics_query_for_dashboard_2022-2025_2026-03-02.csv") |>
+test <- read_csv("data-raw/backfill/results/genetics_query_for_dashboard_2022-2025_2026-03-10.csv") |>
   mutate(season = substr(sample_id, 4, 5))
 
 # only 4 run names should exist
@@ -20,7 +20,7 @@ test |>
   tally() |>
   ungroup()
 
-test2 |>
+test |>
   filter(!is.na(datetime_collected)) |>
   mutate(fake_year = ifelse(month(datetime_collected) %in% 10:12, 1970, 1971),
          fake_date = as.Date(paste0(fake_year, "-", month(datetime_collected), "-", day(datetime_collected))),
@@ -31,6 +31,18 @@ test2 |>
   theme_minimal() +
   labs(x = "Datetime collected") +
   theme(legend.position = "bottom")
+
+# compare run proportions
+test |>
+  group_by(season, final_run_designation) |>
+  tally() |>
+  left_join(old |>
+              mutate(season = substr(sample_id, 4, 5)) |>
+              group_by(season, final_run_designation) |>
+              tally() |>
+              rename(n_old = n)
+  )
+
 
 test |>
   mutate(season = substr(sample_id, 4, 5)) |>
