@@ -33,6 +33,8 @@ final_query_all_seasons <- bind_rows(early_seasons_result,
          # used spring/winter for 22, 25 seasons, spring/winter heterozygous for 23 and 25. standardizing here
          shlk_run_designation = case_when(shlk_run_designation == "FALL" ~ "FALL/LATEFALL",
                                           shlk_run_designation == "SPRING/WINTER HETEROZYGOUS" ~ "SPRING/WINTER",
+                                          # fix just for 2022 samples - was not correct in raw excel files per e-mails with Sean 3-10-2026
+                                          is.na(shlk_run_designation) & !is.na(shlk_chr28_genotype) ~ shlk_chr28_genotype,
                                           TRUE ~ shlk_run_designation))
 
 final_query_all_seasons |>
