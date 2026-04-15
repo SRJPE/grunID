@@ -630,6 +630,18 @@ generate_final_run_assignment <- function(con) {
     # shlk run designations "UNKNOWN" refer to samples in progress; do not report these
     filter(!shlk_run_designation %in% "UNKNOWN") |>
     mutate(final_run_designation = case_when(
+             # catch specific versions of edge case 1
+             is.na(gtseq_chr28_geno) &
+               !is.na(pop_structure_id) &
+               shlk_chr28_genotype == "LATE" ~ "FALL OR LATE FALL",
+             is.na(gtseq_chr28_geno) &
+               !is.na(pop_structure_id) &
+               shlk_chr28_genotype == "EARLY" &
+               shlk_chr16_genotype == "SPRING" ~ "SPRING",
+             is.na(gtseq_chr28_geno) &
+               !is.na(pop_structure_id) &
+               shlk_chr28_genotype == "EARLY" &
+               shlk_chr16_genotype == "WINTER" ~ "WINTER",
              # edge case 1
              is.na(gtseq_chr28_geno) &
                !is.na(pop_structure_id) ~ "REMOVE_CASE 1",
@@ -678,7 +690,10 @@ generate_final_run_assignment <- function(con) {
 
   # further edge cases
   rejects <- final_run_assignments |>
-    filter(!final_run_designation %in% c("FALL OR LATE FALL", "SPRING", "WINTER", "UNKNOWN"))
+    filter(!final_run_designation %in% c("FALL OR LATE FALL", "SPRING", "WINTER", "UNKNOWN")) |>
+    left_join(run_types, by = c("field_run_type_id" = "id")) |>
+    mutate(field_run_type = toupper(run_name)) |>
+    select(-c(field_run_type_id, run_name))
 
   keeps <- final_run_assignments |>
     filter(final_run_designation %in% c("FALL OR LATE FALL", "SPRING", "WINTER", "UNKNOWN")) |>

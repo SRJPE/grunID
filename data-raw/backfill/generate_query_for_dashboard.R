@@ -3,7 +3,7 @@ library(grunID)
 
 # generate query for data dashboard, bind together 2022-2024
 # 2022-2024 are in staging as of Dec 2025; backfilled and query written in backfill.R
-early_seasons_result <- read_csv("data-raw/backfill/results/genetics_query_for_dashboard_2022-2024_2026-03-10.csv") |>
+early_seasons_result <- read_csv("data-raw/backfill/results/genetics_query_for_dashboard_2022-2024_2026-04-14.csv") |>
   mutate(season = substr(sample_id, 4, 5)) |>
   glimpse()
 
@@ -34,7 +34,8 @@ final_query_all_seasons <- bind_rows(early_seasons_result,
          shlk_run_designation = case_when(shlk_run_designation == "FALL" ~ "FALL/LATEFALL",
                                           shlk_run_designation == "SPRING/WINTER HETEROZYGOUS" ~ "SPRING/WINTER",
                                           # fix just for 2022 samples - was not correct in raw excel files per e-mails with Sean 3-10-2026
-                                          is.na(shlk_run_designation) & !is.na(shlk_chr28_genotype) ~ shlk_chr28_genotype,
+                                          is.na(shlk_run_designation) & !is.na(shlk_chr28_genotype) & shlk_chr28_genotype == "LATE" ~ "FALL/LATEFALL",
+                                          is.na(shlk_run_designation) & !is.na(shlk_chr28_genotype) & shlk_chr28_genotype == "HETEROZYGOTE" ~ "EARLY/LATE HETEROZYGOUS",
                                           TRUE ~ shlk_run_designation))
 
 final_query_all_seasons |>

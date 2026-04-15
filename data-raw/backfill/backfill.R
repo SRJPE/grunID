@@ -678,7 +678,8 @@ update_field_sheet_samples(con, field_data_2024)
 # generate query backfill sherlock ----------------------------------------
 
 con <- gr_db_connect()
-query_for_dashboard_raw <- generate_final_run_assignment(con)$results
+query_for_dashboard_raw_all <- generate_final_run_assignment(con)
+query_for_dashboard_raw <- query_for_dashboard_raw_all$results
 query_for_dashboard_raw |>
   glimpse()
 
@@ -688,6 +689,27 @@ query_for_dashboard_raw |>
 shlk_backfill_genotype <- sherlock_all_data |>
   select(sample_id = SampleID,
          `SHERLOCK Chr28 geno`, `SHERLOCK Chr16 geno`)
+
+# backfill for the single case Sean identified - only need to do this
+# because we don't have the sherlock raw results in the db
+query_for_dashboard_raw_add_back_in <- query_for_dashboard_raw_all$diagnostic |>
+  left_join(shlk_backfill_genotype, by = "sample_id") |>
+  mutate(shlk_chr28_genotype = ifelse(is.na(shlk_chr28_genotype)  &
+                                        !is.na(`SHERLOCK Chr28 geno`), `SHERLOCK Chr28 geno`, shlk_chr28_genotype),
+         shlk_chr16_genotype = ifelse(is.na(shlk_chr16_genotype)  &
+                                        !is.na(`SHERLOCK Chr16 geno`), `SHERLOCK Chr16 geno`, shlk_chr16_genotype)) |>
+  select(-c(`SHERLOCK Chr28 geno`, `SHERLOCK Chr16 geno`)) |>
+  filter(remove_case == "CASE 1" &
+           !is.na(shlk_run_designation) &
+           !is.na(shlk_chr28_genotype)) |>
+  mutate(final_run_designation = case_when(shlk_chr28_genotype == "EARLY" &
+                                             shlk_chr16_genotype == "SPRING" ~ "SPRING",
+                                           shlk_chr28_genotype == "LATE" ~ "FALL OR LATE FALL",
+                                           shlk_chr28_genotype == "EARLY" &
+                                             shlk_chr16_genotype == "WINTER" ~ "WINTER",
+                                           TRUE ~ final_run_designation)) |>
+  filter(final_run_designation != "REMOVE_CASE 1") |>
+  select(-remove_case)
 
 query_for_dashboard <- query_for_dashboard_raw |>
   left_join(shlk_backfill_genotype, by = "sample_id") |>
@@ -700,8 +722,10 @@ query_for_dashboard <- query_for_dashboard_raw |>
   filter(season != 25) |>
   select(-season)
 
+query_for_dashboard_with_add_ins <- bind_rows(query_for_dashboard, query_for_dashboard_raw_add_back_in)
+
 # join in field data and gt seq raw results
 
-write_csv(query_for_dashboard, paste0("data-raw/backfill/results/genetics_query_for_dashboard_2022-2024_", Sys.Date(), ".csv"))
+write_csv(query_for_dashboard_with_add_ins, paste0("data-raw/backfill/results/genetics_query_for_dashboard_2022-2024_", Sys.Date(), ".csv"))
 
 
