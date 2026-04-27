@@ -36,7 +36,14 @@ final_query_all_seasons <- bind_rows(early_seasons_result,
                                           # fix just for 2022 samples - was not correct in raw excel files per e-mails with Sean 3-10-2026
                                           is.na(shlk_run_designation) & !is.na(shlk_chr28_genotype) & shlk_chr28_genotype == "LATE" ~ "FALL/LATEFALL",
                                           is.na(shlk_run_designation) & !is.na(shlk_chr28_genotype) & shlk_chr28_genotype == "HETEROZYGOTE" ~ "EARLY/LATE HETEROZYGOUS",
-                                          TRUE ~ shlk_run_designation))
+                                          TRUE ~ shlk_run_designation),
+         # last minute changes
+         shlk_chr16_genotype = ifelse(shlk_chr16_genotype == "HETEROZYGOTE",
+                                      "INDETERMINATE", shlk_chr16_genotype),
+         tributary = ifelse(tributary == "Feather River Spring",
+                             "Feather River Lineage Spring", tributary)) |>
+  filter(!is.na(fork_length_mm) | !is.na(datetime_collected)) |>
+  select(-season)
 
 final_query_all_seasons |>
   filter(!is.na(datetime_collected)) |>

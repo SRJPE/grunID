@@ -686,7 +686,13 @@ generate_final_run_assignment <- function(con) {
            )) |>
     mutate(remove_case = str_split_i(final_run_designation, "\\_", i = 2)) |>
     # clean up
-    mutate(final_run_designation = ifelse(final_run_designation %in% c("LATEFALL", "FALL", "FALL/LATEFALL"), "FALL OR LATE FALL", final_run_designation))
+    mutate(final_run_designation = ifelse(final_run_designation %in% c("LATEFALL", "FALL", "FALL/LATEFALL"),
+                                          "FALL OR LATE FALL", final_run_designation),
+           # clean up naming per Sean's e-mail April 2026
+           shlk_chr16_genotype = ifelse(shlk_chr16_genotype == "HETEROZYGOTE",
+                                        "INDETERMINATE", shlk_chr16_genotype),
+           tributary == ifelse(tributary == "Feather River Spring",
+                               "Feather River Lineage Spring", tributary))
 
   # further edge cases
   rejects <- final_run_assignments |>
