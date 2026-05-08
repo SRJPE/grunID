@@ -696,22 +696,34 @@ generate_final_run_assignment <- function(con) {
 
   # further edge cases
   rejects <- final_run_assignments |>
-    filter(!final_run_designation %in% c("FALL OR LATE FALL", "SPRING", "WINTER", "UNKNOWN")) |>
+    filter(!final_run_designation %in% c("FALL OR LATE FALL", "SPRING", "WINTER", "UNKNOWN"),
+           is.na(fork_length_mm) | is.na(datetime_collected)) |>
     left_join(run_types, by = c("field_run_type_id" = "id")) |>
     mutate(field_run_type = toupper(run_name)) |>
     select(-c(field_run_type_id, run_name))
 
   keeps <- final_run_assignments |>
-    filter(final_run_designation %in% c("FALL OR LATE FALL", "SPRING", "WINTER", "UNKNOWN")) |>
+    filter(final_run_designation %in% c("FALL OR LATE FALL", "SPRING", "WINTER", "UNKNOWN"),
+           !is.na(fork_length_mm) | !is.na(datetime_collected)) |>
     left_join(run_types, by = c("field_run_type_id" = "id")) |>
-    mutate(field_run_type = toupper(run_name)) |>
+    mutate(field_run_type = toupper(run_name),
+           final_run_designation = ifelse(final_run_designation == "UNKNOWN", "GREB1L HETEROZYGOTE", final_run_designation),
+           # used spring/winter for 22, 25 seasons, spring/winter heterozygous for 23 and 25. standardizing here
+           shlk_run_designation = case_when(shlk_run_designation == "FALL" ~ "FALL/LATEFALL",
+                                            shlk_run_designation == "SPRING/WINTER HETEROZYGOUS" ~ "SPRING/WINTER",
+                                            TRUE ~ shlk_run_designation),
+           # nomenclature changes identified for the EDI package
+           shlk_chr16_genotype = ifelse(shlk_chr16_genotype == "HETEROZYGOTE",
+                                        "INDETERMINATE", shlk_chr16_genotype),
+           tributary = ifelse(tributary == "Feather River Spring",
+                              "Feather River Lineage Spring", tributary)) |>
     select(-c(field_run_type_id, run_name)) |>
     select(sample_id:fork_length_mm, field_run_type, final_run_designation,
            shlk_chr28_genotype, shlk_chr16_genotype, shlk_run_designation,
            gtseq_chr28_geno:sac_win)
 
   cli::cli_bullets(paste0(nrow(rejects), " sample IDs did not produce a conclusive result. See returned list element `diagnostic` and the remove_case column for more details."))
-  cli::cli_bullets(paste0(nrow(keeps), " sample IDs produced a conclusive results. See returned list element `results`."))
+  cli::cli_bullets(paste0(nrow(keeps), " sample IDs produced conclusive results. See returned list element `results`."))
 
   return(list("results" = keeps,
               "diagnostic" = rejects))

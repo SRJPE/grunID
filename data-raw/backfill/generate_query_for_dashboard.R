@@ -27,7 +27,7 @@ final_runs_2025 |>
 
 final_query_all_seasons <- bind_rows(early_seasons_result,
                                      final_runs_2025) |>
-  # TODO move this to VIEW generation
+  # This was all moved into the generate_final_run_assignment() function
   distinct_all() |>
   mutate(final_run_designation = ifelse(final_run_designation == "UNKNOWN", "GREB1L HETEROZYGOTE", final_run_designation),
          # used spring/winter for 22, 25 seasons, spring/winter heterozygous for 23 and 25. standardizing here
