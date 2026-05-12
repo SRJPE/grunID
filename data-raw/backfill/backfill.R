@@ -499,6 +499,8 @@ gtseq_only_2022 <- gt_seq_data_2022 |>
 # 23
 gtseq_only_2023 <- gt_seq_data_2023 |>
   filter(SampleID %in% samples_only_in_gtseq_2023) |>
+  # added this for database backfill for production
+  filter(!(SampleID %in% samples_to_check$sample_id)) |>
   select(sample_id = SampleID)
 
 # 24
@@ -510,9 +512,10 @@ gtseq_only_2024 <- gt_seq_data_2024 |>
 # location_code, date, sample_event_number, sample_bin_code, n,
 # first_sample_date, min_fork_length, max_fork_length
 
-gtseq_only <- bind_rows(gtseq_only_2022,
-                        gtseq_only_2023,
-                        gtseq_only_2024) |>
+gtseq_only <- bind_rows(#gtseq_only_2022,
+                        gtseq_only_2023#,
+                        #gtseq_only_2024
+                        ) |>
   filter(!sample_id %in% samples_to_check$sample_id,
          !str_detect(sample_id, "EBK"),
          !str_detect(sample_id, "SWP")) |>
@@ -591,6 +594,13 @@ field_data_2022 <- field_data_2022_raw |>
          field_comment = NA_character_) |>
   left_join(all_run_types, by = c("field_run" = "run_name_upper")) |>
   select(sample_id = `Sample ID`, datetime_collected, fork_length_mm, field_run_type_id = id, field_comment) |>
+  filter(!(sample_id %in% samples_to_check$sample_id)) |>
+  # some are missing the season in the sample ID - issue coming from the
+  # gt seq spreadsheet. this code is replicated in gt seq processing section
+  mutate(sample_id = ifelse(sample_id %in% problem_2022_gtseq_samples,
+                            paste0(substr(sample_id, 1, 3), "22",
+                                   substr(sample_id, 4, nchar(sample_id))),
+                            sample_id)) |>
   glimpse()
 
 field_data_2023 <- field_data_2023_raw |>
