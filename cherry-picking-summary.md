@@ -298,27 +298,3 @@ genetic-ID logic (`R/genetic-identification.R:608-722`), which computes fields
 like `shlk_run_designation` and `shlk_chr28_genotype`/`shlk_chr16_genotype`.
 That logic consumes the *results* of the Sherlock/GT-Seq assay run — it does
 not participate in generating the cherry-pick input file itself.
-
-## Quick file:line index
-
-| Concern | File | Lines |
-|---|---|---|
-| Shiny app entry point | `R/run-app.R` | 11-42 |
-| App bootstrap / DB connect / config | `inst/app/global.R` | 1-90 |
-| UI tab & button | `inst/app/ui.R` | 224-234 |
-| Event dropdown / preview reactives | `inst/app/server.R` | 580-613 |
-| Button click handler | `inst/app/server.R` | 636-655 |
-| Core generator function | `R/plate-maps.R` | 637-915 |
-| Candidate sample query | `R/plate-maps.R` | 613-629 |
-| Sample status query | `R/sample-status.R` | 94-135 |
-| Archive plate DB read | `R/plate-maps.R` | 660-669 |
-| Sort/chunk into 96-sample groups | `R/plate-maps.R` | 695-710 / 781-796 |
-| GT-Seq cherry-pick build + file write | `R/plate-maps.R` | 689-774 |
-| Sherlock/OTS-16 cherry-pick build + file write | `R/plate-maps.R` | 776-868 |
-| Plate layout matrix builder | `R/plate-maps.R` | 18-42 |
-| Excel writer helper | `R/plate-maps.R` | 548-564 |
-| Dual OTS-16 Sherlock layout from cherry pick | `R/plate-maps.R` | 1243-1257 |
-| Insert archive plate ids | `R/plate-maps.R` | 512-529 |
-| Insert Hamilton plate ids (defined, unused) | `R/plate-maps.R` | 532-544 |
-| Dead code: alternate single/dual-assay split (commented out) | `R/plate-maps.R` | 871-909 |
-| Config file (output dir) | `config.yml` | 1-8 |
