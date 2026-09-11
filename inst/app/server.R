@@ -140,7 +140,10 @@ function(input, output, session) {
       tagList(
         h5(tags$b("Please confirm Plate Layout Selection")),
         h5("This extra check is here to ensure that the order of the layout present in the results file matches the layout selected in this upload tool."),
-        h5("Layout Selected:", tags$b(glue::glue("{input$layout_type}"))),
+        h5("Instrument Selected:", tags$b(glue::glue("{input$instrument}"))),
+        if (input$instrument == "sherlock") {
+          h5("Layout Selected:", tags$b(glue::glue("{input$layout_type}")))
+        },
         h5("Results filename:", tags$b(glue::glue("{input$sherlock_results$name}"))),
         h5("Is this selection correct?"),
       ),
@@ -158,12 +161,13 @@ function(input, output, session) {
     if(input$yes_upload > 0){
       tryCatch({
         removeModal(session = session)
-        if (input$layout_type == "custom") {
+        if (input$instrument == "sherlock" && input$layout_type == "custom") {
           grunID::add_new_plate_results(
             con,
             protocol_name = input$protocol,
             genetic_method = input$genetic_method,
             laboratory = input$laboratory,
+            instrument = input$instrument,
             lab_work_performed_by = input$performed_by,
             description = input$run_description,
             date_run = input$date_run,
@@ -183,13 +187,14 @@ function(input, output, session) {
             protocol_name = input$protocol,
             genetic_method = input$genetic_method,
             laboratory = input$laboratory,
+            instrument = input$instrument,
             lab_work_performed_by = input$performed_by,
             description = input$run_description,
             date_run = input$date_run,
             filepath = input$sherlock_results,
             sample_type = input$sample_type,
-            layout_type = input$layout_type,
-            plate_size = input$plate_size,
+            layout_type = if (input$instrument == "sherlock") input$layout_type else NULL,
+            plate_size = if (input$instrument == "sherlock") input$plate_size else NULL,
             selection_strategy = "recent priority",
             .control_id = input$control_blank,
             threshold_strategy = "twice average",

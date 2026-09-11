@@ -51,6 +51,9 @@ navbarPage(
                         # offset = 1,
                         width = 3,
                         h3("Enter Plate Run"),
+                        selectInput("instrument", "Select Instrument",
+                                    choices = c("Synergy H1 (SHERLOCK)" = "sherlock",
+                                                "SherQuant" = "sherquant")),
                         radioButtons("sample_id_type", "Sample ID Types",
                                      choices = c("JPE Samples" = "jpe", "Salvage Samples" = "salvage"), inline = TRUE),
                         tags$div(
@@ -105,28 +108,31 @@ navbarPage(
                           actionButton("info_sample_type", label = NULL, icon = icon("question"), class = "round-btn icon-offset")
 
                         ),
-                        tags$div(
-                          style = "display: flex; align-items: center;",
-                          selectInput("layout_type", "Select Layout Type",
-                                      choices = c("Split Plate - Early + Late" = "split_plate_early_late",
-                                                  "Split Plate - Late + Early" = "split_plate_late_early",
-                                                  "Split Plate - Spring + Winter" = "split_plate_spring_winter",
-                                                  "Split Plate - Winter + Spring" = "split_plate_winter_spring",
-                                                  "Single Assay OTS 28 Early (v5 Mapping)" = "single_assay_ots28_early",
-                                                  "Single Assay OTS 28 Late (v5 Mapping)" = "single_assay_ots28_late",
-                                                  "Single Assay OTS 16 Spring (v5 Mapping)" = "single_assay_ots16_spring",
-                                                  "Single Assay OTS 16 Winter (v5 Mapping)" = "single_assay_ots16_winter",
-                                                  "Triplicate" = "triplicate",
-                                                  "Custom (must include custom 'layout' sheet)" = "custom"
-                                      )
+                        shiny::conditionalPanel(
+                          condition = "input.instrument == 'sherlock'",
+                          tags$div(
+                            style = "display: flex; align-items: center;",
+                            selectInput("layout_type", "Select Layout Type",
+                                        choices = c("Split Plate - Early + Late" = "split_plate_early_late",
+                                                    "Split Plate - Late + Early" = "split_plate_late_early",
+                                                    "Split Plate - Spring + Winter" = "split_plate_spring_winter",
+                                                    "Split Plate - Winter + Spring" = "split_plate_winter_spring",
+                                                    "Single Assay OTS 28 Early (v5 Mapping)" = "single_assay_ots28_early",
+                                                    "Single Assay OTS 28 Late (v5 Mapping)" = "single_assay_ots28_late",
+                                                    "Single Assay OTS 16 Spring (v5 Mapping)" = "single_assay_ots16_spring",
+                                                    "Single Assay OTS 16 Winter (v5 Mapping)" = "single_assay_ots16_winter",
+                                                    "Triplicate" = "triplicate",
+                                                    "Custom (must include custom 'layout' sheet)" = "custom"
+                                        )
+                            ),
+                            actionButton("info_layout_type", label = NULL, icon = icon("question"), class = "round-btn icon-offset")
                           ),
-                          actionButton("info_layout_type", label = NULL, icon = icon("question"), class = "round-btn icon-offset")
+
+                          shiny::conditionalPanel(condition = "input.layout_type == 'custom'",
+                                                  shiny::helpText("You selected custom layout, you must include a sheet named 'layout' in your sherlock results file")),
+
+                          selectInput("plate_size", "Select Plate Size", choices = c(384, 96))
                         ),
-
-                        shiny::conditionalPanel(condition = "input.layout_type == 'custom'",
-                                                shiny::helpText("You selected custom layout, you must include a sheet named 'layout' in your sherlock results file")),
-
-                        selectInput("plate_size", "Select Plate Size", choices = c(384, 96)),
                         selectInput("control_blank", "Select Control", choices = c("NEG-DNA", "EBK", "NTC"), selected = "NEG-DNA"),
                         checkboxInput("perform_genetics_id", label = "Run genetic calculations for samples after upload", value = TRUE),
                         actionButton("do_upload", "Upload Results", class = "btn-success", icon = icon("rocket")),

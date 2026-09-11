@@ -10,3 +10,6 @@ inst/doc
 /Meta/
 *~$*xlsx
 
+
+/.quarto/
+**/*.quarto_ipynb

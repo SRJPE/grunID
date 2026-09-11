@@ -93,13 +93,69 @@ extract_sherlock_protocol <- function(filepath) {
   return(metadata)
 }
 
-process_sherquant_protocol <- function(filepath) {
-  metadata <- read_xlsx(
+#' Extract SherQUANT Protocol
+#' @description helper function for parsing protocol settings within SherQuant output
+#' @details This assumes that if 41 cycles are performed, the protocol was a 2 hour run time.
+#' @export
+extract_sherquant_protocol <- function(filepath) {
+  raw_metadata <- readxl::read_xlsx(
     filepath,
     sheet = "Multicomponent Data",
     range = "A1:B45",
     col_names = c("key", "value")
+  ) |>
+    tidyr::pivot_wider(names_from = "key", values_from = "value")
+
+  block_type <- raw_metadata$`Block Type`
+  instrument_type <- raw_metadata$`Instrument Type`
+  passive_reference <- raw_metadata$`Passive Reference`
+  quantification_cycle_method <- raw_metadata$`Quantification Cycle Method`
+  signal_smoothing_on <- raw_metadata$`Signal Smoothing On`
+  chemistry <- raw_metadata$Chemistry
+  instrument_name <- raw_metadata$`Instrument Name`
+  instrument_serial_number <- raw_metadata$`Instrument Serial Number`
+  stage_analysis_performed <- raw_metadata$`Stage/ Cycle where Analysis is performed`
+  date_created <- as.Date(raw_metadata$`Date Created`)
+  experiment_filename <- raw_metadata$`Experiment File Name`
+  experiment_name <- raw_metadata$`Experiment Name`
+  experiment_end_time <- raw_metadata$`Experiment Run End Time`
+  experiment_user_name <- raw_metadata$`User Name`
+
+  # parse
+  plate_size <- readr::parse_number(block_type)
+
+  # from multicomponent data tab
+  read_count <- readxl::read_xlsx(
+    filepath,
+    sheet = "Multicomponent Data",
+    skip = 47,
+    col_names = c("well", "well_position", "cycle", "rox", "fam")
+  ) |>
+    dplyr::pull(cycle) |>
+    max()
+
+  runtime <- if (read_count == 41) hms::as_hms(2 * 3600) else NA
+
+  metadata <- tibble::tibble(
+    plate_size,
+    runtime,
+    read_count,
+    block_type,
+    instrument_type,
+    passive_reference,
+    quantification_cycle_method,
+    signal_smoothing_on,
+    chemistry,
+    instrument_name,
+    instrument_serial_number,
+    stage_analysis_performed,
+    date_created,
+    experiment_filename,
+    experiment_name,
+    experiment_end_time,
+    experiment_user_name
   )
+
   return(metadata)
 }
 
