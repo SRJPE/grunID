@@ -335,19 +335,19 @@ is_valid_protocol <- function(protocol) {
     stop("The protocol supplied is not valid, reference `grunID::protocol_template`", call. = FALSE)
   }
 
-  if (!protocol$run_mode %in% c("Kinetic")) {
+  if (!protocol$run_mode %in% c("Kinetic", "Standard Curve")) {
     stop("The `run_mode` supplied is not valid", call. = FALSE)
   }
 
-  if (!protocol$optics %in% c("Top")) {
+  if (!(protocol$optics %in% c("Top") || is.na(protocol$optics))) {
     stop("The `optics` supplied is not valid", call. = FALSE)
   }
 
-  if (!protocol$light_source %in% c("Xenon Flash")) {
+  if (!(protocol$light_source %in% c("Xenon Flash") || is.na(protocol$light_source))) {
     stop("The `light_source` supplied is not valid", call. = FALSE)
   }
 
-  if (!protocol$lamp_energy %in% c("High")) {
+  if (!(protocol$lamp_energy %in% c("High") || is.na(protocol$lamp_energy))) {
     stop("The `lamp_energy` supplied is not valid", call. = FALSE)
   }
 
