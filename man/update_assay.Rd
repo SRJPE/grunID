@@ -40,10 +40,10 @@ updated_assay <- data.frame(code = "OTS28E1",
 update_assay(con, 1, updated_assay)
 }
 \seealso{
-Other assay functions: 
-\code{\link{add_assay}()},
-\code{\link{delete_assay}()},
-\code{\link{get_assays}()},
-\code{\link{update_assay_status}()}
+Other assay functions:
+\code{\link[=add_assay]{add_assay()}},
+\code{\link[=delete_assay]{delete_assay()}},
+\code{\link[=get_assays]{get_assays()}},
+\code{\link[=update_assay_status]{update_assay_status()}}
 }
 \concept{assay functions}

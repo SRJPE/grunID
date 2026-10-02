@@ -39,10 +39,10 @@ updated_sample_type$sample_type_name <- "New Name Run"
 update_sample_type(con, 1, updated_sample_type)
 }
 \seealso{
-Other sample type functions: 
-\code{\link{add_sample_type}()},
-\code{\link{delete_sample_type}()},
-\code{\link{get_sample_types}()},
-\code{\link{update_sample_type_status}()}
+Other sample type functions:
+\code{\link[=add_sample_type]{add_sample_type()}},
+\code{\link[=delete_sample_type]{delete_sample_type()}},
+\code{\link[=get_sample_types]{get_sample_types()}},
+\code{\link[=update_sample_type_status]{update_sample_type_status()}}
 }
 \concept{sample type functions}

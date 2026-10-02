@@ -35,10 +35,10 @@ new_sample_type <- data.frame(code = "SFB",
 add_sample_type(con, new_sample_type)
 }
 \seealso{
-Other sample type functions: 
-\code{\link{delete_sample_type}()},
-\code{\link{get_sample_types}()},
-\code{\link{update_sample_type}()},
-\code{\link{update_sample_type_status}()}
+Other sample type functions:
+\code{\link[=delete_sample_type]{delete_sample_type()}},
+\code{\link[=get_sample_types]{get_sample_types()}},
+\code{\link[=update_sample_type]{update_sample_type()}},
+\code{\link[=update_sample_type_status]{update_sample_type_status()}}
 }
 \concept{sample type functions}

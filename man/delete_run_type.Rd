@@ -35,10 +35,10 @@ View(all_run_types) # to view the ID of the run type needing deletion
 delete_run_type(con, 1)
 }
 \seealso{
-Other run type functions: 
-\code{\link{add_run_type}()},
-\code{\link{get_run_types}()},
-\code{\link{update_run_type}()},
-\code{\link{update_run_type_status}()}
+Other run type functions:
+\code{\link[=add_run_type]{add_run_type()}},
+\code{\link[=get_run_types]{get_run_types()}},
+\code{\link[=update_run_type]{update_run_type()}},
+\code{\link[=update_run_type_status]{update_run_type_status()}}
 }
 \concept{run type functions}

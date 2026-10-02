@@ -53,8 +53,8 @@ update_enum_value(con, "life_stage_enum",
 
 }
 \seealso{
-Other enum method functions: 
-\code{\link{add_enum_value}()},
-\code{\link{get_enum_values}()}
+Other enum method functions:
+\code{\link[=add_enum_value]{add_enum_value()}},
+\code{\link[=get_enum_values]{get_enum_values()}}
 }
 \concept{enum method functions}

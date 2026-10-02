@@ -33,12 +33,12 @@ new_status_code <- data.frame(status_code = "All done",
 add_status_code(con, new_status_code)
 }
 \seealso{
-Other status code functions: 
-\code{\link{delete_status_code}()},
-\code{\link{get_sample_status}()},
-\code{\link{get_status_codes}()},
-\code{\link{set_sample_status}()},
-\code{\link{update_status_code}()},
-\code{\link{update_status_code_status}()}
+Other status code functions:
+\code{\link[=delete_status_code]{delete_status_code()}},
+\code{\link[=get_sample_status]{get_sample_status()}},
+\code{\link[=get_status_codes]{get_status_codes()}},
+\code{\link[=set_sample_status]{set_sample_status()}},
+\code{\link[=update_status_code]{update_status_code()}},
+\code{\link[=update_status_code_status]{update_status_code_status()}}
 }
 \concept{status code functions}

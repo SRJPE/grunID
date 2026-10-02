@@ -39,10 +39,10 @@ updated_method <- data.frame(code = "SHLK", method_name = "Sherlock",
 update_genetic_method(con, genetic_method_id = 1, updated_method)
 }
 \seealso{
-Other genetic method functions: 
-\code{\link{add_genetic_method}()},
-\code{\link{delete_genetic_method}()},
-\code{\link{get_genetic_methods}()},
-\code{\link{update_genetic_method_status}()}
+Other genetic method functions:
+\code{\link[=add_genetic_method]{add_genetic_method()}},
+\code{\link[=delete_genetic_method]{delete_genetic_method()}},
+\code{\link[=get_genetic_methods]{get_genetic_methods()}},
+\code{\link[=update_genetic_method_status]{update_genetic_method_status()}}
 }
 \concept{genetic method functions}

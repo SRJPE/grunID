@@ -24,11 +24,11 @@ con <- DBI::dbConnect(RPostgres::Postgres(),
 protocols <- get_protocols(con)
 }
 \seealso{
-Other protocol functions: 
-\code{\link{add_protocol}()},
-\code{\link{add_protocol_based_on}()},
-\code{\link{delete_protocol}()},
-\code{\link{update_protocol}()},
-\code{\link{update_protocol_status}()}
+Other protocol functions:
+\code{\link[=add_protocol]{add_protocol()}},
+\code{\link[=add_protocol_based_on]{add_protocol_based_on()}},
+\code{\link[=delete_protocol]{delete_protocol()}},
+\code{\link[=update_protocol]{update_protocol()}},
+\code{\link[=update_protocol_status]{update_protocol_status()}}
 }
 \concept{protocol functions}

@@ -24,10 +24,10 @@ con <- DBI::dbConnect(RPostgres::Postgres(),
 protocols <- get_genetic_methods(con)
 }
 \seealso{
-Other genetic method functions: 
-\code{\link{add_genetic_method}()},
-\code{\link{delete_genetic_method}()},
-\code{\link{update_genetic_method}()},
-\code{\link{update_genetic_method_status}()}
+Other genetic method functions:
+\code{\link[=add_genetic_method]{add_genetic_method()}},
+\code{\link[=delete_genetic_method]{delete_genetic_method()}},
+\code{\link[=update_genetic_method]{update_genetic_method()}},
+\code{\link[=update_genetic_method_status]{update_genetic_method_status()}}
 }
 \concept{genetic method functions}

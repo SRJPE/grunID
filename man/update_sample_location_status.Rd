@@ -38,10 +38,10 @@ update_sample_location_status(con, 4, set_active=FALSE)
 update_sample_location_status(con, 4)
 }
 \seealso{
-Other sample location functions: 
-\code{\link{add_sample_location}()},
-\code{\link{delete_sample_location}()},
-\code{\link{get_sample_locations}()},
-\code{\link{update_sample_location}()}
+Other sample location functions:
+\code{\link[=add_sample_location]{add_sample_location()}},
+\code{\link[=delete_sample_location]{delete_sample_location()}},
+\code{\link[=get_sample_locations]{get_sample_locations()}},
+\code{\link[=update_sample_location]{update_sample_location()}}
 }
 \concept{sample location functions}

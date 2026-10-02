@@ -35,10 +35,10 @@ new_laboratory <- data.frame(code = "CNL",
 add_laboratory(con, new_laboratory)
 }
 \seealso{
-Other laboratory functions: 
-\code{\link{delete_laboratory}()},
-\code{\link{get_laboratories}()},
-\code{\link{update_laboratory}()},
-\code{\link{update_laboratory_status}()}
+Other laboratory functions:
+\code{\link[=delete_laboratory]{delete_laboratory()}},
+\code{\link[=get_laboratories]{get_laboratories()}},
+\code{\link[=update_laboratory]{update_laboratory()}},
+\code{\link[=update_laboratory_status]{update_laboratory_status()}}
 }
 \concept{laboratory functions}

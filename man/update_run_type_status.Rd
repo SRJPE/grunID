@@ -38,10 +38,10 @@ update_run_type_status(con, 4, set_active=FALSE)
 update_run_type_status(con, 4)
 }
 \seealso{
-Other run type functions: 
-\code{\link{add_run_type}()},
-\code{\link{delete_run_type}()},
-\code{\link{get_run_types}()},
-\code{\link{update_run_type}()}
+Other run type functions:
+\code{\link[=add_run_type]{add_run_type()}},
+\code{\link[=delete_run_type]{delete_run_type()}},
+\code{\link[=get_run_types]{get_run_types()}},
+\code{\link[=update_run_type]{update_run_type()}}
 }
 \concept{run type functions}

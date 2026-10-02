@@ -51,11 +51,11 @@ con <- DBI::dbConnect(RPostgres::Postgres(),
 add_protocol_based_on(con, based_on = "existing protocol", software_version = "2")
 }
 \seealso{
-Other protocol functions: 
-\code{\link{add_protocol}()},
-\code{\link{delete_protocol}()},
-\code{\link{get_protocols}()},
-\code{\link{update_protocol}()},
-\code{\link{update_protocol_status}()}
+Other protocol functions:
+\code{\link[=add_protocol]{add_protocol()}},
+\code{\link[=delete_protocol]{delete_protocol()}},
+\code{\link[=get_protocols]{get_protocols()}},
+\code{\link[=update_protocol]{update_protocol()}},
+\code{\link[=update_protocol_status]{update_protocol_status()}}
 }
 \concept{protocol functions}

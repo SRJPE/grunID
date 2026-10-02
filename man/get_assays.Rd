@@ -24,10 +24,10 @@ con <- DBI::dbConnect(RPostgres::Postgres(),
 assays <- get_assays(con)
 }
 \seealso{
-Other assay functions: 
-\code{\link{add_assay}()},
-\code{\link{delete_assay}()},
-\code{\link{update_assay}()},
-\code{\link{update_assay_status}()}
+Other assay functions:
+\code{\link[=add_assay]{add_assay()}},
+\code{\link[=delete_assay]{delete_assay()}},
+\code{\link[=update_assay]{update_assay()}},
+\code{\link[=update_assay_status]{update_assay_status()}}
 }
 \concept{assay functions}

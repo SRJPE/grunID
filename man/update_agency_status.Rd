@@ -38,10 +38,10 @@ update_agency_status(con, 4, set_active=FALSE)
 update_agency_status(con, 4)
 }
 \seealso{
-Other agency functions: 
-\code{\link{add_agency}()},
-\code{\link{delete_agency}()},
-\code{\link{get_agencies}()},
-\code{\link{update_agency}()}
+Other agency functions:
+\code{\link[=add_agency]{add_agency()}},
+\code{\link[=delete_agency]{delete_agency()}},
+\code{\link[=get_agencies]{get_agencies()}},
+\code{\link[=update_agency]{update_agency()}}
 }
 \concept{agency functions}

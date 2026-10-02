@@ -35,10 +35,10 @@ new_method <- data.frame(code = "FAKE", method_name = "Fake Method",
 add_genetic_method(con, new_method)
 }
 \seealso{
-Other genetic method functions: 
-\code{\link{delete_genetic_method}()},
-\code{\link{get_genetic_methods}()},
-\code{\link{update_genetic_method}()},
-\code{\link{update_genetic_method_status}()}
+Other genetic method functions:
+\code{\link[=delete_genetic_method]{delete_genetic_method()}},
+\code{\link[=get_genetic_methods]{get_genetic_methods()}},
+\code{\link[=update_genetic_method]{update_genetic_method()}},
+\code{\link[=update_genetic_method_status]{update_genetic_method_status()}}
 }
 \concept{genetic method functions}

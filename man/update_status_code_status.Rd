@@ -38,12 +38,12 @@ update_status_code_status(con, 4, set_active=FALSE)
 update_status_code_status(con, 4)
 }
 \seealso{
-Other status code functions: 
-\code{\link{add_status_code}()},
-\code{\link{delete_status_code}()},
-\code{\link{get_sample_status}()},
-\code{\link{get_status_codes}()},
-\code{\link{set_sample_status}()},
-\code{\link{update_status_code}()}
+Other status code functions:
+\code{\link[=add_status_code]{add_status_code()}},
+\code{\link[=delete_status_code]{delete_status_code()}},
+\code{\link[=get_sample_status]{get_sample_status()}},
+\code{\link[=get_status_codes]{get_status_codes()}},
+\code{\link[=set_sample_status]{set_sample_status()}},
+\code{\link[=update_status_code]{update_status_code()}}
 }
 \concept{status code functions}

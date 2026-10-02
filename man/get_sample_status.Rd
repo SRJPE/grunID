@@ -31,12 +31,12 @@ sample_locations <- get_sample_locations(con,
                                                          "FTH_RM1722_3_A_2"))
 }
 \seealso{
-Other status code functions: 
-\code{\link{add_status_code}()},
-\code{\link{delete_status_code}()},
-\code{\link{get_status_codes}()},
-\code{\link{set_sample_status}()},
-\code{\link{update_status_code}()},
-\code{\link{update_status_code_status}()}
+Other status code functions:
+\code{\link[=add_status_code]{add_status_code()}},
+\code{\link[=delete_status_code]{delete_status_code()}},
+\code{\link[=get_status_codes]{get_status_codes()}},
+\code{\link[=set_sample_status]{set_sample_status()}},
+\code{\link[=update_status_code]{update_status_code()}},
+\code{\link[=update_status_code_status]{update_status_code_status()}}
 }
 \concept{status code functions}

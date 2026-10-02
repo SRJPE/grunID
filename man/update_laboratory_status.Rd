@@ -38,10 +38,10 @@ update_laboratory_status(con, 4, set_active=FALSE)
 update_laboratory_status(con, 4)
 }
 \seealso{
-Other laboratory functions: 
-\code{\link{add_laboratory}()},
-\code{\link{delete_laboratory}()},
-\code{\link{get_laboratories}()},
-\code{\link{update_laboratory}()}
+Other laboratory functions:
+\code{\link[=add_laboratory]{add_laboratory()}},
+\code{\link[=delete_laboratory]{delete_laboratory()}},
+\code{\link[=get_laboratories]{get_laboratories()}},
+\code{\link[=update_laboratory]{update_laboratory()}}
 }
 \concept{laboratory functions}

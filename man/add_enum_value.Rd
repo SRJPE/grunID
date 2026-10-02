@@ -55,8 +55,8 @@ get_enum_values(con, "lamp_energy_enum")
 add_enum_value(con, "lamp_energy_enum", "Low")
 }
 \seealso{
-Other enum method functions: 
-\code{\link{get_enum_values}()},
-\code{\link{update_enum_value}()}
+Other enum method functions:
+\code{\link[=get_enum_values]{get_enum_values()}},
+\code{\link[=update_enum_value]{update_enum_value()}}
 }
 \concept{enum method functions}

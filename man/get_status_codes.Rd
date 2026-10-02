@@ -24,12 +24,12 @@ con <- DBI::dbConnect(RPostgres::Postgres(),
 sample_types <- get_status_codes(con)
 }
 \seealso{
-Other status code functions: 
-\code{\link{add_status_code}()},
-\code{\link{delete_status_code}()},
-\code{\link{get_sample_status}()},
-\code{\link{set_sample_status}()},
-\code{\link{update_status_code}()},
-\code{\link{update_status_code_status}()}
+Other status code functions:
+\code{\link[=add_status_code]{add_status_code()}},
+\code{\link[=delete_status_code]{delete_status_code()}},
+\code{\link[=get_sample_status]{get_sample_status()}},
+\code{\link[=set_sample_status]{set_sample_status()}},
+\code{\link[=update_status_code]{update_status_code()}},
+\code{\link[=update_status_code_status]{update_status_code_status()}}
 }
 \concept{status code functions}

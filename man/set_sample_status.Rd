@@ -43,12 +43,12 @@ sample_locations <- set_sample_locations(con,
                                          comment = "ready for pickup")
 }
 \seealso{
-Other status code functions: 
-\code{\link{add_status_code}()},
-\code{\link{delete_status_code}()},
-\code{\link{get_sample_status}()},
-\code{\link{get_status_codes}()},
-\code{\link{update_status_code}()},
-\code{\link{update_status_code_status}()}
+Other status code functions:
+\code{\link[=add_status_code]{add_status_code()}},
+\code{\link[=delete_status_code]{delete_status_code()}},
+\code{\link[=get_sample_status]{get_sample_status()}},
+\code{\link[=get_status_codes]{get_status_codes()}},
+\code{\link[=update_status_code]{update_status_code()}},
+\code{\link[=update_status_code_status]{update_status_code_status()}}
 }
 \concept{status code functions}
