@@ -65,7 +65,12 @@ below.**
 ## 3. Lookup tables / schema — done
 
 - [x] `genetic_method` row added
-- [x] `protocol` row added, team-confirmed values
+- [x] `protocol` row added, team-confirmed values — confirmed present in
+      **production** (`id = 10`) as of 2026-10-13. (Earlier attempts silently
+      failed against production while schema fixes were accidentally applied
+      to staging instead — if the protocol dropdown still looks empty for
+      SherQuant in the app, restart the Shiny process so `global.R` reloads
+      `all_protocols` with this row.)
 - [x] `is_valid_protocol()` (`R/lu-protocol.R`) relaxed: `run_mode` now accepts
       `"Kinetic"` or `"Standard Curve"`; `optics`/`light_source`/`lamp_energy`
       now also accept `NA` (SHERLOCK's original values still required when
@@ -102,6 +107,14 @@ sub_plate/pooling question below if that assumption turns out to be wrong.
       `layout_type`/`plate_size` as `NULL` for SherQuant
 - [x] Confirmed `inst/app/global.R`'s `genetic_method`/`protocol` dropdowns
       aren't SHERLOCK-filtered, so the new rows show up automatically
+- [x] `protocol`, `genetic_method`, and `control_blank` dropdowns now actually
+      filter/default based on the selected instrument (`server.R`'s
+      `observeEvent(input$instrument, ...)`): `protocol` filters on
+      `reader_type` ("Synergy" vs "QuantStudio"); `control_blank` is limited to
+      `"NTC"` for SherQuant (`"NEG-DNA"`/`"EBK"` don't exist as sample names in
+      SherQuant output, so `generate_threshold()` would error on them); a
+      help-text warning shows under `control_blank` for SherQuant noting this
+      is provisional
 
 ## 7. Tests and fixtures — done
 
@@ -159,3 +172,8 @@ is available. Everything else (code, schema, tests, docs) is ready to go.
    plates are. Unconfirmed.
 4. **RFU cutoff:** placeholder value, not calibrated, not wired into
    `validate_results()`.
+5. **Genetic method code:** `server.R`'s instrument-based default for the
+   `genetic_method` dropdown assumes the code added for SherQuant is
+   `"SHQT"` — unconfirmed against the actual DB value (no DB access to check
+   from here). If it's different, update the `selected = "SHQT"` line in the
+   `observeEvent(input$instrument, ...)` block in `inst/app/server.R`.
