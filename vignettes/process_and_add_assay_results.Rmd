@@ -288,3 +288,77 @@ grunID::update_assay_detection(con, thresholds)
 # disconnect
 DBI::dbDisconnect(con)
 ```
+
+## SherQuant Workflow
+
+`grunID` also supports a second instrument, **SherQuant** (a QuantStudio-based qPCR
+reader), as an alternative to the Synergy H1/SHERLOCK workflow described above.
+Everything downstream of `raw_assay_result` (thresholding, QA/QC, genetic ID
+assignment) is shared between the two instruments - the only differences are in
+how the raw results file gets parsed and how you call `add_new_plate_results`.
+
+Two things SherQuant does **not** need, unlike SHERLOCK:
+
+- `layout_type`: SherQuant's results file reports the assay for each well directly
+  (via a `Target Name` column), so there's no need to tell `grunID` how the plate
+  was laid out.
+- `plate_size`: derived automatically from the file's metadata.
+
+### Single Function Call with `add_new_plate_results`
+
+The only difference from the SHERLOCK call shown earlier is passing
+`instrument = "sherquant"` and omitting `layout_type`/`plate_size`:
+
+```r
+add_new_plate_results(con, protocol_name = "new sherquant protocol", genetic_method = "SHLK",
+                      laboratory = "DWR_GeM", instrument = "sherquant",
+                      lab_work_performed_by = "user",
+                      description = "a test run", date_run = "2023-07-12",
+                      filepath = "../misc/sherquant_results.xlsx",
+                      sample_type = "mucus")
+```
+
+### Multi-step Approach
+
+The multi-step approach mirrors the SHERLOCK version - the only change is
+swapping `process_sherlock()` for `process_sherquant()`, which doesn't take a
+`layout_type` or `plate_size` argument:
+
+```r
+plate_run_id <- grunID::add_plate_run(con, protocol_id, genetic_method_id,
+                                      laboratory_id, lab_work_performed_by = "Yogi Bear",
+                                      description = "Plate run for sampling event X",
+                                      date_run = "07-04-1776")
+
+results <- grunID::process_sherquant(filepath = "templates/sherquant_results_template.xlsx",
+                                     sample_type = "mucus",
+                                     plate_run_id = plate_run_id)
+
+# no need to store output
+grunID::add_raw_assay_results(con, results)
+
+thresholds <- grunID::generate_threshold(con, plate_run_id)
+
+# no need to store output
+grunID::update_assay_detection(con, thresholds)
+```
+
+### Known caveats (as of this writing)
+
+This workflow has only been exercised against a controls-only validation plate,
+not a real production run. A few assumptions are still open and should be
+revisited once a production SherQuant file is available:
+
+- **Control sample naming:** SherQuant's control wells currently keep whatever
+  `Sample Name` the instrument software reports (e.g. `"NTC"`, `"(EMG)+"`),
+  rather than SHERLOCK's suffixed convention (`"NTC-1"`, `"NEG-DNA-1"`, etc.).
+  In the example file, every replicate control shares the same `sample_id` *and*
+  `assay_id` across its triplicate wells, which would collide with the unique
+  constraint `add_raw_assay_results()` enforces on `(sample_id, assay_id)` per
+  plate run. Confirm with a real production file whether replicate controls get
+  a distinguishing suffix before relying on this path for a plate with replicate
+  controls.
+- **RFU threshold cutoff:** `sherquant_rfu_threshold_placeholder` is a
+  placeholder value (not yet wired into `validate_results()`) pending a
+  calibrated cutoff from the wet lab team, since SherQuant's raw fluorescence
+  values are not expected to be on the same scale as SHERLOCK's.
