@@ -43,7 +43,7 @@ navbarPage(
   ),
   # tabPanel(title = "About"),
   navbarMenu("Add Data",
-             tabPanel("Upload Sherlock Results",
+             tabPanel("Upload Sherlock / Sherquant Results",
                       # sidebarPanel(
                       #   width = 3
                       # ),
@@ -100,7 +100,7 @@ navbarPage(
 
                         ),
                         dateInput("date_run", "Date of Run"),
-                        fileInput("sherlock_results", "Upload Sherlock Results"),
+                        fileInput("sherlock_results", "Upload Sherlock / Sherquant Results"),
 
                         tags$div(
                           style = "display: flex; align-items: center;",
@@ -134,6 +134,10 @@ navbarPage(
                           selectInput("plate_size", "Select Plate Size", choices = c(384, 96))
                         ),
                         selectInput("control_blank", "Select Control", choices = c("NEG-DNA", "EBK", "NTC"), selected = "NEG-DNA"),
+                        shiny::conditionalPanel(
+                          condition = "input.instrument == 'sherquant'",
+                          shiny::helpText("SherQuant's control naming hasn't been confirmed against a real production file yet - 'NTC' is used provisionally.")
+                        ),
                         checkboxInput("perform_genetics_id", label = "Run genetic calculations for samples after upload", value = TRUE),
                         actionButton("do_upload", "Upload Results", class = "btn-success", icon = icon("rocket")),
 
