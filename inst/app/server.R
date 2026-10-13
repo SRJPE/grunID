@@ -1,6 +1,38 @@
 function(input, output, session) {
 
   # Upload Results ----------------------------------------------------------
+
+  # Filter the protocol/genetic method/control choices to match the selected
+  # instrument - runs once on app start (so defaults match the default
+  # "sherlock" instrument selection) and again any time input$instrument changes.
+  observeEvent(input$instrument, {
+    if (input$instrument == "sherlock") {
+      protocol_choices <- all_protocols |>
+        dplyr::filter(stringr::str_detect(reader_type, "Synergy")) |>
+        dplyr::pull(name)
+
+      updateSelectInput(session, "protocol", choices = protocol_choices)
+      updateSelectInput(session, "genetic_method", choices = gen_methods_shlk$code)
+      updateSelectInput(session, "control_blank",
+                         choices = c("NEG-DNA", "EBK", "NTC"), selected = "NEG-DNA")
+    } else {
+      protocol_choices <- all_protocols |>
+        dplyr::filter(stringr::str_detect(reader_type, "QuantStudio")) |>
+        dplyr::pull(name)
+
+      updateSelectInput(session, "protocol", choices = protocol_choices)
+      # TODO: confirm "SHQT" matches the actual genetic_method code added for SherQuant
+      updateSelectInput(session, "genetic_method", choices = gen_methods_shlk$code,
+                         selected = "SHQT")
+      # NEG-DNA/EBK don't exist as sample_ids in SherQuant output - NTC is the
+      # only control generate_threshold() can currently find (see
+      # new-machine-integration.md's "control sample naming" caveat - this is
+      # provisional until a real production file confirms SherQuant's control
+      # naming convention)
+      updateSelectInput(session, "control_blank", choices = c("NTC"), selected = "NTC")
+    }
+  })
+
   observeEvent(input$show_protocol_details, {
     showModal(modalDialog(
       title = "Protocol Details",
