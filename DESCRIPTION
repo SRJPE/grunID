@@ -35,10 +35,12 @@ Imports:
     janitor
 Depends: 
     R (>= 2.10)
-Suggests: 
+Suggests:
     rmarkdown,
     knitr,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    RSQLite,
+    mockery
 Config/testthat/edition: 3
 VignetteBuilder: knitr
 Config/roxygen2/version: 8.0.0
