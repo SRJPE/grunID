@@ -1,6 +1,38 @@
 function(input, output, session) {
 
   # Upload Results ----------------------------------------------------------
+
+  # Filter the protocol/genetic method/control choices to match the selected
+  # instrument - runs once on app start (so defaults match the default
+  # "sherlock" instrument selection) and again any time input$instrument changes.
+  observeEvent(input$instrument, {
+    if (input$instrument == "sherlock") {
+      protocol_choices <- all_protocols |>
+        dplyr::filter(stringr::str_detect(reader_type, "Synergy")) |>
+        dplyr::pull(name)
+
+      updateSelectInput(session, "protocol", choices = protocol_choices)
+      updateSelectInput(session, "genetic_method", choices = gen_methods_shlk$code)
+      updateSelectInput(session, "control_blank",
+                         choices = c("NEG-DNA", "EBK", "NTC"), selected = "NEG-DNA")
+    } else {
+      protocol_choices <- all_protocols |>
+        dplyr::filter(stringr::str_detect(reader_type, "QuantStudio")) |>
+        dplyr::pull(name)
+
+      updateSelectInput(session, "protocol", choices = protocol_choices)
+      # TODO: confirm "SHQT" matches the actual genetic_method code added for SherQuant
+      updateSelectInput(session, "genetic_method", choices = gen_methods_shlk$code,
+                         selected = "SHQT")
+      # NEG-DNA/EBK don't exist as sample_ids in SherQuant output - NTC is the
+      # only control generate_threshold() can currently find (see
+      # new-machine-integration.md's "control sample naming" caveat - this is
+      # provisional until a real production file confirms SherQuant's control
+      # naming convention)
+      updateSelectInput(session, "control_blank", choices = c("NTC"), selected = "NTC")
+    }
+  })
+
   observeEvent(input$show_protocol_details, {
     showModal(modalDialog(
       title = "Protocol Details",
@@ -140,7 +172,10 @@ function(input, output, session) {
       tagList(
         h5(tags$b("Please confirm Plate Layout Selection")),
         h5("This extra check is here to ensure that the order of the layout present in the results file matches the layout selected in this upload tool."),
-        h5("Layout Selected:", tags$b(glue::glue("{input$layout_type}"))),
+        h5("Instrument Selected:", tags$b(glue::glue("{input$instrument}"))),
+        if (input$instrument == "sherlock") {
+          h5("Layout Selected:", tags$b(glue::glue("{input$layout_type}")))
+        },
         h5("Results filename:", tags$b(glue::glue("{input$sherlock_results$name}"))),
         h5("Is this selection correct?"),
       ),
@@ -158,12 +193,13 @@ function(input, output, session) {
     if(input$yes_upload > 0){
       tryCatch({
         removeModal(session = session)
-        if (input$layout_type == "custom") {
+        if (input$instrument == "sherlock" && input$layout_type == "custom") {
           grunID::add_new_plate_results(
             con,
             protocol_name = input$protocol,
             genetic_method = input$genetic_method,
             laboratory = input$laboratory,
+            instrument = input$instrument,
             lab_work_performed_by = input$performed_by,
             description = input$run_description,
             date_run = input$date_run,
@@ -183,13 +219,14 @@ function(input, output, session) {
             protocol_name = input$protocol,
             genetic_method = input$genetic_method,
             laboratory = input$laboratory,
+            instrument = input$instrument,
             lab_work_performed_by = input$performed_by,
             description = input$run_description,
             date_run = input$date_run,
             filepath = input$sherlock_results,
             sample_type = input$sample_type,
-            layout_type = input$layout_type,
-            plate_size = input$plate_size,
+            layout_type = if (input$instrument == "sherlock") input$layout_type else NULL,
+            plate_size = if (input$instrument == "sherlock") input$plate_size else NULL,
             selection_strategy = "recent priority",
             .control_id = input$control_blank,
             threshold_strategy = "twice average",

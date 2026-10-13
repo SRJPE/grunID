@@ -46,10 +46,10 @@ filepath <- "data-raw/test.xlsx"
 field_data_clean <- process_field_sheet_samples(filepath)
 }
 \seealso{
-Other field sheet helpers: 
-\code{\link{create_field_sheet}()},
-\code{\link{create_season_field_sheets}()},
-\code{\link{get_field_sheet_event_plan}()},
-\code{\link{update_field_sheet_samples}()}
+Other field sheet helpers:
+\code{\link[=create_field_sheet]{create_field_sheet()}},
+\code{\link[=create_season_field_sheets]{create_season_field_sheets()}},
+\code{\link[=get_field_sheet_event_plan]{get_field_sheet_event_plan()}},
+\code{\link[=update_field_sheet_samples]{update_field_sheet_samples()}}
 }
 \concept{field sheet helpers}

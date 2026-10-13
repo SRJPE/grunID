@@ -43,10 +43,10 @@ new_sample_location <- data.frame(code = "",
 add_sample_location(con, new_sample_location)
 }
 \seealso{
-Other sample location functions: 
-\code{\link{delete_sample_location}()},
-\code{\link{get_sample_locations}()},
-\code{\link{update_sample_location}()},
-\code{\link{update_sample_location_status}()}
+Other sample location functions:
+\code{\link[=delete_sample_location]{delete_sample_location()}},
+\code{\link[=get_sample_locations]{get_sample_locations()}},
+\code{\link[=update_sample_location]{update_sample_location()}},
+\code{\link[=update_sample_location_status]{update_sample_location_status()}}
 }
 \concept{sample location functions}

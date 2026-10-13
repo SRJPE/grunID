@@ -33,10 +33,10 @@ new_agency <- data.frame(code = "USFWS",
 add_agency(con, new_agency)
 }
 \seealso{
-Other agency functions: 
-\code{\link{delete_agency}()},
-\code{\link{get_agencies}()},
-\code{\link{update_agency}()},
-\code{\link{update_agency_status}()}
+Other agency functions:
+\code{\link[=delete_agency]{delete_agency()}},
+\code{\link[=get_agencies]{get_agencies()}},
+\code{\link[=update_agency]{update_agency()}},
+\code{\link[=update_agency_status]{update_agency_status()}}
 }
 \concept{agency functions}

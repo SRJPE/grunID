@@ -35,10 +35,10 @@ View(all_methods) # to view the ID of the genetic method needing updates
 delete_genetic_method(con, 1)
 }
 \seealso{
-Other genetic method functions: 
-\code{\link{add_genetic_method}()},
-\code{\link{get_genetic_methods}()},
-\code{\link{update_genetic_method}()},
-\code{\link{update_genetic_method_status}()}
+Other genetic method functions:
+\code{\link[=add_genetic_method]{add_genetic_method()}},
+\code{\link[=get_genetic_methods]{get_genetic_methods()}},
+\code{\link[=update_genetic_method]{update_genetic_method()}},
+\code{\link[=update_genetic_method_status]{update_genetic_method_status()}}
 }
 \concept{genetic method functions}

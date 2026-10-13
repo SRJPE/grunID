@@ -24,10 +24,10 @@ con <- DBI::dbConnect(RPostgres::Postgres(),
 agencies <- get_agencies(con)
 }
 \seealso{
-Other agency functions: 
-\code{\link{add_agency}()},
-\code{\link{delete_agency}()},
-\code{\link{update_agency}()},
-\code{\link{update_agency_status}()}
+Other agency functions:
+\code{\link[=add_agency]{add_agency()}},
+\code{\link[=delete_agency]{delete_agency()}},
+\code{\link[=update_agency]{update_agency()}},
+\code{\link[=update_agency_status]{update_agency_status()}}
 }
 \concept{agency functions}

@@ -37,10 +37,10 @@ View(all_agencies) # to view the ID of the agency needing deletion
 delete_agency(con, 4)
 }
 \seealso{
-Other agency functions: 
-\code{\link{add_agency}()},
-\code{\link{get_agencies}()},
-\code{\link{update_agency}()},
-\code{\link{update_agency_status}()}
+Other agency functions:
+\code{\link[=add_agency]{add_agency()}},
+\code{\link[=get_agencies]{get_agencies()}},
+\code{\link[=update_agency]{update_agency()}},
+\code{\link[=update_agency_status]{update_agency_status()}}
 }
 \concept{agency functions}

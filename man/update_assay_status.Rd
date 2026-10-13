@@ -38,10 +38,10 @@ update_assay_status(con, 1, set_active=FALSE)
 update_assay_status(con, 1)
 }
 \seealso{
-Other assay functions: 
-\code{\link{add_assay}()},
-\code{\link{delete_assay}()},
-\code{\link{get_assays}()},
-\code{\link{update_assay}()}
+Other assay functions:
+\code{\link[=add_assay]{add_assay()}},
+\code{\link[=delete_assay]{delete_assay()}},
+\code{\link[=get_assays]{get_assays()}},
+\code{\link[=update_assay]{update_assay()}}
 }
 \concept{assay functions}

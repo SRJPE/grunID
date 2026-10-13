@@ -60,11 +60,11 @@ and appends a worksheet to an existing excel workbook
 containing a formatted field sheet to be used by crew collecting genetic samples.
 }
 \seealso{
-Other field sheet helpers: 
-\code{\link{create_season_field_sheets}()},
-\code{\link{get_field_sheet_event_plan}()},
-\code{\link{process_field_sheet_samples}()},
-\code{\link{update_field_sheet_samples}()}
+Other field sheet helpers:
+\code{\link[=create_season_field_sheets]{create_season_field_sheets()}},
+\code{\link[=get_field_sheet_event_plan]{get_field_sheet_event_plan()}},
+\code{\link[=process_field_sheet_samples]{process_field_sheet_samples()}},
+\code{\link[=update_field_sheet_samples]{update_field_sheet_samples()}}
 }
 \concept{field sheet helpers}
 \keyword{internal}

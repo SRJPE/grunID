@@ -39,10 +39,10 @@ updated_run_type$run_name <- "New Name Run"
 update_run_type(con, 1, updated_run_type)
 }
 \seealso{
-Other run type functions: 
-\code{\link{add_run_type}()},
-\code{\link{delete_run_type}()},
-\code{\link{get_run_types}()},
-\code{\link{update_run_type_status}()}
+Other run type functions:
+\code{\link[=add_run_type]{add_run_type()}},
+\code{\link[=delete_run_type]{delete_run_type()}},
+\code{\link[=get_run_types]{get_run_types()}},
+\code{\link[=update_run_type_status]{update_run_type_status()}}
 }
 \concept{run type functions}

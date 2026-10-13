@@ -37,10 +37,10 @@ View(all_assays) # to view the ID of the assay needing deletion
 delete_assay(con, 1)
 }
 \seealso{
-Other assay functions: 
-\code{\link{add_assay}()},
-\code{\link{get_assays}()},
-\code{\link{update_assay}()},
-\code{\link{update_assay_status}()}
+Other assay functions:
+\code{\link[=add_assay]{add_assay()}},
+\code{\link[=get_assays]{get_assays()}},
+\code{\link[=update_assay]{update_assay()}},
+\code{\link[=update_assay_status]{update_assay_status()}}
 }
 \concept{assay functions}

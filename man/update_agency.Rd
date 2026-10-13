@@ -37,10 +37,10 @@ updated_agency <- data.frame(code = "UCD",
 update_agency(con, 4, updated_agency)
 }
 \seealso{
-Other agency functions: 
-\code{\link{add_agency}()},
-\code{\link{delete_agency}()},
-\code{\link{get_agencies}()},
-\code{\link{update_agency_status}()}
+Other agency functions:
+\code{\link[=add_agency]{add_agency()}},
+\code{\link[=delete_agency]{delete_agency()}},
+\code{\link[=get_agencies]{get_agencies()}},
+\code{\link[=update_agency_status]{update_agency_status()}}
 }
 \concept{agency functions}

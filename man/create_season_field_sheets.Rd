@@ -36,10 +36,10 @@ sample_plan_2022_final <- read_csv("data-raw/2022_sample_plan.csv") |> distinct_
 create_season_field_sheets(con, season = 2022, "data-raw/2022_field_sheets.xlsx")
 }
 \seealso{
-Other field sheet helpers: 
-\code{\link{create_field_sheet}()},
-\code{\link{get_field_sheet_event_plan}()},
-\code{\link{process_field_sheet_samples}()},
-\code{\link{update_field_sheet_samples}()}
+Other field sheet helpers:
+\code{\link[=create_field_sheet]{create_field_sheet()}},
+\code{\link[=get_field_sheet_event_plan]{get_field_sheet_event_plan()}},
+\code{\link[=process_field_sheet_samples]{process_field_sheet_samples()}},
+\code{\link[=update_field_sheet_samples]{update_field_sheet_samples()}}
 }
 \concept{field sheet helpers}

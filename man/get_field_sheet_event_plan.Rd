@@ -29,11 +29,11 @@ retrieves the sampling event information
 from the database that is needed to prepare field sheets.
 }
 \seealso{
-Other field sheet helpers: 
-\code{\link{create_field_sheet}()},
-\code{\link{create_season_field_sheets}()},
-\code{\link{process_field_sheet_samples}()},
-\code{\link{update_field_sheet_samples}()}
+Other field sheet helpers:
+\code{\link[=create_field_sheet]{create_field_sheet()}},
+\code{\link[=create_season_field_sheets]{create_season_field_sheets()}},
+\code{\link[=process_field_sheet_samples]{process_field_sheet_samples()}},
+\code{\link[=update_field_sheet_samples]{update_field_sheet_samples()}}
 }
 \concept{field sheet helpers}
 \keyword{internal}

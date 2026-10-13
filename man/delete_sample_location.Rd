@@ -37,10 +37,10 @@ View(all_sample_locations) # to view the ID of the sample location needing delet
 delete_sample_location(con, 4)
 }
 \seealso{
-Other sample location functions: 
-\code{\link{add_sample_location}()},
-\code{\link{get_sample_locations}()},
-\code{\link{update_sample_location}()},
-\code{\link{update_sample_location_status}()}
+Other sample location functions:
+\code{\link[=add_sample_location]{add_sample_location()}},
+\code{\link[=get_sample_locations]{get_sample_locations()}},
+\code{\link[=update_sample_location]{update_sample_location()}},
+\code{\link[=update_sample_location_status]{update_sample_location_status()}}
 }
 \concept{sample location functions}

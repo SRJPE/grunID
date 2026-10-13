@@ -38,10 +38,10 @@ update_genetic_method_status(con, 4, set_active=FALSE)
 update_genetic_method_status(con, 4)
 }
 \seealso{
-Other genetic method functions: 
-\code{\link{add_genetic_method}()},
-\code{\link{delete_genetic_method}()},
-\code{\link{get_genetic_methods}()},
-\code{\link{update_genetic_method}()}
+Other genetic method functions:
+\code{\link[=add_genetic_method]{add_genetic_method()}},
+\code{\link[=delete_genetic_method]{delete_genetic_method()}},
+\code{\link[=get_genetic_methods]{get_genetic_methods()}},
+\code{\link[=update_genetic_method]{update_genetic_method()}}
 }
 \concept{genetic method functions}

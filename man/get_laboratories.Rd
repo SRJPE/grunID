@@ -24,10 +24,10 @@ con <- DBI::dbConnect(RPostgres::Postgres(),
 laboratories <- get_laboratories(con)
 }
 \seealso{
-Other laboratory functions: 
-\code{\link{add_laboratory}()},
-\code{\link{delete_laboratory}()},
-\code{\link{update_laboratory}()},
-\code{\link{update_laboratory_status}()}
+Other laboratory functions:
+\code{\link[=add_laboratory]{add_laboratory()}},
+\code{\link[=delete_laboratory]{delete_laboratory()}},
+\code{\link[=update_laboratory]{update_laboratory()}},
+\code{\link[=update_laboratory_status]{update_laboratory_status()}}
 }
 \concept{laboratory functions}

@@ -38,11 +38,11 @@ update_protocol_status(con, 4, set_active=FALSE)
 update_protocol_status(con, 4)
 }
 \seealso{
-Other protocol functions: 
-\code{\link{add_protocol}()},
-\code{\link{add_protocol_based_on}()},
-\code{\link{delete_protocol}()},
-\code{\link{get_protocols}()},
-\code{\link{update_protocol}()}
+Other protocol functions:
+\code{\link[=add_protocol]{add_protocol()}},
+\code{\link[=add_protocol_based_on]{add_protocol_based_on()}},
+\code{\link[=delete_protocol]{delete_protocol()}},
+\code{\link[=get_protocols]{get_protocols()}},
+\code{\link[=update_protocol]{update_protocol()}}
 }
 \concept{protocol functions}

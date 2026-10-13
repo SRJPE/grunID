@@ -38,10 +38,10 @@ update_sample_type_status(con, 4, set_active=FALSE)
 update_sample_type_status(con, 4)
 }
 \seealso{
-Other sample type functions: 
-\code{\link{add_sample_type}()},
-\code{\link{delete_sample_type}()},
-\code{\link{get_sample_types}()},
-\code{\link{update_sample_type}()}
+Other sample type functions:
+\code{\link[=add_sample_type]{add_sample_type()}},
+\code{\link[=delete_sample_type]{delete_sample_type()}},
+\code{\link[=get_sample_types]{get_sample_types()}},
+\code{\link[=update_sample_type]{update_sample_type()}}
 }
 \concept{sample type functions}

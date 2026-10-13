@@ -24,10 +24,10 @@ con <- DBI::dbConnect(RPostgres::Postgres(),
 run_types <- get_run_types(con)
 }
 \seealso{
-Other run type functions: 
-\code{\link{add_run_type}()},
-\code{\link{delete_run_type}()},
-\code{\link{update_run_type}()},
-\code{\link{update_run_type_status}()}
+Other run type functions:
+\code{\link[=add_run_type]{add_run_type()}},
+\code{\link[=delete_run_type]{delete_run_type()}},
+\code{\link[=update_run_type]{update_run_type()}},
+\code{\link[=update_run_type_status]{update_run_type_status()}}
 }
 \concept{run type functions}

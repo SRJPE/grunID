@@ -44,8 +44,8 @@ con <- DBI::dbConnect(RPostgres::Postgres(),
 get_enum_values(con, "bin_code_enum")
 }
 \seealso{
-Other enum method functions: 
-\code{\link{add_enum_value}()},
-\code{\link{update_enum_value}()}
+Other enum method functions:
+\code{\link[=add_enum_value]{add_enum_value()}},
+\code{\link[=update_enum_value]{update_enum_value()}}
 }
 \concept{enum method functions}

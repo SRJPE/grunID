@@ -24,10 +24,10 @@ con <- DBI::dbConnect(RPostgres::Postgres(),
 sample_types <- get_sample_types(con)
 }
 \seealso{
-Other sample type functions: 
-\code{\link{add_sample_type}()},
-\code{\link{delete_sample_type}()},
-\code{\link{update_sample_type}()},
-\code{\link{update_sample_type_status}()}
+Other sample type functions:
+\code{\link[=add_sample_type]{add_sample_type()}},
+\code{\link[=delete_sample_type]{delete_sample_type()}},
+\code{\link[=update_sample_type]{update_sample_type()}},
+\code{\link[=update_sample_type_status]{update_sample_type_status()}}
 }
 \concept{sample type functions}

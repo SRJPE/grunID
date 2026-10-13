@@ -39,10 +39,10 @@ updated_laboratory$laboratory_name <- "The Department of Water Resources Genetic
 update_laboratory(con, 1, updated_laboratory)
 }
 \seealso{
-Other laboratory functions: 
-\code{\link{add_laboratory}()},
-\code{\link{delete_laboratory}()},
-\code{\link{get_laboratories}()},
-\code{\link{update_laboratory_status}()}
+Other laboratory functions:
+\code{\link[=add_laboratory]{add_laboratory()}},
+\code{\link[=delete_laboratory]{delete_laboratory()}},
+\code{\link[=get_laboratories]{get_laboratories()}},
+\code{\link[=update_laboratory_status]{update_laboratory_status()}}
 }
 \concept{laboratory functions}

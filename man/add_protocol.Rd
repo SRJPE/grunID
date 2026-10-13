@@ -29,11 +29,11 @@ new_protocol$software_version <- "3.11.20"
 add_protocol(con, new_protocol)
 }
 \seealso{
-Other protocol functions: 
-\code{\link{add_protocol_based_on}()},
-\code{\link{delete_protocol}()},
-\code{\link{get_protocols}()},
-\code{\link{update_protocol}()},
-\code{\link{update_protocol_status}()}
+Other protocol functions:
+\code{\link[=add_protocol_based_on]{add_protocol_based_on()}},
+\code{\link[=delete_protocol]{delete_protocol()}},
+\code{\link[=get_protocols]{get_protocols()}},
+\code{\link[=update_protocol]{update_protocol()}},
+\code{\link[=update_protocol_status]{update_protocol_status()}}
 }
 \concept{protocol functions}
