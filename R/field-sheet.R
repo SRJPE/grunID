@@ -244,13 +244,20 @@ get_field_sheet_event_plan <- function(con, sample_event_id_arg) {
 #' @family field sheet helpers
 #' @md
 create_season_field_sheets <- function(con, season, field_sheet_filepath) {
-
+  
   # last sample dates for season 2026 have no defineable ruleset, so read them in here
   if(season == 2026) {
     last_sample_date_2026 <- tibble("sample_event" = seq(1:14),
                                     "last_sample_date" = c("2025-11-12", "2025-11-21", "2025-12-09", "2025-12-19", "2026-01-07",
                                                            "2026-01-16", "2026-02-04", "2026-02-13", "2026-03-04", "2026-03-13",
                                                            "2026-04-01", "2026-04-10", "2026-04-29", "2026-05-08"))
+  }
+  if(season == 2027) {
+    last_sample_date_2027 = tibble("sample_event" = seq(1:14),
+                                   "last_sample_date" = c("2026-11-10", "2026-11-20", "2026-12-08", "2026-12-17",
+                                                          "2027-01-06", "2027-01-15", "2027-02-03", "2027-02-12",
+                                                        "2027-03-03", "2027-03-12", "2027-03-30", "2027-04-09",
+                                                      "2027-04-28", "2027-05-07"))
   }
 
   # create workbook to append each sampling event tab
@@ -292,12 +299,17 @@ create_season_field_sheets <- function(con, season, field_sheet_filepath) {
     # field sheets for sampling events
     plan <- get_field_sheet_event_plan(con, sample_event_id = i)
 
-    if(season != 2026) {
+    if(!season %in% 2026:2027) {
       # set last sample date to the friday of that week
-      last_sample_date <- lubridate::ceiling_date(first_sample_date, "week") - 2
-    } else {
-      # as of 2026 season, the last sample date is the day before the next sample date
+      last_sample_date <- lubridate::ceiling_date(plan$first_sample_date, "week") - 2
+    } else if(season == 2026) {
+      # as of 2026 season, the last sample date is the day before the next sample date and is hard coded based on excel file
       last_sample_date <- last_sample_date_2026 |>
+        filter(sample_event == plan$sample_event) |>
+        mutate(last_sample_date = as.Date(last_sample_date)) |>
+        pull(last_sample_date)
+    } else if(season == 2027) {
+      last_sample_date <- last_sample_date_2027 |>
         filter(sample_event == plan$sample_event) |>
         mutate(last_sample_date = as.Date(last_sample_date)) |>
         pull(last_sample_date)

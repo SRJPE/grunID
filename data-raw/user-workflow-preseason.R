@@ -18,6 +18,25 @@ con <- DBI::dbConnect(RPostgres::Postgres(),
 
 con <- gr_db_connect()
 
+# 2027 - season creation --------------------------------------------------
+
+sampling_dates_2027 <- readxl::read_xlsx("data-raw/2027-season/sampling-dates-2027.xlsx") |>
+  select(sample_event_number = Event, first_sample_date = Start) |> 
+  glimpse()
+
+# if starting with a raw sample plan similar to "data-raw/2024_raw_sample_plan.xlsx"
+# use process raw sample plan function:
+sample_plan_2027 <- process_raw_sample_plan("data-raw/2027-season/2027_JPE_Sample_Sizes_v2.xlsx", 2027, 14)
+sample_plan_2027_with_dates <- sample_plan_2027 |>
+  select(-first_sample_date) |>
+  left_join(sampling_dates_2027, by = "sample_event_number") |>
+  mutate(sample_event_number = as.integer(sample_event_number)) |>
+  relocate(first_sample_date, .before = sample_bin_code) |> 
+  mutate(first_sample_date = as.Date(first_sample_date))
+sample_ids_2027 <- add_sample_plan(con, sample_plan_2027_with_dates, verbose = TRUE)
+
+# create workbook containing multiple field sheets
+create_season_field_sheets(con, 2027, "data-raw/2027-season/field-sheets-2027.xlsx")
 
 # 2026 - season creation --------------------------------------------------
 
