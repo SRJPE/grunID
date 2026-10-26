@@ -640,16 +640,24 @@ ORDER BY gri.sample_id;
       return(NULL)
     }
 
-    res <- make_sw_plate_maps(
-      con,
-      events = input$gen_ham_plate_events,
-      destination = input$gen_ham_destination,
-      output_dir = cfg$data_output,
-      season = get_current_season()
+    res <- tryCatch(
+      make_integra_plate_maps(
+        con,
+        events = input$gen_ham_plate_events,
+        destination = input$gen_ham_destination,
+        output_dir = cfg$data_output,
+        season = get_current_season(),
+        transfer_volume = input$gen_ham_transfer_volume
+      ),
+      error = function(e) {
+        shiny::showNotification(paste("cherry pick files were not created:", cli::ansi_strip(conditionMessage(e))),
+                                type = "error", duration = NULL)
+        NULL
+      }
     )
 
-    if (res$success) {
-      shiny::showNotification(glue::glue("file created and saved to: {cfg$data_output} see RStudio Console for details and full paths"),
+    if (!is.null(res) && res$success) {
+      shiny::showNotification(glue::glue("{nrow(res$summary)} Integra files created and saved to: {cfg$data_output} see RStudio Console for details and full paths"),
                               type = "message")
     }
   })
