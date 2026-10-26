@@ -221,13 +221,14 @@ navbarPage(
                           tableOutput("gen_arc_plate_samples_preview")
                         )
                       )),
-             tabPanel("Generate Hamilton Plate Layouts",
+             tabPanel("Generate Integra Cherry Pick Files",
                       tags$div(
                         style = "padding: 10px;",
                         tagList(
-                          tags$p("Only events with at least one sample set to 'Need Ots 16' are selectable. Generating a plate will associate the given sample to the hamilton plate name generated."),
+                          tags$p("Only events with at least one sample set to 'Need Ots 16' or 'Need GT-Seq' are selectable. Each Integra file fills one target plate with up to 90 samples from up to 3 archive plates. Files and a session summary are saved to the output folder; nothing is written to the database."),
                           uiOutput("gen_ham_plate_events_UI"),
-                          selectInput("gen_ham_destination", "Destnation", choices = c("Sherlock"="sherlock", "GT-Seq" = "gtseq")),
+                          selectInput("gen_ham_destination", "Destination", choices = c("Sherlock"="sherlock", "GT-Seq" = "gtseq")),
+                          numericInput("gen_ham_transfer_volume", "Transfer Volume", value = 16, min = 1),
                           actionButton("save_ham_plates", "Generate Cherry Pick Files"),
                           tableOutput("gen_ham_plate_samples_preview")
                           )
