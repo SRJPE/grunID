@@ -225,11 +225,11 @@ navbarPage(
                       tags$div(
                         style = "padding: 10px;",
                         tagList(
-                          tags$p("Only events with at least one sample set to 'Need Ots 16' or 'Need GT-Seq' are selectable. Each Integra file fills one target plate with up to 90 samples from up to 3 archive plates. Files and a session summary are saved to the output folder; nothing is written to the database."),
+                          tags$p("Only events with at least one sample set to 'Need GT-Seq' are selectable. Each Integra file uses up to 3 archive plates and one target plate; target plates are filled across files up to 90 samples (B12). Files and a session summary are saved to the output folder; nothing is written to the database."),
                           uiOutput("gen_ham_plate_events_UI"),
-                          selectInput("gen_ham_destination", "Destination", choices = c("Sherlock"="sherlock", "GT-Seq" = "gtseq")),
                           numericInput("gen_ham_transfer_volume", "Transfer Volume", value = 16, min = 1),
                           actionButton("save_ham_plates", "Generate Cherry Pick Files"),
+                          uiOutput("gen_ham_summary_UI"),
                           tableOutput("gen_ham_plate_samples_preview")
                           )
                       )),

@@ -4,19 +4,22 @@
 \alias{summarise_integra_session}
 \title{Summarise Integra Session}
 \usage{
-summarise_integra_session(integra_input, file_names)
+summarise_integra_session(integra_input, rounds, file_names)
 }
 \arguments{
 \item{integra_input}{dataframe returned by \code{\link[=format_integra_input]{format_integra_input()}}}
 
-\item{file_names}{input file names, one per target plate, in target plate order}
+\item{rounds}{the round of each row of \code{integra_input}, the \code{round} column
+returned by \code{\link[=assign_integra_target_plates]{assign_integra_target_plates()}}}
+
+\item{file_names}{input file names, one per round, in round order}
 }
 \value{
 dataframe with columns \code{Round}, \code{FileName}, \code{TargetPlateID},
 \code{SourcePlateIDs} and \code{SampleCount}
 }
 \description{
-Summarise a cherry picking session, one row per Integra input file.
+Summarise a cherry picking session, one row per round (Integra input file).
 }
 \seealso{
 Other integra functions: 

@@ -17,20 +17,24 @@ assign_integra_target_plates(
 \item{max_samples}{maximum samples per target plate, 90 leaves C12-H12 open
 for the lab's controls}
 
-\item{max_source_plates}{maximum source plates per target plate}
+\item{max_source_plates}{maximum source plates per round (input file)}
 }
 \value{
-\code{source_wells} in pick order with added columns \code{target_plate}
-(integer) and \code{target_well}
+\code{source_wells} in pick order with added columns \code{round} (integer),
+\code{target_plate} (integer) and \code{target_well}
 }
 \description{
-Assign archive plate (source) wells to Integra target plates and wells.
-Source plates are ordered by season, first event and plate number parsed
-from \code{arc_plate_id}, and wells within a source plate are picked row-wise
-(A1, A2, ..., B1). A new target plate is started when the current one holds
-\code{max_samples} samples or when the next sample would add more than
-\code{max_source_plates} source plates. A source plate can be split across
-target plates. Target wells are filled column-wise (A1, B1, ..., H1, A2).
+Assign archive plate (source) wells to Integra rounds (input files), target
+plates and target wells. Source plates are ordered by season, first event
+and plate number parsed from \code{arc_plate_id}, and wells within a source plate
+are picked row-wise (A1, A2, ..., B1).
+
+A round holds at most \code{max_source_plates} source plates; the next source
+plate starts a new round on the same target plate. A target plate is filled
+across rounds until it holds \code{max_samples} samples, which starts a new round
+on a new target plate, so a source plate can be split across target plates.
+Target wells are filled column-wise (A1, B1, ..., H1, A2) and continue
+across rounds on the same target plate.
 }
 \seealso{
 Other integra functions: 

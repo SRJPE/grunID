@@ -7,7 +7,6 @@
 make_integra_plate_maps(
   con,
   events,
-  destination = c("sherlock", "gtseq"),
   season = get_current_season(),
   output_dir = tempdir(),
   transfer_volume = 16
@@ -17,8 +16,6 @@ make_integra_plate_maps(
 \item{con}{a database connection}
 
 \item{events}{event numbers to generate files for}
-
-\item{destination}{either "sherlock" or "gtseq"}
 
 \item{season}{season obtained from \code{\link[=get_current_season]{get_current_season()}}}
 
@@ -31,11 +28,11 @@ list with \code{success}, \code{message}, \code{summary} (the session summary) a
 \code{files} (paths written)
 }
 \description{
-Generate Integra cherry pick input files for the selected events. Each file
-fills one target plate with at most 90 samples from at most 3 archive
-(source) plates. Also writes a plate layout for each target plate, a dual
-assay OTS-16 layout for each target plate when the destination is Sherlock,
-and a summary of the session.
+Generate Integra cherry pick input files for GT-Seq for the selected events.
+Candidates are current season samples whose latest status is "need gtseq".
+Each input file (round) uses at most 3 archive (source) plates, and target
+plates are filled across rounds to 90 samples. Also writes a plate layout
+for each target plate and a summary of the session.
 }
 \seealso{
 Other integra functions: 

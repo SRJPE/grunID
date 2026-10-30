@@ -577,13 +577,13 @@ ORDER BY gri.sample_id;
       ungroup()
   })
 
-  events_with_need_ots16_or_gtseq_samples <- reactive({
+  events_with_need_gtseq_samples <- reactive({
     get_sample_status(con, season = get_current_season()$season_code) |>
-      filter(status_code_name %in% c("need ots16", "need gtseq"))
+      filter(status_code_name == "need gtseq")
   })
 
-  need_ots16_or_gtseq_events <- reactive({
-    events_with_need_ots16_or_gtseq_samples() |>
+  need_gtseq_events <- reactive({
+    events_with_need_gtseq_samples() |>
       distinct(event_number) |>
       pull()
   })
@@ -593,7 +593,7 @@ ORDER BY gri.sample_id;
   })
 
   output$gen_ham_plate_events_UI <- renderUI({
-    selectInput("gen_ham_plate_events", "Events", multiple = TRUE, choices = need_ots16_or_gtseq_events())
+    selectInput("gen_ham_plate_events", "Events", multiple = TRUE, choices = need_gtseq_events())
   })
 
   output$gen_arc_plate_samples_preview <- renderTable({
@@ -606,10 +606,10 @@ ORDER BY gri.sample_id;
 
   output$gen_ham_plate_samples_preview <- renderTable({
     validate(need(!is.null(input$gen_ham_plate_events), "select at least one event"))
-    events_with_need_ots16_or_gtseq_samples() |>
-      filter(status_code_name == if_else(input$gen_ham_destination == "sherlock", "need ots16", "need gtseq")) |>
+    events_with_need_gtseq_samples() |>
+      ungroup() |>
       filter(event_number %in% input$gen_ham_plate_events) |>
-      select(sample_id, status_code_name, comment)
+      transmute(`#` = row_number(), sample_id, status_code_name, comment)
   })
 
 
@@ -633,7 +633,24 @@ ORDER BY gri.sample_id;
     }
   })
 
+  integra_summary <- reactiveVal(NULL)
+
+  output$gen_ham_summary_UI <- renderUI({
+    req(integra_summary())
+    summary <- integra_summary()
+    tagList(
+      tags$h4("Cherry pick session summary"),
+      tags$p(glue::glue(
+        "{sum(summary$SampleCount)} samples in {nrow(summary)} Integra files on {dplyr::n_distinct(summary$TargetPlateID)} target plates. Run the files in round order."
+      )),
+      tableOutput("gen_ham_summary")
+    )
+  })
+
+  output$gen_ham_summary <- renderTable(integra_summary())
+
   observeEvent(input$save_ham_plates, {
+    integra_summary(NULL)
     if (length(input$gen_ham_plate_events) == 0) {
       shiny::showNotification("you must select at least one event to generate a plate",
                               type = "warning")
@@ -644,7 +661,6 @@ ORDER BY gri.sample_id;
       make_integra_plate_maps(
         con,
         events = input$gen_ham_plate_events,
-        destination = input$gen_ham_destination,
         output_dir = cfg$data_output,
         season = get_current_season(),
         transfer_volume = input$gen_ham_transfer_volume
@@ -657,6 +673,7 @@ ORDER BY gri.sample_id;
     )
 
     if (!is.null(res) && res$success) {
+      integra_summary(res$summary)
       shiny::showNotification(glue::glue("{nrow(res$summary)} Integra files created and saved to: {cfg$data_output} see RStudio Console for details and full paths"),
                               type = "message")
     }

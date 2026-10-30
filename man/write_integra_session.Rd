@@ -7,7 +7,6 @@
 write_integra_session(
   assignments,
   events,
-  destination = c("sherlock", "gtseq"),
   season = get_current_season(),
   output_dir = tempdir(),
   transfer_volume = 16
@@ -17,8 +16,6 @@ write_integra_session(
 \item{assignments}{dataframe returned by \code{\link[=assign_integra_target_plates]{assign_integra_target_plates()}}}
 
 \item{events}{event numbers to generate files for}
-
-\item{destination}{either "sherlock" or "gtseq"}
 
 \item{season}{season obtained from \code{\link[=get_current_season]{get_current_season()}}}
 
@@ -30,9 +27,8 @@ write_integra_session(
 list with \code{summary} (the session summary) and \code{files} (paths written)
 }
 \description{
-Write the files for an Integra cherry picking session: one semicolon
-delimited input file and one plate layout per target plate, a dual assay
-OTS-16 layout per target plate when the destination is Sherlock, and a
+Write the files for a GT-Seq Integra cherry picking session: one semicolon
+delimited input file per round, one plate layout per target plate, and a
 session summary.
 }
 \seealso{
